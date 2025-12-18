@@ -1,0 +1,22 @@
+{
+  "name": "neumorstudio",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.26.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@neumorstudio/template-restaurant --filter=@neumorstudio/admin",
+    "dev:admin": "turbo dev --filter=@neumorstudio/admin",
+    "dev:restaurant": "turbo dev --filter=@neumorstudio/template-restaurant",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}

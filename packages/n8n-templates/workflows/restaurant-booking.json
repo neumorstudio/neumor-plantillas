@@ -1,0 +1,352 @@
+{
+  "name": "Restaurant Booking Automation",
+  "description": "Handles new restaurant bookings: saves to Supabase, sends confirmation via email/WhatsApp",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Webhook - New Booking",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "booking",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "supabase-insert",
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [450, 300],
+      "parameters": {
+        "operation": "insert",
+        "tableId": "bookings",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "website_id",
+              "fieldValue": "={{ $json.website_id }}"
+            },
+            {
+              "fieldName": "customer_name",
+              "fieldValue": "={{ $json.name }}"
+            },
+            {
+              "fieldName": "customer_email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldName": "customer_phone",
+              "fieldValue": "={{ $json.phone }}"
+            },
+            {
+              "fieldName": "booking_date",
+              "fieldValue": "={{ $json.date }}"
+            },
+            {
+              "fieldName": "booking_time",
+              "fieldValue": "={{ $json.time }}"
+            },
+            {
+              "fieldName": "guests",
+              "fieldValue": "={{ $json.guests }}"
+            },
+            {
+              "fieldName": "notes",
+              "fieldValue": "={{ $json.notes }}"
+            },
+            {
+              "fieldName": "status",
+              "fieldValue": "pending"
+            },
+            {
+              "fieldName": "source",
+              "fieldValue": "website"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "get-settings",
+      "name": "Get Notification Settings",
+      "type": "n8n-nodes-base.supabase",
+      "position": [650, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "notification_settings",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "website_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.website_id }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "switch-notifications",
+      "name": "Check Notification Type",
+      "type": "n8n-nodes-base.switch",
+      "position": [850, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "rules": [
+            {
+              "outputKey": "email",
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.email_booking_confirmation }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "whatsapp",
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.whatsapp_booking_confirmation }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "send-email",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [1050, 200],
+      "parameters": {
+        "fromEmail": "reservas@neumorstudio.com",
+        "toEmail": "={{ $('webhook').item.json.email }}",
+        "subject": "Confirmacion de Reserva",
+        "emailFormat": "html",
+        "html": "<!DOCTYPE html><html><body><h1>Reserva Recibida</h1><p>Hola {{ $('webhook').item.json.name }},</p><p>Hemos recibido tu reserva para el {{ $('webhook').item.json.date }} a las {{ $('webhook').item.json.time }}.</p><p>Personas: {{ $('webhook').item.json.guests }}</p><p>Te contactaremos pronto para confirmar.</p><p>Gracias!</p></body></html>"
+      },
+      "typeVersion": 2,
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1050, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.whatsapp.com/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "={{ $('webhook').item.json.phone }}"
+            },
+            {
+              "name": "text",
+              "value": "Hola {{ $('webhook').item.json.name }}! Tu reserva para el {{ $('webhook').item.json.date }} a las {{ $('webhook').item.json.time }} ha sido recibida. Te contactaremos para confirmar. Gracias!"
+            }
+          ]
+        }
+      },
+      "typeVersion": 4,
+      "notes": "Replace with actual WhatsApp Business API endpoint"
+    },
+    {
+      "id": "log-activity",
+      "name": "Log Activity",
+      "type": "n8n-nodes-base.supabase",
+      "position": [1250, 300],
+      "parameters": {
+        "operation": "insert",
+        "tableId": "activity_log",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "website_id",
+              "fieldValue": "={{ $('webhook').item.json.website_id }}"
+            },
+            {
+              "fieldName": "event_type",
+              "fieldValue": "booking_created"
+            },
+            {
+              "fieldName": "event_data",
+              "fieldValue": "={{ JSON.stringify($('webhook').item.json) }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [1450, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Booking received' }) }}"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "webhook": {
+      "main": [
+        [
+          {
+            "node": "supabase-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "supabase-insert": {
+      "main": [
+        [
+          {
+            "node": "get-settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-settings": {
+      "main": [
+        [
+          {
+            "node": "switch-notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switch-notifications": {
+      "main": [
+        [
+          {
+            "node": "send-email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "send-whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-email": {
+      "main": [
+        [
+          {
+            "node": "log-activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-whatsapp": {
+      "main": [
+        [
+          {
+            "node": "log-activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log-activity": {
+      "main": [
+        [
+          {
+            "node": "respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "restaurant"
+    },
+    {
+      "name": "booking"
+    },
+    {
+      "name": "automation"
+    }
+  ]
+}

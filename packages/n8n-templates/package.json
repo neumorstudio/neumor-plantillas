@@ -1,0 +1,12 @@
+{
+  "name": "@neumorstudio/n8n-templates",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plantillas de workflows n8n para automatizaciones NeumorStudio",
+  "exports": {
+    "./workflows/*": "./workflows/*.json"
+  },
+  "files": [
+    "workflows"
+  ]
+}

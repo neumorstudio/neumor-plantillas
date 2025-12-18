@@ -1,0 +1,268 @@
+{
+  "name": "Lead Capture Automation",
+  "description": "Handles contact form submissions: saves to Supabase, notifies owner via email/WhatsApp",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Webhook - New Lead",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "supabase-insert",
+      "name": "Save Lead to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [450, 300],
+      "parameters": {
+        "operation": "insert",
+        "tableId": "leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "website_id",
+              "fieldValue": "={{ $json.website_id }}"
+            },
+            {
+              "fieldName": "name",
+              "fieldValue": "={{ $json.name }}"
+            },
+            {
+              "fieldName": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldName": "phone",
+              "fieldValue": "={{ $json.phone }}"
+            },
+            {
+              "fieldName": "message",
+              "fieldValue": "={{ $json.message }}"
+            },
+            {
+              "fieldName": "source",
+              "fieldValue": "={{ $json.source || 'website' }}"
+            },
+            {
+              "fieldName": "status",
+              "fieldValue": "new"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "get-website",
+      "name": "Get Website Info",
+      "type": "n8n-nodes-base.supabase",
+      "position": [650, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "websites",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.website_id }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "get-client",
+      "name": "Get Client Info",
+      "type": "n8n-nodes-base.supabase",
+      "position": [850, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "clients",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.client_id }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "notify-owner-email",
+      "name": "Notify Owner via Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [1050, 300],
+      "parameters": {
+        "fromEmail": "leads@neumorstudio.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Nuevo Lead - {{ $('webhook').item.json.name }}",
+        "emailFormat": "html",
+        "html": "<!DOCTYPE html><html><body><h1>Nuevo Lead Recibido</h1><p><strong>Nombre:</strong> {{ $('webhook').item.json.name }}</p><p><strong>Email:</strong> {{ $('webhook').item.json.email }}</p><p><strong>Telefono:</strong> {{ $('webhook').item.json.phone }}</p><p><strong>Mensaje:</strong></p><p>{{ $('webhook').item.json.message }}</p><p><a href='https://admin.neumorstudio.com/dashboard/leads'>Ver en el Panel</a></p></body></html>"
+      },
+      "typeVersion": 2,
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "id": "log-activity",
+      "name": "Log Activity",
+      "type": "n8n-nodes-base.supabase",
+      "position": [1250, 300],
+      "parameters": {
+        "operation": "insert",
+        "tableId": "activity_log",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "website_id",
+              "fieldValue": "={{ $('webhook').item.json.website_id }}"
+            },
+            {
+              "fieldName": "event_type",
+              "fieldValue": "lead_created"
+            },
+            {
+              "fieldName": "event_data",
+              "fieldValue": "={{ JSON.stringify($('webhook').item.json) }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [1450, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Lead saved' }) }}"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "webhook": {
+      "main": [
+        [
+          {
+            "node": "supabase-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "supabase-insert": {
+      "main": [
+        [
+          {
+            "node": "get-website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-website": {
+      "main": [
+        [
+          {
+            "node": "get-client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-client": {
+      "main": [
+        [
+          {
+            "node": "notify-owner-email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "notify-owner-email": {
+      "main": [
+        [
+          {
+            "node": "log-activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log-activity": {
+      "main": [
+        [
+          {
+            "node": "respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "lead"
+    },
+    {
+      "name": "contact"
+    },
+    {
+      "name": "automation"
+    }
+  ]
+}

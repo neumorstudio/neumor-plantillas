@@ -1,0 +1,135 @@
+---
+/**
+ * FooterMinimal - Variante compacta de una sola linea
+ * Ideal para: Fine Dining, diseños minimalistas
+ */
+interface Props {
+  restaurantName: string;
+  phone?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    tripadvisor?: string;
+  };
+}
+
+const {
+  restaurantName,
+  phone = "+34 912 345 678",
+  socialLinks = {},
+} = Astro.props;
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer id="contact" class="footer-minimal">
+  <div class="container">
+    <div class="footer-content">
+      <span class="brand">{restaurantName}</span>
+      <span class="separator">|</span>
+      <a href={`tel:${phone.replace(/\s/g, "")}`} class="phone">{phone}</a>
+      <span class="separator">|</span>
+      <div class="social-icons">
+        {socialLinks.instagram && (
+          <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+        )}
+        {socialLinks.facebook && (
+          <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+        )}
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; {currentYear} {restaurantName}</span>
+      <span class="powered">
+        <a href="https://neumorstudio.com" target="_blank">NeumorStudio</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-minimal {
+    padding: 1.5rem 0;
+    margin-top: 4rem;
+    background: var(--neumor-bg);
+    box-shadow: inset 0 4px 8px var(--shadow-dark);
+  }
+
+  .footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .brand {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .separator {
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .phone {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .phone:hover {
+    color: var(--accent);
+  }
+
+  .social-icons {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .social-icons a {
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  .social-icons a:hover {
+    color: var(--accent);
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .powered a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 640px) {
+    .separator {
+      display: none;
+    }
+
+    .footer-content {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: center;
+    }
+  }
+</style>

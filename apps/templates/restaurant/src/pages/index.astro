@@ -1,0 +1,193 @@
+---
+/**
+ * NEUMORSTUDIO - Plantilla Restaurante
+ *
+ * Variables de configuracion para personalizar:
+ * - restaurantName: Nombre del restaurante
+ * - theme: "light" | "dark" | "colorful" | "rustic" | "elegant"
+ * - variants: Seleccion de componentes (hero, menu, features, reviews, footer)
+ * - preset: Usar un preset predefinido (fine-dining, casual, fast-food, cafe-bistro)
+ */
+
+import Layout from "@layouts/Layout.astro";
+import Header from "@components/Header.astro";
+import ReservationForm from "@components/ReservationForm.astro";
+
+// Importar TODAS las variantes de componentes
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
+import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@components/Menu";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
+import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
+import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
+
+// ============================================
+// MAPEO DE VARIANTES
+// ============================================
+const componentMap = {
+  hero: {
+    classic: HeroClassic,
+    modern: HeroModern,
+    bold: HeroBold,
+    minimal: HeroMinimal,
+  },
+  menu: {
+    tabs: MenuTabs,
+    grid: MenuGrid,
+    list: MenuList,
+    carousel: MenuCarousel,
+  },
+  features: {
+    cards: FeaturesCards,
+    icons: FeaturesIcons,
+    banner: FeaturesBanner,
+  },
+  reviews: {
+    grid: ReviewsGrid,
+    carousel: ReviewsCarousel,
+    minimal: ReviewsMinimal,
+  },
+  footer: {
+    full: FooterFull,
+    minimal: FooterMinimal,
+    centered: FooterCentered,
+  },
+};
+
+// ============================================
+// PRESETS PREDEFINIDOS
+// ============================================
+const presets = {
+  "fine-dining": {
+    hero: "modern",
+    menu: "list",
+    features: "icons",
+    reviews: "minimal",
+    footer: "minimal",
+  },
+  "casual": {
+    hero: "classic",
+    menu: "tabs",
+    features: "cards",
+    reviews: "grid",
+    footer: "full",
+  },
+  "fast-food": {
+    hero: "bold",
+    menu: "carousel",
+    features: "banner",
+    reviews: "carousel",
+    footer: "minimal",
+  },
+  "cafe-bistro": {
+    hero: "minimal",
+    menu: "grid",
+    features: "icons",
+    reviews: "minimal",
+    footer: "centered",
+  },
+} as const;
+
+// ============================================
+// CONFIGURACION DEL RESTAURANTE
+// Personalizar estos valores para cada cliente
+// ============================================
+
+const config = {
+  // Informacion basica
+  restaurantName: "The Golden Spoon",
+  theme: "dark" as const, // light | dark | colorful | rustic | elegant
+
+  // OPCION 1: Seleccion manual de variantes
+  variants: {
+    hero: "classic" as const,      // classic | modern | bold | minimal
+    menu: "tabs" as const,         // tabs | grid | list | carousel
+    features: "cards" as const,    // cards | icons | banner
+    reviews: "grid" as const,      // grid | carousel | minimal
+    footer: "full" as const,       // full | minimal | centered
+  },
+
+  // OPCION 2: Usar un preset (cambia undefined por: "fine-dining" | "casual" | "fast-food" | "cafe-bistro")
+  preset: undefined as "fine-dining" | "casual" | "fast-food" | "cafe-bistro" | undefined,
+
+  // SEO
+  siteTitle: "The Golden Spoon | Restaurante Gourmet",
+  siteDescription:
+    "Experiencia gastronomica unica con platos elaborados con ingredientes frescos y de temporada.",
+
+  // Hero
+  heroTitle: "Descubre el Arte de la Gastronomia",
+  heroSubtitle:
+    "Una experiencia culinaria unica donde cada plato cuenta una historia. Reserva tu mesa y dejate sorprender.",
+  heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+
+  // Reservas - webhook de n8n (configurar URL del webhook antes de desplegar)
+  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://tu-instancia-n8n.com/webhook/reservas",
+
+  // Contacto
+  address: "Calle Gran Via 123, Madrid",
+  phone: "+34 912 345 678",
+  email: "reservas@goldenspoon.com",
+
+  // Redes sociales
+  socialLinks: {
+    instagram: "https://instagram.com/goldenspoon",
+    facebook: "https://facebook.com/goldenspoon",
+    tripadvisor: "https://tripadvisor.com/goldenspoon",
+  },
+
+  // Valoraciones
+  googleRating: 4.8,
+  totalReviews: 324,
+};
+
+// ============================================
+// SELECCION DINAMICA DE COMPONENTES
+// ============================================
+
+// Si hay preset, usarlo; si no, usar variants
+const selectedVariants = config.preset
+  ? presets[config.preset]
+  : config.variants;
+
+// Seleccionar componentes segun la configuracion
+const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
+const Menu = componentMap.menu[selectedVariants.menu] || MenuTabs;
+const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
+const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
+const Footer = componentMap.footer[selectedVariants.footer] || FooterFull;
+---
+
+<Layout
+  title={config.siteTitle}
+  description={config.siteDescription}
+  theme={config.theme}
+>
+  <Header restaurantName={config.restaurantName} />
+
+  <main>
+    <Hero
+      title={config.heroTitle}
+      subtitle={config.heroSubtitle}
+      backgroundImage={config.heroImage}
+    />
+
+    <Features />
+
+    <Menu />
+
+    <Reviews
+      googleRating={config.googleRating}
+      totalReviews={config.totalReviews}
+    />
+
+    <ReservationForm webhookUrl={config.webhookUrl} />
+  </main>
+
+  <Footer
+    restaurantName={config.restaurantName}
+    address={config.address}
+    phone={config.phone}
+    email={config.email}
+    socialLinks={config.socialLinks}
+  />
+</Layout>

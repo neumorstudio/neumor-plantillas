@@ -1,0 +1,12 @@
+{
+  "name": "@neumorstudio/config-typescript",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base.json": "./base.json",
+    "./nextjs.json": "./nextjs.json",
+    "./astro.json": "./astro.json",
+    "./library.json": "./library.json"
+  }
+}

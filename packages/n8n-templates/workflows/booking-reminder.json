@@ -1,0 +1,295 @@
+{
+  "name": "Booking Reminder Automation",
+  "description": "Sends reminder notifications 24 hours before booking date",
+  "nodes": [
+    {
+      "id": "schedule",
+      "name": "Daily Check at 10:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "get-tomorrow-bookings",
+      "name": "Get Tomorrow's Bookings",
+      "type": "n8n-nodes-base.supabase",
+      "position": [450, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "bookings",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "booking_date",
+              "condition": "eq",
+              "keyValue": "={{ $now.plus({ days: 1 }).toFormat('yyyy-MM-dd') }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "confirmed"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "loop-bookings",
+      "name": "Loop Through Bookings",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [650, 300],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "get-settings",
+      "name": "Check Reminder Settings",
+      "type": "n8n-nodes-base.supabase",
+      "position": [850, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "notification_settings",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "website_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.website_id }}"
+            },
+            {
+              "keyName": "reminder_24h",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "if-reminder-enabled",
+      "name": "Reminder Enabled?",
+      "type": "n8n-nodes-base.if",
+      "position": [1050, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "send-reminder-email",
+      "name": "Send Reminder Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [1250, 200],
+      "parameters": {
+        "fromEmail": "reservas@neumorstudio.com",
+        "toEmail": "={{ $('loop-bookings').item.json.customer_email }}",
+        "subject": "Recordatorio: Tu reserva es manana",
+        "emailFormat": "html",
+        "html": "<!DOCTYPE html><html><body><h1>Recordatorio de Reserva</h1><p>Hola {{ $('loop-bookings').item.json.customer_name }},</p><p>Te recordamos que tu reserva es <strong>manana {{ $('loop-bookings').item.json.booking_date }}</strong> a las <strong>{{ $('loop-bookings').item.json.booking_time }}</strong>.</p><p>Personas: {{ $('loop-bookings').item.json.guests }}</p><p>Te esperamos!</p><p>Si necesitas cancelar o modificar tu reserva, contactanos.</p></body></html>"
+      },
+      "typeVersion": 2,
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "id": "log-reminder",
+      "name": "Log Reminder Sent",
+      "type": "n8n-nodes-base.supabase",
+      "position": [1450, 200],
+      "parameters": {
+        "operation": "insert",
+        "tableId": "activity_log",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "website_id",
+              "fieldValue": "={{ $('loop-bookings').item.json.website_id }}"
+            },
+            {
+              "fieldName": "event_type",
+              "fieldValue": "reminder_sent"
+            },
+            {
+              "fieldName": "event_data",
+              "fieldValue": "={{ JSON.stringify({ booking_id: $('loop-bookings').item.json.id, customer_name: $('loop-bookings').item.json.customer_name }) }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "continue-loop",
+      "name": "Continue to Next",
+      "type": "n8n-nodes-base.noOp",
+      "position": [1650, 300],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "schedule": {
+      "main": [
+        [
+          {
+            "node": "get-tomorrow-bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-tomorrow-bookings": {
+      "main": [
+        [
+          {
+            "node": "loop-bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop-bookings": {
+      "main": [
+        [
+          {
+            "node": "get-settings",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "continue-loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-settings": {
+      "main": [
+        [
+          {
+            "node": "if-reminder-enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if-reminder-enabled": {
+      "main": [
+        [
+          {
+            "node": "send-reminder-email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "loop-bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send-reminder-email": {
+      "main": [
+        [
+          {
+            "node": "log-reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log-reminder": {
+      "main": [
+        [
+          {
+            "node": "loop-bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "continue-loop": {
+      "main": []
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "reminder"
+    },
+    {
+      "name": "booking"
+    },
+    {
+      "name": "scheduled"
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+/* Estilos base neumorfico para NeumorStudio */
+@import "tailwindcss";
+
+/* Variables CSS para temas */
+:root {
+  /* Light theme (default) */
+  --neumor-bg: oklch(0.95 0.01 250);
+  --shadow-dark: oklch(0.85 0.01 250);
+  --shadow-light: oklch(1 0 0);
+  --text-primary: oklch(0.2 0.02 250);
+  --text-secondary: oklch(0.4 0.02 250);
+  --accent: oklch(0.6 0.15 250);
+}
+
+/* Dark theme */
+.theme-dark {
+  --neumor-bg: oklch(0.25 0.02 250);
+  --shadow-dark: oklch(0.15 0.02 250);
+  --shadow-light: oklch(0.35 0.02 250);
+  --text-primary: oklch(0.95 0.01 250);
+  --text-secondary: oklch(0.75 0.01 250);
+  --accent: oklch(0.7 0.15 250);
+}
+
+/* Colorful theme */
+.theme-colorful {
+  --neumor-bg: oklch(0.95 0.03 80);
+  --shadow-dark: oklch(0.85 0.03 80);
+  --shadow-light: oklch(1 0 0);
+  --text-primary: oklch(0.3 0.1 30);
+  --text-secondary: oklch(0.5 0.08 180);
+  --accent: oklch(0.7 0.2 150);
+}
+
+/* Rustic theme */
+.theme-rustic {
+  --neumor-bg: oklch(0.9 0.04 70);
+  --shadow-dark: oklch(0.75 0.05 70);
+  --shadow-light: oklch(0.98 0.02 70);
+  --text-primary: oklch(0.3 0.05 50);
+  --text-secondary: oklch(0.5 0.04 50);
+  --accent: oklch(0.5 0.12 30);
+}
+
+/* Elegant theme */
+.theme-elegant {
+  --neumor-bg: oklch(0.93 0.02 30);
+  --shadow-dark: oklch(0.83 0.03 30);
+  --shadow-light: oklch(0.99 0.01 30);
+  --text-primary: oklch(0.25 0.03 30);
+  --text-secondary: oklch(0.5 0.03 30);
+  --accent: oklch(0.6 0.1 30);
+}
+
+/* Clases utilitarias neumorfico */
+.neumor-bg {
+  background-color: var(--neumor-bg);
+}
+
+.neumor-raised {
+  background-color: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+.neumor-inset {
+  background-color: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow:
+    inset 8px 8px 16px var(--shadow-dark),
+    inset -8px -8px 16px var(--shadow-light);
+}
+
+.neumor-raised-sm {
+  background-color: var(--neumor-bg);
+  border-radius: 0.75rem;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+}
+
+.neumor-inset-sm {
+  background-color: var(--neumor-bg);
+  border-radius: 0.75rem;
+  box-shadow:
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+}
+
+.neumor-flat {
+  background-color: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+/* Boton neumorfico interactivo */
+.neumor-btn {
+  background-color: var(--neumor-bg);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+}
+
+.neumor-btn:hover {
+  box-shadow:
+    2px 2px 4px var(--shadow-dark),
+    -2px -2px 4px var(--shadow-light);
+}
+
+.neumor-btn:active {
+  box-shadow:
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+}
+
+/* Input neumorfico */
+.neumor-input {
+  background-color: var(--neumor-bg);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  border: none;
+  outline: none;
+  box-shadow:
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+}
+
+.neumor-input:focus {
+  box-shadow:
+    inset 6px 6px 12px var(--shadow-dark),
+    inset -6px -6px 12px var(--shadow-light);
+}
+
+/* Card neumorfico */
+.neumor-card {
+  background-color: var(--neumor-bg);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow:
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+/* Texto */
+.text-neumor-primary {
+  color: var(--text-primary);
+}
+
+.text-neumor-secondary {
+  color: var(--text-secondary);
+}
+
+.text-neumor-accent {
+  color: var(--accent);
+}

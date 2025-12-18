@@ -1,0 +1,232 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { updateBookingStatus } from "@/lib/actions";
+
+interface Booking {
+  id: string;
+  customer_name: string;
+  customer_email: string | null;
+  customer_phone: string | null;
+  booking_date: string;
+  booking_time: string | null;
+  guests: number;
+  notes: string | null;
+  status: string;
+  created_at: string;
+}
+
+type FilterStatus = "all" | "pending" | "confirmed" | "cancelled" | "completed";
+
+export default function ReservasClient({
+  initialBookings,
+}: {
+  initialBookings: Booking[];
+}) {
+  const [filter, setFilter] = useState<FilterStatus>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const filteredBookings = initialBookings.filter((booking) => {
+    const matchesFilter = filter === "all" || booking.status === filter;
+    const matchesSearch =
+      booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (booking.customer_phone?.includes(searchTerm) ?? false) ||
+      (booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    return matchesFilter && matchesSearch;
+  });
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    setActionError(null);
+    startTransition(async () => {
+      const result = await updateBookingStatus(bookingId, newStatus as "pending" | "confirmed" | "cancelled" | "completed");
+      if (result.error) {
+        setActionError(result.error);
+      }
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return <span className="badge badge-confirmed">Confirmada</span>;
+      case "pending":
+        return <span className="badge badge-pending">Pendiente</span>;
+      case "cancelled":
+        return <span className="badge badge-cancelled">Cancelada</span>;
+      case "completed":
+        return <span className="badge badge-confirmed">Completada</span>;
+      default:
+        return <span className="badge">{status}</span>;
+    }
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-heading font-bold mb-2">Reservas</h1>
+        <p className="text-[var(--text-secondary)]">
+          Gestiona las reservas de tu negocio
+        </p>
+      </div>
+
+      {/* Error message */}
+      {actionError && (
+        <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
+          {actionError}
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="neumor-card p-4 mb-6">
+        <div className="flex flex-wrap gap-4 items-center">
+          {/* Search */}
+          <div className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              placeholder="Buscar por nombre, telefono o email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="neumor-input w-full"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex gap-2 flex-wrap">
+            {(["all", "pending", "confirmed", "cancelled"] as const).map(
+              (status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`neumor-btn text-sm ${filter === status ? "neumor-btn-accent" : ""}`}
+                >
+                  {status === "all" && "Todas"}
+                  {status === "pending" && "Pendientes"}
+                  {status === "confirmed" && "Confirmadas"}
+                  {status === "cancelled" && "Canceladas"}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Reservations Table */}
+      <div className="neumor-card p-6">
+        {filteredBookings.length === 0 ? (
+          <div className="empty-state">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="w-16 h-16 mx-auto mb-4 text-[var(--text-secondary)]"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <h3 className="text-lg font-medium mb-2">No hay reservas</h3>
+            <p className="text-[var(--text-secondary)]">
+              {searchTerm || filter !== "all"
+                ? "No se encontraron reservas con los filtros seleccionados."
+                : "Las reservas apareceran aqui cuando los clientes reserven."}
+            </p>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Contacto</th>
+                  <th>Fecha y Hora</th>
+                  <th>Personas</th>
+                  <th>Notas</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBookings.map((booking) => (
+                  <tr key={booking.id} className={isPending ? "opacity-50" : ""}>
+                    <td className="font-medium">{booking.customer_name}</td>
+                    <td>
+                      <div className="text-sm">
+                        <div>{booking.customer_phone || "-"}</div>
+                        <div className="text-[var(--text-secondary)]">
+                          {booking.customer_email || "-"}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="text-sm">
+                        <div>{formatDate(booking.booking_date)}</div>
+                        <div className="text-[var(--text-secondary)]">
+                          {booking.booking_time || "-"}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{booking.guests}</td>
+                    <td>
+                      <span
+                        className="text-sm text-[var(--text-secondary)] max-w-[150px] truncate block"
+                        title={booking.notes || ""}
+                      >
+                        {booking.notes || "-"}
+                      </span>
+                    </td>
+                    <td>{getStatusBadge(booking.status)}</td>
+                    <td>
+                      <div className="flex gap-2">
+                        {booking.status === "pending" && (
+                          <>
+                            <button
+                              className="neumor-btn text-xs px-3 py-1"
+                              onClick={() => handleStatusChange(booking.id, "confirmed")}
+                              disabled={isPending}
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              className="neumor-btn text-xs px-3 py-1"
+                              onClick={() => handleStatusChange(booking.id, "cancelled")}
+                              disabled={isPending}
+                            >
+                              Cancelar
+                            </button>
+                          </>
+                        )}
+                        {booking.status === "confirmed" && (
+                          <button
+                            className="neumor-btn text-xs px-3 py-1"
+                            onClick={() => handleStatusChange(booking.id, "completed")}
+                            disabled={isPending}
+                          >
+                            Completar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

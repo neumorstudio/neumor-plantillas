@@ -1,0 +1,267 @@
+{
+  "name": "Newsletter - Enviar Campaña",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "newsletter-send",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar datos de la campaña\nconst input = $input.first().json;\n\nconst campaign = {\n  campaignId: input.campaignId,\n  subject: input.subject,\n  previewText: input.previewText || '',\n  htmlContent: input.htmlContent,\n  websiteId: input.websiteId,\n  totalSubscribers: input.subscribers.length\n};\n\n// Devolver cada suscriptor como item separado\nconst items = input.subscribers.map(subscriber => ({\n  json: {\n    ...campaign,\n    to: subscriber.email,\n    recipientName: subscriber.name || 'Cliente'\n  }\n}));\n\nreturn items;"
+      },
+      "id": "prepare-emails",
+      "name": "Preparar Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Personalizar HTML con nombre del destinatario\nconst item = $input.first().json;\n\nlet html = item.htmlContent;\n\n// Reemplazar variables\nhtml = html.replace(/{{nombre}}/g, item.recipientName);\nhtml = html.replace(/{{email}}/g, item.to);\n\n// Agregar link de unsuscribe\nconst unsubscribeLink = `${process.env.ADMIN_URL}/unsubscribe?email=${encodeURIComponent(item.to)}&website=${item.websiteId}`;\nhtml = html.replace(/{{unsubscribe_link}}/g, unsubscribeLink);\n\nreturn [{\n  json: {\n    ...item,\n    htmlContent: html\n  }\n}];"
+      },
+      "id": "personalize-html",
+      "name": "Personalizar HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "fromEmail": "={{ $env.NEWSLETTER_FROM_EMAIL }}",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.htmlContent }}",
+        "options": {
+          "replyTo": "={{ $env.NEWSLETTER_REPLY_TO }}"
+        }
+      },
+      "id": "send-email-resend",
+      "name": "Enviar con Resend",
+      "type": "n8n-nodes-base.resend",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "credentials": {
+        "resendApi": {
+          "id": "resend-credentials",
+          "name": "Resend API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NEWSLETTER_FROM_EMAIL }}",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.htmlContent }}",
+        "options": {
+          "replyTo": "={{ $env.NEWSLETTER_REPLY_TO }}"
+        }
+      },
+      "id": "send-email-smtp",
+      "name": "Enviar con SMTP",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 400],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "SMTP"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "batch-emails",
+      "name": "Batch (10 por lote)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "seconds"
+      },
+      "id": "wait-rate-limit",
+      "name": "Esperar (Rate Limit)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Contar resultados\nconst items = $input.all();\nconst sent = items.filter(i => !i.json.error).length;\nconst failed = items.filter(i => i.json.error).length;\n\nreturn [{\n  json: {\n    sent,\n    failed,\n    total: items.length,\n    campaignId: items[0]?.json?.campaignId\n  }\n}];"
+      },
+      "id": "count-results",
+      "name": "Contar Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/newsletter_campaigns?id=eq.{{ $json.campaignId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"sent\",\n  \"emails_sent\": {{ $json.sent }},\n  \"emails_failed\": {{ $json.failed }}\n}",
+        "options": {}
+      },
+      "id": "update-campaign-status",
+      "name": "Actualizar Campaña en Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase-auth",
+          "name": "Supabase API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Campaña enviada\",\n  \"sent\": {{ $json.sent }},\n  \"failed\": {{ $json.failed }}\n}"
+      },
+      "id": "respond-success",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "use-resend",
+              "leftValue": "={{ $env.EMAIL_PROVIDER }}",
+              "rightValue": "resend",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "switch-email-provider",
+      "name": "Switch Provider",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Preparar Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Emails": {
+      "main": [
+        [
+          {
+            "node": "Personalizar HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalizar HTML": {
+      "main": [
+        [
+          {
+            "node": "Enviar con Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar con Resend": {
+      "main": [
+        [
+          {
+            "node": "Contar Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contar Resultados": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Campaña en Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Campaña en Supabase": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "newsletter"
+    },
+    {
+      "name": "email"
+    }
+  ],
+  "triggerCount": 1,
+  "pinData": {}
+}

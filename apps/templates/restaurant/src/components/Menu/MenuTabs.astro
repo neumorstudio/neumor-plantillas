@@ -1,0 +1,436 @@
+---
+interface MenuItem {
+  name: string;
+  description: string;
+  price: string;
+  tag?: string; // "nuevo", "popular", "vegano", etc.
+  image?: string;
+}
+
+interface MenuCategory {
+  name: string;
+  icon: string;
+  items: MenuItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: MenuCategory[];
+}
+
+const defaultCategories: MenuCategory[] = [
+  {
+    name: "Entrantes",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>`,
+    items: [
+      {
+        name: "Carpaccio de Ternera",
+        description: "Finas laminas de ternera con rucula, parmesano y aceite de trufa",
+        price: "14",
+        tag: "popular",
+      },
+      {
+        name: "Burrata Fresca",
+        description: "Con tomates cherry confitados, pesto de albahaca y reduccion de balsamico",
+        price: "12",
+      },
+      {
+        name: "Tartar de Atun",
+        description: "Atun rojo con aguacate, sesamo y salsa ponzu",
+        price: "16",
+        tag: "nuevo",
+      },
+      {
+        name: "Croquetas de Jamon",
+        description: "Cremosas croquetas caseras de jamon iberico",
+        price: "10",
+      },
+    ],
+  },
+  {
+    name: "Principales",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+    items: [
+      {
+        name: "Solomillo Wellington",
+        description: "Solomillo envuelto en hojaldre con duxelles de setas y foie",
+        price: "32",
+        tag: "popular",
+      },
+      {
+        name: "Lubina a la Espalda",
+        description: "Lubina salvaje con verduras de temporada y salsa de champan",
+        price: "28",
+      },
+      {
+        name: "Risotto de Boletus",
+        description: "Arroz carnaroli con boletus edulis y aceite de trufa negra",
+        price: "22",
+        tag: "vegano",
+      },
+      {
+        name: "Cochinillo Confitado",
+        description: "Cochinillo a baja temperatura con pure de manzana y jugo",
+        price: "26",
+      },
+    ],
+  },
+  {
+    name: "Postres",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>`,
+    items: [
+      {
+        name: "Tarta de Queso",
+        description: "Nuestra famosa tarta cremosa con coulis de frutos rojos",
+        price: "8",
+        tag: "popular",
+      },
+      {
+        name: "Coulant de Chocolate",
+        description: "Bizcocho tibio de chocolate con corazon fundido y helado de vainilla",
+        price: "9",
+      },
+      {
+        name: "Tiramistu",
+        description: "Receta tradicional italiana con mascarpone y cafe",
+        price: "8",
+      },
+    ],
+  },
+];
+
+const {
+  title = "Nuestra Carta",
+  subtitle = "Cada plato cuenta una historia de sabor y tradicion",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="menu" class="menu-section">
+  <div class="container">
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+      {categories.map((category, index) => (
+        <button
+          class={`category-tab neumor-btn ${index === 0 ? 'active' : ''}`}
+          data-category={index}
+        >
+          <span class="tab-icon" set:html={category.icon} />
+          <span class="tab-name">{category.name}</span>
+        </button>
+      ))}
+    </div>
+
+    <!-- Menu Content -->
+    <div class="menu-content">
+      {categories.map((category, catIndex) => (
+        <div class={`menu-category ${catIndex === 0 ? 'active' : ''}`} data-category-content={catIndex}>
+          <div class="menu-grid">
+            {category.items.map((item, itemIndex) => (
+              <article
+                class="menu-item neumor-card"
+                style={`animation-delay: ${itemIndex * 100}ms`}
+              >
+                <div class="item-content">
+                  <div class="item-header">
+                    <h3 class="item-name">{item.name}</h3>
+                    {item.tag && (
+                      <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>
+                    )}
+                  </div>
+                  <p class="item-description">{item.description}</p>
+                </div>
+                <div class="item-price">
+                  <span class="price-currency">€</span>
+                  <span class="price-value">{item.price}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .menu-section {
+    padding: 6rem 0;
+    position: relative;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Category Tabs */
+  .category-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .category-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .category-tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow:
+      4px 4px 12px var(--shadow-dark),
+      -2px -2px 8px var(--shadow-light),
+      inset 0 0 0 transparent;
+  }
+
+  .tab-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+  }
+
+  .tab-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tab-name {
+    font-size: 0.95rem;
+  }
+
+  /* Menu Content */
+  .menu-content {
+    position: relative;
+  }
+
+  .menu-category {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .menu-category.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Menu Grid */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Menu Item */
+  .menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: slideUp 0.5s ease backwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .menu-item:hover {
+    transform: translateY(-4px);
+  }
+
+  .item-content {
+    flex: 1;
+    padding-right: 1rem;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .item-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .item-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.25rem 0.6rem;
+    border-radius: 2rem;
+  }
+
+  .tag-popular {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+
+  .tag-nuevo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .tag-vegano {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+  }
+
+  .item-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* Price */
+  .item-price {
+    display: flex;
+    align-items: baseline;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background: var(--neumor-bg);
+    box-shadow:
+      inset 3px 3px 6px var(--shadow-dark),
+      inset -3px -3px 6px var(--shadow-light);
+  }
+
+  .price-currency {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-right: 2px;
+  }
+
+  .price-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .menu-section {
+      padding: 4rem 0;
+    }
+
+    .category-tabs {
+      gap: 0.75rem;
+    }
+
+    .category-tab {
+      padding: 0.6rem 1rem;
+    }
+
+    .tab-name {
+      display: none;
+    }
+
+    .tab-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .category-tab.active .tab-name {
+      display: inline;
+    }
+
+    .menu-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .menu-item {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .item-content {
+      padding-right: 0;
+    }
+
+    .item-price {
+      align-self: flex-start;
+    }
+  }
+</style>
+
+<script>
+  // Tab switching functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.category-tab');
+    const contents = document.querySelectorAll('.menu-category');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const categoryIndex = tab.getAttribute('data-category');
+
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active content
+        contents.forEach(content => {
+          content.classList.remove('active');
+          if (content.getAttribute('data-category-content') === categoryIndex) {
+            content.classList.add('active');
+          }
+        });
+      });
+    });
+  });
+</script>
