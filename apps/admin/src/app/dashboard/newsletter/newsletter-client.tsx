@@ -369,7 +369,7 @@ export function NewsletterClient({
         </div>
         <div className="neumor-card p-4 text-center">
           <p className="text-3xl font-bold">{campaigns.length}</p>
-          <p className="text-sm text-[var(--text-secondary)]">Campanas</p>
+          <p className="text-sm text-[var(--text-secondary)]">Campañas</p>
         </div>
       </div>
 
@@ -406,7 +406,7 @@ export function NewsletterClient({
               : "neumor-btn"
           }`}
         >
-          Campanas
+          Campañas
         </button>
         <button
           onClick={() => {
