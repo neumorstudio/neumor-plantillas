@@ -55,12 +55,12 @@ async function getNewsletterData(websiteId: string) {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  // Get subscriber count (from bookings with email)
+  // Get subscriber count from newsletter_subscribers table
   const { count: subscriberCount } = await supabase
-    .from("bookings")
-    .select("customer_email", { count: "exact", head: true })
+    .from("newsletter_subscribers")
+    .select("*", { count: "exact", head: true })
     .eq("website_id", websiteId)
-    .not("customer_email", "is", null);
+    .eq("is_subscribed", true);
 
   // Get automation config
   const { data: automation } = await supabase
