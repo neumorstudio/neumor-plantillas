@@ -12,7 +12,8 @@
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "clean": "turbo clean && rm -rf node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "create-client": "pnpm --filter=@neumorstudio/cli create-client"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

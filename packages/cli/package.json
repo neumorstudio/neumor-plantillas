@@ -1,0 +1,27 @@
+{
+  "name": "@neumorstudio/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "create-client": "./dist/create-client.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/create-client.ts",
+    "create-client": "tsx src/create-client.ts"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.1",
+    "@supabase/supabase-js": "^2.47.10",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.4.7",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "@neumorstudio/config-typescript": "workspace:*",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

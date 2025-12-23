@@ -47,6 +47,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Protected route - change-password requires authentication
+  if (!user && request.nextUrl.pathname === "/change-password") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Force password change on first login
+  if (user?.user_metadata?.must_change_password) {
+    // Allow access to change-password page
+    if (request.nextUrl.pathname === "/change-password") {
+      return supabaseResponse;
+    }
+    // Redirect any other page to change-password
+    if (
+      request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname === "/login"
+    ) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/change-password";
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Redirect to dashboard if already logged in and trying to access login
   if (user && request.nextUrl.pathname === "/login") {
     const url = request.nextUrl.clone();

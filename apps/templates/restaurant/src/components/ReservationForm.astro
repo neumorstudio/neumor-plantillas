@@ -3,12 +3,14 @@ interface Props {
   title?: string;
   subtitle?: string;
   webhookUrl?: string;
+  websiteId?: string;
 }
 
 const {
   title = "Reserva tu Mesa",
   subtitle = "Completa el formulario y nos pondremos en contacto contigo para confirmar tu reserva.",
   webhookUrl = "",
+  websiteId = "",
 } = Astro.props;
 ---
 
@@ -63,7 +65,7 @@ const {
         </div>
       </div>
 
-      <form class="reservation-form neumor-card" data-webhook={webhookUrl}>
+      <form class="reservation-form neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
         <div class="form-row">
           <div class="form-group">
             <label for="name">Nombre</label>
@@ -277,11 +279,13 @@ const {
     e.preventDefault();
 
     const webhookUrl = form.dataset.webhook;
+    const websiteId = form.dataset.websiteId;
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
 
     // Mapear campos al formato del webhook
     const data = {
+      website_id: websiteId,
       nombre: rawData.name,
       email: rawData.email,
       telefono: rawData.phone,

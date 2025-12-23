@@ -93,6 +93,9 @@ const presets = {
 // ============================================
 
 const config = {
+  // ID del website en Supabase (OBLIGATORIO - se asigna al crear el cliente)
+  websiteId: import.meta.env.PUBLIC_WEBSITE_ID || "",
+
   // Informacion basica
   restaurantName: "The Golden Spoon",
   theme: "dark" as const, // light | dark | colorful | rustic | elegant
@@ -180,7 +183,7 @@ const Footer = componentMap.footer[selectedVariants.footer] || FooterFull;
       totalReviews={config.totalReviews}
     />
 
-    <ReservationForm webhookUrl={config.webhookUrl} />
+    <ReservationForm webhookUrl={config.webhookUrl} websiteId={config.websiteId} />
   </main>
 
   <Footer
