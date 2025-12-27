@@ -4,6 +4,10 @@ import { input, select, confirm } from "@inquirer/prompts";
 import { createClient } from "@supabase/supabase-js";
 import chalk from "chalk";
 import ora from "ora";
+import figlet from "figlet";
+import gradient from "gradient-string";
+import boxen from "boxen";
+import Table from "cli-table3";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -21,6 +25,68 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 // URL del webhook de reservas
 const WEBHOOK_URL = process.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.neumorstudio.com/webhook/reservas";
 
+// ============================================
+// ESTILOS Y COLORES PERSONALIZADOS
+// ============================================
+const neumorGradient = gradient(["#667eea", "#764ba2", "#f093fb"]);
+const successGradient = gradient(["#11998e", "#38ef7d"]);
+const warningGradient = gradient(["#f12711", "#f5af19"]);
+
+const styles = {
+  title: (text: string) => neumorGradient.multiline(text),
+  success: (text: string) => chalk.green.bold(text),
+  error: (text: string) => chalk.red.bold(text),
+  warning: (text: string) => chalk.yellow(text),
+  info: (text: string) => chalk.cyan(text),
+  muted: (text: string) => chalk.gray(text),
+  highlight: (text: string) => chalk.magenta.bold(text),
+  label: (text: string) => chalk.white.bold(text),
+  value: (text: string) => chalk.cyan(text),
+};
+
+// Función para mostrar el banner
+async function showBanner(): Promise<void> {
+  return new Promise((resolve) => {
+    figlet.text(
+      "NeumorStudio",
+      {
+        font: "ANSI Shadow",
+        horizontalLayout: "fitted",
+      },
+      (err, data) => {
+        if (!err && data) {
+          console.log("\n" + neumorGradient.multiline(data));
+        }
+        console.log(
+          boxen(chalk.white("  CLI para Creación de Clientes  "), {
+            padding: { left: 2, right: 2, top: 0, bottom: 0 },
+            borderStyle: "round",
+            borderColor: "magenta",
+            dimBorder: true,
+          })
+        );
+        console.log();
+        resolve();
+      }
+    );
+  });
+}
+
+// Función para mostrar separador
+function showDivider(char = "─", length = 50): void {
+  console.log(chalk.gray(char.repeat(length)));
+}
+
+// Función para mostrar paso actual
+function showStep(step: number, total: number, title: string): void {
+  const progress = chalk.magenta(`[${step}/${total}]`);
+  console.log(`\n${progress} ${chalk.white.bold(title)}`);
+  showDivider();
+}
+
+// Función para delay visual
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 interface ClientData {
   businessName: string;
   email: string;
@@ -28,6 +94,10 @@ interface ClientData {
   phone: string;
   domain: string;
   theme: string;
+  address: string;
+  preset: string;
+  heroTitle: string;
+  heroSubtitle: string;
 }
 
 // Generar contraseña temporal segura
@@ -40,22 +110,83 @@ function generateTempPassword(): string {
   return password;
 }
 
+// Generar textos automáticos según tipo de negocio
+function generateHeroTexts(businessName: string, businessType: string): { title: string; subtitle: string } {
+  const texts: Record<string, { title: string; subtitle: string }> = {
+    restaurant: {
+      title: `Bienvenido a ${businessName}`,
+      subtitle: "Una experiencia gastronómica única donde cada plato cuenta una historia. Reserva tu mesa y déjate sorprender por nuestros sabores.",
+    },
+    clinic: {
+      title: `${businessName} - Tu salud es nuestra prioridad`,
+      subtitle: "Profesionales dedicados a tu bienestar. Reserva tu cita y recibe la atención que mereces.",
+    },
+    salon: {
+      title: `${businessName} - Donde la belleza cobra vida`,
+      subtitle: "Expertos en realzar tu belleza natural. Reserva tu cita y déjate mimar por nuestros profesionales.",
+    },
+    shop: {
+      title: `Bienvenido a ${businessName}`,
+      subtitle: "Descubre nuestra selección exclusiva de productos. Calidad y estilo en cada detalle.",
+    },
+    fitness: {
+      title: `${businessName} - Transforma tu vida`,
+      subtitle: "Alcanza tus metas con nuestros entrenadores expertos. Reserva tu clase y comienza tu transformación.",
+    },
+    realestate: {
+      title: `${businessName} - Tu hogar te espera`,
+      subtitle: "Encuentra la propiedad de tus sueños. Nuestros expertos te guiarán en cada paso del camino.",
+    },
+  };
+
+  return texts[businessType] || texts.restaurant;
+}
+
+// Obtener preset recomendado según tipo de negocio
+function getRecommendedPreset(businessType: string): string {
+  const presetMap: Record<string, string> = {
+    restaurant: "casual",
+    clinic: "fine-dining",
+    salon: "cafe-bistro",
+    shop: "casual",
+    fitness: "fast-food",
+    realestate: "fine-dining",
+  };
+  return presetMap[businessType] || "casual";
+}
+
 
 async function main() {
-  console.log(chalk.cyan.bold("\n🏢 NeumorStudio - Crear Nuevo Cliente\n"));
+  // Limpiar consola y mostrar banner
+  console.clear();
+  await showBanner();
 
   // Verificar credenciales
-  if (!SUPABASE_URL) {
-    console.log(chalk.red("❌ Error: SUPABASE_URL no está configurado."));
-    console.log(chalk.yellow("   Configúralo en tu archivo .env (SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL).\n"));
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    console.log(
+      boxen(
+        chalk.red.bold("  Error de Configuración  \n\n") +
+          (!SUPABASE_URL
+            ? chalk.yellow("• SUPABASE_URL no está configurado\n")
+            : "") +
+          (!SUPABASE_SERVICE_KEY
+            ? chalk.yellow("• SUPABASE_SERVICE_ROLE_KEY no está configurado\n")
+            : "") +
+          chalk.gray("\nConfigúralos en tu archivo .env"),
+        {
+          padding: 1,
+          borderStyle: "round",
+          borderColor: "red",
+        }
+      )
+    );
     process.exit(1);
   }
 
-  if (!SUPABASE_SERVICE_KEY) {
-    console.log(chalk.red("❌ Error: SUPABASE_SERVICE_ROLE_KEY no está configurado."));
-    console.log(chalk.yellow("   Configúralo en tu archivo .env o como variable de entorno.\n"));
-    process.exit(1);
-  }
+  // Verificación exitosa
+  console.log(
+    chalk.green("  ✓ ") + chalk.gray("Conectado a Supabase")
+  );
 
   // Crear cliente de Supabase con service role
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -89,71 +220,190 @@ async function main() {
     return true;
   }
 
-  // Recopilar información del cliente
+  // ============================================
+  // PASO 1: Información básica
+  // ============================================
+  showStep(1, 4, "Información del Negocio");
+
   const clientData: ClientData = {
     businessName: await input({
-      message: "Nombre del negocio:",
+      message: chalk.cyan("   Nombre del negocio:"),
       validate: (value) => value.length > 0 || "El nombre es obligatorio",
     }),
 
     email: await input({
-      message: "Email del cliente:",
+      message: chalk.cyan("   Email del cliente:"),
       validate: validateEmail,
     }),
 
     businessType: await select({
-      message: "Tipo de negocio:",
+      message: chalk.cyan("   Tipo de negocio:"),
       choices: [
-        { name: "🍽️  Restaurante", value: "restaurant" },
-        { name: "🏥 Clínica", value: "clinic" },
-        { name: "💇 Salón de belleza", value: "salon" },
-        { name: "🛒 Tienda", value: "shop" },
-        { name: "🏋️  Gimnasio/Fitness", value: "fitness" },
-        { name: "🏠 Inmobiliaria", value: "realestate" },
+        { name: "🍽️   Restaurante", value: "restaurant" },
+        { name: "🏥  Clínica", value: "clinic" },
+        { name: "💇  Salón de belleza", value: "salon" },
+        { name: "🛒  Tienda", value: "shop" },
+        { name: "🏋️   Gimnasio/Fitness", value: "fitness" },
+        { name: "🏠  Inmobiliaria", value: "realestate" },
       ],
     }),
 
     phone: await input({
-      message: "Teléfono (opcional):",
+      message: chalk.cyan("   Teléfono:"),
       default: "",
     }),
 
-    domain: await input({
-      message: "Subdominio (ej: mirestaurante):",
-      validate: validateDomain,
-      transformer: (value) => value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+    address: await input({
+      message: chalk.cyan("   Dirección:"),
+      validate: (value) => value.length > 0 || "La dirección es obligatoria",
     }),
 
-    theme: await select({
-      message: "Tema visual:",
-      choices: [
-        { name: "☀️  Light - Claro y moderno", value: "light" },
-        { name: "🌙 Dark - Oscuro y elegante", value: "dark" },
-        { name: "🎨 Colorful - Vibrante y colorido", value: "colorful" },
-        { name: "🪵 Rustic - Rústico y cálido", value: "rustic" },
-        { name: "✨ Elegant - Sofisticado y lujoso", value: "elegant" },
-      ],
-    }),
+    domain: "",
+    theme: "",
+    preset: "",
+    heroTitle: "",
+    heroSubtitle: "",
   };
+
+  // ============================================
+  // PASO 2: Configuración web
+  // ============================================
+  showStep(2, 4, "Configuración de la Web");
+
+  clientData.domain = await input({
+    message: chalk.cyan("   Subdominio:"),
+    validate: validateDomain,
+    transformer: (value) => {
+      const clean = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return chalk.magenta(clean) + chalk.gray(".neumorstudio.com");
+    },
+  });
+
+  clientData.theme = await select({
+    message: chalk.cyan("   Tema visual:"),
+    choices: [
+      { name: "☀️   Light    " + chalk.gray("Claro y moderno"), value: "light" },
+      { name: "🌙  Dark     " + chalk.gray("Oscuro y elegante"), value: "dark" },
+      { name: "🎨  Colorful " + chalk.gray("Vibrante y colorido"), value: "colorful" },
+      { name: "🪵  Rustic   " + chalk.gray("Rústico y cálido"), value: "rustic" },
+      { name: "✨  Elegant  " + chalk.gray("Sofisticado y lujoso"), value: "elegant" },
+    ],
+  });
+
+  const recommendedPreset = getRecommendedPreset(clientData.businessType);
+  clientData.preset = await select({
+    message: chalk.cyan("   Estilo de diseño:"),
+    choices: [
+      {
+        name: "🍽️   Casual     " + chalk.gray("Acogedor y familiar") + (recommendedPreset === "casual" ? chalk.green(" ★") : ""),
+        value: "casual"
+      },
+      {
+        name: "✨  Fine Dining" + chalk.gray(" Elegante y sofisticado") + (recommendedPreset === "fine-dining" ? chalk.green(" ★") : ""),
+        value: "fine-dining"
+      },
+      {
+        name: "🚀  Fast Food  " + chalk.gray("Moderno y dinámico") + (recommendedPreset === "fast-food" ? chalk.green(" ★") : ""),
+        value: "fast-food"
+      },
+      {
+        name: "☕  Café Bistro" + chalk.gray(" Minimalista y acogedor") + (recommendedPreset === "cafe-bistro" ? chalk.green(" ★") : ""),
+        value: "cafe-bistro"
+      },
+    ],
+  });
+
+  // ============================================
+  // PASO 3: Contenido
+  // ============================================
+  showStep(3, 4, "Contenido de la Web");
+
+  const autoTexts = generateHeroTexts(clientData.businessName, clientData.businessType);
+
+  console.log(chalk.gray("\n   Textos generados automáticamente:"));
+  console.log(chalk.white(`   "${autoTexts.title}"\n`));
+
+  const customizeTexts = await confirm({
+    message: chalk.cyan("   ¿Personalizar textos del banner?"),
+    default: false,
+  });
+
+  if (customizeTexts) {
+    clientData.heroTitle = await input({
+      message: chalk.cyan("   Título principal:"),
+      default: autoTexts.title,
+    });
+    clientData.heroSubtitle = await input({
+      message: chalk.cyan("   Subtítulo:"),
+      default: autoTexts.subtitle,
+    });
+  } else {
+    clientData.heroTitle = autoTexts.title;
+    clientData.heroSubtitle = autoTexts.subtitle;
+  }
 
   const fullDomain = `${clientData.domain}.neumorstudio.com`;
 
-  // Confirmar antes de crear
-  console.log(chalk.cyan("\n📋 Resumen del nuevo cliente:\n"));
-  console.log(`   Negocio:    ${chalk.white.bold(clientData.businessName)}`);
-  console.log(`   Email:      ${chalk.white(clientData.email)}`);
-  console.log(`   Tipo:       ${chalk.white(clientData.businessType)}`);
-  console.log(`   Teléfono:   ${chalk.white(clientData.phone || "(no especificado)")}`);
-  console.log(`   Dominio:    ${chalk.white(fullDomain)}`);
-  console.log(`   Tema:       ${chalk.white(clientData.theme)}\n`);
+  // ============================================
+  // PASO 4: Confirmación
+  // ============================================
+  showStep(4, 4, "Confirmación");
+
+  // Crear tabla de resumen
+  const table = new Table({
+    chars: {
+      'top': '─', 'top-mid': '┬', 'top-left': '╭', 'top-right': '╮',
+      'bottom': '─', 'bottom-mid': '┴', 'bottom-left': '╰', 'bottom-right': '╯',
+      'left': '│', 'left-mid': '├', 'mid': '─', 'mid-mid': '┼',
+      'right': '│', 'right-mid': '┤', 'middle': '│'
+    },
+    style: { 'padding-left': 1, 'padding-right': 1 },
+    colWidths: [18, 40],
+  });
+
+  table.push(
+    [chalk.gray('Negocio'), chalk.white.bold(clientData.businessName)],
+    [chalk.gray('Email'), chalk.cyan(clientData.email)],
+    [chalk.gray('Tipo'), chalk.white(clientData.businessType)],
+    [chalk.gray('Teléfono'), chalk.white(clientData.phone || chalk.gray('(no especificado)'))],
+    [chalk.gray('Dirección'), chalk.white(clientData.address)],
+    [chalk.gray('Dominio'), chalk.magenta(fullDomain)],
+    [chalk.gray('Tema'), chalk.white(clientData.theme)],
+    [chalk.gray('Preset'), chalk.white(clientData.preset)],
+  );
+
+  console.log("\n" + table.toString());
+
+  // Box con el título del hero
+  console.log(
+    boxen(
+      chalk.gray("Título: ") + chalk.white(clientData.heroTitle) + "\n" +
+      chalk.gray("Subtítulo: ") + chalk.gray(clientData.heroSubtitle.substring(0, 60) + "..."),
+      {
+        title: "Banner Principal",
+        titleAlignment: "left",
+        padding: { left: 1, right: 1, top: 0, bottom: 0 },
+        margin: { top: 1, bottom: 1 },
+        borderStyle: "round",
+        borderColor: "gray",
+        dimBorder: true,
+      }
+    )
+  );
 
   const confirmed = await confirm({
-    message: "¿Crear este cliente?",
+    message: chalk.cyan("   ¿Crear este cliente?"),
     default: true,
   });
 
   if (!confirmed) {
-    console.log(chalk.yellow("\n⚠️  Operación cancelada.\n"));
+    console.log(
+      boxen(chalk.yellow("  Operación cancelada  "), {
+        padding: { left: 2, right: 2, top: 0, bottom: 0 },
+        borderStyle: "round",
+        borderColor: "yellow",
+      })
+    );
     process.exit(0);
   }
 
@@ -240,40 +490,95 @@ async function main() {
         .eq("id", client.id);
     }
 
-    spinner.succeed("Cliente creado correctamente");
+    spinner.succeed(chalk.green("Cliente creado correctamente"));
 
-    // Mostrar resultados
-    console.log(chalk.green.bold("\n✅ Cliente creado exitosamente!\n"));
+    // Mostrar resultados con estilo
+    await sleep(300);
+    console.log();
+    console.log(
+      boxen(
+        successGradient("  ✓ CLIENTE CREADO EXITOSAMENTE  "),
+        {
+          padding: { left: 2, right: 2, top: 0, bottom: 0 },
+          borderStyle: "round",
+          borderColor: "green",
+        }
+      )
+    );
 
-    console.log(chalk.cyan("📌 IDs generados:"));
-    console.log(`   Client ID:  ${chalk.yellow(client.id)}`);
-    console.log(`   Website ID: ${chalk.yellow.bold(website.id)}`);
+    // IDs generados
+    const idsTable = new Table({
+      chars: {
+        'top': '─', 'top-mid': '┬', 'top-left': '╭', 'top-right': '╮',
+        'bottom': '─', 'bottom-mid': '┴', 'bottom-left': '╰', 'bottom-right': '╯',
+        'left': '│', 'left-mid': '├', 'mid': '─', 'mid-mid': '┼',
+        'right': '│', 'right-mid': '┤', 'middle': '│'
+      },
+      style: { 'padding-left': 1, 'padding-right': 1 },
+    });
+    idsTable.push(
+      [chalk.gray('Client ID'), chalk.yellow(client.id)],
+      [chalk.gray('Website ID'), chalk.yellow.bold(website.id)],
+    );
+    console.log("\n" + idsTable.toString());
 
+    // Credenciales
     if (!authError && authUser) {
-      console.log(chalk.cyan("\n🔐 Credenciales de acceso:"));
-      console.log(chalk.gray("   ─────────────────────────────────────────"));
-      console.log(`   URL:        ${chalk.white("https://admin.neumorstudio.com")}`);
-      console.log(`   Email:      ${chalk.white(clientData.email)}`);
-      console.log(`   Contraseña: ${chalk.yellow.bold(tempPassword)}`);
-      console.log(chalk.gray("   ─────────────────────────────────────────"));
-      console.log(chalk.red.bold("   ⚠️  GUARDA ESTA CONTRASEÑA - No se puede recuperar"));
-      console.log(chalk.gray("   El cliente deberá cambiarla en su primer acceso"));
+      console.log(
+        boxen(
+          chalk.white.bold("CREDENCIALES DE ACCESO\n\n") +
+          chalk.gray("URL:        ") + chalk.cyan("https://admin.neumorstudio.com") + "\n" +
+          chalk.gray("Email:      ") + chalk.white(clientData.email) + "\n" +
+          chalk.gray("Contraseña: ") + chalk.yellow.bold(tempPassword) + "\n\n" +
+          chalk.red("⚠  GUARDA ESTA CONTRASEÑA") + chalk.gray(" - No se puede recuperar\n") +
+          chalk.gray("   El cliente deberá cambiarla en su primer acceso"),
+          {
+            padding: 1,
+            margin: { top: 1 },
+            borderStyle: "double",
+            borderColor: "yellow",
+            title: "🔐 Acceso Admin",
+            titleAlignment: "center",
+          }
+        )
+      );
     } else if (authError) {
-      console.log(chalk.yellow("\n⚠️  Usuario Auth no creado:"));
-      console.log(chalk.gray(`   ${authError.message}`));
-      console.log(chalk.gray("   Puedes crearlo manualmente desde Supabase Dashboard"));
+      console.log(
+        boxen(
+          chalk.yellow("Usuario Auth no creado:\n") +
+          chalk.gray(authError.message + "\n\n") +
+          chalk.gray("Puedes crearlo manualmente desde Supabase Dashboard"),
+          {
+            padding: 1,
+            margin: { top: 1 },
+            borderStyle: "round",
+            borderColor: "yellow",
+          }
+        )
+      );
     }
 
-    console.log(chalk.cyan("\n📝 Configuración para la plantilla:\n"));
-    console.log(chalk.white("   Variables de entorno (.env):"));
-    console.log(chalk.gray("   ─────────────────────────────────────────"));
-    console.log(`   ${chalk.green("PUBLIC_WEBSITE_ID")}=${chalk.yellow(website.id)}`);
-    console.log(`   ${chalk.green("PUBLIC_RESERVATION_WEBHOOK_URL")}=${chalk.yellow(WEBHOOK_URL)}`);
-    console.log(chalk.gray("   ─────────────────────────────────────────\n"));
+    // Variables de entorno
+    console.log(
+      boxen(
+        chalk.gray("# Variables de entorno (.env)\n\n") +
+        chalk.green("PUBLIC_WEBSITE_ID") + chalk.white("=") + chalk.yellow(website.id) + "\n" +
+        chalk.green("PUBLIC_RESERVATION_WEBHOOK_URL") + chalk.white("=") + chalk.cyan(WEBHOOK_URL),
+        {
+          padding: 1,
+          margin: { top: 1 },
+          borderStyle: "round",
+          borderColor: "gray",
+          title: "📝 Configuración",
+          titleAlignment: "left",
+        }
+      )
+    );
 
     // Preguntar si quiere copiar la plantilla
+    console.log();
     const copyTemplate = await confirm({
-      message: "¿Quieres crear una copia de la plantilla para este cliente?",
+      message: chalk.cyan("   ¿Crear proyecto de la plantilla para este cliente?"),
       default: true,
     });
 
@@ -281,7 +586,18 @@ async function main() {
       await createClientTemplate(clientData, website.id);
     }
 
-    console.log(chalk.green.bold("\n🎉 ¡Listo! El cliente está configurado.\n"));
+    // Mensaje final
+    console.log(
+      boxen(
+        neumorGradient("  ✨ ¡LISTO! El cliente está configurado ✨  "),
+        {
+          padding: { left: 2, right: 2, top: 0, bottom: 0 },
+          margin: { top: 1, bottom: 1 },
+          borderStyle: "round",
+          borderColor: "magenta",
+        }
+      )
+    );
 
   } catch (error) {
     spinner.fail("Error al crear el cliente");
@@ -341,11 +657,79 @@ async function createClientTemplate(clientData: ClientData, websiteId: string) {
     const { execSync } = await import("child_process");
     execSync(`cp -r "${templateSource}" "${clientDir}"`, { stdio: "ignore" });
 
+    spinner.text = "Personalizando plantilla...";
+
+    // ============================================
+    // PERSONALIZAR index.astro
+    // ============================================
+    const indexPath = join(clientDir, "src", "pages", "index.astro");
+    let indexContent = readFileSync(indexPath, "utf-8");
+
+    // Generar el nuevo objeto config personalizado
+    const newConfig = `const config = {
+  // ID del website en Supabase (OBLIGATORIO - se asigna al crear el cliente)
+  websiteId: import.meta.env.PUBLIC_WEBSITE_ID || "",
+
+  // Informacion basica
+  restaurantName: "${clientData.businessName}",
+  theme: "${clientData.theme}" as const, // light | dark | colorful | rustic | elegant
+
+  // OPCION 1: Seleccion manual de variantes
+  variants: {
+    hero: "classic" as const,      // classic | modern | bold | minimal
+    menu: "tabs" as const,         // tabs | grid | list | carousel
+    features: "cards" as const,    // cards | icons | banner
+    reviews: "grid" as const,      // grid | carousel | minimal
+    footer: "full" as const,       // full | minimal | centered
+  },
+
+  // OPCION 2: Usar un preset (cambia undefined por: "fine-dining" | "casual" | "fast-food" | "cafe-bistro")
+  preset: "${clientData.preset}" as "fine-dining" | "casual" | "fast-food" | "cafe-bistro" | undefined,
+
+  // SEO
+  siteTitle: "${clientData.businessName} | ${clientData.businessType === 'restaurant' ? 'Restaurante' : 'Bienvenido'}",
+  siteDescription:
+    "${clientData.heroSubtitle.replace(/"/g, '\\"')}",
+
+  // Hero
+  heroTitle: "${clientData.heroTitle.replace(/"/g, '\\"')}",
+  heroSubtitle:
+    "${clientData.heroSubtitle.replace(/"/g, '\\"')}",
+  heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+
+  // Reservas - webhook de n8n (configurar URL del webhook antes de desplegar)
+  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.neumorstudio.com/webhook/reservas",
+
+  // Contacto
+  address: "${clientData.address.replace(/"/g, '\\"')}",
+  phone: "${clientData.phone || '+34 000 000 000'}",
+  email: "${clientData.email}",
+
+  // Redes sociales
+  socialLinks: {
+    instagram: "https://instagram.com/${clientData.domain}",
+    facebook: "https://facebook.com/${clientData.domain}",
+    tripadvisor: "https://tripadvisor.com/${clientData.domain}",
+  },
+
+  // Valoraciones
+  googleRating: 4.8,
+  totalReviews: 0,
+};`;
+
+    // Reemplazar el objeto config en el archivo
+    // Buscar desde "const config = {" hasta el cierre "};"
+    const configRegex = /const config = \{[\s\S]*?\n\};/;
+    indexContent = indexContent.replace(configRegex, newConfig);
+
+    writeFileSync(indexPath, indexContent);
+
     spinner.text = "Configurando proyecto...";
 
     // Crear archivo .env con la configuración
     const envContent = `# Configuración de ${clientData.businessName}
 # Generado automáticamente por NeumorStudio CLI
+# Fecha: ${new Date().toLocaleDateString("es-ES")}
 # Website ID: ${websiteId}
 
 PUBLIC_WEBSITE_ID=${websiteId}
@@ -409,12 +793,43 @@ PUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}
       spinner.warn(`Proyecto creado pero fallo pnpm install. Ejecuta manualmente.`);
     }
 
-    console.log(chalk.green.bold("\n📂 Proyecto listo!\n"));
-    console.log(chalk.cyan("   Próximos pasos:"));
-    console.log(chalk.white(`   1. cd ${clientDir}`));
-    console.log(chalk.white(`   2. Edita src/pages/index.astro con los datos del cliente`));
-    console.log(chalk.white(`   3. pnpm dev para probar (puerto 4321)`));
-    console.log(chalk.white(`   4. pnpm build para generar el sitio estático\n`));
+    // Mostrar resultado bonito
+    console.log(
+      boxen(
+        chalk.green.bold("  📂 PROYECTO PERSONALIZADO LISTO  \n\n") +
+        chalk.gray("La plantilla ya incluye:\n") +
+        chalk.white(`  • Nombre: ${chalk.cyan(clientData.businessName)}\n`) +
+        chalk.white(`  • Tema: ${chalk.cyan(clientData.theme)}\n`) +
+        chalk.white(`  • Preset: ${chalk.cyan(clientData.preset)}\n`) +
+        chalk.white(`  • Contacto configurado\n`) +
+        chalk.white(`  • Redes sociales personalizadas`),
+        {
+          padding: 1,
+          margin: { top: 1 },
+          borderStyle: "round",
+          borderColor: "green",
+        }
+      )
+    );
+
+    // Próximos pasos
+    console.log(
+      boxen(
+        chalk.white.bold("PRÓXIMOS PASOS\n\n") +
+        chalk.yellow("1. ") + chalk.white(`cd ${clientDir}\n`) +
+        chalk.yellow("2. ") + chalk.white("pnpm dev ") + chalk.gray("(puerto 4321)\n") +
+        chalk.yellow("3. ") + chalk.white("Personaliza imágenes y menú\n") +
+        chalk.yellow("4. ") + chalk.white("pnpm build ") + chalk.gray("para producción"),
+        {
+          padding: 1,
+          margin: { top: 1 },
+          borderStyle: "round",
+          borderColor: "cyan",
+          title: "🚀 Siguiente",
+          titleAlignment: "left",
+        }
+      )
+    );
 
   } catch (error) {
     spinner.fail("Error al crear el proyecto");

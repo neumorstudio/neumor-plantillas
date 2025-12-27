@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+
+interface ClientInfo {
+  businessName: string;
+  businessType: string;
+  email: string;
+}
 
 const navItems = [
   {
@@ -111,12 +118,73 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
+
+  useEffect(() => {
+    async function fetchClientInfo() {
+      const supabase = createClient();
+
+      // Obtener usuario actual
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // Primero intentar obtener de user_metadata (más rápido)
+        if (user.user_metadata?.business_name) {
+          setClientInfo({
+            businessName: user.user_metadata.business_name,
+            businessType: user.user_metadata.business_type || "restaurant",
+            email: user.email || "",
+          });
+        } else {
+          // Si no hay metadata, buscar en la tabla clients
+          const { data: client } = await supabase
+            .from("clients")
+            .select("business_name, business_type, email")
+            .eq("auth_user_id", user.id)
+            .single();
+
+          if (client) {
+            setClientInfo({
+              businessName: client.business_name,
+              businessType: client.business_type,
+              email: client.email,
+            });
+          }
+        }
+      }
+    }
+
+    fetchClientInfo();
+  }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
+  };
+
+  // Obtener iniciales del nombre del negocio
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  // Obtener tipo de negocio legible
+  const getBusinessTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      restaurant: "Restaurante",
+      clinic: "Clínica",
+      salon: "Salón de belleza",
+      shop: "Tienda",
+      fitness: "Gimnasio",
+      realestate: "Inmobiliaria",
+    };
+    return labels[type] || type;
   };
 
   return (
@@ -163,12 +231,14 @@ export default function DashboardLayout({
         <div className="neumor-card-sm p-4 mt-auto">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center text-white font-semibold">
-              R
+              {clientInfo ? getInitials(clientInfo.businessName) : "..."}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Restaurante Demo</p>
+              <p className="text-sm font-medium truncate">
+                {clientInfo?.businessName || "Cargando..."}
+              </p>
               <p className="text-xs text-[var(--text-secondary)] truncate">
-                La Trattoria
+                {clientInfo ? getBusinessTypeLabel(clientInfo.businessType) : ""}
               </p>
             </div>
           </div>
