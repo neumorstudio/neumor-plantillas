@@ -150,6 +150,11 @@ export function NewsletterClient({
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // AI Generation state
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+
   // Template CRUD
   const handleSaveTemplate = async () => {
     if (!templateForm.name || !templateForm.subject || !templateForm.html_content) {
@@ -297,6 +302,48 @@ export function NewsletterClient({
       setMessage({ type: "error", text: "Error de conexion" });
     } finally {
       setSavingAutomation(false);
+    }
+  };
+
+  // Generate with AI
+  const handleGenerateWithAI = async () => {
+    if (!aiPrompt || aiPrompt.trim().length < 10) {
+      setMessage({ type: "error", text: "Describe qué tipo de email quieres (mínimo 10 caracteres)" });
+      return;
+    }
+
+    setGenerating(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/newsletter/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: aiPrompt,
+          websiteId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setTemplateForm({
+          ...templateForm,
+          html_content: data.html,
+          subject: data.suggestedSubject || templateForm.subject,
+          name: templateForm.name || data.suggestedName || "",
+        });
+        setShowAIModal(false);
+        setAiPrompt("");
+        setMessage({ type: "success", text: "Plantilla generada con IA. Revisa y personaliza el contenido." });
+      } else {
+        setMessage({ type: "error", text: data.error || "Error al generar plantilla" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Error de conexion" });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -545,9 +592,22 @@ export function NewsletterClient({
           {/* Form */}
           <div className="space-y-4">
             <div className="neumor-card p-4">
-              <h3 className="font-semibold mb-4">
-                {editorMode === "edit" ? "Editar Plantilla" : "Nueva Plantilla"}
-              </h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold">
+                  {editorMode === "edit" ? "Editar Plantilla" : "Nueva Plantilla"}
+                </h3>
+                <button
+                  onClick={() => setShowAIModal(true)}
+                  className="neumor-btn flex items-center gap-2 text-sm px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
+                  Generar con IA
+                </button>
+              </div>
 
               <div className="space-y-4">
                 <div>
@@ -935,6 +995,88 @@ export function NewsletterClient({
                   className="neumor-btn neumor-btn-accent flex-1"
                 >
                   {sending ? "Enviando..." : "Enviar Ahora"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Generation Modal */}
+      {showAIModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="neumor-card p-6 max-w-lg w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">Generar Plantilla con IA</h3>
+                <p className="text-sm text-[var(--text-secondary)]">Describe el email que quieres crear</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Describe tu email</label>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="Ej: Un email promocional para el menu de San Valentin con descuento del 20% en cenas romanticas. Estilo elegante con colores rojos y rosas."
+                  rows={4}
+                  className="neumor-input w-full"
+                />
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  Cuanto mas detallada sea tu descripcion, mejor sera el resultado
+                </p>
+              </div>
+
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p className="text-sm text-purple-800 font-medium mb-1">Ejemplos de prompts:</p>
+                <ul className="text-xs text-purple-700 space-y-1">
+                  <li>• Email de bienvenida para nuevos suscriptores</li>
+                  <li>• Promocion de verano con 15% de descuento</li>
+                  <li>• Anuncio de nuevo menu especial de temporada</li>
+                  <li>• Recordatorio de reserva para eventos especiales</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <button
+                  onClick={() => {
+                    setShowAIModal(false);
+                    setAiPrompt("");
+                  }}
+                  className="neumor-btn flex-1"
+                  disabled={generating}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleGenerateWithAI}
+                  disabled={generating || aiPrompt.trim().length < 10}
+                  className="flex-1 px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {generating ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                      </svg>
+                      Generar Plantilla
+                    </>
+                  )}
                 </button>
               </div>
             </div>
