@@ -5,20 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 interface WebsiteConfig {
   businessName?: string;
   businessType?: string;
-  preset?: "fine-dining" | "casual" | "fast-food" | "cafe-bistro";
   variants?: {
     hero: "classic" | "modern" | "bold" | "minimal";
     menu: "tabs" | "grid" | "list" | "carousel";
     features: "cards" | "icons" | "banner";
     reviews: "grid" | "carousel" | "minimal";
     footer: "full" | "minimal" | "centered";
-  };
-  customColors?: {
-    primary: string;
-    secondary: string;
-    background: string;
-    text: string;
-    accent: string;
   };
 }
 

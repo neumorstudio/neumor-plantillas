@@ -4,7 +4,6 @@ import { useState, useCallback, useMemo } from "react";
 
 // Types
 type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
-type Preset = "fine-dining" | "casual" | "fast-food" | "cafe-bistro";
 
 interface Variants {
   hero: "classic" | "modern" | "bold" | "minimal";
@@ -14,20 +13,10 @@ interface Variants {
   footer: "full" | "minimal" | "centered";
 }
 
-interface CustomColors {
-  primary: string;
-  secondary: string;
-  background: string;
-  text: string;
-  accent: string;
-}
-
 interface WebsiteConfig {
   businessName?: string;
   businessType?: string;
-  preset?: Preset;
   variants?: Variants;
-  customColors?: CustomColors;
 }
 
 interface Props {
@@ -46,13 +35,6 @@ const themes: { value: Theme; label: string; icon: string; colors: string[] }[] 
   { value: "elegant", label: "Elegant", icon: "crown", colors: ["#f5f0e8", "#c9a96e", "#8b6914"] },
   { value: "neuglass", label: "NeuGlass", icon: "diamond", colors: ["#e8ecf1", "#6366f1", "#4f46e5"] },
   { value: "neuglass-dark", label: "NeuGlass Dark", icon: "sparkles", colors: ["#13151a", "#818cf8", "#6366f1"] },
-];
-
-const presets: { value: Preset; label: string; description: string }[] = [
-  { value: "casual", label: "Casual", description: "Ambiente relajado y familiar" },
-  { value: "fine-dining", label: "Fine Dining", description: "Elegante y sofisticado" },
-  { value: "fast-food", label: "Fast Food", description: "Rapido y moderno" },
-  { value: "cafe-bistro", label: "Cafe Bistro", description: "Acogedor y artistico" },
 ];
 
 const variantOptions = {
@@ -83,14 +65,6 @@ const variantOptions = {
     { value: "minimal", label: "Minimalista" },
     { value: "centered", label: "Centrado" },
   ],
-};
-
-const defaultColors: CustomColors = {
-  primary: "#6366f1",
-  secondary: "#8b5cf6",
-  background: "#e8ecf1",
-  text: "#1a1a2e",
-  accent: "#6366f1",
 };
 
 const defaultVariants: Variants = {
@@ -145,45 +119,33 @@ export function PersonalizacionClient({
 }: Props) {
   // State
   const [theme, setTheme] = useState<Theme>(initialTheme);
-  const [preset, setPreset] = useState<Preset>(initialConfig.preset || "casual");
   const [variants, setVariants] = useState<Variants>(initialConfig.variants || defaultVariants);
-  const [customColors, setCustomColors] = useState<CustomColors>(
-    initialConfig.customColors || defaultColors
-  );
-  const [useCustomColors, setUseCustomColors] = useState(!!initialConfig.customColors);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [localPreview, setLocalPreview] = useState(true);
+  const [localPort, setLocalPort] = useState("4321");
 
   // Build preview URL with query params
   const previewUrl = useMemo(() => {
-    const baseUrl = domain.startsWith("http") ? domain : `http://${domain}`;
+    const baseUrl = localPreview
+      ? `http://localhost:${localPort}`
+      : domain.startsWith("http") ? domain : `http://${domain}`;
+
     const params = new URLSearchParams();
     params.set("preview", "1");
     params.set("theme", theme);
-    params.set("preset", preset);
 
     // Add variants
     Object.entries(variants).forEach(([key, value]) => {
       params.set(`v_${key}`, value);
     });
 
-    // Add custom colors if enabled
-    if (useCustomColors) {
-      Object.entries(customColors).forEach(([key, value]) => {
-        params.set(`c_${key}`, encodeURIComponent(value));
-      });
-    }
-
     return `${baseUrl}?${params.toString()}`;
-  }, [domain, theme, preset, variants, customColors, useCustomColors]);
+  }, [domain, theme, variants, localPreview, localPort]);
 
   // Handlers
   const handleVariantChange = useCallback((key: keyof Variants, value: string) => {
     setVariants(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleColorChange = useCallback((key: keyof CustomColors, value: string) => {
-    setCustomColors(prev => ({ ...prev, [key]: value }));
   }, []);
 
   const handleSave = async () => {
@@ -193,9 +155,7 @@ export function PersonalizacionClient({
     try {
       const config: WebsiteConfig = {
         ...initialConfig,
-        preset,
         variants,
-        ...(useCustomColors ? { customColors } : {}),
       };
 
       const response = await fetch("/api/personalizacion", {
@@ -302,27 +262,6 @@ export function PersonalizacionClient({
             </div>
           </div>
 
-          {/* Preset Selector */}
-          <div className="neumor-card p-5">
-            <h2 className="text-lg font-semibold mb-4">Estilo de Restaurante</h2>
-            <div className="space-y-2">
-              {presets.map((p) => (
-                <button
-                  key={p.value}
-                  onClick={() => setPreset(p.value)}
-                  className={`w-full p-3 rounded-xl text-left transition-all ${
-                    preset === p.value
-                      ? "neumor-inset"
-                      : "neumor-card-sm hover:shadow-lg"
-                  }`}
-                >
-                  <div className="font-medium">{p.label}</div>
-                  <div className="text-sm text-[var(--text-secondary)]">{p.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Variants */}
           <div className="neumor-card p-5">
             <h2 className="text-lg font-semibold mb-4">Variantes de Secciones</h2>
@@ -350,74 +289,59 @@ export function PersonalizacionClient({
               ))}
             </div>
           </div>
-
-          {/* Custom Colors */}
-          <div className="neumor-card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Colores Personalizados</h2>
-              <button
-                onClick={() => setUseCustomColors(!useCustomColors)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  useCustomColors ? "bg-[var(--accent)]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    useCustomColors ? "translate-x-6" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {useCustomColors && (
-              <div className="space-y-3">
-                {(Object.keys(defaultColors) as (keyof CustomColors)[]).map((key) => (
-                  <div key={key} className="flex items-center gap-3">
-                    <label className="w-24 text-sm font-medium capitalize">
-                      {key === "primary" ? "Primario" :
-                       key === "secondary" ? "Secundario" :
-                       key === "background" ? "Fondo" :
-                       key === "text" ? "Texto" : "Acento"}
-                    </label>
-                    <div className="flex-1 flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={customColors[key]}
-                        onChange={(e) => handleColorChange(key, e.target.value)}
-                        className="w-10 h-10 rounded-lg border-0 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={customColors[key]}
-                        onChange={(e) => handleColorChange(key, e.target.value)}
-                        className="neumor-input flex-1 text-sm font-mono"
-                        placeholder="#000000"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Right Panel - Preview */}
         <div className="lg:col-span-2 neumor-card p-4 flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Vista Previa</h2>
-            <a
-              href={previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-[var(--accent)] hover:underline flex items-center gap-1"
-            >
-              Abrir en nueva pestana
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
+            <div className="flex items-center gap-4">
+              {/* Local/Production Toggle */}
+              <div className="flex items-center gap-2">
+                <span className={`text-xs ${localPreview ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`}>
+                  Local
+                </span>
+                <button
+                  onClick={() => setLocalPreview(!localPreview)}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${
+                    localPreview ? "bg-[var(--accent)]" : "bg-gray-400"
+                  }`}
+                  title={localPreview ? "Modo local (localhost)" : "Modo produccion"}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                      localPreview ? "translate-x-0.5" : "translate-x-5"
+                    }`}
+                  />
+                </button>
+                <span className={`text-xs ${!localPreview ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`}>
+                  Prod
+                </span>
+              </div>
+              {localPreview && (
+                <input
+                  type="text"
+                  value={localPort}
+                  onChange={(e) => setLocalPort(e.target.value)}
+                  className="w-16 text-xs px-2 py-1 rounded border border-gray-300 text-center"
+                  placeholder="4321"
+                  title="Puerto del servidor local"
+                />
+              )}
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[var(--accent)] hover:underline flex items-center gap-1"
+              >
+                Abrir
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
           </div>
-          <div className="flex-1 rounded-xl overflow-hidden border border-[var(--shadow-dark)]">
+          <div className="flex-1 rounded-xl overflow-hidden border border-[var(--shadow-dark)] bg-white">
             <iframe
               src={previewUrl}
               className="w-full h-full min-h-[500px]"
@@ -425,7 +349,10 @@ export function PersonalizacionClient({
             />
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-2 text-center">
-            Los cambios se reflejan automaticamente. Guarda para aplicarlos permanentemente.
+            {localPreview
+              ? `Conectado a localhost:${localPort} - Asegurate de tener el template corriendo`
+              : `Conectado a ${domain}`
+            }
           </p>
         </div>
       </div>

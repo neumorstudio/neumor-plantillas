@@ -9,20 +9,10 @@ export interface WebsiteVariants {
   footer: "full" | "minimal" | "centered";
 }
 
-export interface CustomColors {
-  primary?: string;
-  secondary?: string;
-  background?: string;
-  text?: string;
-  accent?: string;
-}
-
 export interface WebsiteConfig {
   businessName?: string;
   businessType?: string;
-  preset?: "fine-dining" | "casual" | "fast-food" | "cafe-bistro";
   variants?: WebsiteVariants;
-  customColors?: CustomColors;
   // Otros campos de configuración del restaurante
   heroTitle?: string;
   heroSubtitle?: string;

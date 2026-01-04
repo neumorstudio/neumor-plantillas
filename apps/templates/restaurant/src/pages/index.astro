@@ -14,9 +14,7 @@
  * Añadir ?preview=1 a la URL para activar el modo preview.
  * Parametros de preview:
  * - theme: Tema a previsualizar
- * - preset: Preset a previsualizar
  * - v_hero, v_menu, v_features, v_reviews, v_footer: Variantes individuales
- * - c_primary, c_secondary, c_background, c_text, c_accent: Colores custom
  */
 
 import Layout from "@layouts/Layout.astro";
@@ -31,7 +29,7 @@ import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Review
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getWebsiteConfig, type WebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+import { getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -41,7 +39,6 @@ const isPreview = url.searchParams.get("preview") === "1";
 
 // Parametros de preview
 const previewTheme = url.searchParams.get("theme") as Theme | null;
-const previewPreset = url.searchParams.get("preset") as WebsiteConfig["preset"] | null;
 const previewVariants = {
   hero: url.searchParams.get("v_hero"),
   menu: url.searchParams.get("v_menu"),
@@ -49,18 +46,6 @@ const previewVariants = {
   reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
 };
-
-// Colores custom de preview
-const previewColors = {
-  primary: url.searchParams.get("c_primary"),
-  secondary: url.searchParams.get("c_secondary"),
-  background: url.searchParams.get("c_background"),
-  text: url.searchParams.get("c_text"),
-  accent: url.searchParams.get("c_accent"),
-};
-
-// Verificar si hay colores custom en preview
-const hasPreviewColors = Object.values(previewColors).some(c => c !== null);
 
 // ============================================
 // MAPEO DE VARIANTES
@@ -96,40 +81,6 @@ const componentMap = {
 };
 
 // ============================================
-// PRESETS PREDEFINIDOS
-// ============================================
-const presets: Record<string, WebsiteVariants> = {
-  "fine-dining": {
-    hero: "modern",
-    menu: "list",
-    features: "icons",
-    reviews: "minimal",
-    footer: "minimal",
-  },
-  "casual": {
-    hero: "classic",
-    menu: "tabs",
-    features: "cards",
-    reviews: "grid",
-    footer: "full",
-  },
-  "fast-food": {
-    hero: "bold",
-    menu: "carousel",
-    features: "banner",
-    reviews: "carousel",
-    footer: "minimal",
-  },
-  "cafe-bistro": {
-    hero: "minimal",
-    menu: "grid",
-    features: "icons",
-    reviews: "minimal",
-    footer: "centered",
-  },
-};
-
-// ============================================
 // VALORES POR DEFECTO (fallback si no hay Supabase)
 // ============================================
 const defaultConfig = {
@@ -142,7 +93,6 @@ const defaultConfig = {
     reviews: "grid",
     footer: "full",
   } as WebsiteVariants,
-  preset: undefined as WebsiteConfig["preset"],
   siteTitle: "Mi Restaurante | Bienvenidos",
   siteDescription: "Restaurante con estilo neumórfico",
   heroTitle: "Bienvenidos a Nuestro Restaurante",
@@ -185,7 +135,6 @@ if (websiteData) {
     restaurantName: dbConfig.businessName || defaultConfig.restaurantName,
     theme: websiteData.theme || defaultConfig.theme,
     variants: dbConfig.variants || defaultConfig.variants,
-    preset: dbConfig.preset || defaultConfig.preset,
     siteTitle: `${dbConfig.businessName || defaultConfig.restaurantName} | Restaurante`,
     siteDescription: defaultConfig.siteDescription,
     heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
@@ -207,9 +156,6 @@ if (websiteData) {
   console.log("⚠️ Usando configuración por defecto (Supabase no disponible)");
 }
 
-// Obtener colores custom de la BD (si existen)
-const dbCustomColors = websiteData?.config?.customColors;
-
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
 // ============================================
@@ -219,15 +165,8 @@ const activeTheme: Theme = (isPreview && previewTheme)
   ? previewTheme
   : config.theme;
 
-// Determinar preset activo
-const activePreset = (isPreview && previewPreset)
-  ? previewPreset
-  : config.preset;
-
-// Si hay preset, usarlo; si no, usar variants
-let selectedVariants: WebsiteVariants = activePreset && presets[activePreset]
-  ? presets[activePreset]
-  : config.variants;
+// Determinar variantes: preview override > Supabase config > defaults
+let selectedVariants: WebsiteVariants = config.variants;
 
 // En modo preview, aplicar variantes individuales si se especifican
 if (isPreview) {
@@ -247,18 +186,6 @@ const Features = componentMap.features[selectedVariants.features] || FeaturesCar
 const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
 
-// Preparar colores custom para el Layout
-// Prioridad: preview > Supabase > ninguno
-const customColors = hasPreviewColors
-  ? {
-      primary: previewColors.primary ? decodeURIComponent(previewColors.primary) : undefined,
-      secondary: previewColors.secondary ? decodeURIComponent(previewColors.secondary) : undefined,
-      background: previewColors.background ? decodeURIComponent(previewColors.background) : undefined,
-      text: previewColors.text ? decodeURIComponent(previewColors.text) : undefined,
-      accent: previewColors.accent ? decodeURIComponent(previewColors.accent) : undefined,
-    }
-  : dbCustomColors;
-
 // Website ID para el formulario de reservas
 const currentWebsiteId = websiteData?.id || websiteId || "";
 ---
@@ -267,7 +194,6 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
   title={config.siteTitle}
   description={config.siteDescription}
   theme={activeTheme}
-  customColors={customColors}
 >
   <Header restaurantName={config.restaurantName} />
 

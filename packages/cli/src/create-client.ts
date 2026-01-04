@@ -800,6 +800,7 @@ PUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}
     // Añadir dependencias necesarias
     pkg.dependencies = {
       ...pkg.dependencies,
+      "@astrojs/node": "^9.1.3",
       "@supabase/supabase-js": "^2.49.1",
       "astro": "^5.16.6",
       "clsx": "^2.1.1"
