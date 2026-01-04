@@ -60,6 +60,109 @@
   --accent-hover: oklch(0.5 0.13 25);
 }
 
+/* ==============================================
+   NeuGlass theme - Neumorphism + Glassmorphism
+   Premium hybrid style with glass effects
+   ============================================== */
+.theme-neuglass {
+  /* Map to NeuGlass system variables */
+  --neumor-bg: #e8ecf1;
+  --shadow-dark: rgba(163, 177, 198, 0.6);
+  --shadow-light: rgba(255, 255, 255, 0.9);
+  --text-primary: #1a1a2e;
+  --text-secondary: #374151;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+
+  /* Glass-specific variables */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: 16px;
+  --glass-shadow: rgba(31, 38, 135, 0.15);
+  --accent-glow: rgba(99, 102, 241, 0.4);
+}
+
+/* NeuGlass dark variant */
+.theme-neuglass-dark {
+  --neumor-bg: #13151a;
+  --shadow-dark: rgba(0, 0, 0, 0.7);
+  --shadow-light: rgba(45, 50, 65, 0.5);
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --accent: #818cf8;
+  --accent-hover: #6366f1;
+
+  /* Glass-specific for dark */
+  --glass-bg: rgba(30, 35, 50, 0.6);
+  --glass-bg-strong: rgba(40, 45, 65, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --accent-glow: rgba(129, 140, 248, 0.3);
+}
+
+/* Glass-enhanced neumorphic components for NeuGlass theme */
+.theme-neuglass .neumor-card,
+.theme-neuglass-dark .neumor-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    8px 8px 24px var(--shadow-dark),
+    -8px -8px 24px var(--shadow-light),
+    0 8px 32px var(--glass-shadow);
+}
+
+.theme-neuglass .neumor-card:hover,
+.theme-neuglass-dark .neumor-card:hover {
+  box-shadow:
+    12px 12px 32px var(--shadow-dark),
+    -12px -12px 32px var(--shadow-light),
+    0 16px 48px var(--glass-shadow);
+}
+
+.theme-neuglass .neumor-btn,
+.theme-neuglass-dark .neumor-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-neuglass .neumor-btn-accent,
+.theme-neuglass-dark .neumor-btn-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light),
+    0 4px 20px var(--accent-glow);
+}
+
+.theme-neuglass .neumor-btn-accent:hover,
+.theme-neuglass-dark .neumor-btn-accent:hover {
+  box-shadow:
+    8px 8px 20px var(--shadow-dark),
+    -8px -8px 20px var(--shadow-light),
+    0 8px 32px var(--accent-glow);
+}
+
+.theme-neuglass .neumor-input,
+.theme-neuglass-dark .neumor-input {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-neuglass .neumor-input:focus,
+.theme-neuglass-dark .neumor-input:focus {
+  box-shadow:
+    inset 4px 4px 12px var(--shadow-dark),
+    inset -4px -4px 12px var(--shadow-light),
+    0 0 0 3px var(--accent-glow);
+}
+
 /* Reset y base */
 *,
 *::before,

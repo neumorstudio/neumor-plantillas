@@ -30,19 +30,6 @@ const WEBHOOK_URL = process.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.n
 // ============================================
 const neumorGradient = gradient(["#667eea", "#764ba2", "#f093fb"]);
 const successGradient = gradient(["#11998e", "#38ef7d"]);
-const warningGradient = gradient(["#f12711", "#f5af19"]);
-
-const styles = {
-  title: (text: string) => neumorGradient.multiline(text),
-  success: (text: string) => chalk.green.bold(text),
-  error: (text: string) => chalk.red.bold(text),
-  warning: (text: string) => chalk.yellow(text),
-  info: (text: string) => chalk.cyan(text),
-  muted: (text: string) => chalk.gray(text),
-  highlight: (text: string) => chalk.magenta.bold(text),
-  label: (text: string) => chalk.white.bold(text),
-  value: (text: string) => chalk.cyan(text),
-};
 
 // Función para mostrar el banner
 async function showBanner(): Promise<void> {
@@ -282,11 +269,13 @@ async function main() {
   clientData.theme = await select({
     message: chalk.cyan("   Tema visual:"),
     choices: [
-      { name: "☀️   Light    " + chalk.gray("Claro y moderno"), value: "light" },
-      { name: "🌙  Dark     " + chalk.gray("Oscuro y elegante"), value: "dark" },
-      { name: "🎨  Colorful " + chalk.gray("Vibrante y colorido"), value: "colorful" },
-      { name: "🪵  Rustic   " + chalk.gray("Rústico y cálido"), value: "rustic" },
-      { name: "✨  Elegant  " + chalk.gray("Sofisticado y lujoso"), value: "elegant" },
+      { name: "☀️   Light       " + chalk.gray("Claro y moderno"), value: "light" },
+      { name: "🌙  Dark        " + chalk.gray("Oscuro y elegante"), value: "dark" },
+      { name: "🎨  Colorful    " + chalk.gray("Vibrante y colorido"), value: "colorful" },
+      { name: "🪵  Rustic      " + chalk.gray("Rústico y cálido"), value: "rustic" },
+      { name: "✨  Elegant     " + chalk.gray("Sofisticado y lujoso"), value: "elegant" },
+      { name: "💎  NeuGlass    " + chalk.magenta("Premium") + chalk.gray(" Cristal + Neumorfismo"), value: "neuglass" },
+      { name: "🔮  NeuGlass Dark " + chalk.magenta("Premium") + chalk.gray(" Cristal oscuro"), value: "neuglass-dark" },
     ],
   });
 
@@ -672,7 +661,7 @@ async function createClientTemplate(clientData: ClientData, websiteId: string) {
 
   // Informacion basica
   restaurantName: "${clientData.businessName}",
-  theme: "${clientData.theme}" as const, // light | dark | colorful | rustic | elegant
+  theme: "${clientData.theme}" as const, // light | dark | colorful | rustic | elegant | neuglass | neuglass-dark
 
   // OPCION 1: Seleccion manual de variantes
   variants: {

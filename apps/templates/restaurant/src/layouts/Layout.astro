@@ -2,7 +2,7 @@
 interface Props {
   title: string;
   description?: string;
-  theme?: "light" | "dark" | "colorful" | "rustic" | "elegant";
+  theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
 }
 
 const {
@@ -12,6 +12,7 @@ const {
 } = Astro.props;
 
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
+const isNeuGlass = theme === "neuglass" || theme === "neuglass-dark";
 ---
 
 <!doctype html>
@@ -54,6 +55,13 @@ const themeClass = theme === "light" ? "" : `theme-${theme}`;
         font-family: var(--font-heading);
       }
     </style>
+
+    {/* NeuGlass theme - import additional styles */}
+    {isNeuGlass && (
+      <style is:global>
+        @import "../styles/neuglass.css";
+      </style>
+    )}
   </head>
   <body>
     <slot />
