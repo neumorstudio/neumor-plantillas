@@ -2,11 +2,21 @@
 /**
  * NEUMORSTUDIO - Plantilla Restaurante
  *
- * Variables de configuracion para personalizar:
- * - restaurantName: Nombre del restaurante
- * - theme: "light" | "dark" | "colorful" | "rustic" | "elegant"
- * - variants: Seleccion de componentes (hero, menu, features, reviews, footer)
- * - preset: Usar un preset predefinido (fine-dining, casual, fast-food, cafe-bistro)
+ * Esta plantilla carga la configuración desde Supabase automáticamente.
+ * Si no hay conexión a Supabase, usa los valores por defecto.
+ *
+ * Variables de entorno requeridas:
+ * - PUBLIC_SUPABASE_URL: URL de tu proyecto Supabase
+ * - PUBLIC_SUPABASE_ANON_KEY: Clave anónima de Supabase
+ * - PUBLIC_WEBSITE_ID: ID del website en la tabla websites
+ *
+ * Preview Mode:
+ * Añadir ?preview=1 a la URL para activar el modo preview.
+ * Parametros de preview:
+ * - theme: Tema a previsualizar
+ * - preset: Preset a previsualizar
+ * - v_hero, v_menu, v_features, v_reviews, v_footer: Variantes individuales
+ * - c_primary, c_secondary, c_background, c_text, c_accent: Colores custom
  */
 
 import Layout from "@layouts/Layout.astro";
@@ -19,6 +29,38 @@ import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
+
+// Importar cliente Supabase
+import { getWebsiteConfig, type WebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+
+// ============================================
+// PREVIEW MODE - Leer parametros de URL
+// ============================================
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+
+// Parametros de preview
+const previewTheme = url.searchParams.get("theme") as Theme | null;
+const previewPreset = url.searchParams.get("preset") as WebsiteConfig["preset"] | null;
+const previewVariants = {
+  hero: url.searchParams.get("v_hero"),
+  menu: url.searchParams.get("v_menu"),
+  features: url.searchParams.get("v_features"),
+  reviews: url.searchParams.get("v_reviews"),
+  footer: url.searchParams.get("v_footer"),
+};
+
+// Colores custom de preview
+const previewColors = {
+  primary: url.searchParams.get("c_primary"),
+  secondary: url.searchParams.get("c_secondary"),
+  background: url.searchParams.get("c_background"),
+  text: url.searchParams.get("c_text"),
+  accent: url.searchParams.get("c_accent"),
+};
+
+// Verificar si hay colores custom en preview
+const hasPreviewColors = Object.values(previewColors).some(c => c !== null);
 
 // ============================================
 // MAPEO DE VARIANTES
@@ -56,7 +98,7 @@ const componentMap = {
 // ============================================
 // PRESETS PREDEFINIDOS
 // ============================================
-const presets = {
+const presets: Record<string, WebsiteVariants> = {
   "fine-dining": {
     hero: "modern",
     menu: "list",
@@ -85,85 +127,147 @@ const presets = {
     reviews: "minimal",
     footer: "centered",
   },
-} as const;
-
-// ============================================
-// CONFIGURACION DEL RESTAURANTE
-// Personalizar estos valores para cada cliente
-// ============================================
-
-const config = {
-  // ID del website en Supabase (OBLIGATORIO - se asigna al crear el cliente)
-  websiteId: import.meta.env.PUBLIC_WEBSITE_ID || "",
-
-  // Informacion basica
-  restaurantName: "The Golden Spoon",
-  theme: "dark" as const, // light | dark | colorful | rustic | elegant
-
-  // OPCION 1: Seleccion manual de variantes
-  variants: {
-    hero: "classic" as const,      // classic | modern | bold | minimal
-    menu: "tabs" as const,         // tabs | grid | list | carousel
-    features: "cards" as const,    // cards | icons | banner
-    reviews: "grid" as const,      // grid | carousel | minimal
-    footer: "full" as const,       // full | minimal | centered
-  },
-
-  // OPCION 2: Usar un preset (cambia undefined por: "fine-dining" | "casual" | "fast-food" | "cafe-bistro")
-  preset: undefined as "fine-dining" | "casual" | "fast-food" | "cafe-bistro" | undefined,
-
-  // SEO
-  siteTitle: "The Golden Spoon | Restaurante Gourmet",
-  siteDescription:
-    "Experiencia gastronomica unica con platos elaborados con ingredientes frescos y de temporada.",
-
-  // Hero
-  heroTitle: "Descubre el Arte de la Gastronomia",
-  heroSubtitle:
-    "Una experiencia culinaria unica donde cada plato cuenta una historia. Reserva tu mesa y dejate sorprender.",
-  heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-
-  // Reservas - webhook de n8n (configurar URL del webhook antes de desplegar)
-  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://tu-instancia-n8n.com/webhook/reservas",
-
-  // Contacto
-  address: "Calle Gran Via 123, Madrid",
-  phone: "+34 912 345 678",
-  email: "reservas@goldenspoon.com",
-
-  // Redes sociales
-  socialLinks: {
-    instagram: "https://instagram.com/goldenspoon",
-    facebook: "https://facebook.com/goldenspoon",
-    tripadvisor: "https://tripadvisor.com/goldenspoon",
-  },
-
-  // Valoraciones
-  googleRating: 4.8,
-  totalReviews: 324,
 };
+
+// ============================================
+// VALORES POR DEFECTO (fallback si no hay Supabase)
+// ============================================
+const defaultConfig = {
+  restaurantName: "Mi Restaurante",
+  theme: "light" as Theme,
+  variants: {
+    hero: "classic",
+    menu: "tabs",
+    features: "cards",
+    reviews: "grid",
+    footer: "full",
+  } as WebsiteVariants,
+  preset: undefined as WebsiteConfig["preset"],
+  siteTitle: "Mi Restaurante | Bienvenidos",
+  siteDescription: "Restaurante con estilo neumórfico",
+  heroTitle: "Bienvenidos a Nuestro Restaurante",
+  heroSubtitle: "Una experiencia culinaria única",
+  heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || "",
+  address: "Tu dirección aquí",
+  phone: "+34 000 000 000",
+  email: "contacto@turestaurante.com",
+  socialLinks: {
+    instagram: "#",
+    facebook: "#",
+    tripadvisor: "#",
+  } as { instagram: string; facebook: string; tripadvisor: string },
+  googleRating: 4.5,
+  totalReviews: 100,
+};
+
+// ============================================
+// CARGAR CONFIGURACION DESDE SUPABASE
+// ============================================
+const websiteId = import.meta.env.PUBLIC_WEBSITE_ID;
+const websiteData = await getWebsiteConfig(websiteId, url.hostname);
+
+// Construir configuración final mezclando Supabase + defaults
+let config: typeof defaultConfig;
+
+if (websiteData) {
+  // Tenemos datos de Supabase
+  const dbConfig = websiteData.config || {};
+
+  // Merge socialLinks asegurando que todos los campos existan
+  const mergedSocialLinks = {
+    instagram: dbConfig.socialLinks?.instagram || defaultConfig.socialLinks.instagram,
+    facebook: dbConfig.socialLinks?.facebook || defaultConfig.socialLinks.facebook,
+    tripadvisor: dbConfig.socialLinks?.tripadvisor || defaultConfig.socialLinks.tripadvisor,
+  };
+
+  config = {
+    restaurantName: dbConfig.businessName || defaultConfig.restaurantName,
+    theme: websiteData.theme || defaultConfig.theme,
+    variants: dbConfig.variants || defaultConfig.variants,
+    preset: dbConfig.preset || defaultConfig.preset,
+    siteTitle: `${dbConfig.businessName || defaultConfig.restaurantName} | Restaurante`,
+    siteDescription: defaultConfig.siteDescription,
+    heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
+    heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,
+    heroImage: dbConfig.heroImage || defaultConfig.heroImage,
+    webhookUrl: defaultConfig.webhookUrl,
+    address: dbConfig.address || defaultConfig.address,
+    phone: dbConfig.phone || defaultConfig.phone,
+    email: dbConfig.email || defaultConfig.email,
+    socialLinks: mergedSocialLinks,
+    googleRating: dbConfig.googleRating || defaultConfig.googleRating,
+    totalReviews: dbConfig.totalReviews || defaultConfig.totalReviews,
+  };
+
+  console.log("✅ Configuración cargada desde Supabase:", websiteData.domain);
+} else {
+  // No hay conexión a Supabase, usar defaults
+  config = defaultConfig;
+  console.log("⚠️ Usando configuración por defecto (Supabase no disponible)");
+}
+
+// Obtener colores custom de la BD (si existen)
+const dbCustomColors = websiteData?.config?.customColors;
 
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
 // ============================================
 
+// Determinar el tema activo (preview override > Supabase)
+const activeTheme: Theme = (isPreview && previewTheme)
+  ? previewTheme
+  : config.theme;
+
+// Determinar preset activo
+const activePreset = (isPreview && previewPreset)
+  ? previewPreset
+  : config.preset;
+
 // Si hay preset, usarlo; si no, usar variants
-const selectedVariants = config.preset
-  ? presets[config.preset]
+let selectedVariants: WebsiteVariants = activePreset && presets[activePreset]
+  ? presets[activePreset]
   : config.variants;
+
+// En modo preview, aplicar variantes individuales si se especifican
+if (isPreview) {
+  selectedVariants = {
+    hero: (previewVariants.hero as WebsiteVariants["hero"]) || selectedVariants.hero,
+    menu: (previewVariants.menu as WebsiteVariants["menu"]) || selectedVariants.menu,
+    features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
+    reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
+    footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
+  };
+}
 
 // Seleccionar componentes segun la configuracion
 const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
 const Menu = componentMap.menu[selectedVariants.menu] || MenuTabs;
 const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
 const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
-const Footer = componentMap.footer[selectedVariants.footer] || FooterFull;
+const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
+
+// Preparar colores custom para el Layout
+// Prioridad: preview > Supabase > ninguno
+const customColors = hasPreviewColors
+  ? {
+      primary: previewColors.primary ? decodeURIComponent(previewColors.primary) : undefined,
+      secondary: previewColors.secondary ? decodeURIComponent(previewColors.secondary) : undefined,
+      background: previewColors.background ? decodeURIComponent(previewColors.background) : undefined,
+      text: previewColors.text ? decodeURIComponent(previewColors.text) : undefined,
+      accent: previewColors.accent ? decodeURIComponent(previewColors.accent) : undefined,
+    }
+  : dbCustomColors;
+
+// Website ID para el formulario de reservas
+const currentWebsiteId = websiteData?.id || websiteId || "";
 ---
 
 <Layout
   title={config.siteTitle}
   description={config.siteDescription}
-  theme={config.theme}
+  theme={activeTheme}
+  customColors={customColors}
 >
   <Header restaurantName={config.restaurantName} />
 
@@ -183,10 +287,10 @@ const Footer = componentMap.footer[selectedVariants.footer] || FooterFull;
       totalReviews={config.totalReviews}
     />
 
-    <ReservationForm webhookUrl={config.webhookUrl} websiteId={config.websiteId} />
+    <ReservationForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
   </main>
 
-  <Footer
+  <FooterComponent
     restaurantName={config.restaurantName}
     address={config.address}
     phone={config.phone}

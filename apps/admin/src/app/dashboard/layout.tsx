@@ -96,6 +96,23 @@ const navItems = [
   //   ),
   // },
   {
+    href: "/dashboard/personalizacion",
+    label: "Personalizacion",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z" />
+        <circle cx="7.5" cy="11.5" r="1.5" fill="currentColor" />
+        <circle cx="12" cy="7.5" r="1.5" fill="currentColor" />
+        <circle cx="16.5" cy="11.5" r="1.5" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/configuracion",
     label: "Configuracion",
     icon: (

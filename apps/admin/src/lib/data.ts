@@ -224,3 +224,53 @@ export async function updateNotificationSettings(websiteId: string, settings: {
 
   return { error };
 }
+
+// Types for website configuration
+export interface WebsiteConfig {
+  businessName?: string;
+  businessType?: string;
+  preset?: "fine-dining" | "casual" | "fast-food" | "cafe-bistro";
+  variants?: {
+    hero: "classic" | "modern" | "bold" | "minimal";
+    menu: "tabs" | "grid" | "list" | "carousel";
+    features: "cards" | "icons" | "banner";
+    reviews: "grid" | "carousel" | "minimal";
+    footer: "full" | "minimal" | "centered";
+  };
+  customColors?: {
+    primary: string;
+    secondary: string;
+    background: string;
+    text: string;
+    accent: string;
+  };
+}
+
+export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
+
+// Get website personalization config
+export async function getWebsiteConfig() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) {
+    return null;
+  }
+
+  const { data: website } = await supabase
+    .from("websites")
+    .select("id, domain, theme, config")
+    .eq("id", websiteId)
+    .single();
+
+  if (!website) {
+    return null;
+  }
+
+  return {
+    websiteId: website.id,
+    domain: website.domain as string,
+    theme: (website.theme || "light") as Theme,
+    config: (website.config || {}) as WebsiteConfig,
+  };
+}

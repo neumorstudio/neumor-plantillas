@@ -25,6 +25,10 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 // URL del webhook de reservas
 const WEBHOOK_URL = process.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.neumorstudio.com/webhook/reservas";
 
+// Variables de Supabase para los templates (se copian al .env del cliente)
+const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
 // ============================================
 // ESTILOS Y COLORES PERSONALIZADOS
 // ============================================
@@ -140,6 +144,41 @@ function getRecommendedPreset(businessType: string): string {
     realestate: "fine-dining",
   };
   return presetMap[businessType] || "casual";
+}
+
+// Obtener variantes según el preset seleccionado
+function getPresetVariants(preset: string): Record<string, string> {
+  const presets: Record<string, Record<string, string>> = {
+    "fine-dining": {
+      hero: "modern",
+      menu: "list",
+      features: "icons",
+      reviews: "minimal",
+      footer: "minimal",
+    },
+    "casual": {
+      hero: "classic",
+      menu: "tabs",
+      features: "cards",
+      reviews: "grid",
+      footer: "full",
+    },
+    "fast-food": {
+      hero: "bold",
+      menu: "carousel",
+      features: "banner",
+      reviews: "carousel",
+      footer: "minimal",
+    },
+    "cafe-bistro": {
+      hero: "minimal",
+      menu: "grid",
+      features: "icons",
+      reviews: "minimal",
+      footer: "centered",
+    },
+  };
+  return presets[preset] || presets["casual"];
 }
 
 
@@ -418,7 +457,7 @@ async function main() {
 
     spinner.text = "Creando website...";
 
-    // 2. Crear website
+    // 2. Crear website con config completo
     const { data: website, error: websiteError } = await supabase
       .from("websites")
       .insert({
@@ -428,6 +467,19 @@ async function main() {
         config: {
           businessName: clientData.businessName,
           businessType: clientData.businessType,
+          preset: clientData.preset,
+          heroTitle: clientData.heroTitle,
+          heroSubtitle: clientData.heroSubtitle,
+          address: clientData.address,
+          phone: clientData.phone || null,
+          email: clientData.email,
+          socialLinks: {
+            instagram: `https://instagram.com/${clientData.domain}`,
+            facebook: `https://facebook.com/${clientData.domain}`,
+            tripadvisor: `https://tripadvisor.com/${clientData.domain}`,
+          },
+          // Variantes por defecto basadas en el preset
+          variants: getPresetVariants(clientData.preset),
         },
       })
       .select()
@@ -715,13 +767,22 @@ async function createClientTemplate(clientData: ClientData, websiteId: string) {
 
     spinner.text = "Configurando proyecto...";
 
-    // Crear archivo .env con la configuración
-    const envContent = `# Configuración de ${clientData.businessName}
+    // Crear archivo .env con la configuración completa
+    const envContent = `# ===========================================
+# ${clientData.businessName}
 # Generado automáticamente por NeumorStudio CLI
 # Fecha: ${new Date().toLocaleDateString("es-ES")}
-# Website ID: ${websiteId}
+# ===========================================
 
+# Supabase - Conexión a la base de datos
+# El template lee la configuración (tema, preset, colores) desde Supabase
+PUBLIC_SUPABASE_URL=${SUPABASE_PUBLIC_URL}
+PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+
+# Website ID - Identificador único en Supabase
 PUBLIC_WEBSITE_ID=${websiteId}
+
+# Webhook de reservas (n8n)
 PUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}
 `;
 
@@ -736,7 +797,15 @@ PUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}
     delete pkg.devDependencies?.["@neumorstudio/config-tailwind"];
     delete pkg.devDependencies?.["@neumorstudio/config-typescript"];
 
-    // Añadir dependencias que antes venían del workspace
+    // Añadir dependencias necesarias
+    pkg.dependencies = {
+      ...pkg.dependencies,
+      "@supabase/supabase-js": "^2.49.1",
+      "astro": "^5.16.6",
+      "clsx": "^2.1.1"
+    };
+
+    // Añadir devDependencies que antes venían del workspace
     pkg.devDependencies = {
       ...pkg.devDependencies,
       "@astrojs/check": "^0.9.4",
@@ -762,9 +831,11 @@ PUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}
         jsxImportSource: "astro",
         baseUrl: ".",
         paths: {
+          "@/*": ["src/*"],
           "@components/*": ["src/components/*"],
           "@layouts/*": ["src/layouts/*"],
-          "@styles/*": ["src/styles/*"]
+          "@styles/*": ["src/styles/*"],
+          "@lib/*": ["src/lib/*"]
         }
       };
       tsconfig.include = ["src/**/*"];

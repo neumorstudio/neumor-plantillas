@@ -1,0 +1,26 @@
+import { getWebsiteConfig } from "@/lib/data";
+import { PersonalizacionClient } from "./personalizacion-client";
+
+export default async function PersonalizacionPage() {
+  const websiteConfig = await getWebsiteConfig();
+
+  if (!websiteConfig) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Personalizacion</h1>
+        <p className="text-[var(--text-secondary)]">
+          No se encontro la cuenta asociada.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <PersonalizacionClient
+      websiteId={websiteConfig.websiteId}
+      domain={websiteConfig.domain}
+      initialTheme={websiteConfig.theme}
+      initialConfig={websiteConfig.config}
+    />
+  );
+}

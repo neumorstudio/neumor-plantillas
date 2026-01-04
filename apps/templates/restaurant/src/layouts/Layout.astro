@@ -1,18 +1,40 @@
 ---
+interface CustomColors {
+  primary?: string;
+  secondary?: string;
+  background?: string;
+  text?: string;
+  accent?: string;
+}
+
 interface Props {
   title: string;
   description?: string;
   theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
+  customColors?: CustomColors;
 }
 
 const {
   title,
   description = "Restaurante con estilo neumorfico",
   theme = "light",
+  customColors,
 } = Astro.props;
 
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
 const isNeuGlass = theme === "neuglass" || theme === "neuglass-dark";
+const hasCustomColors = customColors && Object.values(customColors).some(c => c);
+
+// Generar CSS custom si hay colores personalizados
+const customCss = hasCustomColors ? `
+  :root {
+    ${customColors?.primary ? `--accent: ${customColors.primary}; --accent-hover: ${customColors.primary};` : ''}
+    ${customColors?.background ? `--neumor-bg: ${customColors.background};` : ''}
+    ${customColors?.text ? `--text-primary: ${customColors.text};` : ''}
+    ${customColors?.secondary ? `--text-secondary: ${customColors.secondary};` : ''}
+    ${customColors?.accent ? `--accent: ${customColors.accent}; --accent-hover: ${customColors.accent};` : ''}
+  }
+` : '';
 ---
 
 <!doctype html>
@@ -61,6 +83,11 @@ const isNeuGlass = theme === "neuglass" || theme === "neuglass-dark";
       <style is:global>
         @import "../styles/neuglass.css";
       </style>
+    )}
+
+    {/* Custom colors override */}
+    {hasCustomColors && (
+      <style set:html={customCss}></style>
     )}
   </head>
   <body>
