@@ -1,0 +1,192 @@
+---
+/**
+ * ReviewsMinimal - Variante compacta con testimonios destacados
+ * Ideal para: Fine Dining, espacios limitados
+ */
+interface Review {
+  author: string;
+  platform: "google" | "instagram" | "facebook" | "tripadvisor";
+  rating?: number;
+  text: string;
+}
+
+interface Props {
+  title?: string;
+  reviews?: Review[];
+  googleRating?: number;
+  totalReviews?: number;
+}
+
+const defaultReviews: Review[] = [
+  { author: "Maria Garcia", platform: "google", rating: 5, text: "Una experiencia gastronomica increible. Absolutamente recomendado." },
+  { author: "Carlos Ruiz", platform: "tripadvisor", rating: 5, text: "El mejor restaurante de la ciudad. Volvere sin duda." },
+  { author: "Laura Martinez", platform: "google", rating: 5, text: "Ambiente perfecto y comida exquisita. 10/10." },
+];
+
+const {
+  title = "Nuestros Clientes Opinan",
+  reviews = defaultReviews,
+  googleRating = 4.8,
+  totalReviews = 324,
+} = Astro.props;
+
+function renderStars(rating: number): string {
+  return Array(5).fill(0).map((_, i) => i < rating ? '<span class="star filled">★</span>' : '<span class="star">★</span>').join('');
+}
+---
+
+<section id="reviews" class="reviews-minimal">
+  <div class="container">
+    <div class="reviews-header">
+      <h2 class="reviews-title">{title}</h2>
+      <div class="google-rating neumor-inset">
+        <span class="rating-number">{googleRating}</span>
+        <div class="rating-stars" set:html={renderStars(Math.round(googleRating))} />
+        <span class="rating-count">{totalReviews} opiniones</span>
+      </div>
+    </div>
+
+    <div class="testimonials">
+      {reviews.slice(0, 3).map((review, index) => (
+        <blockquote class="testimonial" style={`animation-delay: ${index * 100}ms`}>
+          <p class="quote-text">"{review.text}"</p>
+          <footer class="quote-author">
+            <span class="author-name">— {review.author}</span>
+            {review.rating && <div class="author-rating" set:html={renderStars(review.rating)} />}
+          </footer>
+        </blockquote>
+      ))}
+    </div>
+
+    <a href="#" class="see-more-link neumor-btn">Ver todas las opiniones</a>
+  </div>
+</section>
+
+<style>
+  .reviews-minimal {
+    padding: var(--section-padding);
+    text-align: center;
+  }
+
+  .reviews-header {
+    margin-bottom: 3rem;
+  }
+
+  .reviews-title {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .google-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+  }
+
+  .rating-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .rating-stars {
+    display: flex;
+    gap: 2px;
+  }
+
+  .star {
+    color: #ddd;
+    font-size: 1rem;
+  }
+
+  .star.filled {
+    color: #fbbf24;
+  }
+
+  .rating-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .testimonials {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 700px;
+    margin: 0 auto 2.5rem;
+  }
+
+  .testimonial {
+    animation: fadeInUp 0.5s ease backwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .quote-text {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+  }
+
+  .quote-author {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .author-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+
+  .author-rating {
+    display: flex;
+    gap: 1px;
+  }
+
+  .author-rating .star {
+    font-size: 0.8rem;
+  }
+
+  .see-more-link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+  }
+
+  .see-more-link:hover {
+    color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .reviews-minimal {
+      padding: 3rem 1rem;
+    }
+
+    .google-rating {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+</style>

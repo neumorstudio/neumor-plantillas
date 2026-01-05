@@ -1,0 +1,312 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  webhookUrl?: string;
+  websiteId?: string;
+}
+
+const {
+  title = "Reserva tu Clase",
+  subtitle = "Elige tu actividad favorita y reserva tu plaza. Te confirmaremos la disponibilidad.",
+  webhookUrl = "",
+  websiteId = "",
+} = Astro.props;
+---
+
+<section id="booking" class="section">
+  <div class="container">
+    <div class="booking-wrapper">
+      <div class="booking-info">
+        <h2 class="booking-title">{title}</h2>
+        <p class="booking-subtitle">{subtitle}</p>
+
+        <div class="contact-info">
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+            </div>
+            <span>+34 912 345 678</span>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <span>Lun - Dom: 06:00 - 23:00</span>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <span>Calle Principal 123</span>
+          </div>
+        </div>
+      </div>
+
+      <form class="booking-form neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Nombre</label>
+            <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="phone">Telefono</label>
+            <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="class-type">Tipo de Clase</label>
+            <select id="class-type" name="class-type" class="neumor-input" required>
+              <option value="">Selecciona una clase</option>
+              <optgroup label="Cardio">
+                <option value="spinning">Spinning</option>
+                <option value="zumba">Zumba</option>
+                <option value="step">Step</option>
+                <option value="hiit">HIIT</option>
+              </optgroup>
+              <optgroup label="Fuerza">
+                <option value="body-pump">Body Pump</option>
+                <option value="crossfit">CrossFit</option>
+                <option value="trx">TRX</option>
+                <option value="kettlebells">Kettlebells</option>
+              </optgroup>
+              <optgroup label="Mente y Cuerpo">
+                <option value="yoga">Yoga</option>
+                <option value="pilates">Pilates</option>
+                <option value="stretching">Stretching</option>
+                <option value="meditacion">Meditacion</option>
+              </optgroup>
+              <optgroup label="Acuaticos">
+                <option value="aquagym">Aquagym</option>
+                <option value="natacion-adultos">Natacion Adultos</option>
+                <option value="aqua-spinning">Aqua Spinning</option>
+                <option value="natacion-infantil">Natacion Infantil</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="level">Tu Nivel</label>
+            <select id="level" name="level" class="neumor-input">
+              <option value="principiante">Principiante</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzado">Avanzado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="date">Fecha</label>
+            <input type="date" id="date" name="date" class="neumor-input" required />
+          </div>
+          <div class="form-group">
+            <label for="time">Horario preferido</label>
+            <select id="time" name="time" class="neumor-input" required>
+              <option value="">Selecciona horario</option>
+              <option value="06:00">06:00 - Manana temprano</option>
+              <option value="07:00">07:00 - Manana temprano</option>
+              <option value="08:00">08:00 - Manana</option>
+              <option value="09:00">09:00 - Manana</option>
+              <option value="10:00">10:00 - Manana</option>
+              <option value="11:00">11:00 - Mediodia</option>
+              <option value="12:00">12:00 - Mediodia</option>
+              <option value="13:00">13:00 - Mediodia</option>
+              <option value="17:00">17:00 - Tarde</option>
+              <option value="18:00">18:00 - Tarde</option>
+              <option value="19:00">19:00 - Tarde</option>
+              <option value="20:00">20:00 - Noche</option>
+              <option value="21:00">21:00 - Noche</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Notas adicionales</label>
+          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Lesiones previas, objetivos, preferencias..."></textarea>
+        </div>
+
+        <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
+          Reservar Plaza
+        </button>
+
+        <p class="form-disclaimer">
+          Te confirmaremos la disponibilidad por email o telefono.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .booking-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .booking-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .booking-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    max-width: 400px;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .contact-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    color: var(--accent);
+  }
+
+  .booking-form {
+    padding: 2rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+
+  textarea.neumor-input {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  select.neumor-input {
+    cursor: pointer;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .form-disclaimer {
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 968px) {
+    .booking-wrapper {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .booking-info {
+      text-align: center;
+    }
+
+    .booking-subtitle {
+      max-width: 100%;
+    }
+
+    .contact-info {
+      align-items: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const form = document.querySelector(".booking-form") as HTMLFormElement;
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const webhookUrl = form.dataset.webhook;
+    const websiteId = form.dataset.websiteId;
+    const formData = new FormData(form);
+    const rawData = Object.fromEntries(formData);
+
+    const data = {
+      website_id: websiteId,
+      nombre: rawData.name,
+      email: rawData.email || "",
+      telefono: rawData.phone,
+      clase: rawData["class-type"],
+      nivel: rawData.level || "principiante",
+      fecha: rawData.date,
+      hora: rawData.time,
+      notas: rawData.notes || "",
+    };
+
+    if (webhookUrl) {
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (response.ok) {
+          alert("Reserva solicitada correctamente. Te contactaremos para confirmar tu plaza.");
+          form.reset();
+        } else {
+          throw new Error("Error en respuesta");
+        }
+      } catch {
+        alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+      }
+    } else {
+      alert("Reserva solicitada correctamente. Te contactaremos pronto.");
+      form.reset();
+    }
+  });
+</script>

@@ -1,0 +1,529 @@
+---
+/**
+ * StatusPulse - Variante "Pulse Beacon"
+ *
+ * Badge flotante con efecto de "respiración" animada.
+ * Emite pulsos de luz cuando está abierto.
+ */
+
+interface DaySchedule {
+  open: string;  // "09:00"
+  close: string; // "22:00"
+  closed?: boolean; // true si está cerrado todo el día
+}
+
+interface Props {
+  schedule: Record<string, DaySchedule>;
+  position?: "floating" | "inline";
+  forceStatus?: "open" | "closed" | null; // Override manual
+  showSchedule?: boolean; // Mostrar horario del día
+  language?: "es" | "en";
+}
+
+const {
+  schedule,
+  position = "floating",
+  forceStatus = null,
+  showSchedule = true,
+  language = "es",
+} = Astro.props;
+
+// Traducciones
+const t = {
+  es: {
+    open: "Abierto",
+    closed: "Cerrado",
+    opensAt: "Abre a las",
+    closesAt: "Cierra a las",
+    closedToday: "Cerrado hoy",
+    days: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+  },
+  en: {
+    open: "Open",
+    closed: "Closed",
+    opensAt: "Opens at",
+    closesAt: "Closes at",
+    closedToday: "Closed today",
+    days: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+  },
+};
+
+const texts = t[language];
+
+// Mapeo de días en español a inglés para el schedule
+const dayMap: Record<string, string> = {
+  "domingo": "sunday",
+  "lunes": "monday",
+  "martes": "tuesday",
+  "miércoles": "wednesday",
+  "miercoles": "wednesday",
+  "jueves": "thursday",
+  "viernes": "friday",
+  "sábado": "saturday",
+  "sabado": "saturday",
+};
+
+// Función para obtener el día actual en el formato del schedule
+function getCurrentDayKey(): string {
+  const now = new Date();
+  const dayIndex = now.getDay();
+  const dayName = texts.days[dayIndex];
+
+  // Buscar en el schedule (puede estar en español o inglés)
+  if (schedule[dayName]) return dayName;
+  if (schedule[dayMap[dayName] || ""]) return dayMap[dayName] || "";
+
+  // Fallback: buscar por índice o nombre alternativo
+  const alternatives = [
+    dayName,
+    dayName.normalize("NFD").replace(/[\u0300-\u036f]/g, ""), // Sin acentos
+    dayMap[dayName] || "",
+  ];
+
+  for (const alt of alternatives) {
+    if (schedule[alt]) return alt;
+  }
+
+  return dayName;
+}
+
+// Calcular estado actual
+function calculateStatus(): { isOpen: boolean; todaySchedule: DaySchedule | null; nextChange: string } {
+  const dayKey = getCurrentDayKey();
+  const todaySchedule = schedule[dayKey] || null;
+
+  // Si hay override manual
+  if (forceStatus === "open") {
+    return { isOpen: true, todaySchedule, nextChange: "" };
+  }
+  if (forceStatus === "closed") {
+    return { isOpen: false, todaySchedule, nextChange: texts.closedToday };
+  }
+
+  // Si no hay horario para hoy o está marcado como cerrado
+  if (!todaySchedule || todaySchedule.closed) {
+    return { isOpen: false, todaySchedule: null, nextChange: texts.closedToday };
+  }
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+  const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+
+  const openMinutes = openHour * 60 + openMin;
+  const closeMinutes = closeHour * 60 + closeMin;
+
+  const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+
+  let nextChange = "";
+  if (isOpen) {
+    nextChange = `${texts.closesAt} ${todaySchedule.close}`;
+  } else if (currentMinutes < openMinutes) {
+    nextChange = `${texts.opensAt} ${todaySchedule.open}`;
+  } else {
+    nextChange = texts.closedToday;
+  }
+
+  return { isOpen, todaySchedule, nextChange };
+}
+
+const { isOpen, todaySchedule, nextChange } = calculateStatus();
+const statusText = isOpen ? texts.open : texts.closed;
+---
+
+<div
+  class:list={[
+    "status-pulse",
+    `status-pulse--${position}`,
+    { "status-pulse--open": isOpen, "status-pulse--closed": !isOpen }
+  ]}
+  data-schedule={JSON.stringify(schedule)}
+  data-force-status={forceStatus}
+  data-language={language}
+>
+  <!-- Pulse rings (solo cuando está abierto) -->
+  {isOpen && (
+    <div class="pulse-rings" aria-hidden="true">
+      <div class="pulse-ring pulse-ring--1"></div>
+      <div class="pulse-ring pulse-ring--2"></div>
+      <div class="pulse-ring pulse-ring--3"></div>
+    </div>
+  )}
+
+  <!-- Indicator dot -->
+  <div class="status-indicator">
+    <div class="indicator-dot"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="status-content">
+    <span class="status-text">{statusText}</span>
+    {showSchedule && nextChange && (
+      <span class="status-schedule">{nextChange}</span>
+    )}
+  </div>
+
+  <!-- Glow effect -->
+  <div class="status-glow" aria-hidden="true"></div>
+</div>
+
+<style>
+  .status-pulse {
+    --status-color: var(--ng-accent, #10b981);
+    --status-glow: rgba(16, 185, 129, 0.4);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--ng-radius-full, 9999px);
+    background: var(--ng-glass-bg, rgba(255, 255, 255, 0.25));
+    backdrop-filter: blur(var(--ng-blur-md, 16px)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--ng-blur-md, 16px)) saturate(180%);
+    border: 1px solid var(--ng-glass-border, rgba(255, 255, 255, 0.4));
+    box-shadow:
+      6px 6px 16px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -6px -6px 16px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 0 20px var(--status-glow),
+      inset 0 1px 1px var(--ng-glass-glow, rgba(255, 255, 255, 0.5));
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    overflow: visible;
+  }
+
+  /* Closed state colors */
+  .status-pulse--closed {
+    --status-color: #ef4444;
+    --status-glow: rgba(239, 68, 68, 0.3);
+  }
+
+  /* Position variants */
+  .status-pulse--floating {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+  }
+
+  .status-pulse--inline {
+    position: relative;
+  }
+
+  /* Pulse rings - only visible when open */
+  .pulse-rings {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+  }
+
+  .pulse-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid var(--status-color);
+    opacity: 0;
+    animation: pulse-expand 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .pulse-ring--1 {
+    animation-delay: 0s;
+  }
+
+  .pulse-ring--2 {
+    animation-delay: 0.6s;
+  }
+
+  .pulse-ring--3 {
+    animation-delay: 1.2s;
+  }
+
+  @keyframes pulse-expand {
+    0% {
+      transform: scale(0.5);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  /* Indicator dot */
+  .status-indicator {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  .indicator-dot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--status-color);
+    box-shadow:
+      0 0 10px var(--status-color),
+      0 0 20px var(--status-glow),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+      inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    transition: all 0.5s ease;
+  }
+
+  /* Breathing animation for open state */
+  .status-pulse--open .indicator-dot {
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow:
+        0 0 10px var(--status-color),
+        0 0 20px var(--status-glow),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+    50% {
+      transform: scale(1.15);
+      box-shadow:
+        0 0 15px var(--status-color),
+        0 0 30px var(--status-glow),
+        0 0 45px var(--status-glow),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  /* Content */
+  .status-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .status-text {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--ng-text-primary, #1a1a2e);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+
+  .status-schedule {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ng-text-secondary, #374151);
+    opacity: 0.85;
+  }
+
+  /* Glow effect behind */
+  .status-glow {
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    background: var(--status-glow);
+    filter: blur(16px);
+    opacity: 0.5;
+    z-index: -1;
+    transition: opacity 0.5s ease;
+  }
+
+  .status-pulse--open .status-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.05);
+    }
+  }
+
+  /* Hover effect */
+  .status-pulse:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      8px 8px 20px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -8px -8px 20px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 0 30px var(--status-glow),
+      inset 0 1px 1px var(--ng-glass-glow, rgba(255, 255, 255, 0.5));
+  }
+
+  .status-pulse--floating:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .status-pulse--floating {
+      bottom: 1rem;
+      right: 1rem;
+      padding: 0.625rem 1rem;
+    }
+
+    .status-text {
+      font-size: 0.8125rem;
+    }
+
+    .status-schedule {
+      font-size: 0.6875rem;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-ring,
+    .indicator-dot,
+    .status-glow {
+      animation: none;
+    }
+
+    .status-pulse {
+      transition: none;
+    }
+  }
+
+  /* Dark mode adjustments */
+  :global(.dark) .status-pulse,
+  :global([data-theme="dark"]) .status-pulse,
+  :global([data-theme="neuglass-dark"]) .status-pulse {
+    background: var(--ng-glass-bg, rgba(30, 35, 50, 0.6));
+    border-color: var(--ng-glass-border, rgba(255, 255, 255, 0.08));
+  }
+
+  :global(.dark) .status-text,
+  :global([data-theme="dark"]) .status-text,
+  :global([data-theme="neuglass-dark"]) .status-text {
+    color: var(--ng-text-primary, #f1f5f9);
+  }
+
+  :global(.dark) .status-schedule,
+  :global([data-theme="dark"]) .status-schedule,
+  :global([data-theme="neuglass-dark"]) .status-schedule {
+    color: var(--ng-text-secondary, #cbd5e1);
+  }
+</style>
+
+<script>
+  /**
+   * Cliente-side script para actualizar el estado en tiempo real
+   * sin necesidad de recargar la página
+   */
+
+  class StatusPulseUpdater {
+    private element: HTMLElement;
+    private schedule: Record<string, { open: string; close: string; closed?: boolean }>;
+    private forceStatus: string | null;
+    private language: string;
+    private updateInterval: number | null = null;
+
+    constructor(element: HTMLElement) {
+      this.element = element;
+      this.schedule = JSON.parse(element.dataset.schedule || "{}");
+      this.forceStatus = element.dataset.forceStatus || null;
+      this.language = element.dataset.language || "es";
+
+      this.init();
+    }
+
+    private init() {
+      // Update every minute
+      this.updateInterval = window.setInterval(() => this.updateStatus(), 60000);
+    }
+
+    private updateStatus() {
+      // Recalculate status and update DOM if needed
+      const isCurrentlyOpen = this.element.classList.contains("status-pulse--open");
+      const shouldBeOpen = this.calculateIsOpen();
+
+      if (isCurrentlyOpen !== shouldBeOpen) {
+        // Status changed! Update the component
+        this.element.classList.toggle("status-pulse--open", shouldBeOpen);
+        this.element.classList.toggle("status-pulse--closed", !shouldBeOpen);
+
+        // Update text
+        const statusText = this.element.querySelector(".status-text");
+        if (statusText) {
+          const texts = this.language === "es"
+            ? { open: "Abierto", closed: "Cerrado" }
+            : { open: "Open", closed: "Closed" };
+          statusText.textContent = shouldBeOpen ? texts.open : texts.closed;
+        }
+
+        // Dispatch custom event for other components to react
+        this.element.dispatchEvent(new CustomEvent("statuschange", {
+          detail: { isOpen: shouldBeOpen },
+          bubbles: true,
+        }));
+      }
+    }
+
+    private calculateIsOpen(): boolean {
+      if (this.forceStatus === "open") return true;
+      if (this.forceStatus === "closed") return false;
+
+      const now = new Date();
+      const dayIndex = now.getDay();
+      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKey = this.findDayKey(days[dayIndex]);
+
+      const todaySchedule = this.schedule[dayKey];
+      if (!todaySchedule || todaySchedule.closed) return false;
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+      const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+
+      const openMinutes = openHour * 60 + openMin;
+      const closeMinutes = closeHour * 60 + closeMin;
+
+      return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+    }
+
+    private findDayKey(dayName: string): string {
+      const dayMap: Record<string, string> = {
+        "sunday": "domingo",
+        "monday": "lunes",
+        "tuesday": "martes",
+        "wednesday": "miércoles",
+        "thursday": "jueves",
+        "friday": "viernes",
+        "saturday": "sábado",
+      };
+
+      // Try English key first
+      if (this.schedule[dayName]) return dayName;
+      // Try Spanish key
+      const spanishKey = dayMap[dayName];
+      if (spanishKey && this.schedule[spanishKey]) return spanishKey;
+      // Try without accents
+      const withoutAccents = spanishKey?.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (withoutAccents && this.schedule[withoutAccents]) return withoutAccents;
+
+      return dayName;
+    }
+
+    public destroy() {
+      if (this.updateInterval) {
+        window.clearInterval(this.updateInterval);
+      }
+    }
+  }
+
+  // Initialize all StatusPulse components
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll<HTMLElement>(".status-pulse").forEach((el) => {
+      new StatusPulseUpdater(el);
+    });
+  });
+</script>

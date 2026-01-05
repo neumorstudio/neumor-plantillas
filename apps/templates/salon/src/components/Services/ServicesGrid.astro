@@ -1,0 +1,237 @@
+---
+/**
+ * MenuGrid - Variante grid simple sin tabs
+ * Ideal para: Casual, menus pequenos
+ */
+interface MenuItem {
+  name: string;
+  description: string;
+  price: string;
+  tag?: string;
+  image?: string;
+}
+
+interface MenuCategory {
+  name: string;
+  icon: string;
+  items: MenuItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: MenuCategory[];
+}
+
+const defaultCategories: MenuCategory[] = [
+  {
+    name: "Entrantes",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>`,
+    items: [
+      { name: "Carpaccio de Ternera", description: "Finas laminas de ternera con rucula, parmesano y aceite de trufa", price: "14", tag: "popular" },
+      { name: "Burrata Fresca", description: "Con tomates cherry confitados, pesto de albahaca", price: "12" },
+      { name: "Tartar de Atun", description: "Atun rojo con aguacate, sesamo y salsa ponzu", price: "16", tag: "nuevo" },
+    ],
+  },
+  {
+    name: "Principales",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20"/></svg>`,
+    items: [
+      { name: "Solomillo Wellington", description: "Solomillo envuelto en hojaldre con duxelles de setas", price: "32", tag: "popular" },
+      { name: "Lubina a la Espalda", description: "Lubina salvaje con verduras de temporada", price: "28" },
+      { name: "Risotto de Boletus", description: "Arroz carnaroli con boletus edulis y trufa", price: "22", tag: "vegano" },
+    ],
+  },
+  {
+    name: "Postres",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>`,
+    items: [
+      { name: "Tarta de Queso", description: "Nuestra famosa tarta cremosa con coulis de frutos rojos", price: "8", tag: "popular" },
+      { name: "Coulant de Chocolate", description: "Bizcocho tibio de chocolate con helado de vainilla", price: "9" },
+    ],
+  },
+];
+
+const {
+  title = "Nuestra Carta",
+  subtitle = "Cada plato cuenta una historia de sabor y tradicion",
+  categories = defaultCategories,
+} = Astro.props;
+
+// Flatten all items
+const allItems = categories.flatMap(cat =>
+  cat.items.map(item => ({ ...item, category: cat.name }))
+);
+---
+
+<section id="menu" class="menu-grid-section">
+  <div class="container">
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <!-- Menu Grid -->
+    <div class="menu-grid">
+      {allItems.map((item, index) => (
+        <article class="menu-item neumor-card" style={`animation-delay: ${index * 50}ms`}>
+          <div class="item-top">
+            <span class="item-category">{item.category}</span>
+            {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+          </div>
+          <h3 class="item-name">{item.name}</h3>
+          <p class="item-description">{item.description}</p>
+          <div class="item-price">
+            <span class="price-currency">€</span>
+            <span class="price-value">{item.price}</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .menu-grid-section {
+    padding: 6rem 0;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Grid */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Item */
+  .menu-item {
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    animation: slideUp 0.5s ease forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .item-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .item-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+  }
+
+  .tag-popular {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+
+  .tag-nuevo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .tag-vegano {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+  }
+
+  .item-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+  }
+
+  .item-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+  }
+
+  .item-price {
+    display: inline-flex;
+    align-items: baseline;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--neumor-bg);
+    box-shadow:
+      inset 3px 3px 6px var(--shadow-dark),
+      inset -3px -3px 6px var(--shadow-light);
+    align-self: flex-start;
+  }
+
+  .price-currency {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-right: 2px;
+  }
+
+  .price-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .menu-grid-section {
+      padding: 4rem 0;
+    }
+
+    .menu-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,392 @@
+@import "tailwindcss";
+
+/* ========================================
+   NEUMORSTUDIO - Restaurant Template
+   Estilos neumorfico con soporte para 5 temas
+   ======================================== */
+
+/* Variables CSS base - Light theme (default) */
+:root {
+  --neumor-bg: oklch(0.95 0.01 250);
+  --shadow-dark: oklch(0.85 0.01 250);
+  --shadow-light: oklch(1 0 0);
+  --text-primary: oklch(0.2 0.02 250);
+  --text-secondary: oklch(0.45 0.02 250);
+  --accent: oklch(0.55 0.12 250);
+  --accent-hover: oklch(0.5 0.14 250);
+}
+
+/* Dark theme */
+.theme-dark {
+  --neumor-bg: oklch(0.22 0.02 260);
+  --shadow-dark: oklch(0.12 0.02 260);
+  --shadow-light: oklch(0.32 0.02 260);
+  --text-primary: oklch(0.95 0.01 250);
+  --text-secondary: oklch(0.7 0.01 250);
+  --accent: oklch(0.65 0.12 250);
+  --accent-hover: oklch(0.7 0.14 250);
+}
+
+/* Colorful theme */
+.theme-colorful {
+  --neumor-bg: oklch(0.94 0.04 85);
+  --shadow-dark: oklch(0.82 0.04 85);
+  --shadow-light: oklch(1 0.01 85);
+  --text-primary: oklch(0.25 0.08 30);
+  --text-secondary: oklch(0.45 0.06 180);
+  --accent: oklch(0.65 0.18 170);
+  --accent-hover: oklch(0.6 0.2 170);
+}
+
+/* Rustic theme */
+.theme-rustic {
+  --neumor-bg: oklch(0.88 0.045 65);
+  --shadow-dark: oklch(0.72 0.055 65);
+  --shadow-light: oklch(0.96 0.025 65);
+  --text-primary: oklch(0.28 0.06 45);
+  --text-secondary: oklch(0.48 0.05 45);
+  --accent: oklch(0.48 0.13 35);
+  --accent-hover: oklch(0.43 0.15 35);
+}
+
+/* Elegant theme */
+.theme-elegant {
+  --neumor-bg: oklch(0.92 0.025 35);
+  --shadow-dark: oklch(0.8 0.035 35);
+  --shadow-light: oklch(0.98 0.01 35);
+  --text-primary: oklch(0.25 0.035 35);
+  --text-secondary: oklch(0.48 0.03 35);
+  --accent: oklch(0.55 0.11 25);
+  --accent-hover: oklch(0.5 0.13 25);
+}
+
+/* ==============================================
+   NeuGlass theme - Neumorphism + Glassmorphism
+   Premium hybrid style with glass effects
+   ============================================== */
+.theme-neuglass {
+  /* Map to NeuGlass system variables */
+  --neumor-bg: #e8ecf1;
+  --shadow-dark: rgba(163, 177, 198, 0.6);
+  --shadow-light: rgba(255, 255, 255, 0.9);
+  --text-primary: #1a1a2e;
+  --text-secondary: #374151;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+
+  /* Glass-specific variables */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: 16px;
+  --glass-shadow: rgba(31, 38, 135, 0.15);
+  --accent-glow: rgba(99, 102, 241, 0.4);
+}
+
+/* NeuGlass dark variant */
+.theme-neuglass-dark {
+  --neumor-bg: #13151a;
+  --shadow-dark: rgba(0, 0, 0, 0.7);
+  --shadow-light: rgba(45, 50, 65, 0.5);
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --accent: #818cf8;
+  --accent-hover: #6366f1;
+
+  /* Glass-specific for dark */
+  --glass-bg: rgba(30, 35, 50, 0.6);
+  --glass-bg-strong: rgba(40, 45, 65, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --accent-glow: rgba(129, 140, 248, 0.3);
+}
+
+/* Glass-enhanced neumorphic components for NeuGlass theme */
+.theme-neuglass .neumor-card,
+.theme-neuglass-dark .neumor-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    8px 8px 24px var(--shadow-dark),
+    -8px -8px 24px var(--shadow-light),
+    0 8px 32px var(--glass-shadow);
+}
+
+.theme-neuglass .neumor-card:hover,
+.theme-neuglass-dark .neumor-card:hover {
+  box-shadow:
+    12px 12px 32px var(--shadow-dark),
+    -12px -12px 32px var(--shadow-light),
+    0 16px 48px var(--glass-shadow);
+}
+
+.theme-neuglass .neumor-btn,
+.theme-neuglass-dark .neumor-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-neuglass .neumor-btn-accent,
+.theme-neuglass-dark .neumor-btn-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light),
+    0 4px 20px var(--accent-glow);
+}
+
+.theme-neuglass .neumor-btn-accent:hover,
+.theme-neuglass-dark .neumor-btn-accent:hover {
+  box-shadow:
+    8px 8px 20px var(--shadow-dark),
+    -8px -8px 20px var(--shadow-light),
+    0 8px 32px var(--accent-glow);
+}
+
+.theme-neuglass .neumor-input,
+.theme-neuglass-dark .neumor-input {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-neuglass .neumor-input:focus,
+.theme-neuglass-dark .neumor-input:focus {
+  box-shadow:
+    inset 4px 4px 12px var(--shadow-dark),
+    inset -4px -4px 12px var(--shadow-light),
+    0 0 0 3px var(--accent-glow);
+}
+
+/* Reset y base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--neumor-bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Tipografia */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+/* ========================================
+   Componentes Neumorfico
+   ======================================== */
+
+/* Card elevada */
+.neumor-card {
+  background-color: var(--neumor-bg);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow:
+    8px 8px 20px var(--shadow-dark),
+    -8px -8px 20px var(--shadow-light);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.neumor-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light);
+}
+
+/* Card pequena */
+.neumor-card-sm {
+  background-color: var(--neumor-bg);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light);
+}
+
+/* Boton primario */
+.neumor-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--neumor-bg);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 0.875rem;
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light);
+}
+
+.neumor-btn:hover {
+  box-shadow:
+    4px 4px 10px var(--shadow-dark),
+    -4px -4px 10px var(--shadow-light);
+}
+
+.neumor-btn:active {
+  box-shadow:
+    inset 4px 4px 10px var(--shadow-dark),
+    inset -4px -4px 10px var(--shadow-light);
+}
+
+/* Boton con acento */
+.neumor-btn-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: white;
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light),
+    inset 0 0 0 transparent;
+}
+
+.neumor-btn-accent:hover {
+  box-shadow:
+    4px 4px 10px var(--shadow-dark),
+    -4px -4px 10px var(--shadow-light);
+  transform: translateY(-2px);
+}
+
+/* Input neumorfico */
+.neumor-input {
+  width: 100%;
+  background-color: var(--neumor-bg);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  outline: none;
+  box-shadow:
+    inset 4px 4px 10px var(--shadow-dark),
+    inset -4px -4px 10px var(--shadow-light);
+  transition: box-shadow 0.2s ease;
+}
+
+.neumor-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.neumor-input:focus {
+  box-shadow:
+    inset 6px 6px 14px var(--shadow-dark),
+    inset -6px -6px 14px var(--shadow-light);
+}
+
+/* Contenedor inset */
+.neumor-inset {
+  background-color: var(--neumor-bg);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow:
+    inset 6px 6px 14px var(--shadow-dark),
+    inset -6px -6px 14px var(--shadow-light);
+}
+
+/* ========================================
+   Utilidades
+   ======================================== */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section {
+  padding: 4rem 0;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-neumor {
+  background-color: var(--neumor-bg);
+}
+
+/* Grid responsive */
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animation-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-300 {
+  animation-delay: 0.3s;
+}

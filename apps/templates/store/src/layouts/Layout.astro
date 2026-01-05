@@ -1,0 +1,62 @@
+---
+import "../styles/global.css";
+import "../styles/neuglass.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
+}
+
+const {
+  title,
+  description = "Restaurante con estilo neumorfico",
+  theme = "light",
+} = Astro.props;
+
+const themeClass = theme === "light" ? "" : `theme-${theme}`;
+---
+
+<!doctype html>
+<html lang="es" class={themeClass}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>{title}</title>
+
+    <style is:global>
+      /* Fuentes del restaurante */
+      :root {
+        --font-heading: "Playfair Display", serif;
+        --font-body: "Inter", system-ui, sans-serif;
+      }
+
+      body {
+        font-family: var(--font-body);
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-heading);
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

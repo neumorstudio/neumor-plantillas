@@ -1,0 +1,535 @@
+---
+/**
+ * StatusMorph - Variante "Morphing Pill"
+ *
+ * Píldora que cambia de forma suavemente entre estados.
+ * Más ancha y vibrante cuando está abierto, compacta cuando está cerrado.
+ */
+
+interface DaySchedule {
+  open: string;
+  close: string;
+  closed?: boolean;
+}
+
+interface Props {
+  schedule: Record<string, DaySchedule>;
+  position?: "floating" | "inline";
+  forceStatus?: "open" | "closed" | null;
+  showSchedule?: boolean;
+  language?: "es" | "en";
+}
+
+const {
+  schedule,
+  position = "floating",
+  forceStatus = null,
+  showSchedule = true,
+  language = "es",
+} = Astro.props;
+
+const t = {
+  es: {
+    open: "Abierto ahora",
+    closed: "Cerrado",
+    opensAt: "Abre",
+    closesAt: "Cierra",
+    closedToday: "Cerrado hoy",
+    days: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+  },
+  en: {
+    open: "Open now",
+    closed: "Closed",
+    opensAt: "Opens",
+    closesAt: "Closes",
+    closedToday: "Closed today",
+    days: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+  },
+};
+
+const texts = t[language];
+
+const dayMap: Record<string, string> = {
+  "domingo": "sunday", "lunes": "monday", "martes": "tuesday",
+  "miércoles": "wednesday", "miercoles": "wednesday", "jueves": "thursday",
+  "viernes": "friday", "sábado": "saturday", "sabado": "saturday",
+};
+
+function getCurrentDayKey(): string {
+  const now = new Date();
+  const dayName = texts.days[now.getDay()];
+  if (schedule[dayName]) return dayName;
+  if (schedule[dayMap[dayName] || ""]) return dayMap[dayName] || "";
+  const noAccent = dayName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (schedule[noAccent]) return noAccent;
+  return dayName;
+}
+
+function calculateStatus() {
+  const dayKey = getCurrentDayKey();
+  const todaySchedule = schedule[dayKey] || null;
+
+  if (forceStatus === "open") return { isOpen: true, todaySchedule, nextChange: "" };
+  if (forceStatus === "closed") return { isOpen: false, todaySchedule, nextChange: texts.closedToday };
+  if (!todaySchedule || todaySchedule.closed) return { isOpen: false, todaySchedule: null, nextChange: texts.closedToday };
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+  const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+  const openMinutes = openHour * 60 + openMin;
+  const closeMinutes = closeHour * 60 + closeMin;
+
+  const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  let nextChange = isOpen ? `${texts.closesAt} ${todaySchedule.close}` :
+    currentMinutes < openMinutes ? `${texts.opensAt} ${todaySchedule.open}` : texts.closedToday;
+
+  return { isOpen, todaySchedule, nextChange };
+}
+
+const { isOpen, nextChange } = calculateStatus();
+const statusText = isOpen ? texts.open : texts.closed;
+---
+
+<div
+  class:list={[
+    "status-morph",
+    `status-morph--${position}`,
+    { "status-morph--open": isOpen, "status-morph--closed": !isOpen }
+  ]}
+  data-schedule={JSON.stringify(schedule)}
+  data-force-status={forceStatus}
+  data-language={language}
+>
+  <!-- Animated background blob -->
+  <div class="morph-blob" aria-hidden="true">
+    <div class="blob-inner"></div>
+  </div>
+
+  <!-- Icon container -->
+  <div class="morph-icon">
+    {isOpen ? (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-open">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    ) : (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-closed">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    )}
+  </div>
+
+  <!-- Text content -->
+  <div class="morph-content">
+    <span class="morph-status">{statusText}</span>
+    {showSchedule && nextChange && (
+      <span class="morph-schedule">{nextChange}</span>
+    )}
+  </div>
+
+  <!-- Shine sweep effect -->
+  <div class="morph-shine" aria-hidden="true"></div>
+</div>
+
+<style>
+  .status-morph {
+    --morph-open-width: auto;
+    --morph-closed-width: auto;
+    --morph-bg-open: linear-gradient(135deg, #10b981, #34d399);
+    --morph-bg-closed: linear-gradient(135deg, #ef4444, #f87171);
+    --morph-shadow-open: rgba(16, 185, 129, 0.4);
+    --morph-shadow-closed: rgba(239, 68, 68, 0.3);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 1.5rem;
+    border-radius: var(--ng-radius-xl, 40px);
+    background: var(--ng-glass-bg-strong, rgba(255, 255, 255, 0.45));
+    backdrop-filter: blur(var(--ng-blur-lg, 24px)) saturate(200%);
+    -webkit-backdrop-filter: blur(var(--ng-blur-lg, 24px)) saturate(200%);
+    border: 1px solid var(--ng-glass-border-strong, rgba(255, 255, 255, 0.6));
+    box-shadow:
+      8px 8px 24px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -8px -8px 24px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      inset 0 1px 2px var(--ng-glass-glow, rgba(255, 255, 255, 0.5));
+    overflow: hidden;
+    z-index: 1000;
+    transition:
+      transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.4s ease,
+      padding 0.5s ease;
+  }
+
+  /* Position variants */
+  .status-morph--floating {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+  }
+
+  .status-morph--inline {
+    position: relative;
+  }
+
+  /* Animated background blob */
+  .morph-blob {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  .blob-inner {
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    top: -25%;
+    left: -25%;
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+    opacity: 0.15;
+    transition: all 0.8s ease;
+  }
+
+  .status-morph--open .blob-inner {
+    background: var(--morph-bg-open);
+    animation: morph-blob 8s ease-in-out infinite;
+  }
+
+  .status-morph--closed .blob-inner {
+    background: var(--morph-bg-closed);
+    opacity: 0.1;
+    animation: morph-blob 12s ease-in-out infinite reverse;
+  }
+
+  @keyframes morph-blob {
+    0%, 100% {
+      border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+      transform: rotate(0deg) scale(1);
+    }
+    25% {
+      border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%;
+      transform: rotate(90deg) scale(1.05);
+    }
+    50% {
+      border-radius: 50% 60% 30% 60% / 70% 40% 70% 30%;
+      transform: rotate(180deg) scale(1);
+    }
+    75% {
+      border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+      transform: rotate(270deg) scale(1.05);
+    }
+  }
+
+  /* Icon container */
+  .morph-icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ng-radius-md, 20px);
+    flex-shrink: 0;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .status-morph--open .morph-icon {
+    background: var(--morph-bg-open);
+    box-shadow:
+      0 4px 16px var(--morph-shadow-open),
+      inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    animation: icon-pulse-open 2s ease-in-out infinite;
+  }
+
+  .status-morph--closed .morph-icon {
+    background: var(--morph-bg-closed);
+    box-shadow:
+      0 4px 12px var(--morph-shadow-closed),
+      inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+
+  @keyframes icon-pulse-open {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow:
+        0 4px 16px var(--morph-shadow-open),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow:
+        0 6px 24px var(--morph-shadow-open),
+        0 0 0 4px rgba(16, 185, 129, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .morph-icon svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+    transition: transform 0.4s ease;
+  }
+
+  .status-morph:hover .morph-icon svg {
+    transform: scale(1.1);
+  }
+
+  .status-morph--open:hover .morph-icon svg {
+    animation: door-swing 0.6s ease;
+  }
+
+  @keyframes door-swing {
+    0%, 100% { transform: rotateY(0deg) scale(1.1); }
+    50% { transform: rotateY(15deg) scale(1.1); }
+  }
+
+  /* Content */
+  .morph-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .morph-status {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ng-text-primary, #1a1a2e);
+    white-space: nowrap;
+    transition: all 0.3s ease;
+  }
+
+  .status-morph--open .morph-status {
+    background: var(--morph-bg-open);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .status-morph--closed .morph-status {
+    color: #ef4444;
+  }
+
+  .morph-schedule {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ng-text-secondary, #374151);
+    white-space: nowrap;
+    opacity: 0.9;
+  }
+
+  /* Shine sweep effect */
+  .morph-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transform: skewX(-20deg);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .status-morph--open .morph-shine {
+    animation: shine-sweep 3s ease-in-out infinite;
+  }
+
+  @keyframes shine-sweep {
+    0%, 100% {
+      left: -100%;
+    }
+    50% {
+      left: 150%;
+    }
+  }
+
+  /* Hover effects */
+  .status-morph:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      12px 12px 32px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -12px -12px 32px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 2px var(--ng-glass-glow, rgba(255, 255, 255, 0.5));
+  }
+
+  /* State-specific shadows on hover */
+  .status-morph--open:hover {
+    box-shadow:
+      12px 12px 32px var(--ng-shadow-dark),
+      -12px -12px 32px var(--ng-shadow-light),
+      0 0 40px var(--morph-shadow-open),
+      inset 0 1px 2px var(--ng-glass-glow);
+  }
+
+  .status-morph--closed:hover {
+    box-shadow:
+      12px 12px 32px var(--ng-shadow-dark),
+      -12px -12px 32px var(--ng-shadow-light),
+      0 0 30px var(--morph-shadow-closed),
+      inset 0 1px 2px var(--ng-glass-glow);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .status-morph--floating {
+      bottom: 1rem;
+      right: 1rem;
+      padding: 0.75rem 1.25rem;
+      gap: 0.625rem;
+    }
+
+    .morph-icon {
+      width: 36px;
+      height: 36px;
+    }
+
+    .morph-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .morph-status {
+      font-size: 0.875rem;
+    }
+
+    .morph-schedule {
+      font-size: 0.6875rem;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .blob-inner,
+    .morph-icon,
+    .morph-shine {
+      animation: none;
+    }
+
+    .status-morph {
+      transition: none;
+    }
+  }
+
+  /* Dark mode */
+  :global(.dark) .status-morph,
+  :global([data-theme="dark"]) .status-morph,
+  :global([data-theme="neuglass-dark"]) .status-morph {
+    background: var(--ng-glass-bg-strong, rgba(40, 45, 65, 0.75));
+    border-color: var(--ng-glass-border-strong, rgba(255, 255, 255, 0.15));
+  }
+
+  :global(.dark) .morph-status,
+  :global([data-theme="dark"]) .morph-status,
+  :global([data-theme="neuglass-dark"]) .morph-status {
+    color: var(--ng-text-primary, #f1f5f9);
+  }
+
+  :global(.dark) .status-morph--open .morph-status,
+  :global([data-theme="dark"]) .status-morph--open .morph-status,
+  :global([data-theme="neuglass-dark"]) .status-morph--open .morph-status {
+    background: var(--morph-bg-open);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  :global(.dark) .morph-schedule,
+  :global([data-theme="dark"]) .morph-schedule,
+  :global([data-theme="neuglass-dark"]) .morph-schedule {
+    color: var(--ng-text-secondary, #cbd5e1);
+  }
+</style>
+
+<script>
+  // Real-time status update (reuses same pattern as StatusPulse)
+  class StatusMorphUpdater {
+    private element: HTMLElement;
+    private schedule: Record<string, { open: string; close: string; closed?: boolean }>;
+    private forceStatus: string | null;
+    private language: string;
+    private updateInterval: number | null = null;
+
+    constructor(element: HTMLElement) {
+      this.element = element;
+      this.schedule = JSON.parse(element.dataset.schedule || "{}");
+      this.forceStatus = element.dataset.forceStatus || null;
+      this.language = element.dataset.language || "es";
+
+      this.updateInterval = window.setInterval(() => this.updateStatus(), 60000);
+    }
+
+    private updateStatus() {
+      const isCurrentlyOpen = this.element.classList.contains("status-morph--open");
+      const shouldBeOpen = this.calculateIsOpen();
+
+      if (isCurrentlyOpen !== shouldBeOpen) {
+        this.element.classList.toggle("status-morph--open", shouldBeOpen);
+        this.element.classList.toggle("status-morph--closed", !shouldBeOpen);
+
+        const statusText = this.element.querySelector(".morph-status");
+        if (statusText) {
+          const texts = this.language === "es"
+            ? { open: "Abierto ahora", closed: "Cerrado" }
+            : { open: "Open now", closed: "Closed" };
+          statusText.textContent = shouldBeOpen ? texts.open : texts.closed;
+        }
+
+        this.element.dispatchEvent(new CustomEvent("statuschange", {
+          detail: { isOpen: shouldBeOpen },
+          bubbles: true,
+        }));
+      }
+    }
+
+    private calculateIsOpen(): boolean {
+      if (this.forceStatus === "open") return true;
+      if (this.forceStatus === "closed") return false;
+
+      const now = new Date();
+      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKey = this.findDayKey(days[now.getDay()]);
+      const todaySchedule = this.schedule[dayKey];
+
+      if (!todaySchedule || todaySchedule.closed) return false;
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+      const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+
+      return currentMinutes >= openHour * 60 + openMin && currentMinutes < closeHour * 60 + closeMin;
+    }
+
+    private findDayKey(dayName: string): string {
+      const dayMap: Record<string, string> = {
+        "sunday": "domingo", "monday": "lunes", "tuesday": "martes",
+        "wednesday": "miércoles", "thursday": "jueves", "friday": "viernes", "saturday": "sábado",
+      };
+      if (this.schedule[dayName]) return dayName;
+      const spanishKey = dayMap[dayName];
+      if (spanishKey && this.schedule[spanishKey]) return spanishKey;
+      return dayName;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll<HTMLElement>(".status-morph").forEach((el) => {
+      new StatusMorphUpdater(el);
+    });
+  });
+</script>

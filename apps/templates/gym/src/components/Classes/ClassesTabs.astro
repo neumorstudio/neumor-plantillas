@@ -1,0 +1,293 @@
+---
+interface ClassItem {
+  name: string;
+  description: string;
+  price: string;
+  duration?: string;
+  tag?: string;
+  level?: string;
+}
+
+interface ClassCategory {
+  name: string;
+  icon: string;
+  items: ClassItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: ClassCategory[];
+}
+
+const defaultCategories: ClassCategory[] = [
+  {
+    name: "Cardio",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+    items: [
+      {
+        name: "Spinning",
+        description: "Clase de ciclismo indoor de alta intensidad con musica motivadora",
+        price: "12",
+        duration: "45 min",
+        tag: "popular",
+        level: "Todos los niveles",
+      },
+      {
+        name: "Zumba",
+        description: "Baile fitness con ritmos latinos para quemar calorias bailando",
+        price: "10",
+        duration: "60 min",
+        tag: "popular",
+      },
+      {
+        name: "Step",
+        description: "Coreografias con plataforma para tonificar piernas y gluteos",
+        price: "10",
+        duration: "50 min",
+      },
+      {
+        name: "HIIT",
+        description: "Entrenamiento por intervalos de alta intensidad para maxima quema",
+        price: "12",
+        duration: "30 min",
+        tag: "nuevo",
+        level: "Intermedio-Avanzado",
+      },
+    ],
+  },
+  {
+    name: "Fuerza",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11M6.5 17.5h11M4 10h2.5v4H4zM17.5 10H20v4h-2.5zM6.5 10h11v4h-11z"/></svg>`,
+    items: [
+      {
+        name: "Body Pump",
+        description: "Entrenamiento con barra y discos para tonificar todo el cuerpo",
+        price: "12",
+        duration: "60 min",
+        tag: "popular",
+      },
+      {
+        name: "CrossFit",
+        description: "Entrenamiento funcional de alta intensidad con movimientos variados",
+        price: "15",
+        duration: "60 min",
+        tag: "nuevo",
+        level: "Intermedio-Avanzado",
+      },
+      {
+        name: "TRX",
+        description: "Suspension training para desarrollar fuerza y estabilidad",
+        price: "12",
+        duration: "45 min",
+      },
+      {
+        name: "Kettlebells",
+        description: "Entrenamiento con pesas rusas para potencia y resistencia",
+        price: "12",
+        duration: "45 min",
+      },
+    ],
+  },
+  {
+    name: "Mente y Cuerpo",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+    items: [
+      {
+        name: "Yoga",
+        description: "Practica de posturas y respiracion para flexibilidad y calma mental",
+        price: "10",
+        duration: "60 min",
+        tag: "popular",
+        level: "Todos los niveles",
+      },
+      {
+        name: "Pilates",
+        description: "Fortalecimiento del core y mejora postural con movimientos controlados",
+        price: "12",
+        duration: "55 min",
+        tag: "popular",
+      },
+      {
+        name: "Stretching",
+        description: "Sesion de estiramientos guiados para mejorar la flexibilidad",
+        price: "8",
+        duration: "45 min",
+      },
+      {
+        name: "Meditacion",
+        description: "Practica guiada de mindfulness y relajacion profunda",
+        price: "8",
+        duration: "30 min",
+        tag: "nuevo",
+      },
+    ],
+  },
+  {
+    name: "Acuaticos",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>`,
+    items: [
+      {
+        name: "Aquagym",
+        description: "Gimnasia acuatica de bajo impacto ideal para todas las edades",
+        price: "12",
+        duration: "45 min",
+        tag: "popular",
+        level: "Todos los niveles",
+      },
+      {
+        name: "Natacion Adultos",
+        description: "Clases de natacion para principiantes o perfeccionamiento",
+        price: "15",
+        duration: "45 min",
+      },
+      {
+        name: "Aqua Spinning",
+        description: "Spinning en piscina para un entrenamiento intenso sin impacto",
+        price: "14",
+        duration: "45 min",
+        tag: "nuevo",
+      },
+      {
+        name: "Natacion Infantil",
+        description: "Clases adaptadas para ninos de todas las edades",
+        price: "12",
+        duration: "30 min",
+      },
+    ],
+  },
+];
+
+const {
+  title = "Nuestras Clases",
+  subtitle = "Encuentra la actividad perfecta para ti",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="classes" class="classes-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <div class="category-tabs">
+      {categories.map((category, index) => (
+        <button
+          class={`category-tab neumor-btn ${index === 0 ? 'active' : ''}`}
+          data-category={index}
+        >
+          <span class="tab-icon" set:html={category.icon} />
+          <span class="tab-name">{category.name}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="classes-content">
+      {categories.map((category, catIndex) => (
+        <div class={`classes-category ${catIndex === 0 ? 'active' : ''}`} data-category-content={catIndex}>
+          <div class="classes-grid">
+            {category.items.map((item, itemIndex) => (
+              <article class="class-item neumor-card" style={`animation-delay: ${itemIndex * 100}ms`}>
+                <div class="item-content">
+                  <div class="item-header">
+                    <h3 class="item-name">{item.name}</h3>
+                    {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+                  </div>
+                  <p class="item-description">{item.description}</p>
+                  <div class="item-meta">
+                    {item.duration && (
+                      <span class="item-duration">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="meta-icon">
+                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        {item.duration}
+                      </span>
+                    )}
+                    {item.level && (
+                      <span class="item-level">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="meta-icon">
+                          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                        </svg>
+                        {item.level}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div class="item-price">
+                  <span class="price-value">{item.price}</span>
+                  <span class="price-currency">€</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .classes-section { padding: 6rem 0; }
+  .section-header { text-align: center; margin-bottom: 3rem; }
+  .section-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); }
+  .section-subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto; }
+  .category-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+  .category-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; cursor: pointer; }
+  .category-tab.active { background: var(--accent); color: white; box-shadow: 4px 4px 12px var(--shadow-dark), -2px -2px 8px var(--shadow-light); }
+  .tab-icon { width: 20px; height: 20px; display: flex; }
+  .tab-icon :global(svg) { width: 100%; height: 100%; }
+  .tab-name { font-size: 0.95rem; }
+  .classes-content { position: relative; }
+  .classes-category { display: none; animation: fadeIn 0.4s ease; }
+  .classes-category.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+  .class-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-radius: 1.25rem; transition: transform 0.3s ease; animation: slideUp 0.5s ease backwards; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .class-item:hover { transform: translateY(-4px); }
+  .item-content { flex: 1; padding-right: 1rem; }
+  .item-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .item-name { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+  .item-tag { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2rem; }
+  .tag-popular { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+  .tag-nuevo { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+  .item-description { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 0.5rem 0; }
+  .item-meta { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .item-duration, .item-level { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; color: var(--text-secondary); }
+  .meta-icon { width: 14px; height: 14px; }
+  .item-price { display: flex; align-items: baseline; padding: 0.75rem 1rem; border-radius: 1rem; background: var(--neumor-bg); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+  .price-value { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+  .price-currency { font-size: 0.9rem; font-weight: 500; color: var(--accent); margin-left: 2px; }
+  @media (max-width: 768px) {
+    .classes-section { padding: 4rem 0; }
+    .category-tabs { gap: 0.75rem; }
+    .category-tab { padding: 0.6rem 1rem; }
+    .tab-name { display: none; }
+    .tab-icon { width: 24px; height: 24px; }
+    .category-tab.active .tab-name { display: inline; }
+    .classes-grid { grid-template-columns: 1fr; }
+    .class-item { flex-direction: column; gap: 1rem; }
+    .item-content { padding-right: 0; }
+    .item-price { align-self: flex-start; }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.category-tab');
+    const contents = document.querySelectorAll('.classes-category');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const categoryIndex = tab.getAttribute('data-category');
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        contents.forEach(content => {
+          content.classList.remove('active');
+          if (content.getAttribute('data-category-content') === categoryIndex) content.classList.add('active');
+        });
+      });
+    });
+  });
+</script>

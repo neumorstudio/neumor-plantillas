@@ -1,0 +1,607 @@
+---
+/**
+ * StatusLiquid - Variante "Liquid Glow"
+ *
+ * Efecto líquido/lava lamp con gradientes animados.
+ * El color fluye constantemente cuando está abierto, se "congela" cuando está cerrado.
+ */
+
+interface DaySchedule {
+  open: string;
+  close: string;
+  closed?: boolean;
+}
+
+interface Props {
+  schedule: Record<string, DaySchedule>;
+  position?: "floating" | "inline";
+  forceStatus?: "open" | "closed" | null;
+  showSchedule?: boolean;
+  language?: "es" | "en";
+}
+
+const {
+  schedule,
+  position = "floating",
+  forceStatus = null,
+  showSchedule = true,
+  language = "es",
+} = Astro.props;
+
+const t = {
+  es: {
+    open: "Estamos abiertos",
+    closed: "Cerrado",
+    opensAt: "Abrimos a las",
+    closesAt: "Cerramos a las",
+    closedToday: "Hoy no abrimos",
+    days: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+  },
+  en: {
+    open: "We're open",
+    closed: "Closed",
+    opensAt: "We open at",
+    closesAt: "We close at",
+    closedToday: "Closed today",
+    days: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+  },
+};
+
+const texts = t[language];
+
+const dayMap: Record<string, string> = {
+  "domingo": "sunday", "lunes": "monday", "martes": "tuesday",
+  "miércoles": "wednesday", "miercoles": "wednesday", "jueves": "thursday",
+  "viernes": "friday", "sábado": "saturday", "sabado": "saturday",
+};
+
+function getCurrentDayKey(): string {
+  const now = new Date();
+  const dayName = texts.days[now.getDay()];
+  if (schedule[dayName]) return dayName;
+  if (schedule[dayMap[dayName] || ""]) return dayMap[dayName] || "";
+  const noAccent = dayName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (schedule[noAccent]) return noAccent;
+  return dayName;
+}
+
+function calculateStatus() {
+  const dayKey = getCurrentDayKey();
+  const todaySchedule = schedule[dayKey] || null;
+
+  if (forceStatus === "open") return { isOpen: true, todaySchedule, nextChange: "" };
+  if (forceStatus === "closed") return { isOpen: false, todaySchedule, nextChange: texts.closedToday };
+  if (!todaySchedule || todaySchedule.closed) return { isOpen: false, todaySchedule: null, nextChange: texts.closedToday };
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+  const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+  const openMinutes = openHour * 60 + openMin;
+  const closeMinutes = closeHour * 60 + closeMin;
+
+  const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  let nextChange = isOpen ? `${texts.closesAt} ${todaySchedule.close}` :
+    currentMinutes < openMinutes ? `${texts.opensAt} ${todaySchedule.open}` : texts.closedToday;
+
+  return { isOpen, todaySchedule, nextChange };
+}
+
+const { isOpen, nextChange } = calculateStatus();
+const statusText = isOpen ? texts.open : texts.closed;
+---
+
+<div
+  class:list={[
+    "status-liquid",
+    `status-liquid--${position}`,
+    { "status-liquid--open": isOpen, "status-liquid--closed": !isOpen }
+  ]}
+  data-schedule={JSON.stringify(schedule)}
+  data-force-status={forceStatus}
+  data-language={language}
+>
+  <!-- Liquid background layer -->
+  <div class="liquid-bg" aria-hidden="true">
+    <div class="liquid-wave liquid-wave--1"></div>
+    <div class="liquid-wave liquid-wave--2"></div>
+    <div class="liquid-wave liquid-wave--3"></div>
+    <div class="liquid-gradient"></div>
+  </div>
+
+  <!-- Glass overlay -->
+  <div class="liquid-glass"></div>
+
+  <!-- Content -->
+  <div class="liquid-content">
+    <div class="liquid-indicator">
+      <div class="indicator-orb">
+        <div class="orb-core"></div>
+        <div class="orb-ring"></div>
+      </div>
+    </div>
+
+    <div class="liquid-text">
+      <span class="status-label">{statusText}</span>
+      {showSchedule && nextChange && (
+        <span class="status-time">{nextChange}</span>
+      )}
+    </div>
+  </div>
+
+  <!-- Floating particles -->
+  <div class="liquid-particles" aria-hidden="true">
+    <div class="particle particle--1"></div>
+    <div class="particle particle--2"></div>
+    <div class="particle particle--3"></div>
+    <div class="particle particle--4"></div>
+  </div>
+</div>
+
+<style>
+  .status-liquid {
+    --liquid-open-1: #10b981;
+    --liquid-open-2: #34d399;
+    --liquid-open-3: #6ee7b7;
+    --liquid-closed-1: #ef4444;
+    --liquid-closed-2: #f87171;
+    --liquid-closed-3: #fca5a5;
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 200px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--ng-radius-lg, 28px);
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow:
+      10px 10px 30px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -10px -10px 30px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 0 40px rgba(16, 185, 129, 0.2);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .status-liquid--closed {
+    box-shadow:
+      10px 10px 30px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -10px -10px 30px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 0 30px rgba(239, 68, 68, 0.15);
+  }
+
+  /* Position variants */
+  .status-liquid--floating {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+  }
+
+  .status-liquid--inline {
+    position: relative;
+  }
+
+  /* Liquid background */
+  .liquid-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+
+  .liquid-gradient {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.8s ease;
+  }
+
+  .status-liquid--open .liquid-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--liquid-open-1) 0%,
+      var(--liquid-open-2) 50%,
+      var(--liquid-open-3) 100%
+    );
+    opacity: 0.9;
+  }
+
+  .status-liquid--closed .liquid-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--liquid-closed-1) 0%,
+      var(--liquid-closed-2) 50%,
+      var(--liquid-closed-3) 100%
+    );
+    opacity: 0.85;
+  }
+
+  /* Liquid waves */
+  .liquid-wave {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    border-radius: 45%;
+    opacity: 0.4;
+  }
+
+  .status-liquid--open .liquid-wave {
+    animation: liquid-flow 6s ease-in-out infinite;
+  }
+
+  .status-liquid--closed .liquid-wave {
+    animation: liquid-flow 12s ease-in-out infinite;
+    opacity: 0.2;
+  }
+
+  .liquid-wave--1 {
+    background: rgba(255, 255, 255, 0.3);
+    animation-delay: 0s;
+  }
+
+  .liquid-wave--2 {
+    background: rgba(255, 255, 255, 0.2);
+    animation-delay: -2s;
+    animation-duration: 8s;
+  }
+
+  .liquid-wave--3 {
+    background: rgba(255, 255, 255, 0.15);
+    animation-delay: -4s;
+    animation-duration: 10s;
+  }
+
+  @keyframes liquid-flow {
+    0% {
+      transform: rotate(0deg) translate(0, 0);
+    }
+    25% {
+      transform: rotate(90deg) translate(5%, -5%);
+    }
+    50% {
+      transform: rotate(180deg) translate(0, 0);
+    }
+    75% {
+      transform: rotate(270deg) translate(-5%, 5%);
+    }
+    100% {
+      transform: rotate(360deg) translate(0, 0);
+    }
+  }
+
+  /* Glass overlay */
+  .liquid-glass {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: inherit;
+  }
+
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    border-radius: inherit;
+  }
+
+  /* Content */
+  .liquid-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Indicator orb */
+  .liquid-indicator {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .indicator-orb {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .orb-core {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    box-shadow:
+      0 0 20px rgba(255, 255, 255, 0.8),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.1),
+      inset 0 3px 6px rgba(255, 255, 255, 0.9);
+    transition: all 0.4s ease;
+  }
+
+  .status-liquid--open .orb-core {
+    animation: orb-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes orb-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.8),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.1),
+        inset 0 3px 6px rgba(255, 255, 255, 0.9);
+    }
+    50% {
+      transform: scale(1.15);
+      box-shadow:
+        0 0 30px rgba(255, 255, 255, 1),
+        0 0 50px rgba(255, 255, 255, 0.5),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.1),
+        inset 0 3px 6px rgba(255, 255, 255, 0.9);
+    }
+  }
+
+  .orb-ring {
+    position: absolute;
+    inset: 0;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    opacity: 0;
+  }
+
+  .status-liquid--open .orb-ring {
+    animation: ring-expand 2s ease-out infinite;
+  }
+
+  @keyframes ring-expand {
+    0% {
+      transform: scale(0.5);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+
+  /* Text content */
+  .liquid-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .status-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.02em;
+  }
+
+  .status-time {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Floating particles */
+  .liquid-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    opacity: 0;
+  }
+
+  .status-liquid--open .particle {
+    animation: particle-float 4s ease-in-out infinite;
+  }
+
+  .particle--1 {
+    left: 20%;
+    bottom: -10px;
+    animation-delay: 0s;
+  }
+
+  .particle--2 {
+    left: 40%;
+    bottom: -10px;
+    animation-delay: 1s;
+    width: 4px;
+    height: 4px;
+  }
+
+  .particle--3 {
+    left: 60%;
+    bottom: -10px;
+    animation-delay: 2s;
+    width: 5px;
+    height: 5px;
+  }
+
+  .particle--4 {
+    left: 80%;
+    bottom: -10px;
+    animation-delay: 3s;
+    width: 3px;
+    height: 3px;
+  }
+
+  @keyframes particle-float {
+    0% {
+      transform: translateY(0) scale(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.8;
+      transform: translateY(0) scale(1);
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateY(-80px) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  /* Hover effect */
+  .status-liquid:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      14px 14px 40px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -14px -14px 40px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 0 60px rgba(16, 185, 129, 0.3);
+  }
+
+  .status-liquid--closed:hover {
+    box-shadow:
+      14px 14px 40px var(--ng-shadow-dark),
+      -14px -14px 40px var(--ng-shadow-light),
+      0 0 50px rgba(239, 68, 68, 0.25);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .status-liquid--floating {
+      bottom: 1rem;
+      right: 1rem;
+      min-width: 180px;
+      padding: 0.875rem 1.25rem;
+    }
+
+    .liquid-indicator {
+      width: 38px;
+      height: 38px;
+    }
+
+    .orb-core {
+      width: 16px;
+      height: 16px;
+    }
+
+    .status-label {
+      font-size: 0.9375rem;
+    }
+
+    .status-time {
+      font-size: 0.6875rem;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .liquid-wave,
+    .orb-core,
+    .orb-ring,
+    .particle {
+      animation: none;
+    }
+
+    .status-liquid {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  class StatusLiquidUpdater {
+    private element: HTMLElement;
+    private schedule: Record<string, { open: string; close: string; closed?: boolean }>;
+    private forceStatus: string | null;
+    private language: string;
+    private updateInterval: number | null = null;
+
+    constructor(element: HTMLElement) {
+      this.element = element;
+      this.schedule = JSON.parse(element.dataset.schedule || "{}");
+      this.forceStatus = element.dataset.forceStatus || null;
+      this.language = element.dataset.language || "es";
+
+      this.updateInterval = window.setInterval(() => this.updateStatus(), 60000);
+    }
+
+    private updateStatus() {
+      const isCurrentlyOpen = this.element.classList.contains("status-liquid--open");
+      const shouldBeOpen = this.calculateIsOpen();
+
+      if (isCurrentlyOpen !== shouldBeOpen) {
+        this.element.classList.toggle("status-liquid--open", shouldBeOpen);
+        this.element.classList.toggle("status-liquid--closed", !shouldBeOpen);
+
+        const statusLabel = this.element.querySelector(".status-label");
+        if (statusLabel) {
+          const texts = this.language === "es"
+            ? { open: "Estamos abiertos", closed: "Cerrado" }
+            : { open: "We're open", closed: "Closed" };
+          statusLabel.textContent = shouldBeOpen ? texts.open : texts.closed;
+        }
+
+        this.element.dispatchEvent(new CustomEvent("statuschange", {
+          detail: { isOpen: shouldBeOpen },
+          bubbles: true,
+        }));
+      }
+    }
+
+    private calculateIsOpen(): boolean {
+      if (this.forceStatus === "open") return true;
+      if (this.forceStatus === "closed") return false;
+
+      const now = new Date();
+      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKey = this.findDayKey(days[now.getDay()]);
+      const todaySchedule = this.schedule[dayKey];
+
+      if (!todaySchedule || todaySchedule.closed) return false;
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+      const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+
+      return currentMinutes >= openHour * 60 + openMin && currentMinutes < closeHour * 60 + closeMin;
+    }
+
+    private findDayKey(dayName: string): string {
+      const dayMap: Record<string, string> = {
+        "sunday": "domingo", "monday": "lunes", "tuesday": "martes",
+        "wednesday": "miércoles", "thursday": "jueves", "friday": "viernes", "saturday": "sábado",
+      };
+      if (this.schedule[dayName]) return dayName;
+      const spanishKey = dayMap[dayName];
+      if (spanishKey && this.schedule[spanishKey]) return spanishKey;
+      return dayName;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll<HTMLElement>(".status-liquid").forEach((el) => {
+      new StatusLiquidUpdater(el);
+    });
+  });
+</script>

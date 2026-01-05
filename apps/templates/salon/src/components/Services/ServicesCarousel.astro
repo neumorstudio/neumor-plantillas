@@ -1,0 +1,312 @@
+---
+/**
+ * MenuCarousel - Variante con scroll horizontal
+ * Ideal para: Fast Food, restaurantes visuales
+ */
+interface MenuItem {
+  name: string;
+  description: string;
+  price: string;
+  tag?: string;
+  image?: string;
+}
+
+interface MenuCategory {
+  name: string;
+  icon: string;
+  items: MenuItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: MenuCategory[];
+}
+
+const defaultCategories: MenuCategory[] = [
+  {
+    name: "Burgers",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`,
+    items: [
+      { name: "Classic Burger", description: "Carne 100% ternera, queso cheddar, lechuga, tomate", price: "12", tag: "popular", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80" },
+      { name: "BBQ Bacon", description: "Bacon crujiente, cebolla caramelizada, salsa BBQ", price: "14", image: "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400&q=80" },
+      { name: "Veggie Deluxe", description: "Hamburguesa vegetal con guacamole y chips", price: "13", tag: "vegano", image: "https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&q=80" },
+      { name: "Double Smash", description: "Doble carne smash con queso americano", price: "16", tag: "nuevo", image: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=400&q=80" },
+    ],
+  },
+  {
+    name: "Sides",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/></svg>`,
+    items: [
+      { name: "Loaded Fries", description: "Patatas con queso, bacon y salsa ranch", price: "8", tag: "popular", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&q=80" },
+      { name: "Onion Rings", description: "Aros de cebolla crujientes con salsa especial", price: "6", image: "https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&q=80" },
+      { name: "Nuggets x10", description: "Nuggets de pollo con 3 salsas a elegir", price: "9", image: "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&q=80" },
+    ],
+  },
+  {
+    name: "Drinks",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/></svg>`,
+    items: [
+      { name: "Milkshake", description: "Vainilla, chocolate o fresa", price: "5", image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&q=80" },
+      { name: "Fresh Lemonade", description: "Limonada natural con hierbabuena", price: "4", tag: "nuevo", image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&q=80" },
+    ],
+  },
+];
+
+const {
+  title = "Nuestro Menu",
+  subtitle = "Desliza para ver todas las opciones",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="menu" class="menu-carousel-section">
+  <div class="section-header">
+    <div class="container">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+  </div>
+
+  {categories.map((category) => (
+    <div class="menu-category">
+      <div class="container">
+        <div class="category-header">
+          <span class="category-icon" set:html={category.icon} />
+          <h3 class="category-name">{category.name}</h3>
+        </div>
+      </div>
+
+      <div class="carousel-wrapper">
+        <div class="carousel-track">
+          {category.items.map((item) => (
+            <article class="menu-card neumor-card">
+              {item.image && (
+                <div class="card-image">
+                  <img src={item.image} alt={item.name} loading="lazy" />
+                  {item.tag && <span class={`card-tag tag-${item.tag}`}>{item.tag}</span>}
+                </div>
+              )}
+              <div class="card-content">
+                <h4 class="card-title">{item.name}</h4>
+                <p class="card-description">{item.description}</p>
+                <div class="card-footer">
+                  <span class="card-price">€{item.price}</span>
+                  <button class="card-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  ))}
+</section>
+
+<style>
+  .menu-carousel-section {
+    padding: 6rem 0;
+    overflow: hidden;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+
+  /* Category */
+  .menu-category {
+    margin-bottom: 3rem;
+  }
+
+  .menu-category:last-child {
+    margin-bottom: 0;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .category-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+    display: flex;
+  }
+
+  .category-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .category-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Carousel */
+  .carousel-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 1rem 0;
+  }
+
+  .carousel-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0 max(1.5rem, calc((100vw - 1200px) / 2 + 1.5rem));
+  }
+
+  /* Card */
+  .menu-card {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+    padding: 0;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .menu-card:hover {
+    transform: translateY(-8px) scale(1.02);
+  }
+
+  .card-image {
+    position: relative;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .menu-card:hover .card-image img {
+    transform: scale(1.1);
+  }
+
+  .card-tag {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.35rem 0.75rem;
+    border-radius: 2rem;
+  }
+
+  .tag-popular {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .tag-nuevo {
+    background: #10b981;
+    color: white;
+  }
+
+  .tag-vegano {
+    background: #22c55e;
+    color: white;
+  }
+
+  .card-content {
+    padding: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+  }
+
+  .card-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .card-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .card-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .card-btn:hover {
+    transform: scale(1.1);
+    background: var(--accent-hover);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .menu-carousel-section {
+      padding: 4rem 0;
+    }
+
+    .menu-card {
+      flex: 0 0 260px;
+    }
+  }
+</style>

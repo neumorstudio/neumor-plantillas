@@ -1,0 +1,653 @@
+---
+/**
+ * StatusTime - Variante "Split Time"
+ *
+ * Muestra estado + countdown al próximo cambio de horario.
+ * Ejemplo: "ABIERTO · Cierra en 2h 30min"
+ */
+
+interface DaySchedule {
+  open: string;
+  close: string;
+  closed?: boolean;
+}
+
+interface Props {
+  schedule: Record<string, DaySchedule>;
+  position?: "floating" | "inline";
+  forceStatus?: "open" | "closed" | null;
+  showCountdown?: boolean;
+  language?: "es" | "en";
+}
+
+const {
+  schedule,
+  position = "floating",
+  forceStatus = null,
+  showCountdown = true,
+  language = "es",
+} = Astro.props;
+
+const t = {
+  es: {
+    open: "ABIERTO",
+    closed: "CERRADO",
+    closesIn: "Cierra en",
+    opensIn: "Abre en",
+    closedToday: "Cerrado hoy",
+    tomorrow: "mañana",
+    hours: "h",
+    minutes: "min",
+    days: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+  },
+  en: {
+    open: "OPEN",
+    closed: "CLOSED",
+    closesIn: "Closes in",
+    opensIn: "Opens in",
+    closedToday: "Closed today",
+    tomorrow: "tomorrow",
+    hours: "h",
+    minutes: "min",
+    days: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"],
+  },
+};
+
+const texts = t[language];
+
+const dayMap: Record<string, string> = {
+  "domingo": "sunday", "lunes": "monday", "martes": "tuesday",
+  "miércoles": "wednesday", "miercoles": "wednesday", "jueves": "thursday",
+  "viernes": "friday", "sábado": "saturday", "sabado": "saturday",
+};
+
+function findDayKey(dayName: string): string {
+  if (schedule[dayName]) return dayName;
+  if (schedule[dayMap[dayName] || ""]) return dayMap[dayName] || "";
+  const noAccent = dayName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (schedule[noAccent]) return noAccent;
+  return dayName;
+}
+
+function calculateStatus() {
+  const now = new Date();
+  const dayIndex = now.getDay();
+  const dayName = texts.days[dayIndex];
+  const dayKey = findDayKey(dayName);
+  const todaySchedule = schedule[dayKey] || null;
+
+  if (forceStatus === "open") {
+    return { isOpen: true, countdown: "", countdownRaw: { hours: 0, minutes: 0 } };
+  }
+  if (forceStatus === "closed") {
+    return { isOpen: false, countdown: texts.closedToday, countdownRaw: { hours: 0, minutes: 0 } };
+  }
+
+  if (!todaySchedule || todaySchedule.closed) {
+    // Find next open day
+    const nextOpenCountdown = findNextOpenTime(now);
+    return { isOpen: false, countdown: nextOpenCountdown.text, countdownRaw: nextOpenCountdown.raw };
+  }
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+  const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+  const openMinutes = openHour * 60 + openMin;
+  const closeMinutes = closeHour * 60 + closeMin;
+
+  const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+
+  let countdown = "";
+  let countdownRaw = { hours: 0, minutes: 0 };
+
+  if (isOpen) {
+    const remaining = closeMinutes - currentMinutes;
+    const hours = Math.floor(remaining / 60);
+    const minutes = remaining % 60;
+    countdownRaw = { hours, minutes };
+    countdown = formatCountdown(hours, minutes, texts.closesIn);
+  } else if (currentMinutes < openMinutes) {
+    const remaining = openMinutes - currentMinutes;
+    const hours = Math.floor(remaining / 60);
+    const minutes = remaining % 60;
+    countdownRaw = { hours, minutes };
+    countdown = formatCountdown(hours, minutes, texts.opensIn);
+  } else {
+    // After closing time, find next open
+    const nextOpen = findNextOpenTime(now);
+    countdown = nextOpen.text;
+    countdownRaw = nextOpen.raw;
+  }
+
+  return { isOpen, countdown, countdownRaw };
+}
+
+function formatCountdown(hours: number, minutes: number, prefix: string): string {
+  if (hours > 0) {
+    return `${prefix} ${hours}${texts.hours} ${minutes}${texts.minutes}`;
+  }
+  return `${prefix} ${minutes}${texts.minutes}`;
+}
+
+function findNextOpenTime(from: Date): { text: string; raw: { hours: number; minutes: number } } {
+  // Simplified: check tomorrow
+  const tomorrow = new Date(from);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowIndex = tomorrow.getDay();
+  const tomorrowName = texts.days[tomorrowIndex];
+  const tomorrowKey = findDayKey(tomorrowName);
+  const tomorrowSchedule = schedule[tomorrowKey];
+
+  if (tomorrowSchedule && !tomorrowSchedule.closed) {
+    return {
+      text: `${texts.opensIn} ${texts.tomorrow} ${tomorrowSchedule.open}`,
+      raw: { hours: 0, minutes: 0 }
+    };
+  }
+
+  return { text: texts.closedToday, raw: { hours: 0, minutes: 0 } };
+}
+
+const { isOpen, countdown, countdownRaw } = calculateStatus();
+const statusText = isOpen ? texts.open : texts.closed;
+---
+
+<div
+  class:list={[
+    "status-time",
+    `status-time--${position}`,
+    { "status-time--open": isOpen, "status-time--closed": !isOpen }
+  ]}
+  data-schedule={JSON.stringify(schedule)}
+  data-force-status={forceStatus}
+  data-language={language}
+>
+  <!-- Neumorphic container -->
+  <div class="time-container">
+    <!-- Status badge -->
+    <div class="time-status">
+      <div class="status-dot"></div>
+      <span class="status-label">{statusText}</span>
+    </div>
+
+    <!-- Separator -->
+    <div class="time-separator" aria-hidden="true">
+      <div class="separator-dot"></div>
+    </div>
+
+    <!-- Countdown section -->
+    {showCountdown && countdown && (
+      <div class="time-countdown">
+        {countdownRaw.hours > 0 || countdownRaw.minutes > 0 ? (
+          <>
+            <span class="countdown-prefix">{isOpen ? texts.closesIn : texts.opensIn}</span>
+            <div class="countdown-digits">
+              {countdownRaw.hours > 0 && (
+                <div class="digit-group">
+                  <span class="digit" data-value={countdownRaw.hours}>{countdownRaw.hours}</span>
+                  <span class="digit-label">{texts.hours}</span>
+                </div>
+              )}
+              <div class="digit-group">
+                <span class="digit" data-value={countdownRaw.minutes}>{countdownRaw.minutes}</span>
+                <span class="digit-label">{texts.minutes}</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <span class="countdown-text">{countdown}</span>
+        )}
+      </div>
+    )}
+  </div>
+
+  <!-- Ambient glow -->
+  <div class="time-glow" aria-hidden="true"></div>
+</div>
+
+<style>
+  .status-time {
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Position variants */
+  .status-time--floating {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+  }
+
+  .status-time--inline {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Main container */
+  .time-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1.5rem;
+    border-radius: var(--ng-radius-lg, 28px);
+    background: var(--ng-glass-bg-strong, rgba(255, 255, 255, 0.45));
+    backdrop-filter: blur(var(--ng-blur-lg, 24px)) saturate(200%);
+    -webkit-backdrop-filter: blur(var(--ng-blur-lg, 24px)) saturate(200%);
+    border: 1px solid var(--ng-glass-border, rgba(255, 255, 255, 0.4));
+    box-shadow:
+      8px 8px 24px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -8px -8px 24px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      inset 0 1px 2px var(--ng-glass-glow, rgba(255, 255, 255, 0.5));
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Status section */
+  .time-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+  }
+
+  .status-time--open .status-dot {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    box-shadow:
+      0 0 12px rgba(16, 185, 129, 0.6),
+      0 0 24px rgba(16, 185, 129, 0.3);
+    animation: dot-pulse 2s ease-in-out infinite;
+  }
+
+  .status-time--closed .status-dot {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  }
+
+  @keyframes dot-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow:
+        0 0 12px rgba(16, 185, 129, 0.6),
+        0 0 24px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+      transform: scale(1.2);
+      box-shadow:
+        0 0 16px rgba(16, 185, 129, 0.8),
+        0 0 32px rgba(16, 185, 129, 0.4);
+    }
+  }
+
+  .status-label {
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--ng-text-primary, #1a1a2e);
+  }
+
+  .status-time--open .status-label {
+    background: linear-gradient(135deg, #10b981, #059669);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .status-time--closed .status-label {
+    color: #ef4444;
+  }
+
+  /* Separator */
+  .time-separator {
+    display: flex;
+    align-items: center;
+    height: 24px;
+  }
+
+  .separator-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ng-text-muted, #4b5563);
+    opacity: 0.5;
+  }
+
+  /* Countdown section */
+  .time-countdown {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .countdown-prefix {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ng-text-secondary, #374151);
+    white-space: nowrap;
+  }
+
+  .countdown-digits {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .digit-group {
+    display: flex;
+    align-items: baseline;
+    gap: 0.125rem;
+  }
+
+  .digit {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ng-text-primary, #1a1a2e);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--ng-radius-sm, 12px);
+    background: var(--ng-surface-sunken, #dde1e6);
+    box-shadow:
+      inset 2px 2px 6px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      inset -2px -2px 6px var(--ng-shadow-light, rgba(255, 255, 255, 0.9));
+    min-width: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .status-time--open .digit {
+    background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+    color: #065f46;
+  }
+
+  .digit-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ng-text-muted, #4b5563);
+    text-transform: lowercase;
+  }
+
+  .countdown-text {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ng-text-secondary, #374151);
+    white-space: nowrap;
+  }
+
+  /* Ambient glow */
+  .time-glow {
+    position: absolute;
+    inset: -8px;
+    border-radius: calc(var(--ng-radius-lg, 28px) + 8px);
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: -1;
+    transition: all 0.4s ease;
+  }
+
+  .status-time--open .time-glow {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(16, 185, 129, 0.3) 0%,
+      transparent 70%
+    );
+  }
+
+  .status-time--closed .time-glow {
+    background: radial-gradient(
+      ellipse at center,
+      rgba(239, 68, 68, 0.2) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Hover effects */
+  .status-time:hover .time-container {
+    transform: translateY(-2px);
+    box-shadow:
+      12px 12px 32px var(--ng-shadow-dark, rgba(163, 177, 198, 0.6)),
+      -12px -12px 32px var(--ng-shadow-light, rgba(255, 255, 255, 0.9)),
+      0 8px 24px rgba(0, 0, 0, 0.08),
+      inset 0 1px 2px var(--ng-glass-glow, rgba(255, 255, 255, 0.5));
+  }
+
+  .status-time--open:hover .time-glow {
+    opacity: 0.5;
+    transform: scale(1.05);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .status-time--floating {
+      bottom: 1rem;
+      right: 1rem;
+    }
+
+    .time-container {
+      padding: 0.75rem 1.125rem;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .time-separator {
+      display: none;
+    }
+
+    .status-label {
+      font-size: 0.75rem;
+    }
+
+    .digit {
+      font-size: 1rem;
+      padding: 0.1875rem 0.375rem;
+      min-width: 1.75rem;
+    }
+
+    .countdown-prefix {
+      font-size: 0.6875rem;
+    }
+
+    .digit-label {
+      font-size: 0.625rem;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .status-dot {
+      animation: none;
+    }
+
+    .time-container {
+      transition: none;
+    }
+  }
+
+  /* Dark mode */
+  :global(.dark) .time-container,
+  :global([data-theme="dark"]) .time-container,
+  :global([data-theme="neuglass-dark"]) .time-container {
+    background: var(--ng-glass-bg-strong, rgba(40, 45, 65, 0.75));
+    border-color: var(--ng-glass-border, rgba(255, 255, 255, 0.08));
+  }
+
+  :global(.dark) .status-label,
+  :global([data-theme="dark"]) .status-label,
+  :global([data-theme="neuglass-dark"]) .status-label {
+    color: var(--ng-text-primary, #f1f5f9);
+  }
+
+  :global(.dark) .status-time--open .status-label,
+  :global([data-theme="dark"]) .status-time--open .status-label,
+  :global([data-theme="neuglass-dark"]) .status-time--open .status-label {
+    background: linear-gradient(135deg, #34d399, #6ee7b7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  :global(.dark) .digit,
+  :global([data-theme="dark"]) .digit,
+  :global([data-theme="neuglass-dark"]) .digit {
+    background: var(--ng-surface-sunken, #0c0e12);
+    color: var(--ng-text-primary, #f1f5f9);
+  }
+
+  :global(.dark) .status-time--open .digit,
+  :global([data-theme="dark"]) .status-time--open .digit,
+  :global([data-theme="neuglass-dark"]) .status-time--open .digit {
+    background: linear-gradient(145deg, #064e3b, #065f46);
+    color: #6ee7b7;
+  }
+
+  :global(.dark) .countdown-prefix,
+  :global([data-theme="dark"]) .countdown-prefix,
+  :global([data-theme="neuglass-dark"]) .countdown-prefix {
+    color: var(--ng-text-secondary, #cbd5e1);
+  }
+
+  :global(.dark) .digit-label,
+  :global([data-theme="dark"]) .digit-label,
+  :global([data-theme="neuglass-dark"]) .digit-label {
+    color: var(--ng-text-muted, #94a3b8);
+  }
+</style>
+
+<script>
+  /**
+   * Real-time countdown updater
+   * Updates every minute and animates digit changes
+   */
+  class StatusTimeUpdater {
+    private element: HTMLElement;
+    private schedule: Record<string, { open: string; close: string; closed?: boolean }>;
+    private forceStatus: string | null;
+    private language: string;
+    private updateInterval: number | null = null;
+
+    constructor(element: HTMLElement) {
+      this.element = element;
+      this.schedule = JSON.parse(element.dataset.schedule || "{}");
+      this.forceStatus = element.dataset.forceStatus || null;
+      this.language = element.dataset.language || "es";
+
+      // Update every minute for countdown accuracy
+      this.updateInterval = window.setInterval(() => this.updateStatus(), 60000);
+    }
+
+    private updateStatus() {
+      const result = this.calculateStatus();
+
+      // Update status classes
+      const wasOpen = this.element.classList.contains("status-time--open");
+      if (wasOpen !== result.isOpen) {
+        this.element.classList.toggle("status-time--open", result.isOpen);
+        this.element.classList.toggle("status-time--closed", !result.isOpen);
+
+        // Update status label
+        const statusLabel = this.element.querySelector(".status-label");
+        if (statusLabel) {
+          const texts = this.language === "es"
+            ? { open: "ABIERTO", closed: "CERRADO" }
+            : { open: "OPEN", closed: "CLOSED" };
+          statusLabel.textContent = result.isOpen ? texts.open : texts.closed;
+        }
+
+        this.element.dispatchEvent(new CustomEvent("statuschange", {
+          detail: { isOpen: result.isOpen },
+          bubbles: true,
+        }));
+      }
+
+      // Update countdown digits with animation
+      this.updateDigits(result.hours, result.minutes);
+    }
+
+    private updateDigits(hours: number, minutes: number) {
+      const digits = this.element.querySelectorAll<HTMLElement>(".digit");
+
+      digits.forEach((digit) => {
+        const currentValue = digit.dataset.value;
+        const digitLabel = digit.nextElementSibling?.textContent;
+
+        let newValue: number | undefined;
+        const texts = this.language === "es" ? { h: "h", min: "min" } : { h: "h", min: "min" };
+
+        if (digitLabel === texts.h) {
+          newValue = hours;
+        } else if (digitLabel === texts.min) {
+          newValue = minutes;
+        }
+
+        if (newValue !== undefined && String(newValue) !== currentValue) {
+          // Animate the change
+          digit.style.transform = "scale(0.8)";
+          digit.style.opacity = "0.5";
+
+          setTimeout(() => {
+            digit.textContent = String(newValue);
+            digit.dataset.value = String(newValue);
+            digit.style.transform = "scale(1)";
+            digit.style.opacity = "1";
+          }, 150);
+        }
+      });
+    }
+
+    private calculateStatus(): { isOpen: boolean; hours: number; minutes: number } {
+      if (this.forceStatus === "open") return { isOpen: true, hours: 0, minutes: 0 };
+      if (this.forceStatus === "closed") return { isOpen: false, hours: 0, minutes: 0 };
+
+      const now = new Date();
+      const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+      const dayKey = this.findDayKey(days[now.getDay()]);
+      const todaySchedule = this.schedule[dayKey];
+
+      if (!todaySchedule || todaySchedule.closed) {
+        return { isOpen: false, hours: 0, minutes: 0 };
+      }
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const [openHour, openMin] = todaySchedule.open.split(":").map(Number);
+      const [closeHour, closeMin] = todaySchedule.close.split(":").map(Number);
+      const openMinutes = openHour * 60 + openMin;
+      const closeMinutes = closeHour * 60 + closeMin;
+
+      const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+
+      let remaining = 0;
+      if (isOpen) {
+        remaining = closeMinutes - currentMinutes;
+      } else if (currentMinutes < openMinutes) {
+        remaining = openMinutes - currentMinutes;
+      }
+
+      return {
+        isOpen,
+        hours: Math.floor(remaining / 60),
+        minutes: remaining % 60,
+      };
+    }
+
+    private findDayKey(dayName: string): string {
+      const dayMap: Record<string, string> = {
+        "sunday": "domingo", "monday": "lunes", "tuesday": "martes",
+        "wednesday": "miércoles", "thursday": "jueves", "friday": "viernes", "saturday": "sábado",
+      };
+      if (this.schedule[dayName]) return dayName;
+      const spanishKey = dayMap[dayName];
+      if (spanishKey && this.schedule[spanishKey]) return spanishKey;
+      return dayName;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll<HTMLElement>(".status-time").forEach((el) => {
+      new StatusTimeUpdater(el);
+    });
+  });
+</script>

@@ -1,0 +1,357 @@
+---
+/**
+ * HeroMinimal - Variante minimalista solo con texto
+ * Ideal para: Cafe/Bistro, restaurantes acogedores
+ */
+interface Props {
+  title: string;
+  subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string; // No se usa pero mantiene la interfaz
+}
+
+const {
+  title,
+  subtitle,
+  ctaText = "Reservar",
+  ctaLink = "#reserve",
+} = Astro.props;
+---
+
+<section class="hero-minimal">
+  <div class="hero-container">
+    <div class="hero-content">
+      <div class="hero-eyebrow animate-fade">
+        <span class="eyebrow-line"></span>
+        <span class="eyebrow-text">Est. 2024</span>
+        <span class="eyebrow-line"></span>
+      </div>
+
+      <h1 class="hero-title animate-fade animation-delay-100">
+        {title}
+      </h1>
+
+      <p class="hero-subtitle animate-fade animation-delay-200">
+        {subtitle}
+      </p>
+
+      <div class="hero-cta-group animate-fade animation-delay-300">
+        <a href={ctaLink} class="hero-cta">
+          {ctaText}
+        </a>
+        <a href="#menu" class="hero-link">
+          Explorar Menu
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Decorative elements -->
+    <div class="hero-deco">
+      <div class="deco-shape deco-1"></div>
+      <div class="deco-shape deco-2"></div>
+      <div class="deco-shape deco-3"></div>
+    </div>
+  </div>
+
+  <!-- Bottom info bar -->
+  <div class="hero-info-bar animate-fade animation-delay-400">
+    <div class="info-item">
+      <span class="info-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+      </span>
+      <div class="info-text">
+        <span class="info-label">Horario</span>
+        <span class="info-value">8:00 - 22:00</span>
+      </div>
+    </div>
+
+    <div class="info-divider"></div>
+
+    <div class="info-item">
+      <span class="info-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </span>
+      <div class="info-text">
+        <span class="info-label">Ubicacion</span>
+        <span class="info-value">Centro, Madrid</span>
+      </div>
+    </div>
+
+    <div class="info-divider"></div>
+
+    <div class="info-item">
+      <span class="info-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+      </span>
+      <div class="info-text">
+        <span class="info-label">Reservas</span>
+        <span class="info-value">+34 912 345 678</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-minimal {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .hero-content {
+    text-align: center;
+    max-width: 700px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow-line {
+    width: 40px;
+    height: 1px;
+    background: var(--text-secondary);
+    opacity: 0.4;
+  }
+
+  .eyebrow-text {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 200;
+    line-height: 1.05;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--text-secondary);
+    line-height: 1.8;
+    max-width: 500px;
+    margin: 0 auto 3rem;
+    font-weight: 300;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .hero-cta {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: var(--text-primary);
+    color: var(--neumor-bg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  .hero-cta:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .hero-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+  }
+
+  .hero-link svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+  }
+
+  .hero-link:hover {
+    color: var(--accent);
+  }
+
+  .hero-link:hover svg {
+    transform: translateX(4px);
+  }
+
+  /* Decorative shapes */
+  .hero-deco {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .deco-shape {
+    position: absolute;
+    border: 1px solid var(--shadow-dark);
+    border-radius: 50%;
+    opacity: 0.3;
+  }
+
+  .deco-1 {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    left: -100px;
+  }
+
+  .deco-2 {
+    width: 300px;
+    height: 300px;
+    bottom: -50px;
+    right: -50px;
+  }
+
+  .deco-3 {
+    width: 150px;
+    height: 150px;
+    top: 30%;
+    right: 10%;
+  }
+
+  /* Info bar */
+  .hero-info-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+    padding: 2rem;
+    border-top: 1px solid var(--shadow-dark);
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .info-icon {
+    color: var(--accent);
+  }
+
+  .info-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .info-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 0.125rem;
+  }
+
+  .info-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .info-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--shadow-dark);
+  }
+
+  /* Animations */
+  .animate-fade {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animation-delay-100 { animation-delay: 0.1s; }
+  .animation-delay-200 { animation-delay: 0.2s; }
+  .animation-delay-300 { animation-delay: 0.3s; }
+  .animation-delay-400 { animation-delay: 0.4s; }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-minimal {
+      padding: 5rem 1.5rem 1.5rem;
+    }
+
+    .hero-cta-group {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .hero-info-bar {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .info-divider {
+      width: 40px;
+      height: 1px;
+    }
+
+    .deco-shape {
+      display: none;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

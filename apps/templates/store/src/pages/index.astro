@@ -1,0 +1,226 @@
+---
+/**
+ * NEUMORSTUDIO - Plantilla Store/Tienda
+ *
+ * Esta plantilla carga la configuracion desde Supabase automaticamente.
+ * Si no hay conexion a Supabase, usa los valores por defecto.
+ *
+ * Variables de entorno requeridas:
+ * - PUBLIC_SUPABASE_URL: URL de tu proyecto Supabase
+ * - PUBLIC_SUPABASE_ANON_KEY: Clave anonima de Supabase
+ * - PUBLIC_WEBSITE_ID: ID del website en la tabla websites
+ *
+ * Preview Mode:
+ * Anadir ?preview=1 a la URL para activar el modo preview.
+ * Parametros de preview:
+ * - theme: Tema a previsualizar
+ * - v_hero, v_products, v_features, v_reviews, v_footer: Variantes individuales
+ */
+
+import Layout from "@layouts/Layout.astro";
+import Header from "@components/Header.astro";
+import ContactForm from "@components/ContactForm.astro";
+
+// Importar TODAS las variantes de componentes
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
+import { ProductsTabs, ProductsGrid, ProductsList, ProductsCarousel } from "@components/Products";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
+import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
+import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
+
+// Importar cliente Supabase
+import { getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+
+// ============================================
+// PREVIEW MODE - Leer parametros de URL
+// ============================================
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+
+// Parametros de preview
+const previewTheme = url.searchParams.get("theme") as Theme | null;
+const previewVariants = {
+  hero: url.searchParams.get("v_hero"),
+  products: url.searchParams.get("v_products"),
+  features: url.searchParams.get("v_features"),
+  reviews: url.searchParams.get("v_reviews"),
+  footer: url.searchParams.get("v_footer"),
+};
+
+// ============================================
+// MAPEO DE VARIANTES
+// ============================================
+const componentMap = {
+  hero: {
+    classic: HeroClassic,
+    modern: HeroModern,
+    bold: HeroBold,
+    minimal: HeroMinimal,
+  },
+  products: {
+    tabs: ProductsTabs,
+    grid: ProductsGrid,
+    list: ProductsList,
+    carousel: ProductsCarousel,
+  },
+  features: {
+    cards: FeaturesCards,
+    icons: FeaturesIcons,
+    banner: FeaturesBanner,
+  },
+  reviews: {
+    grid: ReviewsGrid,
+    carousel: ReviewsCarousel,
+    minimal: ReviewsMinimal,
+  },
+  footer: {
+    full: FooterFull,
+    minimal: FooterMinimal,
+    centered: FooterCentered,
+  },
+};
+
+// ============================================
+// VALORES POR DEFECTO (fallback si no hay Supabase)
+// ============================================
+const defaultConfig = {
+  businessName: "Mi Tienda",
+  theme: "light" as Theme,
+  variants: {
+    hero: "classic",
+    products: "tabs",
+    features: "cards",
+    reviews: "grid",
+    footer: "full",
+  } as WebsiteVariants,
+  siteTitle: "Mi Tienda | E-commerce",
+  siteDescription: "Tienda online con estilo neumorfico",
+  heroTitle: "Descubre Nuestra Coleccion",
+  heroSubtitle: "Productos de calidad seleccionados para ti",
+  heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80",
+  webhookUrl: import.meta.env.PUBLIC_CONTACT_WEBHOOK_URL || "",
+  address: "Tu direccion aqui",
+  phone: "+34 000 000 000",
+  email: "info@tutienda.com",
+  socialLinks: {
+    instagram: "#",
+    facebook: "#",
+    whatsapp: "#",
+  } as { instagram: string; facebook: string; whatsapp: string },
+  googleRating: 4.8,
+  totalReviews: 150,
+};
+
+// ============================================
+// CARGAR CONFIGURACION DESDE SUPABASE
+// ============================================
+const websiteId = import.meta.env.PUBLIC_WEBSITE_ID;
+const websiteData = await getWebsiteConfig(websiteId, url.hostname);
+
+// Construir configuracion final mezclando Supabase + defaults
+let config: typeof defaultConfig;
+
+if (websiteData) {
+  // Tenemos datos de Supabase
+  const dbConfig = websiteData.config || {};
+
+  // Merge socialLinks asegurando que todos los campos existan
+  const mergedSocialLinks = {
+    instagram: dbConfig.socialLinks?.instagram || defaultConfig.socialLinks.instagram,
+    facebook: dbConfig.socialLinks?.facebook || defaultConfig.socialLinks.facebook,
+    whatsapp: dbConfig.socialLinks?.whatsapp || defaultConfig.socialLinks.whatsapp,
+  };
+
+  config = {
+    businessName: dbConfig.businessName || defaultConfig.businessName,
+    theme: websiteData.theme || defaultConfig.theme,
+    variants: dbConfig.variants || defaultConfig.variants,
+    siteTitle: `${dbConfig.businessName || defaultConfig.businessName} | Store`,
+    siteDescription: defaultConfig.siteDescription,
+    heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
+    heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,
+    heroImage: dbConfig.heroImage || defaultConfig.heroImage,
+    webhookUrl: defaultConfig.webhookUrl,
+    address: dbConfig.address || defaultConfig.address,
+    phone: dbConfig.phone || defaultConfig.phone,
+    email: dbConfig.email || defaultConfig.email,
+    socialLinks: mergedSocialLinks,
+    googleRating: dbConfig.googleRating || defaultConfig.googleRating,
+    totalReviews: dbConfig.totalReviews || defaultConfig.totalReviews,
+  };
+
+  console.log("Configuracion cargada desde Supabase:", websiteData.domain);
+} else {
+  // No hay conexion a Supabase, usar defaults
+  config = defaultConfig;
+  console.log("Usando configuracion por defecto (Supabase no disponible)");
+}
+
+// ============================================
+// SELECCION DINAMICA DE COMPONENTES
+// ============================================
+
+// Determinar el tema activo (preview override > Supabase)
+const activeTheme: Theme = (isPreview && previewTheme)
+  ? previewTheme
+  : config.theme;
+
+// Determinar variantes: preview override > Supabase config > defaults
+let selectedVariants: WebsiteVariants = config.variants;
+
+// En modo preview, aplicar variantes individuales si se especifican
+if (isPreview) {
+  selectedVariants = {
+    hero: (previewVariants.hero as WebsiteVariants["hero"]) || selectedVariants.hero,
+    products: (previewVariants.products as WebsiteVariants["products"]) || selectedVariants.products,
+    features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
+    reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
+    footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
+  };
+}
+
+// Seleccionar componentes segun la configuracion
+const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
+const Products = componentMap.products[selectedVariants.products] || ProductsTabs;
+const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
+const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
+const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
+
+// Website ID para el formulario de citas
+const currentWebsiteId = websiteData?.id || websiteId || "";
+---
+
+<Layout
+  title={config.siteTitle}
+  description={config.siteDescription}
+  theme={activeTheme}
+>
+  <Header businessName={config.businessName} />
+
+  <main>
+    <Hero
+      title={config.heroTitle}
+      subtitle={config.heroSubtitle}
+      backgroundImage={config.heroImage}
+    />
+
+    <Features />
+
+    <Products />
+
+    <Reviews
+      googleRating={config.googleRating}
+      totalReviews={config.totalReviews}
+    />
+
+    <ContactForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+  </main>
+
+  <FooterComponent
+    businessName={config.businessName}
+    address={config.address}
+    phone={config.phone}
+    email={config.email}
+    socialLinks={config.socialLinks}
+  />
+</Layout>

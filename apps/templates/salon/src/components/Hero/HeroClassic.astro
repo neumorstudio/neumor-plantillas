@@ -1,0 +1,514 @@
+---
+interface Props {
+  title: string;
+  subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string;
+}
+
+const {
+  title,
+  subtitle,
+  ctaText = "Reservar Mesa",
+  ctaLink = "#reserve",
+  backgroundImage,
+} = Astro.props;
+---
+
+<section class="hero">
+  <!-- Floating Elements con Parallax -->
+  <div class="floating-elements" aria-hidden="true">
+    <div class="floating-element floating-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
+      </svg>
+    </div>
+    <div class="floating-element floating-2">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+      </svg>
+    </div>
+    <div class="floating-element floating-3">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+        <line x1="6" y1="17" x2="18" y2="17"/>
+      </svg>
+    </div>
+    <div class="floating-element floating-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div class="floating-element floating-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Hero 3D Card con imagen -->
+  <div class="hero-3d-container">
+    {
+      backgroundImage && (
+        <div class="tilt-card" data-tilt>
+          <div class="tilt-card-inner neumor-card">
+            <img src={backgroundImage} alt={title} class="hero-image" />
+            <div class="shine-overlay"></div>
+          </div>
+          <!-- Decorative floating badges -->
+          <div class="floating-badge badge-1 neumor-card-sm">
+            <span class="badge-icon">★</span>
+            <span class="badge-text">4.9</span>
+          </div>
+          <div class="floating-badge badge-2 neumor-card-sm">
+            <span class="badge-emoji">🍽️</span>
+          </div>
+        </div>
+      )
+    }
+  </div>
+
+  <!-- Hero Content -->
+  <div class="container">
+    <div class="hero-content">
+      <h1 class="hero-title animate-fade-in-up">{title}</h1>
+      <p class="hero-subtitle animate-fade-in-up animation-delay-100">
+        {subtitle}
+      </p>
+      <a
+        href={ctaLink}
+        class="neumor-btn neumor-btn-accent hero-cta animate-fade-in-up animation-delay-200"
+      >
+        <span>{ctaText}</span>
+        <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 6rem 0 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ================================
+     Floating Elements - Parallax CSS
+     ================================ */
+  .floating-elements {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .floating-element {
+    position: absolute;
+    color: var(--accent);
+    opacity: 0.15;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .floating-element svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .floating-1 {
+    top: 15%;
+    left: 8%;
+    width: 60px;
+    height: 60px;
+    animation-delay: 0s;
+    animation-duration: 7s;
+  }
+
+  .floating-2 {
+    top: 25%;
+    right: 15%;
+    width: 40px;
+    height: 40px;
+    animation-delay: 1s;
+    animation-duration: 5s;
+  }
+
+  .floating-3 {
+    bottom: 30%;
+    left: 12%;
+    width: 50px;
+    height: 50px;
+    animation-delay: 2s;
+    animation-duration: 8s;
+  }
+
+  .floating-4 {
+    top: 60%;
+    right: 8%;
+    width: 45px;
+    height: 45px;
+    animation-delay: 0.5s;
+    animation-duration: 6s;
+  }
+
+  .floating-5 {
+    bottom: 15%;
+    left: 45%;
+    width: 35px;
+    height: 35px;
+    animation-delay: 1.5s;
+    animation-duration: 9s;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-15px) rotate(5deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(-3deg);
+    }
+    75% {
+      transform: translateY(-20px) rotate(3deg);
+    }
+  }
+
+  /* ================================
+     3D Tilt Card Container
+     ================================ */
+  .hero-3d-container {
+    position: absolute;
+    top: 50%;
+    right: 5%;
+    transform: translateY(-50%);
+    width: 45%;
+    max-width: 520px;
+    z-index: 1;
+    perspective: 1000px;
+  }
+
+  .tilt-card {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out;
+    will-change: transform;
+  }
+
+  .tilt-card-inner {
+    position: relative;
+    padding: 1rem;
+    border-radius: 2rem;
+    overflow: hidden;
+    transform-style: preserve-3d;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: auto;
+    border-radius: 1.5rem;
+    object-fit: cover;
+    aspect-ratio: 4/3;
+    display: block;
+    transform: translateZ(20px);
+  }
+
+  /* Shine Overlay Effect */
+  .shine-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 1.5rem;
+    background: radial-gradient(
+      circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 20%,
+      transparent 50%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    mix-blend-mode: overlay;
+  }
+
+  .tilt-card:hover .shine-overlay {
+    opacity: 1;
+  }
+
+  /* Floating Badges */
+  .floating-badge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    transform: translateZ(40px);
+    animation: badgeFloat 4s ease-in-out infinite;
+  }
+
+  .badge-1 {
+    top: -10px;
+    right: 20px;
+    animation-delay: 0s;
+  }
+
+  .badge-2 {
+    bottom: 20px;
+    left: -15px;
+    animation-delay: 1s;
+  }
+
+  .badge-icon {
+    color: #fbbf24;
+  }
+
+  .badge-emoji {
+    font-size: 1.2rem;
+  }
+
+  @keyframes badgeFloat {
+    0%, 100% {
+      transform: translateZ(40px) translateY(0);
+    }
+    50% {
+      transform: translateZ(40px) translateY(-8px);
+    }
+  }
+
+  /* ================================
+     Hero Content
+     ================================ */
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 50%;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    line-height: 1.1;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 420px;
+    line-height: 1.6;
+  }
+
+  .hero-cta {
+    font-size: 1.1rem;
+    padding: 1rem 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cta-arrow {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  .hero-cta:hover .cta-arrow {
+    transform: translateX(4px);
+  }
+
+  /* ================================
+     Responsive
+     ================================ */
+  @media (max-width: 968px) {
+    .hero {
+      flex-direction: column;
+      text-align: center;
+      padding-top: 8rem;
+    }
+
+    .hero-3d-container {
+      position: relative;
+      top: auto;
+      right: auto;
+      transform: none;
+      width: 90%;
+      max-width: 400px;
+      margin: 0 auto 2rem;
+    }
+
+    .hero-content {
+      max-width: 100%;
+    }
+
+    .hero-subtitle {
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .floating-elements {
+      opacity: 0.5;
+    }
+
+    .floating-badge {
+      transform: translateZ(0);
+    }
+
+    .badge-1 {
+      top: -5px;
+      right: 10px;
+    }
+
+    .badge-2 {
+      bottom: 10px;
+      left: -5px;
+    }
+  }
+
+  /* ================================
+     Reduced Motion
+     ================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .floating-element,
+    .floating-badge {
+      animation: none;
+    }
+
+    .tilt-card {
+      transition: none;
+    }
+
+    .shine-overlay {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // 3D Tilt Effect with Shine
+  class TiltEffect {
+    private card: HTMLElement;
+    private inner: HTMLElement;
+    private shine: HTMLElement;
+    private maxTilt: number = 15;
+    private isHovering: boolean = false;
+
+    constructor(element: HTMLElement) {
+      this.card = element;
+      this.inner = element.querySelector('.tilt-card-inner') as HTMLElement;
+      this.shine = element.querySelector('.shine-overlay') as HTMLElement;
+
+      this.init();
+    }
+
+    private init(): void {
+      // Check for reduced motion preference
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      this.card.addEventListener('mouseenter', () => this.onMouseEnter());
+      this.card.addEventListener('mousemove', (e) => this.onMouseMove(e));
+      this.card.addEventListener('mouseleave', () => this.onMouseLeave());
+    }
+
+    private onMouseEnter(): void {
+      this.isHovering = true;
+      this.card.style.transition = 'transform 0.1s ease-out';
+    }
+
+    private onMouseMove(e: MouseEvent): void {
+      if (!this.isHovering) return;
+
+      const rect = this.card.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const mouseX = e.clientX - centerX;
+      const mouseY = e.clientY - centerY;
+
+      const rotateX = (mouseY / (rect.height / 2)) * -this.maxTilt;
+      const rotateY = (mouseX / (rect.width / 2)) * this.maxTilt;
+
+      // Apply tilt transform
+      this.card.style.transform = `
+        rotateX(${rotateX}deg)
+        rotateY(${rotateY}deg)
+        scale3d(1.02, 1.02, 1.02)
+      `;
+
+      // Update shine position
+      const shineX = ((e.clientX - rect.left) / rect.width) * 100;
+      const shineY = ((e.clientY - rect.top) / rect.height) * 100;
+      this.shine.style.setProperty('--mouse-x', `${shineX}%`);
+      this.shine.style.setProperty('--mouse-y', `${shineY}%`);
+    }
+
+    private onMouseLeave(): void {
+      this.isHovering = false;
+      this.card.style.transition = 'transform 0.5s ease-out';
+      this.card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    }
+  }
+
+  // Parallax effect for floating elements on mouse move
+  class ParallaxFloating {
+    private elements: NodeListOf<HTMLElement>;
+    private hero: HTMLElement;
+
+    constructor() {
+      this.hero = document.querySelector('.hero') as HTMLElement;
+      this.elements = document.querySelectorAll('.floating-element');
+
+      this.init();
+    }
+
+    private init(): void {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      this.hero?.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    }
+
+    private onMouseMove(e: MouseEvent): void {
+      const rect = this.hero.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const mouseX = e.clientX - rect.left - centerX;
+      const mouseY = e.clientY - rect.top - centerY;
+
+      this.elements.forEach((el, index) => {
+        const speed = (index + 1) * 0.02;
+        const x = mouseX * speed;
+        const y = mouseY * speed;
+
+        el.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    }
+  }
+
+  // Initialize effects
+  document.addEventListener('DOMContentLoaded', () => {
+    const tiltCard = document.querySelector('[data-tilt]') as HTMLElement;
+    if (tiltCard) {
+      new TiltEffect(tiltCard);
+    }
+
+    new ParallaxFloating();
+  });
+</script>

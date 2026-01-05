@@ -1,0 +1,506 @@
+---
+interface ServiceItem {
+  name: string;
+  description: string;
+  price: string;
+  duration?: string;
+  tag?: string; // "nuevo", "popular", "promo", etc.
+}
+
+interface ServiceCategory {
+  name: string;
+  icon: string;
+  items: ServiceItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: ServiceCategory[];
+}
+
+const defaultCategories: ServiceCategory[] = [
+  {
+    name: "Cortes",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`,
+    items: [
+      {
+        name: "Corte Caballero",
+        description: "Corte clasico o moderno, incluye lavado y peinado",
+        price: "18",
+        duration: "30 min",
+        tag: "popular",
+      },
+      {
+        name: "Corte Senora",
+        description: "Corte personalizado segun tu estilo y tipo de cabello",
+        price: "25",
+        duration: "45 min",
+      },
+      {
+        name: "Corte Infantil",
+        description: "Corte para ninos hasta 12 anos",
+        price: "12",
+        duration: "20 min",
+      },
+      {
+        name: "Corte + Barba",
+        description: "Combo completo con perfilado y afeitado de barba",
+        price: "28",
+        duration: "45 min",
+        tag: "popular",
+      },
+    ],
+  },
+  {
+    name: "Color",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/><path d="m9 15 3-3 3 3"/><circle cx="12" cy="10" r="2"/></svg>`,
+    items: [
+      {
+        name: "Tinte Completo",
+        description: "Color uniforme en todo el cabello, incluye tratamiento",
+        price: "45",
+        duration: "90 min",
+      },
+      {
+        name: "Mechas/Balayage",
+        description: "Tecnica de iluminacion natural y degradado",
+        price: "65",
+        duration: "120 min",
+        tag: "popular",
+      },
+      {
+        name: "Decoloracion",
+        description: "Aclaracion profesional con productos de calidad",
+        price: "50",
+        duration: "90 min",
+      },
+      {
+        name: "Retoque de Raices",
+        description: "Mantenimiento del color en la zona de crecimiento",
+        price: "30",
+        duration: "60 min",
+      },
+    ],
+  },
+  {
+    name: "Tratamientos",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>`,
+    items: [
+      {
+        name: "Keratina",
+        description: "Alisado y nutricion profunda para cabello liso hasta 3 meses",
+        price: "120",
+        duration: "180 min",
+        tag: "nuevo",
+      },
+      {
+        name: "Botox Capilar",
+        description: "Tratamiento reparador intensivo para cabello danado",
+        price: "45",
+        duration: "60 min",
+        tag: "popular",
+      },
+      {
+        name: "Hidratacion Profunda",
+        description: "Mascarilla nutritiva con masaje capilar",
+        price: "25",
+        duration: "30 min",
+      },
+      {
+        name: "Tratamiento Anticaida",
+        description: "Sesion con productos especializados y masaje estimulante",
+        price: "35",
+        duration: "45 min",
+      },
+    ],
+  },
+  {
+    name: "Peinados",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    items: [
+      {
+        name: "Peinado Evento",
+        description: "Recogido o semirecogido para ocasiones especiales",
+        price: "40",
+        duration: "60 min",
+      },
+      {
+        name: "Peinado Novia",
+        description: "Look completo para el dia mas especial, incluye prueba",
+        price: "150",
+        duration: "120 min",
+        tag: "promo",
+      },
+      {
+        name: "Brushing",
+        description: "Lavado y secado con modelado profesional",
+        price: "20",
+        duration: "30 min",
+      },
+      {
+        name: "Ondas/Rizos",
+        description: "Marcado de ondas o rizos con planchas profesionales",
+        price: "25",
+        duration: "40 min",
+      },
+    ],
+  },
+];
+
+const {
+  title = "Nuestros Servicios",
+  subtitle = "Cuidamos tu imagen con profesionalidad y estilo",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="services" class="services-section">
+  <div class="container">
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+      {categories.map((category, index) => (
+        <button
+          class={`category-tab neumor-btn ${index === 0 ? 'active' : ''}`}
+          data-category={index}
+        >
+          <span class="tab-icon" set:html={category.icon} />
+          <span class="tab-name">{category.name}</span>
+        </button>
+      ))}
+    </div>
+
+    <!-- Services Content -->
+    <div class="services-content">
+      {categories.map((category, catIndex) => (
+        <div class={`services-category ${catIndex === 0 ? 'active' : ''}`} data-category-content={catIndex}>
+          <div class="services-grid">
+            {category.items.map((item, itemIndex) => (
+              <article
+                class="service-item neumor-card"
+                style={`animation-delay: ${itemIndex * 100}ms`}
+              >
+                <div class="item-content">
+                  <div class="item-header">
+                    <h3 class="item-name">{item.name}</h3>
+                    {item.tag && (
+                      <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>
+                    )}
+                  </div>
+                  <p class="item-description">{item.description}</p>
+                  {item.duration && (
+                    <span class="item-duration">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="duration-icon">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      {item.duration}
+                    </span>
+                  )}
+                </div>
+                <div class="item-price">
+                  <span class="price-value">{item.price}</span>
+                  <span class="price-currency">€</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .services-section {
+    padding: 6rem 0;
+    position: relative;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Category Tabs */
+  .category-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .category-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .category-tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow:
+      4px 4px 12px var(--shadow-dark),
+      -2px -2px 8px var(--shadow-light),
+      inset 0 0 0 transparent;
+  }
+
+  .tab-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+  }
+
+  .tab-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tab-name {
+    font-size: 0.95rem;
+  }
+
+  /* Services Content */
+  .services-content {
+    position: relative;
+  }
+
+  .services-category {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .services-category.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Services Grid */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Service Item */
+  .service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: slideUp 0.5s ease backwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .service-item:hover {
+    transform: translateY(-4px);
+  }
+
+  .item-content {
+    flex: 1;
+    padding-right: 1rem;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .item-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .item-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.25rem 0.6rem;
+    border-radius: 2rem;
+  }
+
+  .tag-popular {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+
+  .tag-nuevo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .tag-promo {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+  }
+
+  .item-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .item-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .duration-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Price */
+  .item-price {
+    display: flex;
+    align-items: baseline;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background: var(--neumor-bg);
+    box-shadow:
+      inset 3px 3px 6px var(--shadow-dark),
+      inset -3px -3px 6px var(--shadow-light);
+  }
+
+  .price-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .price-currency {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-left: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .services-section {
+      padding: 4rem 0;
+    }
+
+    .category-tabs {
+      gap: 0.75rem;
+    }
+
+    .category-tab {
+      padding: 0.6rem 1rem;
+    }
+
+    .tab-name {
+      display: none;
+    }
+
+    .tab-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .category-tab.active .tab-name {
+      display: inline;
+    }
+
+    .services-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .service-item {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .item-content {
+      padding-right: 0;
+    }
+
+    .item-price {
+      align-self: flex-start;
+    }
+  }
+</style>
+
+<script>
+  // Tab switching functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.category-tab');
+    const contents = document.querySelectorAll('.services-category');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const categoryIndex = tab.getAttribute('data-category');
+
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active content
+        contents.forEach(content => {
+          content.classList.remove('active');
+          if (content.getAttribute('data-category-content') === categoryIndex) {
+            content.classList.add('active');
+          }
+        });
+      });
+    });
+  });
+</script>

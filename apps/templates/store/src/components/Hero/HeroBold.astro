@@ -1,0 +1,452 @@
+---
+/**
+ * HeroBold - Variante split screen con colores vibrantes
+ * Ideal para: Fast Food, restaurantes modernos/jovenes
+ */
+interface Props {
+  title: string;
+  subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string;
+}
+
+const {
+  title,
+  subtitle,
+  ctaText = "Pedir Ahora",
+  ctaLink = "#reserve",
+  backgroundImage,
+} = Astro.props;
+
+// Split title into words for animation
+const words = title.split(' ');
+---
+
+<section class="hero-bold">
+  <div class="hero-split">
+    <!-- Left: Content -->
+    <div class="hero-content">
+      <div class="content-inner">
+        <div class="hero-badge animate-slide-right">
+          <span class="badge-dot"></span>
+          <span>Abierto Ahora</span>
+        </div>
+
+        <h1 class="hero-title">
+          {words.map((word, i) => (
+            <span class="title-word animate-slide-right" style={`animation-delay: ${0.1 + i * 0.1}s`}>
+              {word}
+            </span>
+          ))}
+        </h1>
+
+        <p class="hero-subtitle animate-slide-right animation-delay-400">{subtitle}</p>
+
+        <div class="hero-actions animate-slide-right animation-delay-500">
+          <a href={ctaLink} class="hero-cta-primary">
+            <span>{ctaText}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <a href="#menu" class="hero-cta-secondary">
+            Ver Menu
+          </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="hero-stats animate-slide-right animation-delay-600">
+          <div class="stat">
+            <span class="stat-number">4.9</span>
+            <span class="stat-label">Rating</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">500+</span>
+            <span class="stat-label">Reviews</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">15min</span>
+            <span class="stat-label">Entrega</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Image -->
+    <div class="hero-visual">
+      {backgroundImage && (
+        <div class="visual-container animate-scale-in">
+          <div class="visual-shape"></div>
+          <img src={backgroundImage} alt="" class="hero-image" />
+
+          <!-- Floating elements -->
+          <div class="floating-tag tag-1 animate-float">
+            <span class="tag-emoji">🔥</span>
+            <span class="tag-text">Popular</span>
+          </div>
+          <div class="floating-tag tag-2 animate-float animation-delay-300">
+            <span class="tag-emoji">⚡</span>
+            <span class="tag-text">Rapido</span>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <!-- Decorative elements -->
+  <div class="deco-circle deco-1"></div>
+  <div class="deco-circle deco-2"></div>
+</section>
+
+<style>
+  .hero-bold {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background: var(--neumor-bg);
+  }
+
+  .hero-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+  }
+
+  /* Content side */
+  .hero-content {
+    display: flex;
+    align-items: center;
+    padding: 4rem;
+    padding-top: 8rem;
+  }
+
+  .content-inner {
+    max-width: 550px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: white;
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  .badge-dot {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.2); }
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  .title-word {
+    display: inline-block;
+    margin-right: 0.3em;
+  }
+
+  .title-word:nth-child(2) {
+    color: var(--accent);
+  }
+
+  .hero-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .hero-cta-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: var(--accent);
+    color: white;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .hero-cta-primary svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  .hero-cta-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .hero-cta-primary:hover svg {
+    transform: translateX(4px);
+  }
+
+  .hero-cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--neumor-bg);
+    color: var(--text-primary);
+    border-radius: 1rem;
+    font-weight: 600;
+    box-shadow:
+      6px 6px 14px var(--shadow-dark),
+      -6px -6px 14px var(--shadow-light);
+    transition: all 0.3s ease;
+  }
+
+  .hero-cta-secondary:hover {
+    box-shadow:
+      4px 4px 10px var(--shadow-dark),
+      -4px -4px 10px var(--shadow-light);
+  }
+
+  .hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--shadow-dark);
+  }
+
+  /* Visual side */
+  .hero-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .visual-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .visual-shape {
+    position: absolute;
+    inset: -20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    opacity: 0.15;
+    animation: morphShape 8s ease-in-out infinite;
+  }
+
+  @keyframes morphShape {
+    0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+    50% { border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; }
+  }
+
+  .hero-image {
+    width: 100%;
+    height: auto;
+    border-radius: 2rem;
+    object-fit: cover;
+    aspect-ratio: 1;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  }
+
+  .floating-tag {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: white;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+  }
+
+  .tag-1 {
+    top: 10%;
+    right: -10px;
+  }
+
+  .tag-2 {
+    bottom: 15%;
+    left: -10px;
+  }
+
+  .tag-emoji {
+    font-size: 1.2rem;
+  }
+
+  /* Decorative circles */
+  .deco-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  .deco-1 {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    right: -100px;
+  }
+
+  .deco-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -50px;
+    left: 20%;
+  }
+
+  /* Animations */
+  .animate-slide-right {
+    opacity: 0;
+    transform: translateX(-30px);
+    animation: slideRight 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    opacity: 0;
+    transform: scale(0.9);
+    animation: scaleIn 0.8s ease-out forwards;
+    animation-delay: 0.3s;
+  }
+
+  .animate-float {
+    animation: floatTag 3s ease-in-out infinite;
+  }
+
+  .animation-delay-300 { animation-delay: 0.3s; }
+  .animation-delay-400 { animation-delay: 0.4s; }
+  .animation-delay-500 { animation-delay: 0.5s; }
+  .animation-delay-600 { animation-delay: 0.6s; }
+
+  @keyframes slideRight {
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes floatTag {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Responsive */
+  @media (max-width: 968px) {
+    .hero-split {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-content {
+      order: 2;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .content-inner {
+      max-width: 100%;
+    }
+
+    .hero-actions {
+      justify-content: center;
+    }
+
+    .hero-stats {
+      justify-content: center;
+    }
+
+    .hero-visual {
+      order: 1;
+      padding-top: 6rem;
+    }
+
+    .visual-container {
+      max-width: 300px;
+    }
+
+    .floating-tag {
+      display: none;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-slide-right,
+    .animate-scale-in,
+    .animate-float {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .visual-shape {
+      animation: none;
+    }
+
+    .badge-dot {
+      animation: none;
+    }
+  }
+</style>

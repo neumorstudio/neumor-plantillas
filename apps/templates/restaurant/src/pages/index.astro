@@ -27,9 +27,10 @@ import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
+import { StatusPulse, StatusMorph, StatusLiquid, StatusTime } from "@components/OpenStatus";
 
 // Importar cliente Supabase
-import { getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+import { getWebsiteConfig, type Theme, type WebsiteVariants, type OpenStatusConfig, type WeekSchedule } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -45,7 +46,9 @@ const previewVariants = {
   features: url.searchParams.get("v_features"),
   reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
+  openStatus: url.searchParams.get("v_status"),
 };
+const previewStatusPosition = url.searchParams.get("status_pos") as "floating" | "inline" | "header" | null;
 
 // ============================================
 // MAPEO DE VARIANTES
@@ -78,11 +81,28 @@ const componentMap = {
     minimal: FooterMinimal,
     centered: FooterCentered,
   },
+  openStatus: {
+    pulse: StatusPulse,
+    morph: StatusMorph,
+    liquid: StatusLiquid,
+    time: StatusTime,
+  },
 };
 
 // ============================================
 // VALORES POR DEFECTO (fallback si no hay Supabase)
 // ============================================
+// Horario por defecto (ejemplo típico de restaurante)
+const defaultSchedule: WeekSchedule = {
+  lunes: { open: "13:00", close: "23:00", closed: true },
+  martes: { open: "13:00", close: "16:00" },
+  miercoles: { open: "13:00", close: "16:00" },
+  jueves: { open: "13:00", close: "16:00" },
+  viernes: { open: "13:00", close: "16:00" },
+  sabado: { open: "13:00", close: "23:00" },
+  domingo: { open: "13:00", close: "23:00" },
+};
+
 const defaultConfig = {
   restaurantName: "Mi Restaurante",
   theme: "light" as Theme,
@@ -92,6 +112,7 @@ const defaultConfig = {
     features: "cards",
     reviews: "grid",
     footer: "full",
+    openStatus: "pulse",
   } as WebsiteVariants,
   siteTitle: "Mi Restaurante | Bienvenidos",
   siteDescription: "Restaurante con estilo neumórfico",
@@ -109,6 +130,16 @@ const defaultConfig = {
   } as { instagram: string; facebook: string; tripadvisor: string },
   googleRating: 4.5,
   totalReviews: 100,
+  // Configuración del indicador de estado
+  openStatus: {
+    enabled: true,
+    variant: "pulse",
+    position: "floating",
+    schedule: defaultSchedule,
+    forceStatus: null,
+    showScheduleInfo: true,
+    language: "es",
+  } as OpenStatusConfig,
 };
 
 // ============================================
@@ -131,10 +162,27 @@ if (websiteData) {
     tripadvisor: dbConfig.socialLinks?.tripadvisor || defaultConfig.socialLinks.tripadvisor,
   };
 
+  // Merge openStatus config
+  const mergedOpenStatus: OpenStatusConfig = {
+    enabled: dbConfig.openStatus?.enabled ?? defaultConfig.openStatus.enabled,
+    variant: dbConfig.openStatus?.variant || defaultConfig.openStatus.variant,
+    position: dbConfig.openStatus?.position || defaultConfig.openStatus.position,
+    schedule: dbConfig.openStatus?.schedule || defaultConfig.openStatus.schedule,
+    forceStatus: dbConfig.openStatus?.forceStatus ?? defaultConfig.openStatus.forceStatus,
+    showScheduleInfo: dbConfig.openStatus?.showScheduleInfo ?? defaultConfig.openStatus.showScheduleInfo,
+    language: dbConfig.openStatus?.language || defaultConfig.openStatus.language,
+  };
+
+  // Merge variants asegurando que openStatus exista
+  const mergedVariants: WebsiteVariants = {
+    ...(dbConfig.variants || defaultConfig.variants),
+    openStatus: dbConfig.variants?.openStatus || defaultConfig.variants.openStatus,
+  };
+
   config = {
     restaurantName: dbConfig.businessName || defaultConfig.restaurantName,
     theme: websiteData.theme || defaultConfig.theme,
-    variants: dbConfig.variants || defaultConfig.variants,
+    variants: mergedVariants,
     siteTitle: `${dbConfig.businessName || defaultConfig.restaurantName} | Restaurante`,
     siteDescription: defaultConfig.siteDescription,
     heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
@@ -147,6 +195,7 @@ if (websiteData) {
     socialLinks: mergedSocialLinks,
     googleRating: dbConfig.googleRating || defaultConfig.googleRating,
     totalReviews: dbConfig.totalReviews || defaultConfig.totalReviews,
+    openStatus: mergedOpenStatus,
   };
 
   console.log("✅ Configuración cargada desde Supabase:", websiteData.domain);
@@ -176,6 +225,7 @@ if (isPreview) {
     features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
     reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
     footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
+    openStatus: (previewVariants.openStatus as WebsiteVariants["openStatus"]) || selectedVariants.openStatus,
   };
 }
 
@@ -185,6 +235,14 @@ const Menu = componentMap.menu[selectedVariants.menu] || MenuTabs;
 const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
 const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
+const OpenStatusComponent = componentMap.openStatus[selectedVariants.openStatus] || StatusPulse;
+
+// Configuración del OpenStatus (con overrides de preview)
+const openStatusConfig = {
+  ...config.openStatus,
+  variant: selectedVariants.openStatus,
+  position: previewStatusPosition || config.openStatus.position,
+};
 
 // Website ID para el formulario de reservas
 const currentWebsiteId = websiteData?.id || websiteId || "";
@@ -196,6 +254,19 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
   theme={activeTheme}
 >
   <Header restaurantName={config.restaurantName} />
+
+  {/* Indicador de Estado - Posición Header (barra debajo del header) */}
+  {openStatusConfig.enabled && openStatusConfig.position === "header" && (
+    <div class="status-header-bar">
+      <OpenStatusComponent
+        schedule={openStatusConfig.schedule}
+        position="inline"
+        forceStatus={openStatusConfig.forceStatus}
+        showSchedule={openStatusConfig.showScheduleInfo}
+        language={openStatusConfig.language}
+      />
+    </div>
+  )}
 
   <main>
     <Hero
@@ -223,4 +294,41 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
     email={config.email}
     socialLinks={config.socialLinks}
   />
+
+  {/* Indicador de Estado Abierto/Cerrado */}
+  {openStatusConfig.enabled && openStatusConfig.position === "floating" && (
+    <OpenStatusComponent
+      schedule={openStatusConfig.schedule}
+      position="floating"
+      forceStatus={openStatusConfig.forceStatus}
+      showSchedule={openStatusConfig.showScheduleInfo}
+      language={openStatusConfig.language}
+    />
+  )}
 </Layout>
+
+<style>
+  /* Barra de estado en posición header */
+  .status-header-bar {
+    position: fixed;
+    top: 80px; /* Debajo del header */
+    left: 0;
+    right: 0;
+    z-index: 99;
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    background: var(--ng-glass-bg, rgba(255, 255, 255, 0.25));
+    backdrop-filter: blur(var(--ng-blur-md, 16px)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--ng-blur-md, 16px)) saturate(180%);
+    border-bottom: 1px solid var(--ng-glass-border, rgba(255, 255, 255, 0.4));
+    box-shadow: 0 4px 16px var(--ng-shadow-dark, rgba(163, 177, 198, 0.3));
+  }
+
+  @media (max-width: 768px) {
+    .status-header-bar {
+      top: 70px;
+      padding: 0.5rem;
+    }
+  }
+</style>

@@ -1,0 +1,281 @@
+---
+/**
+ * MenuList - Variante elegante con lista vertical
+ * Ideal para: Fine Dining, restaurantes elegantes
+ */
+interface MenuItem {
+  name: string;
+  description: string;
+  price: string;
+  tag?: string;
+  image?: string;
+}
+
+interface MenuCategory {
+  name: string;
+  icon: string;
+  items: MenuItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: MenuCategory[];
+}
+
+const defaultCategories: MenuCategory[] = [
+  {
+    name: "Entrantes",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>`,
+    items: [
+      { name: "Carpaccio de Ternera", description: "Finas laminas de ternera con rucula, parmesano y aceite de trufa", price: "14", tag: "popular" },
+      { name: "Burrata Fresca", description: "Con tomates cherry confitados, pesto de albahaca y reduccion de balsamico", price: "12" },
+      { name: "Tartar de Atun", description: "Atun rojo con aguacate, sesamo y salsa ponzu", price: "16", tag: "nuevo" },
+    ],
+  },
+  {
+    name: "Principales",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+    items: [
+      { name: "Solomillo Wellington", description: "Solomillo envuelto en hojaldre con duxelles de setas y foie", price: "32", tag: "popular" },
+      { name: "Lubina a la Espalda", description: "Lubina salvaje con verduras de temporada y salsa de champan", price: "28" },
+      { name: "Risotto de Boletus", description: "Arroz carnaroli con boletus edulis y aceite de trufa negra", price: "22", tag: "vegano" },
+    ],
+  },
+  {
+    name: "Postres",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>`,
+    items: [
+      { name: "Tarta de Queso", description: "Nuestra famosa tarta cremosa con coulis de frutos rojos", price: "8", tag: "popular" },
+      { name: "Coulant de Chocolate", description: "Bizcocho tibio de chocolate con corazon fundido y helado de vainilla", price: "9" },
+    ],
+  },
+];
+
+const {
+  title = "Nuestra Carta",
+  subtitle = "Cada plato cuenta una historia de sabor y tradicion",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="menu" class="menu-list-section">
+  <div class="container">
+    <!-- Section Header -->
+    <div class="section-header">
+      <span class="section-label">Menu</span>
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <!-- Menu Categories -->
+    <div class="menu-categories">
+      {categories.map((category, catIndex) => (
+        <div class="menu-category">
+          <div class="category-header">
+            <span class="category-icon" set:html={category.icon} />
+            <h3 class="category-name">{category.name}</h3>
+            <span class="category-line"></span>
+          </div>
+
+          <div class="category-items">
+            {category.items.map((item, itemIndex) => (
+              <article class="menu-item" style={`animation-delay: ${(catIndex * 3 + itemIndex) * 100}ms`}>
+                <div class="item-info">
+                  <div class="item-header">
+                    <h4 class="item-name">{item.name}</h4>
+                    <span class="item-dots"></span>
+                    <span class="item-price">€{item.price}</span>
+                  </div>
+                  <p class="item-description">{item.description}</p>
+                  {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .menu-list-section {
+    padding: 6rem 0;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-label {
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 300;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0 auto;
+    font-weight: 300;
+  }
+
+  /* Categories */
+  .menu-categories {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .category-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--accent);
+    display: flex;
+  }
+
+  .category-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .category-name {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+
+  .category-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--shadow-dark), transparent);
+  }
+
+  /* Items */
+  .category-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .menu-item {
+    opacity: 0;
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+  .item-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .item-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .item-dots {
+    flex: 1;
+    border-bottom: 1px dotted var(--shadow-dark);
+    margin: 0 0.5rem;
+    min-width: 20px;
+  }
+
+  .item-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .item-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    padding-left: 0;
+  }
+
+  .item-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+  }
+
+  .tag-popular {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+  }
+
+  .tag-nuevo {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+  }
+
+  .tag-vegano {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .menu-list-section {
+      padding: 4rem 0;
+    }
+
+    .menu-categories {
+      gap: 3rem;
+    }
+
+    .item-dots {
+      display: none;
+    }
+
+    .item-header {
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .item-price {
+      margin-left: auto;
+    }
+  }
+</style>

@@ -1,0 +1,272 @@
+---
+interface TreatmentItem {
+  name: string;
+  description: string;
+  price: string;
+  duration?: string;
+  tag?: string;
+}
+
+interface TreatmentCategory {
+  name: string;
+  icon: string;
+  items: TreatmentItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: TreatmentCategory[];
+}
+
+const defaultCategories: TreatmentCategory[] = [
+  {
+    name: "Odontologia",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
+    items: [
+      {
+        name: "Limpieza Dental",
+        description: "Limpieza profesional con ultrasonidos y pulido",
+        price: "60",
+        duration: "45 min",
+        tag: "popular",
+      },
+      {
+        name: "Empaste",
+        description: "Restauracion de caries con composite estetico",
+        price: "80",
+        duration: "30 min",
+      },
+      {
+        name: "Blanqueamiento",
+        description: "Blanqueamiento dental profesional LED",
+        price: "250",
+        duration: "60 min",
+        tag: "nuevo",
+      },
+      {
+        name: "Revision Completa",
+        description: "Diagnostico con radiografias y plan de tratamiento",
+        price: "40",
+        duration: "30 min",
+      },
+    ],
+  },
+  {
+    name: "Fisioterapia",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="M16 10l-4 4-3-3-4 4"/><path d="M3 21h18"/></svg>`,
+    items: [
+      {
+        name: "Sesion Individual",
+        description: "Tratamiento personalizado de fisioterapia",
+        price: "45",
+        duration: "50 min",
+        tag: "popular",
+      },
+      {
+        name: "Masaje Terapeutico",
+        description: "Masaje descontracturante y relajante",
+        price: "40",
+        duration: "45 min",
+      },
+      {
+        name: "Rehabilitacion",
+        description: "Programa de recuperacion post-lesion",
+        price: "50",
+        duration: "60 min",
+      },
+      {
+        name: "Puncion Seca",
+        description: "Tratamiento de puntos gatillo miofasciales",
+        price: "55",
+        duration: "30 min",
+        tag: "nuevo",
+      },
+    ],
+  },
+  {
+    name: "Medicina General",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+    items: [
+      {
+        name: "Consulta General",
+        description: "Revision medica completa con el especialista",
+        price: "50",
+        duration: "30 min",
+      },
+      {
+        name: "Analitica Completa",
+        description: "Analisis de sangre y orina con resultados",
+        price: "85",
+        duration: "15 min",
+        tag: "popular",
+      },
+      {
+        name: "Electrocardiograma",
+        description: "ECG con interpretacion medica",
+        price: "60",
+        duration: "20 min",
+      },
+      {
+        name: "Certificado Medico",
+        description: "Certificados deportivos, conductores, etc.",
+        price: "35",
+        duration: "15 min",
+      },
+    ],
+  },
+  {
+    name: "Especialidades",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+    items: [
+      {
+        name: "Dermatologia",
+        description: "Consulta y tratamiento de problemas de piel",
+        price: "70",
+        duration: "30 min",
+      },
+      {
+        name: "Nutricion",
+        description: "Plan nutricional personalizado",
+        price: "65",
+        duration: "45 min",
+        tag: "popular",
+      },
+      {
+        name: "Psicologia",
+        description: "Sesion de terapia individual",
+        price: "60",
+        duration: "50 min",
+      },
+      {
+        name: "Podologia",
+        description: "Tratamiento y cuidado de pies",
+        price: "45",
+        duration: "40 min",
+      },
+    ],
+  },
+];
+
+const {
+  title = "Nuestros Tratamientos",
+  subtitle = "Cuidamos de tu salud con profesionales cualificados",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="treatments" class="treatments-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <div class="category-tabs">
+      {categories.map((category, index) => (
+        <button
+          class={`category-tab neumor-btn ${index === 0 ? 'active' : ''}`}
+          data-category={index}
+        >
+          <span class="tab-icon" set:html={category.icon} />
+          <span class="tab-name">{category.name}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="treatments-content">
+      {categories.map((category, catIndex) => (
+        <div class={`treatments-category ${catIndex === 0 ? 'active' : ''}`} data-category-content={catIndex}>
+          <div class="treatments-grid">
+            {category.items.map((item, itemIndex) => (
+              <article class="treatment-item neumor-card" style={`animation-delay: ${itemIndex * 100}ms`}>
+                <div class="item-content">
+                  <div class="item-header">
+                    <h3 class="item-name">{item.name}</h3>
+                    {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+                  </div>
+                  <p class="item-description">{item.description}</p>
+                  {item.duration && (
+                    <span class="item-duration">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="duration-icon">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      {item.duration}
+                    </span>
+                  )}
+                </div>
+                <div class="item-price">
+                  <span class="price-value">{item.price}</span>
+                  <span class="price-currency">€</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .treatments-section { padding: 6rem 0; }
+  .section-header { text-align: center; margin-bottom: 3rem; }
+  .section-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); }
+  .section-subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto; }
+  .category-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+  .category-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; cursor: pointer; }
+  .category-tab.active { background: var(--accent); color: white; box-shadow: 4px 4px 12px var(--shadow-dark), -2px -2px 8px var(--shadow-light); }
+  .tab-icon { width: 20px; height: 20px; display: flex; }
+  .tab-icon :global(svg) { width: 100%; height: 100%; }
+  .tab-name { font-size: 0.95rem; }
+  .treatments-content { position: relative; }
+  .treatments-category { display: none; animation: fadeIn 0.4s ease; }
+  .treatments-category.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .treatments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+  .treatment-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-radius: 1.25rem; transition: transform 0.3s ease; animation: slideUp 0.5s ease backwards; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .treatment-item:hover { transform: translateY(-4px); }
+  .item-content { flex: 1; padding-right: 1rem; }
+  .item-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .item-name { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+  .item-tag { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2rem; }
+  .tag-popular { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+  .tag-nuevo { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+  .item-description { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 0.5rem 0; }
+  .item-duration { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; color: var(--text-secondary); }
+  .duration-icon { width: 14px; height: 14px; }
+  .item-price { display: flex; align-items: baseline; padding: 0.75rem 1rem; border-radius: 1rem; background: var(--neumor-bg); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+  .price-value { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+  .price-currency { font-size: 0.9rem; font-weight: 500; color: var(--accent); margin-left: 2px; }
+  @media (max-width: 768px) {
+    .treatments-section { padding: 4rem 0; }
+    .category-tabs { gap: 0.75rem; }
+    .category-tab { padding: 0.6rem 1rem; }
+    .tab-name { display: none; }
+    .tab-icon { width: 24px; height: 24px; }
+    .category-tab.active .tab-name { display: inline; }
+    .treatments-grid { grid-template-columns: 1fr; }
+    .treatment-item { flex-direction: column; gap: 1rem; }
+    .item-content { padding-right: 0; }
+    .item-price { align-self: flex-start; }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.category-tab');
+    const contents = document.querySelectorAll('.treatments-category');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const categoryIndex = tab.getAttribute('data-category');
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        contents.forEach(content => {
+          content.classList.remove('active');
+          if (content.getAttribute('data-category-content') === categoryIndex) content.classList.add('active');
+        });
+      });
+    });
+  });
+</script>

@@ -1,0 +1,295 @@
+---
+interface ProductItem {
+  name: string;
+  description: string;
+  price: string;
+  originalPrice?: string;
+  image?: string;
+  tag?: string;
+  stock?: string;
+}
+
+interface ProductCategory {
+  name: string;
+  icon: string;
+  items: ProductItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: ProductCategory[];
+}
+
+const defaultCategories: ProductCategory[] = [
+  {
+    name: "Electronica",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+    items: [
+      {
+        name: "Auriculares Bluetooth Pro",
+        description: "Auriculares inalambricos con cancelacion de ruido activa",
+        price: "89",
+        originalPrice: "129",
+        tag: "oferta",
+        stock: "15 unidades",
+      },
+      {
+        name: "Altavoz Portatil",
+        description: "Altavoz resistente al agua con 20h de bateria",
+        price: "59",
+        tag: "popular",
+      },
+      {
+        name: "Smartwatch Deportivo",
+        description: "Reloj inteligente con GPS y monitor de ritmo cardiaco",
+        price: "149",
+        tag: "nuevo",
+      },
+      {
+        name: "Cargador Inalambrico",
+        description: "Base de carga rapida compatible con todos los dispositivos",
+        price: "29",
+      },
+    ],
+  },
+  {
+    name: "Ropa",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>`,
+    items: [
+      {
+        name: "Camiseta Premium",
+        description: "Algodon organico 100%, corte regular",
+        price: "29",
+        tag: "popular",
+        stock: "Todas las tallas",
+      },
+      {
+        name: "Sudadera Con Capucha",
+        description: "Interior afelpado, perfecta para el invierno",
+        price: "49",
+        tag: "nuevo",
+      },
+      {
+        name: "Pantalon Chino",
+        description: "Tejido elastico y comodo, multiples colores",
+        price: "45",
+      },
+      {
+        name: "Chaqueta Impermeable",
+        description: "Ligera y transpirable, ideal para entretiempo",
+        price: "79",
+        originalPrice: "99",
+        tag: "oferta",
+      },
+    ],
+  },
+  {
+    name: "Hogar",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    items: [
+      {
+        name: "Lampara LED Inteligente",
+        description: "Control por app, 16 millones de colores",
+        price: "39",
+        tag: "popular",
+      },
+      {
+        name: "Set de Cojines Decorativos",
+        description: "Pack de 4 cojines con fundas lavables",
+        price: "35",
+        tag: "nuevo",
+      },
+      {
+        name: "Organizador Modular",
+        description: "Sistema de almacenamiento versatil y elegante",
+        price: "25",
+      },
+      {
+        name: "Difusor de Aromas",
+        description: "Ultrasonico con luz LED ambiental",
+        price: "29",
+        originalPrice: "39",
+        tag: "oferta",
+      },
+    ],
+  },
+  {
+    name: "Accesorios",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>`,
+    items: [
+      {
+        name: "Mochila Urbana",
+        description: "Compartimento para portatil, resistente al agua",
+        price: "55",
+        tag: "popular",
+      },
+      {
+        name: "Cartera de Piel",
+        description: "Piel genuina con proteccion RFID",
+        price: "35",
+      },
+      {
+        name: "Gafas de Sol Polarizadas",
+        description: "Proteccion UV400, montura ligera",
+        price: "45",
+        tag: "nuevo",
+      },
+      {
+        name: "Cinturon Reversible",
+        description: "Dos colores en uno, hebilla metalica",
+        price: "25",
+        originalPrice: "35",
+        tag: "oferta",
+      },
+    ],
+  },
+];
+
+const {
+  title = "Nuestros Productos",
+  subtitle = "Descubre nuestra seleccion de productos de calidad",
+  categories = defaultCategories,
+} = Astro.props;
+---
+
+<section id="products" class="products-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <div class="category-tabs">
+      {categories.map((category, index) => (
+        <button
+          class={`category-tab neumor-btn ${index === 0 ? 'active' : ''}`}
+          data-category={index}
+        >
+          <span class="tab-icon" set:html={category.icon} />
+          <span class="tab-name">{category.name}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="products-content">
+      {categories.map((category, catIndex) => (
+        <div class={`products-category ${catIndex === 0 ? 'active' : ''}`} data-category-content={catIndex}>
+          <div class="products-grid">
+            {category.items.map((item, itemIndex) => (
+              <article class="product-item neumor-card" style={`animation-delay: ${itemIndex * 100}ms`}>
+                <div class="item-content">
+                  <div class="item-header">
+                    <h3 class="item-name">{item.name}</h3>
+                    {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+                  </div>
+                  <p class="item-description">{item.description}</p>
+                  {item.stock && (
+                    <span class="item-stock">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="stock-icon">
+                        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                      </svg>
+                      {item.stock}
+                    </span>
+                  )}
+                </div>
+                <div class="item-price-section">
+                  <div class="item-price">
+                    <span class="price-value">{item.price}</span>
+                    <span class="price-currency">€</span>
+                  </div>
+                  {item.originalPrice && (
+                    <span class="original-price">{item.originalPrice}€</span>
+                  )}
+                  <button class="add-to-cart neumor-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+                    </svg>
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .products-section { padding: 6rem 0; }
+  .section-header { text-align: center; margin-bottom: 3rem; }
+  .section-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); }
+  .section-subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto; }
+  .category-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+  .category-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 500; transition: all 0.3s ease; cursor: pointer; }
+  .category-tab.active { background: var(--accent); color: white; box-shadow: 4px 4px 12px var(--shadow-dark), -2px -2px 8px var(--shadow-light); }
+  .tab-icon { width: 20px; height: 20px; display: flex; }
+  .tab-icon :global(svg) { width: 100%; height: 100%; }
+  .tab-name { font-size: 0.95rem; }
+  .products-content { position: relative; }
+  .products-category { display: none; animation: fadeIn 0.4s ease; }
+  .products-category.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+  .product-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-radius: 1.25rem; transition: transform 0.3s ease; animation: slideUp 0.5s ease backwards; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .product-item:hover { transform: translateY(-4px); }
+  .item-content { flex: 1; padding-right: 1rem; }
+  .item-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .item-name { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+  .item-tag { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2rem; }
+  .tag-popular { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+  .tag-nuevo { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+  .tag-oferta { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+  .item-description { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 0.5rem 0; }
+  .item-stock { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; color: var(--text-secondary); }
+  .stock-icon { width: 14px; height: 14px; }
+  .item-price-section { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .item-price { display: flex; align-items: baseline; padding: 0.75rem 1rem; border-radius: 1rem; background: var(--neumor-bg); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); }
+  .price-value { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+  .price-currency { font-size: 0.9rem; font-weight: 500; color: var(--accent); margin-left: 2px; }
+  .original-price { font-size: 0.85rem; color: var(--text-secondary); text-decoration: line-through; }
+  .add-to-cart { padding: 0.5rem; border-radius: 0.75rem; color: var(--accent); transition: all 0.3s ease; }
+  .add-to-cart:hover { background: var(--accent); color: white; }
+  @media (max-width: 768px) {
+    .products-section { padding: 4rem 0; }
+    .category-tabs { gap: 0.75rem; }
+    .category-tab { padding: 0.6rem 1rem; }
+    .tab-name { display: none; }
+    .tab-icon { width: 24px; height: 24px; }
+    .category-tab.active .tab-name { display: inline; }
+    .products-grid { grid-template-columns: 1fr; }
+    .product-item { flex-direction: column; gap: 1rem; }
+    .item-content { padding-right: 0; }
+    .item-price-section { flex-direction: row; align-self: flex-start; gap: 1rem; }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.category-tab');
+    const contents = document.querySelectorAll('.products-category');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const categoryIndex = tab.getAttribute('data-category');
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        contents.forEach(content => {
+          content.classList.remove('active');
+          if (content.getAttribute('data-category-content') === categoryIndex) content.classList.add('active');
+        });
+      });
+    });
+
+    // Add to cart functionality
+    const addButtons = document.querySelectorAll('.add-to-cart');
+    addButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.product-item');
+        const name = item?.querySelector('.item-name')?.textContent;
+        alert(`"${name}" anadido al carrito`);
+      });
+    });
+  });
+</script>
