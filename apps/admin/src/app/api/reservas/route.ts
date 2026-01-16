@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { sendEmail } from "@/lib/resend";
+import { sendEmail, getFromAddress } from "@/lib/resend";
 import {
   getCustomerConfirmationEmail,
   getRestaurantNotificationEmail,
@@ -28,6 +28,13 @@ interface ReservationData {
   notas?: string;
 }
 
+// Headers CORS comunes
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 // POST - Crear nueva reserva
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (!body.website_id || !body.nombre || !body.telefono || !body.fecha || !body.hora) {
       return NextResponse.json(
         { error: "Faltan campos requeridos: website_id, nombre, telefono, fecha, hora" },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -52,7 +59,7 @@ export async function POST(request: NextRequest) {
       console.error("Website no encontrado:", websiteError);
       return NextResponse.json(
         { error: "Website no encontrado" },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -92,7 +99,7 @@ export async function POST(request: NextRequest) {
       console.error("Error creando reserva:", bookingError);
       return NextResponse.json(
         { error: "Error al guardar la reserva" },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -122,6 +129,9 @@ export async function POST(request: NextRequest) {
       restaurantEmail: false,
     };
 
+    // Remitente con nombre del restaurante
+    const fromAddress = getFromAddress(restaurantName);
+
     // Enviar email de confirmacion al CLIENTE
     if (body.email && notificationSettings?.email_booking_confirmation !== false) {
       const customerHtml = getCustomerConfirmationEmail(emailData);
@@ -129,6 +139,8 @@ export async function POST(request: NextRequest) {
         to: body.email,
         subject: `Confirmacion de Reserva - ${restaurantName}`,
         html: customerHtml,
+        from: fromAddress,
+        replyTo: restaurantEmail || undefined,
       });
       emailResults.customerEmail = result.success;
       if (!result.success) {
@@ -143,6 +155,7 @@ export async function POST(request: NextRequest) {
         to: restaurantEmail,
         subject: `Nueva Reserva: ${body.nombre} - ${formatDate(body.fecha)} ${body.hora}`,
         html: restaurantHtml,
+        from: fromAddress,
       });
       emailResults.restaurantEmail = result.success;
       if (!result.success) {
@@ -169,12 +182,12 @@ export async function POST(request: NextRequest) {
       booking_id: booking.id,
       message: "Reserva creada correctamente",
       emails: emailResults,
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error("Error en API de reservas:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -194,14 +207,10 @@ function formatDate(dateStr: string): string {
   }
 }
 
-// CORS headers para permitir requests desde templates
+// CORS preflight
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: corsHeaders,
   });
 }

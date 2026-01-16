@@ -9,11 +9,21 @@ if (!resendApiKey) {
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-// Configuracion de email
+// Configuracion de email base
+const EMAIL_DOMAIN = "neumorstudio.com";
+const DEFAULT_FROM_NAME = "NeumorStudio";
+
 export const emailConfig = {
-  from: process.env.EMAIL_FROM || "NeumorStudio <noreply@neumorstudio.com>",
-  replyTo: process.env.EMAIL_REPLY_TO || "soporte@neumorstudio.com",
+  from: process.env.EMAIL_FROM || `${DEFAULT_FROM_NAME} <noreply@${EMAIL_DOMAIN}>`,
+  replyTo: process.env.EMAIL_REPLY_TO || `soporte@${EMAIL_DOMAIN}`,
+  domain: EMAIL_DOMAIN,
 };
+
+// Genera el remitente con el nombre del negocio
+export function getFromAddress(businessName?: string): string {
+  const name = businessName || DEFAULT_FROM_NAME;
+  return `${name} <noreply@${EMAIL_DOMAIN}>`;
+}
 
 // Tipos
 export interface SendEmailParams {

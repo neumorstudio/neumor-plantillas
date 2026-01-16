@@ -127,7 +127,7 @@ const defaultConfig = {
   heroTitle: "Bienvenidos a Nuestro Restaurante",
   heroSubtitle: "Una experiencia culinaria única",
   heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || import.meta.env.PUBLIC_ADMIN_URL + "/api/reservas" || "",
+  webhookUrl: import.meta.env.PUBLIC_ADMIN_URL ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/reservas` : (import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || ""),
   address: "Tu dirección aquí",
   phone: "+34 000 000 000",
   email: "contacto@turestaurante.com",
