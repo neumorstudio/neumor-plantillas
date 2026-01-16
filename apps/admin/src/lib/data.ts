@@ -235,6 +235,7 @@ export interface WebsiteConfig {
     features: "cards" | "icons" | "banner";
     reviews: "grid" | "carousel" | "minimal";
     footer: "full" | "minimal" | "centered";
+    reservation: "classic" | "wizard" | "modal" | "modern";
   };
 }
 

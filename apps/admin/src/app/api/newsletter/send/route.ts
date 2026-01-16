@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       .insert({
         website_id: websiteId,
         template_id: templateId,
-        name: name || \`Campana \${new Date().toLocaleDateString("es-ES")}\`,
+        name: name || `Campaña ${new Date().toLocaleDateString("es-ES")}`,
         subject: template.subject,
         html_content: template.html_content,
         audience_type: audienceFilter || "all_customers",
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       let html = template.html_content
         .replace(/\{\{restaurantName\}\}/g, restaurantName)
         .replace(/\{\{name\}\}/g, subscriber.name || "Cliente")
-        .replace(/\{\{unsubscribeLink\}\}/g, \`#unsubscribe-\${subscriber.id}\`);
+        .replace(/\{\{unsubscribeLink\}\}/g, `#unsubscribe-${subscriber.id}`);
 
       return {
         to: subscriber.email,
@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Enviar emails con Resend
-    console.log(\`Enviando \${emails.length} emails via Resend...\`);
+    console.log(`Enviando ${emails.length} emails via Resend...`);
     const result = await sendBatchEmails(emails);
-    console.log(\`Resultado: \${result.success} enviados, \${result.failed} fallidos\`);
+    console.log(`Resultado: ${result.success} enviados, ${result.failed} fallidos`);
 
     // Actualizar campana
     const finalStatus = result.failed === 0 ? "sent" : result.success === 0 ? "failed" : "sent";
@@ -151,8 +151,8 @@ export async function POST(request: NextRequest) {
       emailsSent: result.success,
       emailsFailed: result.failed,
       message: result.failed === 0
-        ? \`Enviado a \${result.success} suscriptores\`
-        : \`Enviado a \${result.success} suscriptores (\${result.failed} fallidos)\`,
+        ? `Enviado a ${result.success} suscriptores`
+        : `Enviado a ${result.success} suscriptores (${result.failed} fallidos)`,
     });
 
   } catch (error) {

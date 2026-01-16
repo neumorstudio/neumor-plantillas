@@ -6,11 +6,13 @@ import {
   getRestaurantNotificationEmail,
 } from "@/lib/email-templates";
 
-// Cliente Supabase con service role para bypass RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Cliente Supabase con service role para bypass RLS (lazy init)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // Tipos
 interface ReservationData {
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener configuracion del website
-    const { data: website, error: websiteError } = await supabaseAdmin
+    const { data: website, error: websiteError } = await getSupabaseAdmin()
       .from("websites")
       .select("id, domain, config, client_id")
       .eq("id", body.website_id)
@@ -55,21 +57,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener cliente para email del restaurante
-    const { data: client } = await supabaseAdmin
+    const { data: client } = await getSupabaseAdmin()
       .from("clients")
       .select("email, business_name")
       .eq("id", website.client_id)
       .single();
 
     // Obtener configuracion de notificaciones
-    const { data: notificationSettings } = await supabaseAdmin
+    const { data: notificationSettings } = await getSupabaseAdmin()
       .from("notification_settings")
       .select("*")
       .eq("website_id", body.website_id)
       .single();
 
     // Insertar reserva en la base de datos
-    const { data: booking, error: bookingError } = await supabaseAdmin
+    const { data: booking, error: bookingError } = await getSupabaseAdmin()
       .from("bookings")
       .insert({
         website_id: body.website_id,
@@ -149,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Registrar en activity_log
-    await supabaseAdmin.from("activity_log").insert({
+    await getSupabaseAdmin().from("activity_log").insert({
       website_id: body.website_id,
       action: "booking_created",
       details: {

@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // Transpile workspace packages
-  transpilePackages: ["@neumorstudio/ui", "@neumorstudio/supabase"],
+  transpilePackages: ["@neumorstudio/supabase"],
 
   // Experimental features for Next.js 15
   experimental: {
