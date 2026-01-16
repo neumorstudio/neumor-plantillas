@@ -1,0 +1,1290 @@
+---
+/**
+ * ReservationWizard - Formulario multi-step moderno
+ * Flujo: Fecha/Hora → Detalles → Contacto → Confirmación
+ * Con calendario visual, time wheel, selector de zona y ocasiones
+ */
+interface Props {
+  title?: string;
+  subtitle?: string;
+  webhookUrl?: string;
+  websiteId?: string;
+  zones?: string[];
+  occasions?: { id: string; label: string; icon: string }[];
+}
+
+const {
+  title = "Reserva tu Mesa",
+  subtitle = "Selecciona fecha y hora para tu visita",
+  webhookUrl = "",
+  websiteId = "",
+  zones = ["Interior", "Terraza", "Barra", "Privado"],
+  occasions = [
+    { id: "normal", label: "Comida normal", icon: "🍽️" },
+    { id: "birthday", label: "Cumpleaños", icon: "🎂" },
+    { id: "anniversary", label: "Aniversario", icon: "💕" },
+    { id: "business", label: "Negocios", icon: "💼" },
+    { id: "celebration", label: "Celebración", icon: "🎉" },
+  ],
+} = Astro.props;
+
+// Generar horarios disponibles
+const timeSlots = [];
+for (let h = 13; h <= 22; h++) {
+  timeSlots.push(`${h}:00`);
+  timeSlots.push(`${h}:30`);
+}
+---
+
+<section id="reserve" class="section reservation-wizard-section">
+  <div class="container">
+    <div class="wizard-container neumor-card">
+      <!-- Progress Bar -->
+      <div class="progress-bar">
+        <div class="progress-track">
+          <div class="progress-fill" data-step="1"></div>
+        </div>
+        <div class="progress-steps">
+          <div class="progress-step active" data-step="1">
+            <div class="step-dot">1</div>
+            <span>Fecha y Hora</span>
+          </div>
+          <div class="progress-step" data-step="2">
+            <div class="step-dot">2</div>
+            <span>Detalles</span>
+          </div>
+          <div class="progress-step" data-step="3">
+            <div class="step-dot">3</div>
+            <span>Contacto</span>
+          </div>
+        </div>
+      </div>
+
+      <form class="wizard-form" data-webhook={webhookUrl} data-website-id={websiteId}>
+        <!-- Step 1: Fecha y Hora -->
+        <div class="wizard-step active" data-step="1">
+          <h2 class="step-title">{title}</h2>
+          <p class="step-subtitle">{subtitle}</p>
+
+          <div class="datetime-selector">
+            <!-- Calendar -->
+            <div class="calendar-wrapper">
+              <div class="calendar-header">
+                <button type="button" class="calendar-nav prev-month" aria-label="Mes anterior">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <span class="calendar-month-year"></span>
+                <button type="button" class="calendar-nav next-month" aria-label="Mes siguiente">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="calendar-weekdays">
+                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+              </div>
+              <div class="calendar-days"></div>
+              <input type="hidden" name="date" id="selectedDate" required />
+            </div>
+
+            <!-- Time Wheel Selector -->
+            <div class="time-selector">
+              <h3 class="time-label">Selecciona la hora</h3>
+              <div class="time-wheel-container">
+                <div class="time-wheel-mask"></div>
+                <div class="time-wheel" role="listbox" aria-label="Selector de hora">
+                  {timeSlots.map((time) => (
+                    <div class="time-option" data-time={time} role="option">
+                      {time}
+                    </div>
+                  ))}
+                </div>
+                <div class="time-wheel-highlight"></div>
+              </div>
+              <input type="hidden" name="time" id="selectedTime" required />
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <button type="button" class="neumor-btn next-step" disabled>
+              Continuar
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Detalles -->
+        <div class="wizard-step" data-step="2">
+          <h2 class="step-title">Personaliza tu reserva</h2>
+          <p class="step-subtitle">Cuéntanos más sobre tu visita</p>
+
+          <!-- Guests selector -->
+          <div class="guests-selector">
+            <h3 class="selector-label">¿Cuántas personas?</h3>
+            <div class="guests-pills">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                <button type="button" class={`guest-pill ${num === 2 ? 'active' : ''}`} data-guests={num}>
+                  {num === 8 ? '8+' : num}
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="guests" id="selectedGuests" value="2" />
+          </div>
+
+          <!-- Zone selector -->
+          <div class="zone-selector">
+            <h3 class="selector-label">¿Dónde prefieres sentarte?</h3>
+            <div class="zone-options">
+              {zones.map((zone, i) => (
+                <button type="button" class={`zone-option ${i === 0 ? 'active' : ''}`} data-zone={zone}>
+                  <span class="zone-icon">
+                    {zone === "Interior" && "🏠"}
+                    {zone === "Terraza" && "☀️"}
+                    {zone === "Barra" && "🍸"}
+                    {zone === "Privado" && "🚪"}
+                  </span>
+                  <span class="zone-name">{zone}</span>
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="zone" id="selectedZone" value={zones[0]} />
+          </div>
+
+          <!-- Occasion selector -->
+          <div class="occasion-selector">
+            <h3 class="selector-label">¿Es una ocasión especial?</h3>
+            <div class="occasion-options">
+              {occasions.map((occ, i) => (
+                <button type="button" class={`occasion-option ${i === 0 ? 'active' : ''}`} data-occasion={occ.id}>
+                  <span class="occasion-icon">{occ.icon}</span>
+                  <span class="occasion-label">{occ.label}</span>
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="occasion" id="selectedOccasion" value="normal" />
+          </div>
+
+          <div class="step-actions">
+            <button type="button" class="neumor-btn neumor-btn-secondary prev-step">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              Atrás
+            </button>
+            <button type="button" class="neumor-btn next-step">
+              Continuar
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Contacto -->
+        <div class="wizard-step" data-step="3">
+          <h2 class="step-title">Tus datos de contacto</h2>
+          <p class="step-subtitle">Para confirmar tu reserva</p>
+
+          <div class="contact-form">
+            <div class="form-group">
+              <label for="wizard-name">Nombre completo</label>
+              <input type="text" id="wizard-name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="wizard-email">Email</label>
+                <input type="email" id="wizard-email" name="email" class="neumor-input" placeholder="tu@email.com" required />
+              </div>
+              <div class="form-group">
+                <label for="wizard-phone">Teléfono</label>
+                <input type="tel" id="wizard-phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="wizard-notes">Notas adicionales (opcional)</label>
+              <textarea id="wizard-notes" name="notes" class="neumor-input" rows="3" placeholder="Alergias, peticiones especiales..."></textarea>
+            </div>
+          </div>
+
+          <!-- Resumen -->
+          <div class="reservation-summary neumor-inset">
+            <h4>Resumen de tu reserva</h4>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="summary-icon">📅</span>
+                <span class="summary-value" id="summary-date">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-icon">⏰</span>
+                <span class="summary-value" id="summary-time">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-icon">👥</span>
+                <span class="summary-value" id="summary-guests">2 personas</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-icon">📍</span>
+                <span class="summary-value" id="summary-zone">Interior</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <button type="button" class="neumor-btn neumor-btn-secondary prev-step">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              Atrás
+            </button>
+            <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
+              <span class="btn-text">Confirmar Reserva</span>
+              <span class="btn-loader"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Success State -->
+        <div class="wizard-success" style="display: none;">
+          <div class="success-animation">
+            <div class="success-circle">
+              <svg class="checkmark" viewBox="0 0 52 52">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+              </svg>
+            </div>
+            <div class="confetti-container"></div>
+          </div>
+          <h2 class="success-title">¡Reserva confirmada!</h2>
+          <p class="success-message">Te hemos enviado un email con los detalles. Te esperamos.</p>
+          <button type="button" class="neumor-btn new-reservation">Hacer otra reserva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reservation-wizard-section {
+    padding: 4rem 0;
+  }
+
+  .wizard-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    overflow: hidden;
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    margin-bottom: 2.5rem;
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--neumor-bg);
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    border-radius: 2px;
+    width: 33.33%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .progress-fill[data-step="2"] { width: 66.66%; }
+  .progress-fill[data-step="3"] { width: 100%; }
+
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+
+  .progress-step.active,
+  .progress-step.completed {
+    opacity: 1;
+  }
+
+  .step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--neumor-bg);
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    transition: all 0.3s;
+  }
+
+  .progress-step.active .step-dot {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
+  }
+
+  .progress-step.completed .step-dot {
+    background: var(--accent);
+    color: white;
+  }
+
+  .progress-step span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  /* Wizard Steps */
+  .wizard-step {
+    display: none;
+    animation: fadeSlideIn 0.4s ease-out;
+  }
+
+  .wizard-step.active {
+    display: block;
+  }
+
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .step-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  .step-subtitle {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  /* DateTime Selector */
+  .datetime-selector {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Calendar */
+  .calendar-wrapper {
+    background: var(--neumor-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+  }
+
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .calendar-month-year {
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .calendar-nav {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--neumor-bg);
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+    box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+    transition: all 0.2s;
+  }
+
+  .calendar-nav:hover {
+    box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  }
+
+  .calendar-nav:active {
+    box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
+  }
+
+  .calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .calendar-weekdays span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+  }
+
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  .calendar-day:hover:not(.disabled):not(.selected) {
+    background: var(--shadow-light);
+  }
+
+  .calendar-day.today {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .calendar-day.selected {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
+    transform: scale(1.1);
+  }
+
+  .calendar-day.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .calendar-day.other-month {
+    opacity: 0.3;
+  }
+
+  /* Time Wheel */
+  .time-selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .time-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+
+  .time-wheel-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: var(--neumor-bg);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+  }
+
+  .time-wheel-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      var(--neumor-bg) 0%,
+      transparent 30%,
+      transparent 70%,
+      var(--neumor-bg) 100%
+    );
+    z-index: 2;
+  }
+
+  .time-wheel {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    padding: 80px 0;
+  }
+
+  .time-wheel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .time-option {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    scroll-snap-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.4;
+  }
+
+  .time-option.selected {
+    opacity: 1;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--accent);
+  }
+
+  .time-wheel-highlight {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 44px;
+    border-radius: 0.75rem;
+    border: 2px solid var(--accent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Guests Pills */
+  .guests-selector,
+  .zone-selector,
+  .occasion-selector {
+    margin-bottom: 2rem;
+  }
+
+  .selector-label {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
+
+  .guests-pills {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .guest-pill {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    background: var(--neumor-bg);
+    border: none;
+    cursor: pointer;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    transition: all 0.2s;
+    color: var(--text-primary);
+  }
+
+  .guest-pill:hover {
+    box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  }
+
+  .guest-pill.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
+  }
+
+  /* Zone Options */
+  .zone-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .zone-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    border-radius: 1rem;
+    background: var(--neumor-bg);
+    border: none;
+    cursor: pointer;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    transition: all 0.2s;
+  }
+
+  .zone-option:hover {
+    box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  }
+
+  .zone-option.active {
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 99, 102, 241), 0.1), transparent);
+  }
+
+  .zone-icon {
+    font-size: 1.5rem;
+  }
+
+  .zone-name {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+
+  /* Occasion Options */
+  .occasion-options {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .occasion-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 2rem;
+    background: var(--neumor-bg);
+    border: none;
+    cursor: pointer;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    transition: all 0.2s;
+  }
+
+  .occasion-option:hover {
+    box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  }
+
+  .occasion-option.active {
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 99, 102, 241), 0.1), transparent);
+  }
+
+  .occasion-icon {
+    font-size: 1.25rem;
+  }
+
+  .occasion-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+
+  /* Contact Form */
+  .contact-form {
+    margin-bottom: 2rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  /* Summary */
+  .reservation-summary {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .reservation-summary h4 {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .summary-icon {
+    font-size: 1.25rem;
+  }
+
+  .summary-value {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  /* Step Actions */
+  .step-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .neumor-btn-secondary {
+    background: var(--neumor-bg);
+    color: var(--text-primary);
+  }
+
+  .neumor-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .prev-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .next-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .next-step:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .submit-btn {
+    min-width: 200px;
+    position: relative;
+  }
+
+  .submit-btn .btn-loader {
+    display: none;
+  }
+
+  .submit-btn.loading .btn-text {
+    visibility: hidden;
+  }
+
+  .submit-btn.loading .btn-loader {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  /* Success State */
+  .wizard-success {
+    text-align: center;
+    padding: 3rem 0;
+  }
+
+  .success-animation {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .success-circle {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+  }
+
+  .checkmark {
+    width: 100%;
+    height: 100%;
+  }
+
+  .checkmark-circle {
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  }
+
+  .checkmark-check {
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+  }
+
+  @keyframes stroke {
+    100% { stroke-dashoffset: 0; }
+  }
+
+  .confetti-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confetti-fall 1s ease-out forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translate(0, 0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(var(--x), var(--y)) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .success-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+  }
+
+  .success-message {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .wizard-container {
+      padding: 1.5rem;
+    }
+
+    .datetime-selector {
+      grid-template-columns: 1fr;
+    }
+
+    .time-selector {
+      margin-top: 1.5rem;
+    }
+
+    .time-wheel-container {
+      height: 150px;
+    }
+
+    .zone-options {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .progress-step span {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Calendar Logic
+  const calendarDays = document.querySelector('.calendar-days');
+  const monthYearDisplay = document.querySelector('.calendar-month-year');
+  const prevMonthBtn = document.querySelector('.prev-month');
+  const nextMonthBtn = document.querySelector('.next-month');
+  const selectedDateInput = document.getElementById('selectedDate') as HTMLInputElement;
+
+  let currentDate = new Date();
+  let selectedDate: Date | null = null;
+
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+  function renderCalendar() {
+    if (!calendarDays || !monthYearDisplay) return;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    calendarDays.innerHTML = '';
+
+    // Previous month days
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startDay - 1; i >= 0; i--) {
+      const day = document.createElement('button');
+      day.type = 'button';
+      day.className = 'calendar-day other-month disabled';
+      day.textContent = String(prevMonthLastDay - i);
+      calendarDays.appendChild(day);
+    }
+
+    // Current month days
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const dayDate = new Date(year, month, d);
+      const day = document.createElement('button');
+      day.type = 'button';
+      day.className = 'calendar-day';
+      day.textContent = String(d);
+      day.dataset.date = dayDate.toISOString().split('T')[0];
+
+      if (dayDate < today) {
+        day.classList.add('disabled');
+      }
+
+      if (dayDate.toDateString() === today.toDateString()) {
+        day.classList.add('today');
+      }
+
+      if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) {
+        day.classList.add('selected');
+      }
+
+      if (!day.classList.contains('disabled')) {
+        day.addEventListener('click', () => selectDate(dayDate));
+      }
+
+      calendarDays.appendChild(day);
+    }
+
+    // Next month days
+    const totalCells = calendarDays.children.length;
+    const remaining = 42 - totalCells;
+    for (let i = 1; i <= remaining && totalCells + i <= 42; i++) {
+      const day = document.createElement('button');
+      day.type = 'button';
+      day.className = 'calendar-day other-month disabled';
+      day.textContent = String(i);
+      calendarDays.appendChild(day);
+    }
+  }
+
+  function selectDate(date: Date) {
+    selectedDate = date;
+    selectedDateInput.value = date.toISOString().split('T')[0];
+    renderCalendar();
+    updateNextButton();
+    updateSummary();
+  }
+
+  prevMonthBtn?.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  });
+
+  nextMonthBtn?.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  });
+
+  renderCalendar();
+
+  // Time Wheel Logic
+  const timeWheel = document.querySelector('.time-wheel') as HTMLElement;
+  const selectedTimeInput = document.getElementById('selectedTime') as HTMLInputElement;
+  const timeOptions = document.querySelectorAll('.time-option');
+
+  function updateSelectedTime() {
+    if (!timeWheel) return;
+
+    const scrollTop = timeWheel.scrollTop;
+    const optionHeight = 40;
+    const centerOffset = timeWheel.clientHeight / 2 - optionHeight / 2;
+    const selectedIndex = Math.round((scrollTop + centerOffset) / optionHeight);
+
+    timeOptions.forEach((opt, i) => {
+      opt.classList.toggle('selected', i === selectedIndex);
+      if (i === selectedIndex) {
+        selectedTimeInput.value = (opt as HTMLElement).dataset.time || '';
+        updateNextButton();
+        updateSummary();
+      }
+    });
+  }
+
+  timeWheel?.addEventListener('scroll', updateSelectedTime);
+
+  // Initialize time wheel to 14:00
+  setTimeout(() => {
+    const initialIndex = Array.from(timeOptions).findIndex(opt =>
+      (opt as HTMLElement).dataset.time === '14:00'
+    );
+    if (initialIndex >= 0 && timeWheel) {
+      timeWheel.scrollTop = initialIndex * 40;
+    }
+  }, 100);
+
+  // Click on time option
+  timeOptions.forEach((opt, i) => {
+    opt.addEventListener('click', () => {
+      if (timeWheel) {
+        timeWheel.scrollTo({
+          top: i * 40,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+
+  // Guests Pills
+  const guestPills = document.querySelectorAll('.guest-pill');
+  const selectedGuestsInput = document.getElementById('selectedGuests') as HTMLInputElement;
+
+  guestPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      guestPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedGuestsInput.value = (pill as HTMLElement).dataset.guests || '2';
+      updateSummary();
+    });
+  });
+
+  // Zone Options
+  const zoneOptions = document.querySelectorAll('.zone-option');
+  const selectedZoneInput = document.getElementById('selectedZone') as HTMLInputElement;
+
+  zoneOptions.forEach(opt => {
+    opt.addEventListener('click', () => {
+      zoneOptions.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedZoneInput.value = (opt as HTMLElement).dataset.zone || '';
+      updateSummary();
+    });
+  });
+
+  // Occasion Options
+  const occasionOptions = document.querySelectorAll('.occasion-option');
+  const selectedOccasionInput = document.getElementById('selectedOccasion') as HTMLInputElement;
+
+  occasionOptions.forEach(opt => {
+    opt.addEventListener('click', () => {
+      occasionOptions.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedOccasionInput.value = (opt as HTMLElement).dataset.occasion || '';
+    });
+  });
+
+  // Step Navigation
+  const wizardSteps = document.querySelectorAll('.wizard-step');
+  const progressSteps = document.querySelectorAll('.progress-step');
+  const progressFill = document.querySelector('.progress-fill');
+  const nextBtns = document.querySelectorAll('.next-step');
+  const prevBtns = document.querySelectorAll('.prev-step');
+  let currentStep = 1;
+
+  function goToStep(step: number) {
+    currentStep = step;
+
+    wizardSteps.forEach(s => s.classList.remove('active'));
+    document.querySelector(`.wizard-step[data-step="${step}"]`)?.classList.add('active');
+
+    progressSteps.forEach((ps, i) => {
+      ps.classList.remove('active', 'completed');
+      if (i + 1 < step) ps.classList.add('completed');
+      if (i + 1 === step) ps.classList.add('active');
+    });
+
+    if (progressFill) {
+      (progressFill as HTMLElement).dataset.step = String(step);
+    }
+  }
+
+  function updateNextButton() {
+    const step1NextBtn = document.querySelector('.wizard-step[data-step="1"] .next-step') as HTMLButtonElement;
+    if (step1NextBtn) {
+      step1NextBtn.disabled = !selectedDateInput.value || !selectedTimeInput.value;
+    }
+  }
+
+  nextBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (currentStep < 3) goToStep(currentStep + 1);
+    });
+  });
+
+  prevBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (currentStep > 1) goToStep(currentStep - 1);
+    });
+  });
+
+  // Summary Update
+  function updateSummary() {
+    const summaryDate = document.getElementById('summary-date');
+    const summaryTime = document.getElementById('summary-time');
+    const summaryGuests = document.getElementById('summary-guests');
+    const summaryZone = document.getElementById('summary-zone');
+
+    if (summaryDate && selectedDateInput.value) {
+      const date = new Date(selectedDateInput.value);
+      summaryDate.textContent = date.toLocaleDateString('es-ES', {
+        weekday: 'short', day: 'numeric', month: 'short'
+      });
+    }
+    if (summaryTime) summaryTime.textContent = selectedTimeInput.value || '-';
+    if (summaryGuests) summaryGuests.textContent = `${selectedGuestsInput.value} personas`;
+    if (summaryZone) summaryZone.textContent = selectedZoneInput.value || 'Interior';
+  }
+
+  // Form Submit
+  const wizardForm = document.querySelector('.wizard-form') as HTMLFormElement;
+  const wizardSuccess = document.querySelector('.wizard-success') as HTMLElement;
+  const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
+  const newReservationBtn = document.querySelector('.new-reservation');
+
+  wizardForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    submitBtn?.classList.add('loading');
+
+    const webhookUrl = wizardForm.dataset.webhook;
+    const websiteId = wizardForm.dataset.websiteId;
+    const formData = new FormData(wizardForm);
+    const rawData = Object.fromEntries(formData);
+
+    const data = {
+      website_id: websiteId,
+      nombre: rawData.name,
+      email: rawData.email,
+      telefono: rawData.phone,
+      fecha: rawData.date,
+      hora: rawData.time,
+      personas: parseInt(rawData.guests as string) || 2,
+      zona: rawData.zone,
+      ocasion: rawData.occasion,
+      notas: rawData.notes || "",
+    };
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (webhookUrl) {
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error("Error");
+      } catch {
+        submitBtn?.classList.remove('loading');
+        alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
+        return;
+      }
+    }
+
+    submitBtn?.classList.remove('loading');
+
+    // Show success
+    wizardSteps.forEach(s => s.classList.remove('active'));
+    wizardSuccess.style.display = 'block';
+
+    // Confetti animation
+    createConfetti();
+  });
+
+  function createConfetti() {
+    const container = document.querySelector('.confetti-container');
+    if (!container) return;
+
+    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+
+    for (let i = 0; i < 50; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.setProperty('--x', `${(Math.random() - 0.5) * 200}px`);
+      confetti.style.setProperty('--y', `${Math.random() * 150 + 50}px`);
+      confetti.style.left = `${Math.random() * 100 - 50}px`;
+      confetti.style.top = `${Math.random() * 100 - 50}px`;
+      confetti.style.animationDelay = `${Math.random() * 0.3}s`;
+      container.appendChild(confetti);
+
+      setTimeout(() => confetti.remove(), 1500);
+    }
+  }
+
+  newReservationBtn?.addEventListener('click', () => {
+    wizardForm.reset();
+    selectedDate = null;
+    renderCalendar();
+    goToStep(1);
+    wizardSuccess.style.display = 'none';
+    updateNextButton();
+  });
+
+  // Initial state
+  updateNextButton();
+</script>

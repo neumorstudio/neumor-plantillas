@@ -155,6 +155,7 @@ function getPresetVariants(preset: string): Record<string, string> {
       features: "icons",
       reviews: "minimal",
       footer: "minimal",
+      reservation: "modern",
     },
     "casual": {
       hero: "classic",
@@ -162,6 +163,7 @@ function getPresetVariants(preset: string): Record<string, string> {
       features: "cards",
       reviews: "grid",
       footer: "full",
+      reservation: "classic",
     },
     "fast-food": {
       hero: "bold",
@@ -169,6 +171,7 @@ function getPresetVariants(preset: string): Record<string, string> {
       features: "banner",
       reviews: "carousel",
       footer: "minimal",
+      reservation: "modal",
     },
     "cafe-bistro": {
       hero: "minimal",
@@ -176,6 +179,7 @@ function getPresetVariants(preset: string): Record<string, string> {
       features: "icons",
       reviews: "minimal",
       footer: "centered",
+      reservation: "wizard",
     },
   };
   return presets[preset] || presets["casual"];

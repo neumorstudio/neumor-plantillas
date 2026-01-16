@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendBatchEmails } from "@/lib/resend";
 
-// Send campaign via n8n webhook
+// Send campaign via Resend (directo, sin n8n)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -39,6 +40,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get website config for restaurant name
+    const { data: website } = await supabase
+      .from("websites")
+      .select("config")
+      .eq("id", websiteId)
+      .single();
+
+    const restaurantName = website?.config?.businessName || "Restaurante";
+
     // Get subscribers based on filter
     let subscribersQuery = supabase
       .from("newsletter_subscribers")
@@ -47,7 +57,6 @@ export async function POST(request: NextRequest) {
       .eq("is_subscribed", true);
 
     if (audienceFilter === "recent") {
-      // Last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       subscribersQuery = subscribersQuery.gte(
@@ -55,7 +64,6 @@ export async function POST(request: NextRequest) {
         thirtyDaysAgo.toISOString()
       );
     } else if (audienceFilter === "inactive") {
-      // No booking in last 60 days
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
       subscribersQuery = subscribersQuery.lt(
@@ -86,7 +94,7 @@ export async function POST(request: NextRequest) {
       .insert({
         website_id: websiteId,
         template_id: templateId,
-        name: name || `Campaña ${new Date().toLocaleDateString("es-ES")}`,
+        name: name || \`Campana \${new Date().toLocaleDateString("es-ES")}\`,
         subject: template.subject,
         html_content: template.html_content,
         audience_type: audienceFilter || "all_customers",
@@ -99,90 +107,54 @@ export async function POST(request: NextRequest) {
 
     if (campaignError) {
       return NextResponse.json(
-        { error: "Error creando campaña" },
+        { error: "Error creando campana" },
         { status: 500 }
       );
     }
 
-    // Get website config for n8n webhook
-    const { data: website } = await supabase
-      .from("websites")
-      .select("config")
-      .eq("id", websiteId)
-      .single();
+    // Preparar emails personalizados
+    const emails = subscribers.map((subscriber) => {
+      let html = template.html_content
+        .replace(/\{\{restaurantName\}\}/g, restaurantName)
+        .replace(/\{\{name\}\}/g, subscriber.name || "Cliente")
+        .replace(/\{\{unsubscribeLink\}\}/g, \`#unsubscribe-\${subscriber.id}\`);
 
-    const n8nWebhook =
-      website?.config?.newsletter_webhook ||
-      process.env.N8N_NEWSLETTER_WEBHOOK_URL;
+      return {
+        to: subscriber.email,
+        subject: template.subject.replace(/\{\{restaurantName\}\}/g, restaurantName),
+        html,
+      };
+    });
 
-    if (!n8nWebhook) {
-      // Update campaign as failed
-      await supabase
-        .from("newsletter_campaigns")
-        .update({ status: "failed" })
-        .eq("id", campaign.id);
+    // Enviar emails con Resend
+    console.log(\`Enviando \${emails.length} emails via Resend...\`);
+    const result = await sendBatchEmails(emails);
+    console.log(\`Resultado: \${result.success} enviados, \${result.failed} fallidos\`);
 
-      return NextResponse.json(
-        { error: "Webhook de n8n no configurado" },
-        { status: 400 }
-      );
-    }
+    // Actualizar campana
+    const finalStatus = result.failed === 0 ? "sent" : result.success === 0 ? "failed" : "sent";
 
-    // Send to n8n webhook
-    try {
-      console.log("Enviando a n8n webhook:", n8nWebhook);
-      const response = await fetch(n8nWebhook, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          campaignId: campaign.id,
-          templateId: template.id,
-          subject: template.subject,
-          previewText: template.preview_text,
-          htmlContent: template.html_content,
-          subscribers: subscribers.map((s) => ({
-            email: s.email,
-            name: s.name,
-          })),
-          websiteId,
-        }),
-      });
+    await supabase
+      .from("newsletter_campaigns")
+      .update({
+        status: finalStatus,
+        emails_sent: result.success,
+        emails_failed: result.failed,
+        error_message: result.errors.length > 0 ? result.errors.join("; ") : null,
+      })
+      .eq("id", campaign.id);
 
-      console.log("Respuesta n8n:", response.status, response.statusText);
+    return NextResponse.json({
+      success: true,
+      campaignId: campaign.id,
+      recipientsCount: subscribers.length,
+      emailsSent: result.success,
+      emailsFailed: result.failed,
+      message: result.failed === 0
+        ? \`Enviado a \${result.success} suscriptores\`
+        : \`Enviado a \${result.success} suscriptores (\${result.failed} fallidos)\`,
+    });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error n8n response:", errorText);
-        throw new Error(`Error en webhook n8n: ${response.status} - ${errorText}`);
-      }
-
-      // Update campaign as sent
-      await supabase
-        .from("newsletter_campaigns")
-        .update({ status: "sent", emails_sent: subscribers.length })
-        .eq("id", campaign.id);
-
-      return NextResponse.json({
-        success: true,
-        campaignId: campaign.id,
-        recipientsCount: subscribers.length,
-        message: `Enviando a ${subscribers.length} suscriptores`,
-      });
-    } catch (webhookError) {
-      console.error("Webhook error:", webhookError);
-      // Update campaign as failed
-      await supabase
-        .from("newsletter_campaigns")
-        .update({ status: "failed", error_message: String(webhookError) })
-        .eq("id", campaign.id);
-
-      return NextResponse.json(
-        { error: `Error enviando a n8n: ${webhookError}` },
-        { status: 500 }
-      );
-    }
   } catch (error) {
     console.error("Newsletter send error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

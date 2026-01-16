@@ -14,12 +14,11 @@
  * Añadir ?preview=1 a la URL para activar el modo preview.
  * Parametros de preview:
  * - theme: Tema a previsualizar
- * - v_hero, v_menu, v_features, v_reviews, v_footer: Variantes individuales
+ * - v_hero, v_menu, v_features, v_reviews, v_footer, v_reservation: Variantes individuales
  */
 
 import Layout from "@layouts/Layout.astro";
 import Header from "@components/Header.astro";
-import ReservationForm from "@components/ReservationForm.astro";
 
 // Importar TODAS las variantes de componentes
 import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
@@ -28,6 +27,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 import { StatusPulse, StatusMorph, StatusLiquid, StatusTime } from "@components/OpenStatus";
+import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@components/ReservationForm";
 
 // Importar cliente Supabase
 import { getWebsiteConfig, type Theme, type WebsiteVariants, type OpenStatusConfig, type WeekSchedule } from "@lib/supabase";
@@ -47,6 +47,7 @@ const previewVariants = {
   reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
   openStatus: url.searchParams.get("v_status"),
+  reservation: url.searchParams.get("v_reservation"),
 };
 const previewStatusPosition = url.searchParams.get("status_pos") as "floating" | "inline" | "header" | null;
 
@@ -87,6 +88,12 @@ const componentMap = {
     liquid: StatusLiquid,
     time: StatusTime,
   },
+  reservation: {
+    classic: ReservationClassic,
+    wizard: ReservationWizard,
+    modal: ReservationModal,
+    modern: ReservationModern,
+  },
 };
 
 // ============================================
@@ -113,13 +120,14 @@ const defaultConfig = {
     reviews: "grid",
     footer: "full",
     openStatus: "pulse",
+    reservation: "classic",
   } as WebsiteVariants,
   siteTitle: "Mi Restaurante | Bienvenidos",
   siteDescription: "Restaurante con estilo neumórfico",
   heroTitle: "Bienvenidos a Nuestro Restaurante",
   heroSubtitle: "Una experiencia culinaria única",
   heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || "",
+  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || import.meta.env.PUBLIC_ADMIN_URL + "/api/reservas" || "",
   address: "Tu dirección aquí",
   phone: "+34 000 000 000",
   email: "contacto@turestaurante.com",
@@ -173,10 +181,11 @@ if (websiteData) {
     language: dbConfig.openStatus?.language || defaultConfig.openStatus.language,
   };
 
-  // Merge variants asegurando que openStatus exista
+  // Merge variants asegurando que todos los campos existan
   const mergedVariants: WebsiteVariants = {
     ...(dbConfig.variants || defaultConfig.variants),
     openStatus: dbConfig.variants?.openStatus || defaultConfig.variants.openStatus,
+    reservation: dbConfig.variants?.reservation || defaultConfig.variants.reservation,
   };
 
   config = {
@@ -226,6 +235,7 @@ if (isPreview) {
     reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
     footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
     openStatus: (previewVariants.openStatus as WebsiteVariants["openStatus"]) || selectedVariants.openStatus,
+    reservation: (previewVariants.reservation as WebsiteVariants["reservation"]) || selectedVariants.reservation,
   };
 }
 
@@ -236,6 +246,7 @@ const Features = componentMap.features[selectedVariants.features] || FeaturesCar
 const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
 const OpenStatusComponent = componentMap.openStatus[selectedVariants.openStatus] || StatusPulse;
+const ReservationForm = componentMap.reservation[selectedVariants.reservation] || ReservationClassic;
 
 // Configuración del OpenStatus (con overrides de preview)
 const openStatusConfig = {

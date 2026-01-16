@@ -1,9 +1,15 @@
 ---
+/**
+ * ReservationClassic - Formulario de reserva clásico mejorado
+ * Mantiene el layout de dos columnas pero con mejor UX
+ */
 interface Props {
   title?: string;
   subtitle?: string;
   webhookUrl?: string;
   websiteId?: string;
+  phone?: string;
+  schedule?: string;
 }
 
 const {
@@ -11,6 +17,8 @@ const {
   subtitle = "Completa el formulario y nos pondremos en contacto contigo para confirmar tu reserva.",
   webhookUrl = "",
   websiteId = "",
+  phone = "+34 912 345 678",
+  schedule = "Mar - Dom: 13:00 - 23:00",
 } = Astro.props;
 ---
 
@@ -24,43 +32,21 @@ const {
         <div class="contact-info">
           <div class="contact-item">
             <div class="contact-icon neumor-inset">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-                ></path>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
               </svg>
             </div>
-            <span>+34 912 345 678</span>
+            <span>{phone}</span>
           </div>
 
           <div class="contact-item">
             <div class="contact-icon neumor-inset">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
-            <span>Mar - Dom: 13:00 - 23:00</span>
+            <span>{schedule}</span>
           </div>
         </div>
       </div>
@@ -69,39 +55,18 @@ const {
         <div class="form-row">
           <div class="form-group">
             <label for="name">Nombre</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              class="neumor-input"
-              placeholder="Tu nombre"
-              required
-            />
+            <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
           </div>
           <div class="form-group">
             <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              class="neumor-input"
-              placeholder="tu@email.com"
-              required
-            />
+            <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" required />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label for="phone">Telefono</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              class="neumor-input"
-              placeholder="+34 600 000 000"
-              required
-            />
+            <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
           </div>
           <div class="form-group">
             <label for="guests">Comensales</label>
@@ -119,34 +84,17 @@ const {
         <div class="form-row">
           <div class="form-group">
             <label for="date">Fecha</label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              class="neumor-input"
-              required
-            />
+            <input type="date" id="date" name="date" class="neumor-input" required />
           </div>
           <div class="form-group">
             <label for="time">Hora</label>
-            <input
-              type="time"
-              id="time"
-              name="time"
-              class="neumor-input"
-              required
-            />
+            <input type="time" id="time" name="time" class="neumor-input" required />
           </div>
         </div>
 
         <div class="form-group">
           <label for="notes">Notas adicionales</label>
-          <textarea
-            id="notes"
-            name="notes"
-            class="neumor-input"
-            rows="3"
-            placeholder="Alergias, ocasion especial, etc."></textarea>
+          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Alergias, ocasion especial, etc."></textarea>
         </div>
 
         <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
@@ -283,7 +231,6 @@ const {
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
 
-    // Mapear campos al formato del webhook
     const data = {
       website_id: websiteId,
       nombre: rawData.name,

@@ -11,6 +11,7 @@ interface Variants {
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";
   footer: "full" | "minimal" | "centered";
+  reservation: "classic" | "wizard" | "modal" | "modern";
 }
 
 interface WebsiteConfig {
@@ -65,6 +66,12 @@ const variantOptions = {
     { value: "minimal", label: "Minimalista" },
     { value: "centered", label: "Centrado" },
   ],
+  reservation: [
+    { value: "classic", label: "Clasico" },
+    { value: "wizard", label: "Asistente (Pasos)" },
+    { value: "modal", label: "Modal Flotante" },
+    { value: "modern", label: "Moderno" },
+  ],
 };
 
 const defaultVariants: Variants = {
@@ -73,6 +80,7 @@ const defaultVariants: Variants = {
   features: "cards",
   reviews: "grid",
   footer: "full",
+  reservation: "classic",
 };
 
 // Icon components
@@ -272,7 +280,8 @@ export function PersonalizacionClient({
                     {key === "hero" ? "Cabecera" :
                      key === "menu" ? "Menu" :
                      key === "features" ? "Caracteristicas" :
-                     key === "reviews" ? "Resenas" : "Pie de pagina"}
+                     key === "reviews" ? "Resenas" :
+                     key === "footer" ? "Pie de pagina" : "Reservas"}
                   </label>
                   <select
                     value={variants[key]}

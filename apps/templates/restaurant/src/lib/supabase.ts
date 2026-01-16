@@ -8,6 +8,7 @@ export interface WebsiteVariants {
   reviews: "grid" | "carousel" | "minimal";
   footer: "full" | "minimal" | "centered";
   openStatus: "pulse" | "morph" | "liquid" | "time";
+  reservation: "classic" | "wizard" | "modal" | "modern";
 }
 
 // Horario de un día específico
