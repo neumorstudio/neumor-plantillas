@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const newPasswordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -34,15 +36,19 @@ export default function ChangePasswordPage() {
     setLoading(true);
     setError("");
 
+    const newPasswordValue = newPasswordRef.current?.value ?? newPassword;
+    const confirmPasswordValue =
+      confirmPasswordRef.current?.value ?? confirmPassword;
+
     // Validar que las contraseñas coincidan
-    if (newPassword !== confirmPassword) {
+    if (newPasswordValue !== confirmPasswordValue) {
       setError("Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
 
     // Validar requisitos de contraseña
-    const validationError = validatePassword(newPassword);
+    const validationError = validatePassword(newPasswordValue);
     if (validationError) {
       setError(validationError);
       setLoading(false);
@@ -53,7 +59,7 @@ export default function ChangePasswordPage() {
 
     // Actualizar contraseña
     const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
+      password: newPasswordValue,
     });
 
     if (updateError) {
@@ -74,6 +80,22 @@ export default function ChangePasswordPage() {
     // Redirigir al dashboard
     router.push("/dashboard");
     router.refresh();
+  };
+
+  const toggleNewPasswordVisibility = () => {
+    const currentValue = newPasswordRef.current?.value ?? "";
+    if (currentValue !== newPassword) {
+      setNewPassword(currentValue);
+    }
+    setShowNewPassword((prev) => !prev);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    const currentValue = confirmPasswordRef.current?.value ?? "";
+    if (currentValue !== confirmPassword) {
+      setConfirmPassword(currentValue);
+    }
+    setShowConfirmPassword((prev) => !prev);
   };
 
   return (
@@ -133,15 +155,17 @@ export default function ChangePasswordPage() {
                 <input
                   type={showNewPassword ? "text" : "password"}
                   id="newPassword"
+                  ref={newPasswordRef}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="neumor-input w-full pr-10"
                   placeholder="Minimo 8 caracteres"
+                  autoComplete="new-password"
                   required
                 />
                 <button
                   type="button"
-                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  onClick={toggleNewPasswordVisibility}
                   aria-label={showNewPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
                   aria-pressed={showNewPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -209,15 +233,17 @@ export default function ChangePasswordPage() {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmPassword"
+                  ref={confirmPasswordRef}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="neumor-input w-full pr-10"
                   placeholder="Repite la contraseña"
+                  autoComplete="new-password"
                   required
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  onClick={toggleConfirmPasswordVisibility}
                   aria-label={showConfirmPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
                   aria-pressed={showConfirmPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"

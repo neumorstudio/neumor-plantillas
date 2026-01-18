@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const togglePasswordVisibility = () => {
+    const currentValue = passwordRef.current?.value ?? "";
+    if (currentValue !== password) {
+      setPassword(currentValue);
+    }
+    setShowPassword((prev) => !prev);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,10 +28,12 @@ export default function LoginPage() {
     setError("");
 
     const supabase = createClient();
+    const emailValue = emailRef.current?.value ?? email;
+    const passwordValue = passwordRef.current?.value ?? password;
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: emailValue,
+      password: passwordValue,
     });
 
     if (authError) {
@@ -78,10 +90,12 @@ export default function LoginPage() {
               <input
                 type="email"
                 id="email"
+                ref={emailRef}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="neumor-input w-full"
                 placeholder="tu@email.com"
+                autoComplete="email"
                 required
               />
             </div>
@@ -97,15 +111,17 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
+                  ref={passwordRef}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="neumor-input w-full pr-10"
                   placeholder="Tu contrasena"
+                  autoComplete="current-password"
                   required
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  onClick={togglePasswordVisibility}
                   aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
                   aria-pressed={showPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
