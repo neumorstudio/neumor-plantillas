@@ -37,6 +37,19 @@ async function getSupabaseClient() {
     );
 }
 
+async function getClientForUser(
+    supabase: ReturnType<typeof createServerClient>,
+    userId: string
+) {
+    const { data: client } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("auth_user_id", userId)
+        .single();
+
+    return client;
+}
+
 // Helper para obtener y refrescar token si es necesario
 async function getValidAccessToken(
     supabase: ReturnType<typeof createServerClient>,
@@ -95,6 +108,11 @@ export async function POST(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const client = await getClientForUser(supabase, user.id);
+        if (!client) {
+            return NextResponse.json({ error: "Client not found" }, { status: 404 });
+        }
+
         // Obtener la reseña del cache para verificar pertenencia
         const { data: review } = await supabase
             .from("google_reviews_cache")
@@ -136,7 +154,7 @@ export async function POST(
             };
         };
 
-        if (location.social_accounts.websites.client_id !== user.id) {
+        if (location.social_accounts.websites.client_id !== client.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
@@ -187,6 +205,11 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const client = await getClientForUser(supabase, user.id);
+        if (!client) {
+            return NextResponse.json({ error: "Client not found" }, { status: 404 });
+        }
+
         // Obtener la reseña del cache
         const { data: review } = await supabase
             .from("google_reviews_cache")
@@ -228,7 +251,7 @@ export async function DELETE(
             };
         };
 
-        if (location.social_accounts.websites.client_id !== user.id) {
+        if (location.social_accounts.websites.client_id !== client.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 

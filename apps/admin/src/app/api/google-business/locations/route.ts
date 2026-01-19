@@ -38,6 +38,29 @@ async function getSupabaseClient() {
     );
 }
 
+async function getWebsiteForUser(
+    supabase: ReturnType<typeof createServerClient>,
+    userId: string
+) {
+    const { data: client } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("auth_user_id", userId)
+        .single();
+
+    if (!client) {
+        return null;
+    }
+
+    const { data: website } = await supabase
+        .from("websites")
+        .select("id")
+        .eq("client_id", client.id)
+        .single();
+
+    return website;
+}
+
 // Helper para obtener y refrescar token si es necesario
 async function getValidAccessToken(
     supabase: ReturnType<typeof createServerClient>,
@@ -86,11 +109,7 @@ export async function GET() {
         }
 
         // Obtener website
-        const { data: website } = await supabase
-            .from("websites")
-            .select("id")
-            .eq("client_id", user.id)
-            .single();
+        const website = await getWebsiteForUser(supabase, user.id);
 
         if (!website) {
             console.log("[DEBUG] /locations GET - No website found for user:", user.id);
@@ -162,11 +181,7 @@ export async function PUT(request: NextRequest) {
         }
 
         // Obtener website
-        const { data: website } = await supabase
-            .from("websites")
-            .select("id")
-            .eq("client_id", user.id)
-            .single();
+        const website = await getWebsiteForUser(supabase, user.id);
 
         if (!website) {
             return NextResponse.json({ error: "No website found" }, { status: 404 });
@@ -239,11 +254,7 @@ export async function POST() {
         }
 
         // Obtener website
-        const { data: website } = await supabase
-            .from("websites")
-            .select("id")
-            .eq("client_id", user.id)
-            .single();
+        const website = await getWebsiteForUser(supabase, user.id);
 
         if (!website) {
             return NextResponse.json({ error: "No website found" }, { status: 404 });

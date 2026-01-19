@@ -15,6 +15,29 @@ import {
     formatAddress,
 } from "@/lib/google-business-service";
 
+async function getWebsiteForUser(
+    supabase: ReturnType<typeof createServerClient>,
+    userId: string
+) {
+    const { data: client } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("auth_user_id", userId)
+        .single();
+
+    if (!client) {
+        return null;
+    }
+
+    const { data: website } = await supabase
+        .from("websites")
+        .select("id")
+        .eq("client_id", client.id)
+        .single();
+
+    return website;
+}
+
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
@@ -74,11 +97,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Obtener website del usuario
-        const { data: website } = await supabase
-            .from("websites")
-            .select("id")
-            .eq("client_id", user.id)
-            .single();
+        const website = await getWebsiteForUser(supabase, user.id);
 
         if (!website) {
             return NextResponse.redirect(`${errorUrl}no_website`);

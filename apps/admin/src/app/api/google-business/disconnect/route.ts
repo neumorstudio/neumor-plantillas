@@ -8,6 +8,29 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { revokeToken, decryptToken } from "@/lib/google-business-service";
 
+async function getWebsiteForUser(
+    supabase: ReturnType<typeof createServerClient>,
+    userId: string
+) {
+    const { data: client } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("auth_user_id", userId)
+        .single();
+
+    if (!client) {
+        return null;
+    }
+
+    const { data: website } = await supabase
+        .from("websites")
+        .select("id")
+        .eq("client_id", client.id)
+        .single();
+
+    return website;
+}
+
 export async function POST() {
     try {
         const cookieStore = await cookies();
@@ -35,11 +58,7 @@ export async function POST() {
         }
 
         // Obtener website del usuario
-        const { data: website } = await supabase
-            .from("websites")
-            .select("id")
-            .eq("client_id", user.id)
-            .single();
+        const website = await getWebsiteForUser(supabase, user.id);
 
         if (!website) {
             return NextResponse.json({ error: "No website found" }, { status: 404 });
