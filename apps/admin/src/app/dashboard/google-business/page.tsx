@@ -59,11 +59,15 @@ export default function GoogleBusinessPage() {
         try {
             setLoading(true);
             const res = await fetch("/api/google-business/locations");
-            if (!res.ok) throw new Error("Failed to fetch");
-            const json = await res.json();
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const message = json?.error || "Failed to fetch";
+                throw new Error(message);
+            }
             setData(json);
         } catch (err) {
-            setError("Error al cargar datos");
+            const message = err instanceof Error ? err.message : "Error al cargar datos";
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -75,11 +79,17 @@ export default function GoogleBusinessPage() {
             const res = await fetch("/api/google-business/locations", {
                 method: "POST",
             });
-            if (!res.ok) throw new Error("Failed to sync");
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const detail = json?.detail ? ` - ${json.detail}` : "";
+                const message = `${json?.error || "Failed to sync"}${detail}`;
+                throw new Error(message);
+            }
             await fetchLocations();
             setSuccessMessage("Ubicaciones sincronizadas");
         } catch (err) {
-            setError("Error al sincronizar");
+            const message = err instanceof Error ? err.message : "Error al sincronizar";
+            setError(message);
         } finally {
             setSyncing(false);
         }

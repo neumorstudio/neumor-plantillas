@@ -13,6 +13,7 @@ import {
     isTokenExpiringSoon,
     listReviews,
     starRatingToNumber,
+    GoogleApiError,
 } from "@/lib/google-business-service";
 
 // Helper para obtener Supabase client
@@ -67,11 +68,12 @@ async function getValidAccessToken(
         access_token: string;
         refresh_token: string;
         token_expires_at: string;
-    }
+    },
+    forceRefresh: boolean = false
 ): Promise<string> {
     const expiresAt = new Date(socialAccount.token_expires_at);
 
-    if (isTokenExpiringSoon(expiresAt)) {
+    if (forceRefresh || isTokenExpiringSoon(expiresAt)) {
         const refreshToken = decryptToken(socialAccount.refresh_token);
         const newTokens = await refreshAccessToken(refreshToken);
 
@@ -169,13 +171,46 @@ export async function GET(request: NextRequest) {
         }
 
         // Obtener reseñas de Google
-        const accessToken = await getValidAccessToken(supabase, socialAccount);
+        let accessToken: string;
+        try {
+            accessToken = await getValidAccessToken(supabase, socialAccount);
+        } catch (error) {
+            console.error("Get access token error:", error);
+            return NextResponse.json(
+                { error: "Failed to get access token" },
+                { status: 401 }
+            );
+        }
 
-        const { reviews: googleReviews, totalReviewCount } = await listReviews(
-            accessToken,
-            location.account_name,
-            location.location_name
-        );
+        let googleReviews;
+        let totalReviewCount;
+        try {
+            const result = await listReviews(
+                accessToken,
+                location.account_name,
+                location.location_name
+            );
+            googleReviews = result.reviews;
+            totalReviewCount = result.totalReviewCount;
+        } catch (error) {
+            if (error instanceof GoogleApiError && error.status === 401) {
+                accessToken = await getValidAccessToken(supabase, socialAccount, true);
+                const result = await listReviews(
+                    accessToken,
+                    location.account_name,
+                    location.location_name
+                );
+                googleReviews = result.reviews;
+                totalReviewCount = result.totalReviewCount;
+            } else if (error instanceof GoogleApiError) {
+                return NextResponse.json(
+                    { error: error.message, detail: error.body },
+                    { status: error.status }
+                );
+            } else {
+                throw error;
+            }
+        }
 
         // Actualizar cache
         // Primero eliminar cache antiguo

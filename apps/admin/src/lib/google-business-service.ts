@@ -101,6 +101,17 @@ export interface GoogleReview {
   };
 }
 
+export class GoogleApiError extends Error {
+  status: number;
+  body: string;
+
+  constructor(message: string, status: number, body: string) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
 // ============================================
 // ENCRIPTACIÓN DE TOKENS
 // ============================================
@@ -279,7 +290,7 @@ export async function listAccounts(accessToken: string): Promise<GoogleBusinessA
   if (!response.ok) {
     const error = await response.text();
     console.error("List accounts error:", error);
-    throw new Error(`Failed to list accounts: ${response.status}`);
+    throw new GoogleApiError("Failed to list accounts", response.status, error);
   }
 
   const data = await response.json();
@@ -306,7 +317,7 @@ export async function listLocations(
   if (!response.ok) {
     const error = await response.text();
     console.error("List locations error:", error);
-    throw new Error(`Failed to list locations: ${response.status}`);
+    throw new GoogleApiError("Failed to list locations", response.status, error);
   }
 
   const data = await response.json();
@@ -343,7 +354,7 @@ export async function listReviews(
   if (!response.ok) {
     const error = await response.text();
     console.error("List reviews error:", error);
-    throw new Error(`Failed to list reviews: ${response.status}`);
+    throw new GoogleApiError("Failed to list reviews", response.status, error);
   }
 
   const data = await response.json();

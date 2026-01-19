@@ -57,11 +57,15 @@ export default function GoogleReviewsPage() {
             setRefreshing(refresh);
             const url = refresh ? "/api/google-business/reviews?refresh=true" : "/api/google-business/reviews";
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch");
-            const json = await res.json();
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const message = json?.error || "Failed to fetch";
+                throw new Error(message);
+            }
             setData(json);
         } catch (err) {
-            setError("Error al cargar reseñas");
+            const message = err instanceof Error ? err.message : "Error al cargar reseñas";
+            setError(message);
         } finally {
             setLoading(false);
             setRefreshing(false);

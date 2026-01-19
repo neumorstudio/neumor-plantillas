@@ -15,6 +15,7 @@ import {
     listAccounts,
     listLocations,
     formatAddress,
+    GoogleApiError,
 } from "@/lib/google-business-service";
 
 // Helper para obtener Supabase client
@@ -69,11 +70,12 @@ async function getValidAccessToken(
         access_token: string;
         refresh_token: string;
         token_expires_at: string;
-    }
+    },
+    forceRefresh: boolean = false
 ): Promise<string> {
     const expiresAt = new Date(socialAccount.token_expires_at);
 
-    if (isTokenExpiringSoon(expiresAt)) {
+    if (forceRefresh || isTokenExpiringSoon(expiresAt)) {
         // Refrescar token
         const refreshToken = decryptToken(socialAccount.refresh_token);
         const newTokens = await refreshAccessToken(refreshToken);
@@ -276,7 +278,16 @@ export async function POST() {
         }
 
         // Obtener token válido
-        const accessToken = await getValidAccessToken(supabase, socialAccount);
+        let accessToken: string;
+        try {
+            accessToken = await getValidAccessToken(supabase, socialAccount);
+        } catch (error) {
+            console.error("Get access token error:", error);
+            return NextResponse.json(
+                { error: "Failed to get access token" },
+                { status: 401 }
+            );
+        }
 
         // Obtener ubicaciones actuales para preservar is_selected
         const { data: currentLocations } = await supabase
@@ -295,7 +306,17 @@ export async function POST() {
             .eq("social_account_id", socialAccount.id);
 
         // Sincronizar nuevas ubicaciones
-        const accounts = await listAccounts(accessToken);
+        let accounts;
+        try {
+            accounts = await listAccounts(accessToken);
+        } catch (error) {
+            if (error instanceof GoogleApiError && error.status === 401) {
+                accessToken = await getValidAccessToken(supabase, socialAccount, true);
+                accounts = await listAccounts(accessToken);
+            } else {
+                throw error;
+            }
+        }
         let newLocations = [];
 
         for (const account of accounts) {
@@ -333,6 +354,12 @@ export async function POST() {
         });
     } catch (error) {
         console.error("Sync locations error:", error);
+        if (error instanceof GoogleApiError) {
+            return NextResponse.json(
+                { error: error.message, detail: error.body },
+                { status: error.status }
+            );
+        }
         return NextResponse.json(
             { error: "Failed to sync locations" },
             { status: 500 }
