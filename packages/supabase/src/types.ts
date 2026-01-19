@@ -153,6 +153,51 @@ export interface ActivityLog {
 export type ActivityLogInsert = Omit<ActivityLog, "id" | "created_at">;
 
 // ============================================
+// GOOGLE BUSINESS PROFILE
+// ============================================
+
+export interface GoogleBusinessLocation {
+  id: string;
+  social_account_id: string;
+  account_name: string;
+  location_name: string;
+  title: string;
+  address: string | null;
+  phone: string | null;
+  website_url: string | null;
+  is_verified: boolean;
+  is_selected: boolean;
+  metadata: Json;
+  created_at: string;
+  updated_at: string;
+}
+
+export type GoogleBusinessLocationInsert = Omit<GoogleBusinessLocation, "id" | "created_at" | "updated_at"> & {
+  is_verified?: boolean;
+  is_selected?: boolean;
+  metadata?: Json;
+};
+export type GoogleBusinessLocationUpdate = Partial<Omit<GoogleBusinessLocationInsert, "social_account_id">>;
+
+export interface GoogleReviewCache {
+  id: string;
+  location_id: string;
+  review_name: string;
+  reviewer_name: string | null;
+  reviewer_photo_url: string | null;
+  star_rating: number | null;
+  comment: string | null;
+  reply_comment: string | null;
+  reply_updated_at: string | null;
+  review_created_at: string | null;
+  review_updated_at: string | null;
+  cached_at: string;
+}
+
+export type GoogleReviewCacheInsert = Omit<GoogleReviewCache, "id" | "cached_at">;
+export type GoogleReviewCacheUpdate = Partial<Omit<GoogleReviewCacheInsert, "location_id">>;
+
+// ============================================
 // DATABASE TYPE (for Supabase client)
 // ============================================
 export interface Database {
@@ -187,6 +232,16 @@ export interface Database {
         Row: ActivityLog;
         Insert: ActivityLogInsert;
         Update: never;
+      };
+      google_business_locations: {
+        Row: GoogleBusinessLocation;
+        Insert: GoogleBusinessLocationInsert;
+        Update: GoogleBusinessLocationUpdate;
+      };
+      google_reviews_cache: {
+        Row: GoogleReviewCache;
+        Insert: GoogleReviewCacheInsert;
+        Update: GoogleReviewCacheUpdate;
       };
     };
   };
