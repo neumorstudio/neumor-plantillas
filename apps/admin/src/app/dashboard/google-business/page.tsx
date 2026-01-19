@@ -38,6 +38,7 @@ export default function GoogleBusinessPage() {
     const [data, setData] = useState<LocationsResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
     // Cargar datos al montar
     useEffect(() => {
@@ -289,8 +290,8 @@ export default function GoogleBusinessPage() {
                                     <div
                                         key={location.id}
                                         className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${location.is_selected
-                                                ? "border-[var(--accent)] bg-[var(--accent)]/5"
-                                                : "border-transparent bg-[var(--neumor-bg)] hover:border-[var(--accent)]/30"
+                                            ? "border-[var(--accent)] bg-[var(--accent)]/5"
+                                            : "border-transparent bg-[var(--neumor-bg)] hover:border-[var(--accent)]/30"
                                             }`}
                                         onClick={() => handleSelectLocation(location.id)}
                                     >
@@ -327,8 +328,8 @@ export default function GoogleBusinessPage() {
                                             <div className="flex items-center">
                                                 <div
                                                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${location.is_selected
-                                                            ? "border-[var(--accent)] bg-[var(--accent)]"
-                                                            : "border-[var(--text-secondary)]"
+                                                        ? "border-[var(--accent)] bg-[var(--accent)]"
+                                                        : "border-[var(--text-secondary)]"
                                                         }`}
                                                 >
                                                     {location.is_selected && (

@@ -31,8 +31,12 @@ const GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 // Google Business Profile API URLs
-const GBP_API_BASE = "https://mybusinessaccountmanagement.googleapis.com/v1";
-const GBP_BUSINESS_INFO_BASE = "https://mybusinessbusinessinformation.googleapis.com/v1";
+// Updated to use the latest federated APIs where possible
+const GBP_ACCOUNT_BASE = "https://mybusinessaccountmanagement.googleapis.com/v1";
+const GBP_INFO_BASE = "https://mybusinessbusinessinformation.googleapis.com/v1";
+// Note: Reviews are still accessed via specific newer endpoints, but we use the "v4" compatible URL structure
+// or the new Performance API depending on the exact operation.
+// For simplicity and stability with current "googleapis" recommendations, we stick to the specialized endpoints.
 
 // ============================================
 // TIPOS
@@ -104,11 +108,13 @@ export interface GoogleReview {
 export class GoogleApiError extends Error {
   status: number;
   body: string;
+  code?: string;
 
-  constructor(message: string, status: number, body: string) {
+  constructor(message: string, status: number, body: string, code?: string) {
     super(message);
     this.status = status;
     this.body = body;
+    this.code = code;
   }
 }
 
@@ -200,9 +206,22 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Token exchange error:", error);
-    throw new Error(`Failed to exchange code for tokens: ${response.status}`);
+    const errorBody = await response.text();
+    console.error("Token exchange error:", errorBody);
+
+    // Intentar parsear el error para detalles (ej: invalid_grant)
+    try {
+      const errorJson = JSON.parse(errorBody);
+      throw new GoogleApiError(
+        `Failed to exchange code: ${errorJson.error_description || errorJson.error}`,
+        response.status,
+        errorBody,
+        errorJson.error
+      );
+    } catch (e) {
+      if (e instanceof GoogleApiError) throw e;
+      throw new Error(`Failed to exchange code for tokens: ${response.status}`);
+    }
   }
 
   return response.json();
@@ -226,16 +245,16 @@ export async function refreshAccessToken(refreshToken: string): Promise<GoogleTo
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Token refresh error:", error);
-    throw new Error(`Failed to refresh token: ${response.status}`);
+    const errorBody = await response.text();
+    console.error("Token refresh error:", errorBody);
+    throw new GoogleApiError("Failed to refresh token", response.status, errorBody);
   }
 
   const tokens = await response.json();
-  // Google no devuelve refresh_token en el refresh, mantenemos el original
+  // Google no devuelve refresh_token en el refresh si no es necesario, mantenemos el original
   return {
     ...tokens,
-    refresh_token: refreshToken,
+    refresh_token: tokens.refresh_token || refreshToken,
   };
 }
 
@@ -252,7 +271,7 @@ export async function revokeToken(token: string): Promise<void> {
 
   if (!response.ok) {
     console.warn("Token revocation failed:", await response.text());
-    // No lanzamos error, continuamos con la desconexión
+    // No lanzamos error, continuamos
   }
 }
 
@@ -279,9 +298,10 @@ export async function getUserInfo(accessToken: string): Promise<GoogleUserInfo> 
 
 /**
  * Lista las cuentas de Google Business Profile del usuario
+ * Uses: My Business Account Management API v1
  */
 export async function listAccounts(accessToken: string): Promise<GoogleBusinessAccount[]> {
-  const response = await fetch(`${GBP_API_BASE}/accounts`, {
+  const response = await fetch(`${GBP_ACCOUNT_BASE}/accounts`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -299,14 +319,15 @@ export async function listAccounts(accessToken: string): Promise<GoogleBusinessA
 
 /**
  * Lista las ubicaciones de una cuenta
+ * Uses: My Business Business Information API v1
  */
 export async function listLocations(
   accessToken: string,
   accountName: string
 ): Promise<GoogleBusinessLocation[]> {
-  // Usar la API de Business Information para listar ubicaciones
+  // Nota: accountName ya viene en formato "accounts/{id}"
   const response = await fetch(
-    `${GBP_BUSINESS_INFO_BASE}/${accountName}/locations?readMask=name,title,storefrontAddress,phoneNumbers,websiteUri,metadata`,
+    `${GBP_INFO_BASE}/${accountName}/locations?readMask=name,title,storefrontAddress,phoneNumbers,websiteUri,metadata`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -326,6 +347,11 @@ export async function listLocations(
 
 /**
  * Lista las reseñas de una ubicación
+ * Uses: My Business API v4 (Legacy endpoint, but stable for reviews)
+ * Note: While "Performance API" is the future, direct review management (list/reply) 
+ * via "https://mybusiness.googleapis.com/v4" is still the standard way supported 
+ * until the fully federated Reviews API is prevalent. 
+ * We check if we need to account format adjustments.
  */
 export async function listReviews(
   accessToken: string,
@@ -334,6 +360,19 @@ export async function listReviews(
   pageSize: number = 50,
   pageToken?: string
 ): Promise<{ reviews: GoogleReview[]; nextPageToken?: string; totalReviewCount?: number }> {
+  // Extract simple IDs from full resource names if necessary, 
+  // but v4 expects "accounts/{accountId}/locations/{locationId}/reviews"
+
+  // Ensure names are clean. 
+  // API v4 expects: "accounts/{accountId}/locations/{locationId}"
+  // API v1 names are compatible but let's be safe.
+
+  const resourceName = `${accountName}/${locationName}`;
+  // WARNING: locationName from v1 is "locations/{id}", accountName is "accounts/{id}"
+  // Creating the path: "accounts/{accId}/locations/{locId}/reviews"
+  // If accountName="accounts/123" and locationName="locations/456", 
+  // then `${accountName}/${locationName}` results in "accounts/123/locations/456". Correct.
+
   const params = new URLSearchParams({
     pageSize: pageSize.toString(),
   });
@@ -341,7 +380,6 @@ export async function listReviews(
     params.append("pageToken", pageToken);
   }
 
-  // Usar la antigua API de My Business para reseñas (aún disponible)
   const response = await fetch(
     `https://mybusiness.googleapis.com/v4/${accountName}/${locationName}/reviews?${params.toString()}`,
     {
@@ -373,6 +411,7 @@ export async function replyToReview(
   reviewName: string,
   comment: string
 ): Promise<void> {
+  // reviewName format: accounts/{accId}/locations/{locId}/reviews/{reviewId}
   const response = await fetch(
     `https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
     {
@@ -390,7 +429,7 @@ export async function replyToReview(
   if (!response.ok) {
     const error = await response.text();
     console.error("Reply to review error:", error);
-    throw new Error(`Failed to reply to review: ${response.status}`);
+    throw new GoogleApiError(`Failed to reply to review`, response.status, error);
   }
 }
 
@@ -414,7 +453,7 @@ export async function deleteReviewReply(
   if (!response.ok) {
     const error = await response.text();
     console.error("Delete review reply error:", error);
-    throw new Error(`Failed to delete review reply: ${response.status}`);
+    throw new GoogleApiError(`Failed to delete review reply`, response.status, error);
   }
 }
 

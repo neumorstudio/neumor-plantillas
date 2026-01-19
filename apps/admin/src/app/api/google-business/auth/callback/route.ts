@@ -13,6 +13,7 @@ import {
     listLocations,
     encryptToken,
     formatAddress,
+    GoogleApiError,
 } from "@/lib/google-business-service";
 
 async function getWebsiteForUser(
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const error = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
 
     // URL base para redirecciones
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
