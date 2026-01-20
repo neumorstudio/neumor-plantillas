@@ -1,0 +1,837 @@
+---
+interface OrderItem {
+  id?: string;
+  name: string;
+  description: string;
+  price: string;
+  priceCents?: number;
+  tag?: string;
+  image?: string;
+}
+
+interface OrderCategory {
+  name: string;
+  icon: string;
+  items: OrderItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: OrderCategory[];
+  websiteId?: string;
+  orderApiUrl?: string;
+  stripePublishableKey?: string;
+  pickupStart?: string;
+  pickupEnd?: string;
+}
+
+const defaultCategories: OrderCategory[] = [
+  {
+    name: "Entrantes",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>`,
+    items: [
+      { name: "Carpaccio de Ternera", description: "Finas laminas de ternera con rucula, parmesano y aceite de trufa", price: "14", tag: "popular" },
+      { name: "Burrata Fresca", description: "Con tomates cherry confitados, pesto de albahaca", price: "12" },
+      { name: "Tartar de Atun", description: "Atun rojo con aguacate, sesamo y salsa ponzu", price: "16", tag: "nuevo" },
+    ],
+  },
+  {
+    name: "Principales",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20"/></svg>`,
+    items: [
+      { name: "Solomillo Wellington", description: "Solomillo envuelto en hojaldre con duxelles de setas", price: "32", tag: "popular" },
+      { name: "Lubina a la Espalda", description: "Lubina salvaje con verduras de temporada", price: "28" },
+      { name: "Risotto de Boletus", description: "Arroz carnaroli con boletus edulis y trufa", price: "22", tag: "vegano" },
+    ],
+  },
+  {
+    name: "Postres",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>`,
+    items: [
+      { name: "Tarta de Queso", description: "Nuestra famosa tarta cremosa con coulis de frutos rojos", price: "8", tag: "popular" },
+      { name: "Coulant de Chocolate", description: "Bizcocho tibio de chocolate con helado de vainilla", price: "9" },
+    ],
+  },
+];
+
+const {
+  title = "Pedidos Online",
+  subtitle = "Prepara tu pedido y recoge cuando quieras. Pago anticipado seguro con Stripe.",
+  categories = defaultCategories,
+  websiteId = "",
+  orderApiUrl = "",
+  stripePublishableKey = "",
+  pickupStart = "12:00",
+  pickupEnd = "22:00",
+} = Astro.props;
+---
+
+<section
+  id="orders"
+  class="orders-section"
+  data-website-id={websiteId}
+  data-order-api={orderApiUrl}
+  data-stripe-key={stripePublishableKey}
+  data-pickup-start={pickupStart}
+  data-pickup-end={pickupEnd}
+>
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+      <div class="pickup-window neumor-inset">
+        <span>Recogidas:</span>
+        <strong>{pickupStart} - {pickupEnd}</strong>
+      </div>
+    </div>
+
+    <div class="orders-grid">
+      <div class="orders-menu">
+        <div class="category-tabs">
+          {categories.map((category, index) => (
+            <button
+              class={`category-tab neumor-btn ${index === 0 ? "active" : ""}`}
+              data-category={index}
+            >
+              <span class="tab-icon" set:html={category.icon} />
+              <span class="tab-name">{category.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <div class="orders-content">
+          {categories.map((category, catIndex) => (
+            <div
+              class={`orders-category ${catIndex === 0 ? "active" : ""}`}
+              data-category-content={catIndex}
+            >
+              <div class="orders-list">
+                {category.items.map((item, itemIndex) => (
+                  <article class="order-item neumor-card" style={`animation-delay: ${itemIndex * 75}ms`}>
+                    <div class="item-content">
+                      <div class="item-header">
+                        <h3 class="item-name">{item.name}</h3>
+                        {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+                      </div>
+                      <p class="item-description">{item.description}</p>
+                    </div>
+                    <div class="item-actions">
+                      <div class="item-price">
+                        <span class="price-value">{item.price}</span>
+                        <span class="price-currency">€</span>
+                      </div>
+                      <button
+                        class="add-to-cart neumor-btn"
+                        data-add-item
+                        data-item-id={item.id || item.name}
+                        data-item-name={item.name}
+                        data-item-price={item.priceCents ?? Math.round(parseFloat(item.price) * 100)}
+                      >
+                        Anadir
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <aside class="orders-summary neumor-card">
+        <div class="summary-header">
+          <h3>Tu pedido</h3>
+          <span class="summary-count" data-cart-count>0 items</span>
+        </div>
+
+        <div class="cart-empty" data-cart-empty>
+          Aun no has anadido platos a tu carrito.
+        </div>
+
+        <ul class="cart-items" data-cart-items></ul>
+
+        <div class="cart-total">
+          <span>Total</span>
+          <strong data-cart-total>0 €</strong>
+        </div>
+
+        <form class="order-form" data-order-form>
+          <div class="form-group">
+            <label for="order-name">Nombre</label>
+            <input id="order-name" name="name" type="text" class="neumor-input" placeholder="Tu nombre" required />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="order-phone">Telefono</label>
+              <input id="order-phone" name="phone" type="tel" class="neumor-input" placeholder="+34 600 000 000" required />
+            </div>
+            <div class="form-group">
+              <label for="order-email">Email (opcional)</label>
+              <input id="order-email" name="email" type="email" class="neumor-input" placeholder="tu@email.com" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="order-date">Fecha de recogida</label>
+              <input id="order-date" name="pickup_date" type="date" class="neumor-input" required />
+            </div>
+            <div class="form-group">
+              <label for="order-time">Hora de recogida</label>
+              <input id="order-time" name="pickup_time" type="time" class="neumor-input" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="order-notes">Notas</label>
+            <textarea id="order-notes" name="notes" class="neumor-input" rows="3" placeholder="Alergias, indicaciones, etc."></textarea>
+          </div>
+          <button type="button" class="neumor-btn neumor-btn-accent" data-create-intent>
+            Continuar al pago
+          </button>
+          <button type="button" class="neumor-btn" data-reset-intent>
+            Modificar pedido
+          </button>
+        </form>
+
+        <div class="payment-section is-hidden" data-payment-section>
+          <div id="payment-element"></div>
+          <button type="button" class="neumor-btn neumor-btn-accent" data-confirm-payment>
+            Pagar ahora
+          </button>
+          <p class="payment-note">
+            Tu pago se procesa de forma segura con Stripe.
+          </p>
+        </div>
+
+        <p class="order-error is-hidden" data-order-error role="alert"></p>
+        <p class="order-success is-hidden" data-order-success>
+          Pedido confirmado. Recibiras un email con los detalles de recogida.
+        </p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style>
+  .orders-section {
+    padding: 6rem 0;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 1.25rem;
+  }
+
+  .pickup-window {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .orders-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .orders-menu {
+    min-width: 0;
+  }
+
+  .category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .category-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 1rem;
+    font-weight: 500;
+  }
+
+  .category-tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 4px 4px 12px var(--shadow-dark), -2px -2px 8px var(--shadow-light);
+  }
+
+  .tab-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+  }
+
+  .tab-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .orders-category {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .orders-category.active {
+    display: block;
+  }
+
+  .orders-list {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    animation: slideUp 0.5s ease backwards;
+  }
+
+  .item-content {
+    flex: 1;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
+  .item-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .item-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 2rem;
+  }
+
+  .tag-popular { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+  .tag-nuevo { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+  .tag-vegano { background: linear-gradient(135deg, #34d399, #10b981); color: white; }
+
+  .item-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .item-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+
+  .item-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    font-weight: 600;
+  }
+
+  .price-value {
+    font-size: 1.4rem;
+  }
+
+  .price-currency {
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+
+  .add-to-cart {
+    padding: 0.5rem 0.9rem;
+  }
+
+  .orders-summary {
+    padding: 2rem;
+    position: sticky;
+    top: 110px;
+  }
+
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .summary-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .cart-empty {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 0.75rem 0;
+  }
+
+  .cart-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.9rem;
+    background: var(--neumor-bg);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+  }
+
+  .cart-item-info {
+    flex: 1;
+  }
+
+  .cart-item-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+  }
+
+  .cart-item-price {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cart-item-controls button {
+    width: 28px;
+    height: 28px;
+    border-radius: 0.6rem;
+    padding: 0;
+  }
+
+  .cart-item-qty {
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .cart-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin: 1.5rem 0;
+  }
+
+  .order-form {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+
+  .order-form button {
+    width: 100%;
+  }
+
+  .order-form [data-reset-intent] {
+    display: none;
+  }
+
+  .payment-section {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .payment-note {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  .order-error {
+    color: #dc2626;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .order-success {
+    color: #059669;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .is-hidden {
+    display: none;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 1024px) {
+    .orders-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .orders-summary {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .order-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .item-actions {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const section = document.querySelector(".orders-section");
+    if (!section) return;
+
+    const orderApiUrl = section.getAttribute("data-order-api") || "";
+    const stripeKey = section.getAttribute("data-stripe-key") || "";
+    const websiteId = section.getAttribute("data-website-id") || "";
+    const pickupStart = section.getAttribute("data-pickup-start") || "";
+    const pickupEnd = section.getAttribute("data-pickup-end") || "";
+
+    const cartItemsEl = section.querySelector("[data-cart-items]");
+    const cartEmptyEl = section.querySelector("[data-cart-empty]");
+    const cartTotalEl = section.querySelector("[data-cart-total]");
+    const cartCountEl = section.querySelector("[data-cart-count]");
+    const orderForm = section.querySelector("[data-order-form]");
+    const createIntentBtn = section.querySelector("[data-create-intent]");
+    const resetIntentBtn = section.querySelector("[data-reset-intent]");
+    const paymentSection = section.querySelector("[data-payment-section]");
+    const confirmPaymentBtn = section.querySelector("[data-confirm-payment]");
+    const errorEl = section.querySelector("[data-order-error]");
+    const successEl = section.querySelector("[data-order-success]");
+
+    const dateInput = section.querySelector("#order-date");
+    const timeInput = section.querySelector("#order-time");
+
+    if (dateInput) {
+      dateInput.min = new Date().toISOString().split("T")[0];
+    }
+
+    if (timeInput && pickupStart) {
+      timeInput.min = pickupStart;
+      timeInput.max = pickupEnd || pickupStart;
+    }
+
+    const cart = new Map();
+    let stripe = null;
+    let elements = null;
+    let paymentElement = null;
+    let checkoutLocked = false;
+
+    const tabs = section.querySelectorAll(".category-tab");
+    const contents = section.querySelectorAll(".orders-category");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const categoryIndex = tab.getAttribute("data-category");
+        tabs.forEach((btn) => btn.classList.remove("active"));
+        tab.classList.add("active");
+        contents.forEach((content) => {
+          content.classList.remove("active");
+          if (content.getAttribute("data-category-content") === categoryIndex) {
+            content.classList.add("active");
+          }
+        });
+      });
+    });
+
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+      }).format(value / 100);
+    };
+
+    const updateCartSummary = () => {
+      const totalItems = Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0);
+      const totalAmount = Array.from(cart.values()).reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+      if (cartTotalEl) cartTotalEl.textContent = `${formatCurrency(totalAmount)}`;
+      if (cartCountEl) cartCountEl.textContent = `${totalItems} items`;
+      if (cartEmptyEl) cartEmptyEl.classList.toggle("is-hidden", totalItems > 0);
+    };
+
+    const renderCart = () => {
+      if (!cartItemsEl) return;
+      cartItemsEl.innerHTML = "";
+
+      cart.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "cart-item";
+        li.innerHTML = `
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-price">${formatCurrency(item.price)}</div>
+          </div>
+          <div class="cart-item-controls">
+            <button type="button" class="neumor-btn" data-action="decrease" data-item-id="${item.id}">-</button>
+            <span class="cart-item-qty">${item.quantity}</span>
+            <button type="button" class="neumor-btn" data-action="increase" data-item-id="${item.id}">+</button>
+          </div>
+        `;
+        cartItemsEl.appendChild(li);
+      });
+
+      updateCartSummary();
+    };
+
+    const addItem = (item) => {
+      if (checkoutLocked) return;
+      const existing = cart.get(item.id);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.set(item.id, { ...item, quantity: 1 });
+      }
+      renderCart();
+    };
+
+    const changeQuantity = (id, delta) => {
+      if (checkoutLocked) return;
+      const item = cart.get(id);
+      if (!item) return;
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        cart.delete(id);
+      }
+      renderCart();
+    };
+
+    section.querySelectorAll("[data-add-item]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.getAttribute("data-item-id");
+        const name = button.getAttribute("data-item-name");
+        const price = Number(button.getAttribute("data-item-price")) || 0;
+        if (!id || !name || !price) return;
+        addItem({ id, name, price });
+      });
+    });
+
+    cartItemsEl?.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      const action = target.getAttribute("data-action");
+      const id = target.getAttribute("data-item-id");
+      if (!id) return;
+      if (action === "increase") changeQuantity(id, 1);
+      if (action === "decrease") changeQuantity(id, -1);
+    });
+
+    const showError = (message) => {
+      if (!errorEl) return;
+      errorEl.textContent = message;
+      errorEl.classList.remove("is-hidden");
+    };
+
+    const clearError = () => {
+      if (!errorEl) return;
+      errorEl.textContent = "";
+      errorEl.classList.add("is-hidden");
+    };
+
+    const showSuccess = () => {
+      if (!successEl) return;
+      successEl.classList.remove("is-hidden");
+    };
+
+    const resetCheckout = () => {
+      checkoutLocked = false;
+      clearError();
+      if (paymentElement) {
+        paymentElement.unmount();
+        paymentElement = null;
+      }
+      if (paymentSection) paymentSection.classList.add("is-hidden");
+      if (resetIntentBtn) resetIntentBtn.style.display = "none";
+      if (createIntentBtn) createIntentBtn.removeAttribute("disabled");
+    };
+
+    const lockCheckout = () => {
+      checkoutLocked = true;
+      if (resetIntentBtn) resetIntentBtn.style.display = "inline-flex";
+    };
+
+    resetIntentBtn?.addEventListener("click", () => {
+      resetCheckout();
+      renderCart();
+    });
+
+    createIntentBtn?.addEventListener("click", async () => {
+      clearError();
+      if (!orderApiUrl || !stripeKey) {
+        showError("Configura Stripe y la URL de pedidos.");
+        return;
+      }
+
+      if (!websiteId) {
+        showError("Configura el website id antes de continuar.");
+        return;
+      }
+
+      if (!cart.size) {
+        showError("Anade al menos un plato para continuar.");
+        return;
+      }
+
+      if (!orderForm) return;
+      const formData = new FormData(orderForm);
+      const name = String(formData.get("name") || "").trim();
+      const phone = String(formData.get("phone") || "").trim();
+      const email = String(formData.get("email") || "").trim();
+      const pickupDate = String(formData.get("pickup_date") || "").trim();
+      const pickupTime = String(formData.get("pickup_time") || "").trim();
+      const notes = String(formData.get("notes") || "").trim();
+
+      if (!name || !phone || !pickupDate || !pickupTime) {
+        showError("Completa los datos de recogida.");
+        return;
+      }
+
+      const items = Array.from(cart.values()).map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+      }));
+
+      createIntentBtn?.setAttribute("disabled", "true");
+
+      try {
+        const response = await fetch(orderApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            website_id: websiteId,
+            items,
+            customer: { name, phone, email },
+            pickup_date: pickupDate,
+            pickup_time: pickupTime,
+            notes,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Error al crear el pago");
+        }
+
+        if (!window.Stripe) {
+          throw new Error("Stripe no disponible");
+        }
+        stripe = stripe || window.Stripe(stripeKey);
+        elements = stripe.elements({ clientSecret: data.client_secret });
+        paymentElement = elements.create("payment");
+        paymentElement.mount("#payment-element");
+
+        if (paymentSection) paymentSection.classList.remove("is-hidden");
+        lockCheckout();
+      } catch (error) {
+        showError(error.message || "Error al iniciar el pago");
+        createIntentBtn?.removeAttribute("disabled");
+      }
+    });
+
+    confirmPaymentBtn?.addEventListener("click", async () => {
+      clearError();
+      if (!stripe || !elements) return;
+
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.href,
+        },
+        redirect: "if_required",
+      });
+
+      if (error) {
+        showError(error.message || "Error al confirmar el pago");
+        return;
+      }
+
+      showSuccess();
+    });
+
+    updateCartSummary();
+  });
+</script>

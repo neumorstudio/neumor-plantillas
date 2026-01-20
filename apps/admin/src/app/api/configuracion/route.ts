@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, websiteId, businessData, notificationSettings } = body;
+    const { clientId, websiteId, businessData, notificationSettings, orderSettings } = body;
 
     // Verify user owns this client (by auth_user_id)
     const { data: client } = await supabase
@@ -75,6 +75,27 @@ export async function POST(request: NextRequest) {
         { error: "Error al actualizar configuracion de notificaciones" },
         { status: 500 }
       );
+    }
+
+    if (orderSettings) {
+      const { error: orderSettingsError } = await supabase
+        .from("order_settings")
+        .upsert(
+          {
+            website_id: websiteId,
+            pickup_start_time: orderSettings.pickup_start_time,
+            pickup_end_time: orderSettings.pickup_end_time,
+          },
+          { onConflict: "website_id" }
+        );
+
+      if (orderSettingsError) {
+        console.error("Error updating order settings:", orderSettingsError);
+        return NextResponse.json(
+          { error: "Error al actualizar configuracion de pedidos" },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({ success: true });

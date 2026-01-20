@@ -54,6 +54,24 @@ export interface WebsiteConfig {
   openStatus?: OpenStatusConfig;
 }
 
+export interface MenuItemRow {
+  id: string;
+  website_id: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  category: string;
+  tag?: string | null;
+  image_url?: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface OrderSettings {
+  pickup_start_time: string;
+  pickup_end_time: string;
+}
+
 export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
 
 export interface Website {
@@ -114,6 +132,55 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
     }
 
     return data as Website;
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return null;
+  }
+}
+
+export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | null> {
+  if (!supabase || !websiteId) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("id, website_id, name, description, price_cents, category, tag, image_url, is_active, sort_order")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("category", { ascending: true })
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching menu items:", error.message);
+      return null;
+    }
+
+    return data as MenuItemRow[];
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return null;
+  }
+}
+
+export async function getOrderSettings(websiteId?: string): Promise<OrderSettings | null> {
+  if (!supabase || !websiteId) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("order_settings")
+      .select("pickup_start_time, pickup_end_time")
+      .eq("website_id", websiteId)
+      .single();
+
+    if (error) {
+      return null;
+    }
+
+    return data as OrderSettings;
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return null;

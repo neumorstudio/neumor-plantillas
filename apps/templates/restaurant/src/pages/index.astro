@@ -28,9 +28,19 @@ import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Review
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 import { StatusPulse, StatusMorph, StatusLiquid, StatusTime } from "@components/OpenStatus";
 import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@components/ReservationForm";
+import { OrderOnline } from "@components/OrderOnline";
 
 // Importar cliente Supabase
-import { getWebsiteConfig, type Theme, type WebsiteVariants, type OpenStatusConfig, type WeekSchedule } from "@lib/supabase";
+import {
+  getWebsiteConfig,
+  getMenuItems,
+  getOrderSettings,
+  type Theme,
+  type WebsiteVariants,
+  type OpenStatusConfig,
+  type WeekSchedule,
+  type MenuItemRow,
+} from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -150,6 +160,84 @@ const defaultConfig = {
   } as OpenStatusConfig,
 };
 
+const ordersApiUrl = import.meta.env.PUBLIC_ADMIN_URL
+  ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/pedidos/intent`
+  : (import.meta.env.PUBLIC_ORDER_INTENT_URL || "");
+
+const stripePublishableKey = import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+
+const defaultOrderSettings = {
+  pickupStart: "12:00",
+  pickupEnd: "22:00",
+};
+
+const formatPrice = (priceCents: number) => {
+  return new Intl.NumberFormat("es-ES", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(priceCents / 100);
+};
+
+const normalizeTimeString = (value: string) => (value ? value.slice(0, 5) : "");
+
+const getCategoryIcon = (category: string) => {
+  const key = category.toLowerCase();
+  if (key.includes("entrante")) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>`;
+  }
+  if (key.includes("principal")) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20"/></svg>`;
+  }
+  if (key.includes("postre")) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>`;
+  }
+
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>`;
+};
+
+const buildMenuCategories = (items: MenuItemRow[]) => {
+  const categories: {
+    name: string;
+    icon: string;
+    items: Array<{
+      id: string;
+      name: string;
+      description: string;
+      price: string;
+      priceCents: number;
+      tag?: string;
+      image?: string;
+    }>;
+  }[] = [];
+  const categoryMap = new Map<string, typeof categories[number]>();
+
+  items.forEach((item) => {
+    const categoryName = item.category || "Otros";
+    let category = categoryMap.get(categoryName);
+    if (!category) {
+      category = {
+        name: categoryName,
+        icon: getCategoryIcon(categoryName),
+        items: [],
+      };
+      categoryMap.set(categoryName, category);
+      categories.push(category);
+    }
+
+    category.items.push({
+      id: item.id,
+      name: item.name,
+      description: item.description || "",
+      price: formatPrice(item.price_cents),
+      priceCents: item.price_cents,
+      tag: item.tag || undefined,
+      image: item.image_url || undefined,
+    });
+  });
+
+  return categories;
+};
+
 // ============================================
 // CARGAR CONFIGURACION DESDE SUPABASE
 // ============================================
@@ -214,6 +302,11 @@ if (websiteData) {
   console.log("⚠️ Usando configuración por defecto (Supabase no disponible)");
 }
 
+const currentWebsiteId = websiteData?.id || websiteId || "";
+const menuItems = await getMenuItems(currentWebsiteId);
+const orderSettings = await getOrderSettings(currentWebsiteId);
+const menuCategories = menuItems?.length ? buildMenuCategories(menuItems) : undefined;
+
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
 // ============================================
@@ -255,8 +348,8 @@ const openStatusConfig = {
   position: previewStatusPosition || config.openStatus.position,
 };
 
-// Website ID para el formulario de reservas
-const currentWebsiteId = websiteData?.id || websiteId || "";
+const pickupStart = normalizeTimeString(orderSettings?.pickup_start_time || defaultOrderSettings.pickupStart);
+const pickupEnd = normalizeTimeString(orderSettings?.pickup_end_time || defaultOrderSettings.pickupEnd);
 ---
 
 <Layout
@@ -288,7 +381,16 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
 
     <Features />
 
-    <Menu />
+    <Menu categories={menuCategories} />
+
+    <OrderOnline
+      categories={menuCategories}
+      websiteId={currentWebsiteId}
+      orderApiUrl={ordersApiUrl}
+      stripePublishableKey={stripePublishableKey}
+      pickupStart={pickupStart}
+      pickupEnd={pickupEnd}
+    />
 
     <Reviews
       googleRating={config.googleRating}

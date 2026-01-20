@@ -22,10 +22,18 @@ interface NotificationSettings {
   webhook_url: string | null;
 }
 
+interface OrderSettings {
+  id?: string;
+  website_id?: string;
+  pickup_start_time: string | null;
+  pickup_end_time: string | null;
+}
+
 interface Props {
   client: ClientData;
   websiteId: string;
   initialSettings: NotificationSettings | null;
+  initialOrderSettings: OrderSettings | null;
 }
 
 const businessTypeLabels: Record<string, string> = {
@@ -41,6 +49,7 @@ export function ConfiguracionClient({
   client,
   websiteId,
   initialSettings,
+  initialOrderSettings,
 }: Props) {
   // Business data state
   const [businessData, setBusinessData] = useState({
@@ -58,6 +67,11 @@ export function ConfiguracionClient({
     reminder_time: initialSettings?.reminder_time || "10:00",
     email_new_lead: initialSettings?.email_new_lead ?? true,
     whatsapp_new_lead: initialSettings?.whatsapp_new_lead ?? false,
+  });
+
+  const [orderSettings, setOrderSettings] = useState({
+    pickup_start_time: initialOrderSettings?.pickup_start_time || "12:00",
+    pickup_end_time: initialOrderSettings?.pickup_end_time || "22:00",
   });
 
   const [saving, setSaving] = useState(false);
@@ -88,6 +102,7 @@ export function ConfiguracionClient({
           websiteId,
           businessData,
           notificationSettings: settings,
+          orderSettings,
         }),
       });
 
@@ -346,6 +361,48 @@ export function ConfiguracionClient({
                   }`}
                 />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Settings */}
+        <div className="neumor-card p-6">
+          <h2 className="text-xl font-semibold mb-6">Pedidos Online</h2>
+          <p className="text-sm text-[var(--text-secondary)] mb-6">
+            Define el rango horario para recogidas en el checkout online.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Hora de inicio
+              </label>
+              <input
+                type="time"
+                value={orderSettings.pickup_start_time}
+                onChange={(e) =>
+                  setOrderSettings((prev) => ({
+                    ...prev,
+                    pickup_start_time: e.target.value,
+                  }))
+                }
+                className="neumor-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Hora de fin
+              </label>
+              <input
+                type="time"
+                value={orderSettings.pickup_end_time}
+                onChange={(e) =>
+                  setOrderSettings((prev) => ({
+                    ...prev,
+                    pickup_end_time: e.target.value,
+                  }))
+                }
+                className="neumor-input w-full"
+              />
             </div>
           </div>
         </div>

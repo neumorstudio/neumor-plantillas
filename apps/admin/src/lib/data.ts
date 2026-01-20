@@ -144,6 +144,22 @@ export async function getNotificationSettings() {
   return data;
 }
 
+// Order settings
+export async function getOrderSettings() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("order_settings")
+    .select("*")
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
 // Update booking status
 export async function updateBookingStatus(bookingId: string, status: string) {
   const supabase = await createClient();
