@@ -32,6 +32,18 @@ interface LocationsResponse {
 }
 
 export default function GoogleBusinessPage() {
+    const showGoogleBusiness = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+    if (!showGoogleBusiness) {
+        return (
+            <div className="p-6">
+                <h1 className="text-2xl font-bold mb-2">Google Business</h1>
+                <p className="text-[var(--text-secondary)]">
+                    Integracion no disponible por el momento.
+                </p>
+            </div>
+        );
+    }
+
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [disconnecting, setDisconnecting] = useState(false);

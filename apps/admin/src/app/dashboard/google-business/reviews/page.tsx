@@ -32,6 +32,18 @@ interface ReviewsResponse {
 }
 
 export default function GoogleReviewsPage() {
+    const showGoogleBusiness = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+    if (!showGoogleBusiness) {
+        return (
+            <div className="p-6">
+                <h1 className="text-2xl font-bold mb-2">Resenas de Google</h1>
+                <p className="text-[var(--text-secondary)]">
+                    Integracion no disponible por el momento.
+                </p>
+            </div>
+        );
+    }
+
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [data, setData] = useState<ReviewsResponse | null>(null);

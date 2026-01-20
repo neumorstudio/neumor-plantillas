@@ -2,9 +2,10 @@
 interface Props {
   restaurantName: string;
   logo?: string;
+  showOrders?: boolean;
 }
 
-const { restaurantName, logo } = Astro.props;
+const { restaurantName, logo, showOrders = true } = Astro.props;
 ---
 
 <header class="header">
@@ -17,7 +18,7 @@ const { restaurantName, logo } = Astro.props;
 
       <ul class="nav-links">
         <li><a href="#menu">Menu</a></li>
-        <li><a href="#orders">Pedidos</a></li>
+        {showOrders && <li><a href="#orders">Pedidos</a></li>}
         <li><a href="#specials">Especiales</a></li>
         <li><a href="#reviews">Opiniones</a></li>
         <li><a href="#contact">Contacto</a></li>

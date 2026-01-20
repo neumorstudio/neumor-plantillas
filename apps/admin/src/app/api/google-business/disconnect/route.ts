@@ -8,6 +8,8 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { revokeToken, decryptToken } from "@/lib/google-business-service";
 
+const googleBusinessEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
 async function getWebsiteForUser(
     supabase: ReturnType<typeof createServerClient>,
     userId: string
@@ -32,6 +34,10 @@ async function getWebsiteForUser(
 }
 
 export async function POST() {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const cookieStore = await cookies();
         const supabase = createServerClient(

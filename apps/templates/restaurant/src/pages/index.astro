@@ -165,6 +165,7 @@ const ordersApiUrl = import.meta.env.PUBLIC_ADMIN_URL
   : (import.meta.env.PUBLIC_ORDER_INTENT_URL || "");
 
 const stripePublishableKey = import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+const ordersEnabled = Boolean(stripePublishableKey && ordersApiUrl);
 
 const defaultOrderSettings = {
   pickupStart: "12:00",
@@ -350,6 +351,8 @@ const openStatusConfig = {
 
 const pickupStart = normalizeTimeString(orderSettings?.pickup_start_time || defaultOrderSettings.pickupStart);
 const pickupEnd = normalizeTimeString(orderSettings?.pickup_end_time || defaultOrderSettings.pickupEnd);
+const heroCtaText = ordersEnabled ? "Pedir online" : undefined;
+const heroCtaLink = ordersEnabled ? "#orders" : undefined;
 ---
 
 <Layout
@@ -357,7 +360,7 @@ const pickupEnd = normalizeTimeString(orderSettings?.pickup_end_time || defaultO
   description={config.siteDescription}
   theme={activeTheme}
 >
-  <Header restaurantName={config.restaurantName} />
+  <Header restaurantName={config.restaurantName} showOrders={ordersEnabled} />
 
   {/* Indicador de Estado - Posición Header (barra debajo del header) */}
   {openStatusConfig.enabled && openStatusConfig.position === "header" && (
@@ -377,20 +380,24 @@ const pickupEnd = normalizeTimeString(orderSettings?.pickup_end_time || defaultO
       title={config.heroTitle}
       subtitle={config.heroSubtitle}
       backgroundImage={config.heroImage}
+      ctaText={heroCtaText}
+      ctaLink={heroCtaLink}
     />
 
     <Features />
 
     <Menu categories={menuCategories} />
 
-    <OrderOnline
-      categories={menuCategories}
-      websiteId={currentWebsiteId}
-      orderApiUrl={ordersApiUrl}
-      stripePublishableKey={stripePublishableKey}
-      pickupStart={pickupStart}
-      pickupEnd={pickupEnd}
-    />
+    {ordersEnabled && (
+      <OrderOnline
+        categories={menuCategories}
+        websiteId={currentWebsiteId}
+        orderApiUrl={ordersApiUrl}
+        stripePublishableKey={stripePublishableKey}
+        pickupStart={pickupStart}
+        pickupEnd={pickupEnd}
+      />
+    )}
 
     <Reviews
       googleRating={config.googleRating}

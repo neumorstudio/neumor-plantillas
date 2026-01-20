@@ -16,6 +16,8 @@ import {
     deleteReviewReply,
 } from "@/lib/google-business-service";
 
+const googleBusinessEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
 // Helper para obtener Supabase client
 async function getSupabaseClient() {
     const cookieStore = await cookies();
@@ -89,6 +91,10 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ reviewId: string }> }
 ) {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const supabase = await getSupabaseClient();
         const { reviewId } = await params;
@@ -195,6 +201,10 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ reviewId: string }> }
 ) {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const supabase = await getSupabaseClient();
         const { reviewId } = await params;

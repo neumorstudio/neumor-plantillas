@@ -98,6 +98,7 @@ const navItems = [
   {
     href: "/dashboard/google-business",
     label: "Google Business",
+    feature: "googleBusiness",
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -146,6 +147,10 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const showGoogleBusiness = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+  const visibleNavItems = navItems.filter(
+    (item) => item.feature !== "googleBusiness" || showGoogleBusiness
+  );
   const pathname = usePathname();
   const router = useRouter();
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
@@ -239,7 +244,7 @@ export default function DashboardLayout({
 
         {/* Navigation */}
         <nav className="sidebar-nav flex-1">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/dashboard" && pathname.startsWith(item.href));

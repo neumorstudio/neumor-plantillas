@@ -16,6 +16,8 @@ import {
     GoogleApiError,
 } from "@/lib/google-business-service";
 
+const googleBusinessEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
 async function getWebsiteForUser(
     supabase: ReturnType<typeof createServerClient>,
     userId: string
@@ -40,6 +42,10 @@ async function getWebsiteForUser(
 }
 
 export async function GET(request: NextRequest) {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
     const state = searchParams.get("state");

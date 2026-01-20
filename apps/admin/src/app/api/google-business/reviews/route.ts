@@ -16,6 +16,8 @@ import {
     GoogleApiError,
 } from "@/lib/google-business-service";
 
+const googleBusinessEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
 // Helper para obtener Supabase client
 async function getSupabaseClient() {
     const cookieStore = await cookies();
@@ -97,6 +99,10 @@ async function getValidAccessToken(
  * GET - Lista reseñas de la ubicación seleccionada
  */
 export async function GET(request: NextRequest) {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const supabase = await getSupabaseClient();
         const searchParams = request.nextUrl.searchParams;

@@ -51,6 +51,7 @@ export function ConfiguracionClient({
   initialSettings,
   initialOrderSettings,
 }: Props) {
+  const showOrders = process.env.NEXT_PUBLIC_ENABLE_ORDERS === "true";
   // Business data state
   const [businessData, setBusinessData] = useState({
     business_name: client.business_name,
@@ -94,16 +95,21 @@ export function ConfiguracionClient({
     setMessage(null);
 
     try {
+      const payload: Record<string, unknown> = {
+        clientId: client.id,
+        websiteId,
+        businessData,
+        notificationSettings: settings,
+      };
+
+      if (showOrders) {
+        payload.orderSettings = orderSettings;
+      }
+
       const response = await fetch("/api/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: client.id,
-          websiteId,
-          businessData,
-          notificationSettings: settings,
-          orderSettings,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -366,46 +372,48 @@ export function ConfiguracionClient({
         </div>
 
         {/* Order Settings */}
-        <div className="neumor-card p-6">
-          <h2 className="text-xl font-semibold mb-6">Pedidos Online</h2>
-          <p className="text-sm text-[var(--text-secondary)] mb-6">
-            Define el rango horario para recogidas en el checkout online.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Hora de inicio
-              </label>
-              <input
-                type="time"
-                value={orderSettings.pickup_start_time}
-                onChange={(e) =>
-                  setOrderSettings((prev) => ({
-                    ...prev,
-                    pickup_start_time: e.target.value,
-                  }))
-                }
-                className="neumor-input w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Hora de fin
-              </label>
-              <input
-                type="time"
-                value={orderSettings.pickup_end_time}
-                onChange={(e) =>
-                  setOrderSettings((prev) => ({
-                    ...prev,
-                    pickup_end_time: e.target.value,
-                  }))
-                }
-                className="neumor-input w-full"
-              />
+        {showOrders && (
+          <div className="neumor-card p-6">
+            <h2 className="text-xl font-semibold mb-6">Pedidos Online</h2>
+            <p className="text-sm text-[var(--text-secondary)] mb-6">
+              Define el rango horario para recogidas en el checkout online.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Hora de inicio
+                </label>
+                <input
+                  type="time"
+                  value={orderSettings.pickup_start_time}
+                  onChange={(e) =>
+                    setOrderSettings((prev) => ({
+                      ...prev,
+                      pickup_start_time: e.target.value,
+                    }))
+                  }
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Hora de fin
+                </label>
+                <input
+                  type="time"
+                  value={orderSettings.pickup_end_time}
+                  onChange={(e) =>
+                    setOrderSettings((prev) => ({
+                      ...prev,
+                      pickup_end_time: e.target.value,
+                    }))
+                  }
+                  className="neumor-input w-full"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Webhook Info */}
         <div className="neumor-card p-6">

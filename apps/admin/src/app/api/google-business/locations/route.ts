@@ -18,6 +18,8 @@ import {
     GoogleApiError,
 } from "@/lib/google-business-service";
 
+const googleBusinessEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
 // Helper para obtener Supabase client
 async function getSupabaseClient() {
     const cookieStore = await cookies();
@@ -101,6 +103,10 @@ async function getValidAccessToken(
  * GET - Lista ubicaciones del usuario
  */
 export async function GET() {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const supabase = await getSupabaseClient();
 
@@ -164,6 +170,10 @@ export async function GET() {
  * PUT - Selecciona una ubicación como activa
  */
 export async function PUT(request: NextRequest) {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const supabase = await getSupabaseClient();
         const body = await request.json();
@@ -246,6 +256,10 @@ export async function PUT(request: NextRequest) {
  * POST - Sincronizar ubicaciones desde Google
  */
 export async function POST() {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         const supabase = await getSupabaseClient();
 

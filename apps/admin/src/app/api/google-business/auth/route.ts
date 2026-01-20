@@ -8,7 +8,13 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { generateAuthUrl, generateState } from "@/lib/google-business-service";
 
+const googleBusinessEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
 export async function GET() {
+    if (!googleBusinessEnabled) {
+        return NextResponse.json({ error: "Google Business disabled" }, { status: 404 });
+    }
+
     try {
         // Verificar que el usuario está autenticado
         const cookieStore = await cookies();
