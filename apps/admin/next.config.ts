@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Optimizations
   reactStrictMode: true,
-  //
+
   // Transpile workspace packages
   transpilePackages: ["@neumorstudio/supabase"],
 
