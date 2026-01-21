@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateBookingStatus } from "@/lib/actions";
+import { Pencil } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -28,6 +29,9 @@ export default function ReservasClient({
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // 🔹 NUEVO: estado para la reserva que se está editando
+  const [bookingEdit, setBookingEdit] = useState<Booking | null>(null);
+
   const filteredBookings = initialBookings.filter((booking) => {
     const matchesFilter = filter === "all" || booking.status === filter;
     const matchesSearch =
@@ -49,7 +53,10 @@ export default function ReservasClient({
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     setActionError(null);
     startTransition(async () => {
-      const result = await updateBookingStatus(bookingId, newStatus as "pending" | "confirmed" | "cancelled" | "completed");
+      const result = await updateBookingStatus(
+        bookingId,
+        newStatus as "pending" | "confirmed" | "cancelled" | "completed"
+      );
       if (result.error) {
         setActionError(result.error);
       }
@@ -109,7 +116,8 @@ export default function ReservasClient({
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
-                  className={`neumor-btn text-sm ${filter === status ? "neumor-btn-accent" : ""}`}
+                  className={`neumor-btn text-sm ${filter === status ? "neumor-btn-accent" : ""
+                    }`}
                 >
                   {status === "all" && "Todas"}
                   {status === "pending" && "Pendientes"}
@@ -218,6 +226,15 @@ export default function ReservasClient({
                             Completar
                           </button>
                         )}
+
+                        {/* ✏️ Botón Editar */}
+                        <button
+                          className="neumor-btn text-xs px-3 py-1 flex items-center gap-1"
+                          onClick={() => setBookingEdit(booking)}
+                        >
+                          <Pencil size={14} />
+                          Editar
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -227,6 +244,76 @@ export default function ReservasClient({
           </div>
         )}
       </div>
+
+      {/* 🔹 Modal de edición */}
+      {bookingEdit && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold mb-4">Editar reserva</h2>
+
+            <input
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Nombre"
+              value={bookingEdit.customer_name}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, customer_name: e.target.value })
+              }
+            />
+
+            <input
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Teléfono"
+              value={bookingEdit.customer_phone ?? ""}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, customer_phone: e.target.value })
+              }
+            />
+
+            <input
+              type="number"
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Personas"
+              value={bookingEdit.guests}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, guests: Number(e.target.value) })
+              }
+            />
+
+            <textarea
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Notas"
+              value={bookingEdit.notes ?? ""}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, notes: e.target.value })
+              }
+            />
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="neumor-btn"
+                onClick={() => setBookingEdit(null)}
+              >
+                Cancelar
+              </button>
+
+              <button
+                className="neumor-btn"
+                onClick={async () => {
+                  await fetch("/api/bookings/update", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(bookingEdit),
+                  });
+                  setBookingEdit(null);
+                  location.reload();
+                }}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
