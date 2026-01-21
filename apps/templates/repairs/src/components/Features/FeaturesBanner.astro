@@ -1,0 +1,138 @@
+---
+/**
+ * FeaturesBanner - Variante banner horizontal compacto
+ * Ideal para: reformas rapidas, servicios locales
+ */
+interface Feature {
+  icon: string;
+  title: string;
+  description: string;
+  link?: string;
+}
+
+interface Props {
+  features?: Feature[];
+}
+
+const defaultFeatures: Feature[] = [
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+    title: "Diagnostico",
+    description: "Visita tecnica y mediciones",
+    link: "#contact",
+  },
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    title: "Presupuesto",
+    description: "Claro y detallado en 48h",
+    link: "#contact",
+  },
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>`,
+    title: "Ejecucion",
+    description: "Equipo propio y garantias",
+    link: "#menu",
+  },
+];
+
+const { features = defaultFeatures } = Astro.props;
+---
+
+<section id="features" class="features-banner">
+  <div class="banner-container neumor-raised">
+    {features.map((feature, index) => (
+      <a
+        href={feature.link || "#"}
+        class="banner-item"
+      >
+        <div class="banner-icon">
+          <Fragment set:html={feature.icon} />
+        </div>
+        <div class="banner-text">
+          <h3 class="banner-title">{feature.title}</h3>
+          <p class="banner-desc">{feature.description}</p>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .features-banner {
+    padding: 2rem 1.5rem;
+    background: var(--background);
+  }
+
+  .banner-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-radius: var(--radius-lg);
+    gap: 1rem;
+  }
+
+  .banner-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+  }
+
+  .banner-item:hover {
+    background: var(--surface);
+  }
+
+  .banner-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .banner-icon :global(svg) {
+    width: 28px;
+    height: 28px;
+  }
+
+  .banner-text {
+    text-align: left;
+  }
+
+  .banner-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .banner-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .banner-container {
+      flex-direction: column;
+      padding: 1.5rem;
+    }
+
+    .banner-item {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .banner-desc {
+      white-space: normal;
+    }
+  }
+</style>

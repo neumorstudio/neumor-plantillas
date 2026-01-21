@@ -1,0 +1,238 @@
+---
+/**
+ * MenuGrid - Variante grid simple sin tabs
+ * Ideal para: servicios variados, fichas rapidas
+ */
+interface MenuItem {
+  name: string;
+  description: string;
+  price: string;
+  tag?: string;
+  image?: string;
+}
+
+interface MenuCategory {
+  name: string;
+  icon: string;
+  items: MenuItem[];
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: MenuCategory[];
+}
+
+const defaultCategories: MenuCategory[] = [
+  {
+    name: "Reformas integrales",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+    items: [
+      { name: "Reforma de cocina", description: "Diseno y ejecucion completa con acabados premium", price: "3900", tag: "popular" },
+      { name: "Reforma de bano", description: "Renovacion total con soluciones resistentes", price: "2400" },
+      { name: "Reforma integral", description: "Proyecto llave en mano con coordinacion total", price: "12000", tag: "nuevo" },
+    ],
+  },
+  {
+    name: "Reparaciones urgentes",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>`,
+    items: [
+      { name: "Fontaneria", description: "Fugas, desatascos y sustituciones", price: "90", tag: "popular" },
+      { name: "Electricidad", description: "Averias, cuadros y mejoras de instalacion", price: "80" },
+      { name: "Humedades", description: "Diagnostico y soluciones duraderas", price: "260", tag: "oferta" },
+    ],
+  },
+  {
+    name: "Instalaciones",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v4"/><path d="M14 2v4"/><path d="M6 7h12"/><path d="M6 11h12"/><path d="M6 15h12"/><path d="M6 19h12"/></svg>`,
+    items: [
+      { name: "Climatizacion", description: "Instalacion de aire y bombas de calor", price: "750", tag: "popular" },
+      { name: "Pintura profesional", description: "Pintura interior/exterior y acabados", price: "450" },
+      { name: "Suelo laminado", description: "Suministro e instalacion rapida", price: "620", tag: "nuevo" },
+    ],
+  },
+];
+
+const {
+  title = "Servicios principales",
+  subtitle = "Reformas y reparaciones con resultados profesionales",
+  categories = defaultCategories,
+} = Astro.props;
+
+// Flatten all items
+const allItems = categories.flatMap(cat =>
+  cat.items.map(item => ({ ...item, category: cat.name }))
+);
+---
+
+<section id="menu" class="menu-grid-section">
+  <div class="container">
+    <!-- Section Header -->
+    <div class="section-header">
+      <h2 class="section-title">{title}</h2>
+      <p class="section-subtitle">{subtitle}</p>
+    </div>
+
+    <!-- Menu Grid -->
+    <div class="menu-grid">
+      {allItems.map((item, index) => (
+        <article class="menu-item neumor-card" style={`animation-delay: ${index * 50}ms`}>
+          <div class="item-top">
+            <span class="item-category">{item.category}</span>
+            {item.tag && <span class={`item-tag tag-${item.tag}`}>{item.tag}</span>}
+          </div>
+          <h3 class="item-name">{item.name}</h3>
+          <p class="item-description">{item.description}</p>
+          <div class="item-price">
+            <span class="price-currency">€</span>
+            <span class="price-value">{item.price}</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .menu-grid-section {
+    padding: 6rem 0;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Grid */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Item */
+  .menu-item {
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    animation: slideUp 0.5s ease forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .item-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .item-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+  }
+
+  .tag-popular {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+
+  .tag-nuevo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .tag-vegano {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+  }
+
+  .item-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+  }
+
+  .item-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+  }
+
+  .item-price {
+    display: inline-flex;
+    align-items: baseline;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--neumor-bg);
+    box-shadow:
+      inset 3px 3px 6px var(--shadow-dark),
+      inset -3px -3px 6px var(--shadow-light);
+    align-self: flex-start;
+  }
+
+  .price-currency {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-right: 2px;
+  }
+
+  .price-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .menu-grid-section {
+      padding: 4rem 0;
+    }
+
+    .menu-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

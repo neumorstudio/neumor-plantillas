@@ -46,6 +46,14 @@
               "fieldValue": "={{ $json.message }}"
             },
             {
+              "fieldName": "lead_type",
+              "fieldValue": "={{ $json.lead_type || 'general' }}"
+            },
+            {
+              "fieldName": "details",
+              "fieldValue": "={{ JSON.stringify($json.details || {}) }}"
+            },
+            {
               "fieldName": "source",
               "fieldValue": "={{ $json.source || 'website' }}"
             },

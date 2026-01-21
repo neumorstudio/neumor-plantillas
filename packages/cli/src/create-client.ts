@@ -24,6 +24,10 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 // URL del webhook de reservas
 const WEBHOOK_URL = process.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.neumorstudio.com/webhook/reservas";
+// URL del webhook de leads/presupuestos
+const CONTACT_WEBHOOK_URL = process.env.PUBLIC_CONTACT_WEBHOOK_URL
+  || process.env.PUBLIC_LEAD_WEBHOOK_URL
+  || "https://n8n.neumorstudio.com/webhook/lead";
 
 // Variables de Supabase para los templates (se copian al .env del cliente)
 const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -128,6 +132,10 @@ function generateHeroTexts(businessName: string, businessType: string): { title:
       title: `${businessName} - Tu hogar te espera`,
       subtitle: "Encuentra la propiedad de tus sueños. Nuestros expertos te guiarán en cada paso del camino.",
     },
+    repairs: {
+      title: `${businessName} - Reformas sin complicaciones`,
+      subtitle: "Cuéntanos tu proyecto y recibe un presupuesto claro y detallado. Te acompañamos de principio a fin.",
+    },
   };
 
   return texts[businessType] || texts.restaurant;
@@ -142,12 +150,13 @@ function getRecommendedPreset(businessType: string): string {
     shop: "casual",
     fitness: "fast-food",
     realestate: "fine-dining",
+    repairs: "casual",
   };
   return presetMap[businessType] || "casual";
 }
 
 // Obtener variantes según el preset seleccionado
-function getPresetVariants(preset: string): Record<string, string> {
+function getPresetVariants(preset: string, businessType: string): Record<string, string> {
   const presets: Record<string, Record<string, string>> = {
     "fine-dining": {
       hero: "modern",
@@ -182,7 +191,39 @@ function getPresetVariants(preset: string): Record<string, string> {
       reservation: "wizard",
     },
   };
-  return presets[preset] || presets["casual"];
+  const storePresets: Record<string, Record<string, string>> = {
+    "fine-dining": {
+      hero: "modern",
+      products: "list",
+      features: "icons",
+      reviews: "minimal",
+      footer: "minimal",
+    },
+    "casual": {
+      hero: "classic",
+      products: "tabs",
+      features: "cards",
+      reviews: "grid",
+      footer: "full",
+    },
+    "fast-food": {
+      hero: "bold",
+      products: "carousel",
+      features: "banner",
+      reviews: "carousel",
+      footer: "minimal",
+    },
+    "cafe-bistro": {
+      hero: "minimal",
+      products: "grid",
+      features: "icons",
+      reviews: "minimal",
+      footer: "centered",
+    },
+  };
+
+  const presetSet = businessType === "repairs" ? storePresets : presets;
+  return presetSet[preset] || presetSet["casual"];
 }
 
 
@@ -275,6 +316,7 @@ async function main() {
         { name: "🛒  Tienda", value: "shop" },
         { name: "🏋️   Gimnasio/Fitness", value: "fitness" },
         { name: "🏠  Inmobiliaria", value: "realestate" },
+        { name: "🧰  Reformas y reparaciones", value: "repairs" },
       ],
     }),
 
@@ -483,7 +525,7 @@ async function main() {
             tripadvisor: `https://tripadvisor.com/${clientData.domain}`,
           },
           // Variantes por defecto basadas en el preset
-          variants: getPresetVariants(clientData.preset),
+          variants: getPresetVariants(clientData.preset, clientData.businessType),
         },
       })
       .select()
@@ -668,7 +710,8 @@ async function createClientTemplate(clientData: ClientData, websiteId: string) {
 
   try {
     // Determinar paths
-    const templateSource = join(rootDir, "apps", "templates", "restaurant");
+    const templateName = clientData.businessType === "repairs" ? "repairs" : "restaurant";
+    const templateSource = join(rootDir, "apps", "templates", templateName);
 
     // Verificar que existe la plantilla fuente
     if (!existsSync(templateSource)) {
@@ -732,7 +775,7 @@ async function createClientTemplate(clientData: ClientData, websiteId: string) {
   preset: "${clientData.preset}" as "fine-dining" | "casual" | "fast-food" | "cafe-bistro" | undefined,
 
   // SEO
-  siteTitle: "${clientData.businessName} | ${clientData.businessType === 'restaurant' ? 'Restaurante' : 'Bienvenido'}",
+  siteTitle: "${clientData.businessName} | ${clientData.businessType === 'restaurant' ? 'Restaurante' : clientData.businessType === 'repairs' ? 'Reformas' : 'Bienvenido'}",
   siteDescription:
     "${clientData.heroSubtitle.replace(/"/g, '\\"')}",
 
@@ -772,6 +815,10 @@ async function createClientTemplate(clientData: ClientData, websiteId: string) {
     spinner.text = "Configurando proyecto...";
 
     // Crear archivo .env con la configuración completa
+    const webhookEnvBlock = clientData.businessType === "repairs"
+      ? `# Webhook de presupuestos (n8n)\nPUBLIC_CONTACT_WEBHOOK_URL=${CONTACT_WEBHOOK_URL}\n`
+      : `# Webhook de reservas (n8n)\nPUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}\n`;
+
     const envContent = `# ===========================================
 # ${clientData.businessName}
 # Generado automáticamente por NeumorStudio CLI
@@ -786,8 +833,7 @@ PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 # Website ID - Identificador único en Supabase
 PUBLIC_WEBSITE_ID=${websiteId}
 
-# Webhook de reservas (n8n)
-PUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}
+${webhookEnvBlock}
 `;
 
     writeFileSync(join(clientDir, ".env"), envContent);

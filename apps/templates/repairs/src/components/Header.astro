@@ -1,0 +1,129 @@
+---
+interface Props {
+  businessName: string;
+  logo?: string;
+}
+
+const { businessName, logo } = Astro.props;
+---
+
+<header class="header">
+  <div class="container">
+    <nav class="nav">
+      <a href="/" class="logo">
+        {logo ? <img src={logo} alt={businessName} class="logo-img" /> : null}
+        <span class="logo-text">{businessName}</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#menu">Servicios</a></li>
+        <li><a href="#features">Proceso</a></li>
+        <li><a href="#reviews">Opiniones</a></li>
+        <li><a href="#contact">Presupuesto</a></li>
+      </ul>
+
+      <a href="#contact" class="neumor-btn neumor-btn-accent nav-cta">
+        Solicitar Presupuesto
+      </a>
+
+      <button class="mobile-menu-btn neumor-btn" aria-label="Menu">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 1rem 0;
+    background-color: var(--neumor-bg);
+    box-shadow:
+      0 4px 12px var(--shadow-dark),
+      0 -4px 12px var(--shadow-light);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+  }
+
+  .logo-img {
+    height: 40px;
+    width: auto;
+  }
+
+  .logo-text {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-links a {
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--accent);
+  }
+
+  .nav-cta {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .mobile-menu-btn {
+    display: none;
+    padding: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links,
+    .nav-cta {
+      display: none;
+    }
+
+    .mobile-menu-btn {
+      display: flex;
+    }
+  }
+</style>

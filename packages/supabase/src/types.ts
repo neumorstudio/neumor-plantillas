@@ -20,7 +20,8 @@ export type BusinessType =
   | "salon"
   | "shop"
   | "fitness"
-  | "realestate";
+  | "realestate"
+  | "repairs";
 
 // Theme variants
 export type Theme =

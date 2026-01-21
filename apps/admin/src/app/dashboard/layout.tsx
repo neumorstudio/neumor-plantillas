@@ -64,6 +64,23 @@ const navItems = [
     ),
   },
   {
+    href: "/dashboard/presupuestos",
+    label: "Presupuestos",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6" />
+        <path d="M8 13h8" />
+        <path d="M8 17h5" />
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/newsletter",
     label: "Newsletter",
     icon: (
@@ -218,6 +235,7 @@ export default function DashboardLayout({
       shop: "Tienda",
       fitness: "Gimnasio",
       realestate: "Inmobiliaria",
+      repairs: "Reformas y reparaciones",
     };
     return labels[type] || type;
   };

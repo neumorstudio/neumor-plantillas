@@ -247,8 +247,10 @@ export type Database = {
       leads: {
         Row: {
           created_at: string | null
+          details: Json | null
           email: string | null
           id: string
+          lead_type: string
           message: string | null
           name: string
           phone: string | null
@@ -259,8 +261,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          details?: Json | null
           email?: string | null
           id?: string
+          lead_type?: string
           message?: string | null
           name: string
           phone?: string | null
@@ -271,8 +275,10 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          details?: Json | null
           email?: string | null
           id?: string
+          lead_type?: string
           message?: string | null
           name?: string
           phone?: string | null
