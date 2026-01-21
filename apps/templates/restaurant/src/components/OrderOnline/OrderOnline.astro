@@ -641,17 +641,42 @@ const {
       cart.forEach((item) => {
         const li = document.createElement("li");
         li.className = "cart-item";
-        li.innerHTML = `
-          <div class="cart-item-info">
-            <div class="cart-item-name">${item.name}</div>
-            <div class="cart-item-price">${formatCurrency(item.price)}</div>
-          </div>
-          <div class="cart-item-controls">
-            <button type="button" class="neumor-btn" data-action="decrease" data-item-id="${item.id}">-</button>
-            <span class="cart-item-qty">${item.quantity}</span>
-            <button type="button" class="neumor-btn" data-action="increase" data-item-id="${item.id}">+</button>
-          </div>
-        `;
+        const info = document.createElement("div");
+        info.className = "cart-item-info";
+
+        const name = document.createElement("div");
+        name.className = "cart-item-name";
+        name.textContent = item.name;
+
+        const price = document.createElement("div");
+        price.className = "cart-item-price";
+        price.textContent = formatCurrency(item.price);
+
+        info.append(name, price);
+
+        const controls = document.createElement("div");
+        controls.className = "cart-item-controls";
+
+        const decreaseBtn = document.createElement("button");
+        decreaseBtn.type = "button";
+        decreaseBtn.className = "neumor-btn";
+        decreaseBtn.dataset.action = "decrease";
+        decreaseBtn.dataset.itemId = item.id;
+        decreaseBtn.textContent = "-";
+
+        const quantity = document.createElement("span");
+        quantity.className = "cart-item-qty";
+        quantity.textContent = String(item.quantity);
+
+        const increaseBtn = document.createElement("button");
+        increaseBtn.type = "button";
+        increaseBtn.className = "neumor-btn";
+        increaseBtn.dataset.action = "increase";
+        increaseBtn.dataset.itemId = item.id;
+        increaseBtn.textContent = "+";
+
+        controls.append(decreaseBtn, quantity, increaseBtn);
+        li.append(info, controls);
         cartItemsEl.appendChild(li);
       });
 
