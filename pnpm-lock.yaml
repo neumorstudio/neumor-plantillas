@@ -311,6 +311,9 @@ importers:
       '@neumorstudio/config-typescript':
         specifier: workspace:*
         version: link:../config/typescript
+      '@types/node':
+        specifier: ^22.19.3
+        version: 22.19.3
       supabase:
         specifier: ^2.15.8
         version: 2.67.2

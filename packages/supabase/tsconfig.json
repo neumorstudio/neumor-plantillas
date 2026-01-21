@@ -2,6 +2,7 @@
   "extends": "@neumorstudio/config-typescript/library.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": ["node"],
     "paths": {
       "@/*": ["./src/*"]
     }
