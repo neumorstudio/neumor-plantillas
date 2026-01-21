@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { updateBookingStatus } from "@/lib/actions";
+import { useEffect, useState, useTransition } from "react";
+import { updateBooking, updateBookingStatus } from "@/lib/actions";
 import { Pencil } from "lucide-react";
 
 interface Booking {
@@ -28,11 +28,16 @@ export default function ReservasClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
 
   // 🔹 NUEVO: estado para la reserva que se está editando
   const [bookingEdit, setBookingEdit] = useState<Booking | null>(null);
 
-  const filteredBookings = initialBookings.filter((booking) => {
+  useEffect(() => {
+    setBookings(initialBookings);
+  }, [initialBookings]);
+
+  const filteredBookings = bookings.filter((booking) => {
     const matchesFilter = filter === "all" || booking.status === filter;
     const matchesSearch =
       booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,6 +64,50 @@ export default function ReservasClient({
       );
       if (result.error) {
         setActionError(result.error);
+        return;
+      }
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: newStatus } : booking
+        )
+      );
+    });
+  };
+
+  const handleBookingSave = async () => {
+    if (!bookingEdit) return;
+    setActionError(null);
+
+    const payload = {
+      customer_name: bookingEdit.customer_name.trim(),
+      customer_phone: bookingEdit.customer_phone?.trim() || null,
+      guests: bookingEdit.guests,
+      notes: bookingEdit.notes?.trim() || null,
+    };
+
+    if (!payload.customer_name || !payload.customer_phone) {
+      setActionError("Nombre y telefono son obligatorios.");
+      return;
+    }
+
+    if (!Number.isFinite(payload.guests) || payload.guests <= 0) {
+      setActionError("El numero de personas debe ser mayor que 0.");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        await updateBooking(bookingEdit.id, payload);
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking.id === bookingEdit.id ? { ...booking, ...payload } : booking
+          )
+        );
+        setBookingEdit(null);
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : "No se pudo actualizar la reserva."
+        );
       }
     });
   };
@@ -89,7 +138,7 @@ export default function ReservasClient({
       </div>
 
       {/* Error message */}
-      {actionError && (
+      {actionError && !bookingEdit && (
         <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
           {actionError}
         </div>
@@ -230,7 +279,10 @@ export default function ReservasClient({
                         {/* ✏️ Botón Editar */}
                         <button
                           className="neumor-btn text-xs px-3 py-1 flex items-center gap-1"
-                          onClick={() => setBookingEdit(booking)}
+                          onClick={() => {
+                            setActionError(null);
+                            setBookingEdit(booking);
+                          }}
                         >
                           <Pencil size={14} />
                           Editar
@@ -250,6 +302,11 @@ export default function ReservasClient({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-4">Editar reserva</h2>
+            {actionError && (
+              <div className="mb-3 p-2 rounded-lg bg-red-100 text-red-700 text-sm">
+                {actionError}
+              </div>
+            )}
 
             <input
               className="w-full border p-2 rounded mb-2"
@@ -291,22 +348,18 @@ export default function ReservasClient({
             <div className="flex justify-end gap-2 mt-4">
               <button
                 className="neumor-btn"
-                onClick={() => setBookingEdit(null)}
+                onClick={() => {
+                  setActionError(null);
+                  setBookingEdit(null);
+                }}
               >
                 Cancelar
               </button>
 
               <button
                 className="neumor-btn"
-                onClick={async () => {
-                  await fetch("/api/bookings/update", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(bookingEdit),
-                  });
-                  setBookingEdit(null);
-                  location.reload();
-                }}
+                onClick={handleBookingSave}
+                disabled={isPending}
               >
                 Guardar
               </button>
