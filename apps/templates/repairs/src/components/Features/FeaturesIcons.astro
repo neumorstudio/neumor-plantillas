@@ -1,0 +1,131 @@
+---
+/**
+ * FeaturesIcons - Variante con iconos grandes en fila horizontal
+ * Ideal para: reformas premium, trabajos especializados
+ */
+interface Feature {
+  icon: string;
+  title: string;
+  description: string;
+  link?: string;
+}
+
+interface Props {
+  features?: Feature[];
+}
+
+const defaultFeatures: Feature[] = [
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+    title: "Diagnostico claro",
+    description: "Visitamos el espacio y proponemos la mejor solucion.",
+    link: "#contact",
+  },
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    title: "Presupuesto detallado",
+    description: "Materiales, tiempos y mano de obra con total transparencia.",
+    link: "#contact",
+  },
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>`,
+    title: "Ejecucion cuidada",
+    description: "Equipo propio y seguimiento continuo hasta el final.",
+    link: "#menu",
+  },
+];
+
+const { features = defaultFeatures } = Astro.props;
+---
+
+<section id="features" class="features-icons">
+  <div class="features-container">
+    {features.map((feature, index) => (
+      <a
+        href={feature.link || "#"}
+        class="feature-item animate-fade-in-up"
+        style={`animation-delay: ${index * 150}ms`}
+      >
+        <div class="icon-wrapper neumor-raised">
+          <Fragment set:html={feature.icon} />
+        </div>
+        <h3 class="feature-title">{feature.title}</h3>
+        <p class="feature-desc">{feature.description}</p>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .features-icons {
+    padding: var(--section-padding);
+    background: var(--background);
+  }
+
+  .features-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    flex-wrap: wrap;
+  }
+
+  .feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    max-width: 280px;
+    transition: transform 0.3s ease;
+  }
+
+  .feature-item:hover {
+    transform: translateY(-8px);
+  }
+
+  .icon-wrapper {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent);
+    transition: all 0.3s ease;
+  }
+
+  .feature-item:hover .icon-wrapper {
+    color: var(--accent-hover, var(--accent));
+    transform: scale(1.05);
+  }
+
+  .icon-wrapper :global(svg) {
+    width: 40px;
+    height: 40px;
+  }
+
+  .feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .features-container {
+      flex-direction: column;
+      align-items: center;
+      gap: 3rem;
+    }
+  }
+</style>

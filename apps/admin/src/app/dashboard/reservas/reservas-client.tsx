@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { updateBookingStatus } from "@/lib/actions";
+import { useEffect, useState, useTransition } from "react";
+import { updateBooking, updateBookingStatus } from "@/lib/actions";
+import { Pencil } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -27,8 +28,16 @@ export default function ReservasClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
 
-  const filteredBookings = initialBookings.filter((booking) => {
+  // 🔹 NUEVO: estado para la reserva que se está editando
+  const [bookingEdit, setBookingEdit] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    setBookings(initialBookings);
+  }, [initialBookings]);
+
+  const filteredBookings = bookings.filter((booking) => {
     const matchesFilter = filter === "all" || booking.status === filter;
     const matchesSearch =
       booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -49,9 +58,59 @@ export default function ReservasClient({
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     setActionError(null);
     startTransition(async () => {
-      const result = await updateBookingStatus(bookingId, newStatus as "pending" | "confirmed" | "cancelled" | "completed");
+      const result = await updateBookingStatus(
+        bookingId,
+        newStatus as "pending" | "confirmed" | "cancelled" | "completed"
+      );
       if (result.error) {
         setActionError(result.error);
+        return;
+      }
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: newStatus } : booking
+        )
+      );
+    });
+  };
+
+  const handleBookingSave = async () => {
+    if (!bookingEdit) return;
+    setActionError(null);
+
+    const customerName = bookingEdit.customer_name.trim();
+    const customerPhone = bookingEdit.customer_phone?.trim() || "";
+
+    const payload = {
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      guests: bookingEdit.guests,
+      notes: bookingEdit.notes?.trim() || null,
+    };
+
+    if (!customerName || !customerPhone) {
+      setActionError("Nombre y telefono son obligatorios.");
+      return;
+    }
+
+    if (!Number.isFinite(payload.guests) || payload.guests <= 0) {
+      setActionError("El numero de personas debe ser mayor que 0.");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        await updateBooking(bookingEdit.id, payload);
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking.id === bookingEdit.id ? { ...booking, ...payload } : booking
+          )
+        );
+        setBookingEdit(null);
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : "No se pudo actualizar la reserva."
+        );
       }
     });
   };
@@ -82,7 +141,7 @@ export default function ReservasClient({
       </div>
 
       {/* Error message */}
-      {actionError && (
+      {actionError && !bookingEdit && (
         <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
           {actionError}
         </div>
@@ -109,7 +168,8 @@ export default function ReservasClient({
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
-                  className={`neumor-btn text-sm ${filter === status ? "neumor-btn-accent" : ""}`}
+                  className={`neumor-btn text-sm ${filter === status ? "neumor-btn-accent" : ""
+                    }`}
                 >
                   {status === "all" && "Todas"}
                   {status === "pending" && "Pendientes"}
@@ -218,6 +278,18 @@ export default function ReservasClient({
                             Completar
                           </button>
                         )}
+
+                        {/* ✏️ Botón Editar */}
+                        <button
+                          className="neumor-btn text-xs px-3 py-1 flex items-center gap-1"
+                          onClick={() => {
+                            setActionError(null);
+                            setBookingEdit(booking);
+                          }}
+                        >
+                          <Pencil size={14} />
+                          Editar
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -227,6 +299,77 @@ export default function ReservasClient({
           </div>
         )}
       </div>
+
+      {/* 🔹 Modal de edición */}
+      {bookingEdit && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold mb-4">Editar reserva</h2>
+            {actionError && (
+              <div className="mb-3 p-2 rounded-lg bg-red-100 text-red-700 text-sm">
+                {actionError}
+              </div>
+            )}
+
+            <input
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Nombre"
+              value={bookingEdit.customer_name}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, customer_name: e.target.value })
+              }
+            />
+
+            <input
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Teléfono"
+              value={bookingEdit.customer_phone ?? ""}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, customer_phone: e.target.value })
+              }
+            />
+
+            <input
+              type="number"
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Personas"
+              value={bookingEdit.guests}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, guests: Number(e.target.value) })
+              }
+            />
+
+            <textarea
+              className="w-full border p-2 rounded mb-2"
+              placeholder="Notas"
+              value={bookingEdit.notes ?? ""}
+              onChange={(e) =>
+                setBookingEdit({ ...bookingEdit, notes: e.target.value })
+              }
+            />
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="neumor-btn"
+                onClick={() => {
+                  setActionError(null);
+                  setBookingEdit(null);
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                className="neumor-btn"
+                onClick={handleBookingSave}
+                disabled={isPending}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

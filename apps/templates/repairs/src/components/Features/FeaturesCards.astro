@@ -1,0 +1,55 @@
+---
+import FeatureCard from "./FeatureCard.astro";
+
+interface Feature {
+  icon: string;
+  title: string;
+  description: string;
+  link?: string;
+}
+
+interface Props {
+  features?: Feature[];
+}
+
+const defaultFeatures: Feature[] = [
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+    title: "Planificacion precisa",
+    description: "Analizamos tu proyecto y proponemos soluciones claras desde el primer dia.",
+    link: "#contact",
+  },
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    title: "Presupuesto transparente",
+    description: "Desglosamos materiales, tiempos y mano de obra sin sorpresas.",
+    link: "#contact",
+  },
+  {
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>`,
+    title: "Ejecucion cuidada",
+    description: "Un equipo propio coordina cada fase para cumplir plazos y calidad.",
+    link: "#menu",
+  },
+];
+
+const { features = defaultFeatures } = Astro.props;
+---
+
+<section id="features" class="section">
+  <div class="container">
+    <div class="grid-cards">
+      {
+        features.map((feature, index) => (
+          <FeatureCard
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+            link={feature.link}
+            delay={(index + 1) * 100}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,350 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  webhookUrl?: string;
+  websiteId?: string;
+}
+
+const {
+  title = "Solicita tu presupuesto",
+  subtitle = "Cuéntanos los detalles y te enviaremos una propuesta clara y sin compromiso.",
+  webhookUrl = "",
+  websiteId = "",
+} = Astro.props;
+---
+
+<section id="contact" class="section">
+  <div class="container">
+    <div class="contact-wrapper">
+      <div class="contact-info-section">
+        <h2 class="contact-title">{title}</h2>
+        <p class="contact-subtitle">{subtitle}</p>
+
+        <div class="contact-info">
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+            </div>
+            <span>+34 912 345 678</span>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <span>Lun - Vie: 09:00 - 19:00</span>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <span>Calle Principal 123</span>
+          </div>
+        </div>
+
+        <div class="shipping-info neumor-card">
+          <h4>Como trabajamos</h4>
+          <ul>
+            <li>Visita tecnica y mediciones sin coste</li>
+            <li>Presupuesto detallado en 48h</li>
+            <li>Equipo propio y materiales de calidad</li>
+          </ul>
+        </div>
+      </div>
+
+      <form class="contact-form neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Nombre</label>
+            <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="phone">Telefono</label>
+            <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email (opcional)</label>
+          <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="work_type">Tipo de trabajo</label>
+            <select id="work_type" name="work_type" class="neumor-input" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="reforma-integral">Reforma integral</option>
+              <option value="reforma-bano">Reforma de baño</option>
+              <option value="reforma-cocina">Reforma de cocina</option>
+              <option value="pintura">Pintura y acabados</option>
+              <option value="instalaciones">Instalaciones</option>
+              <option value="reparacion">Reparacion urgente</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="property_type">Tipo de inmueble</label>
+            <select id="property_type" name="property_type" class="neumor-input" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="vivienda">Vivienda</option>
+              <option value="local">Local comercial</option>
+              <option value="oficina">Oficina</option>
+              <option value="comunidad">Comunidad</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="location">Ubicacion</label>
+            <input type="text" id="location" name="location" class="neumor-input" placeholder="Ciudad o barrio" required />
+          </div>
+          <div class="form-group">
+            <label for="area">Metros aproximados</label>
+            <input type="text" id="area" name="area" class="neumor-input" placeholder="Ej. 80 m2" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="timeline">Fecha aproximada</label>
+            <input type="date" id="timeline" name="timeline" class="neumor-input" />
+          </div>
+          <div class="form-group">
+            <label for="budget">Rango de presupuesto</label>
+            <select id="budget" name="budget" class="neumor-input">
+              <option value="">Selecciona un rango</option>
+              <option value="menos-3000">Menos de 3.000€</option>
+              <option value="3000-8000">3.000€ - 8.000€</option>
+              <option value="8000-15000">8.000€ - 15.000€</option>
+              <option value="mas-15000">Mas de 15.000€</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Descripcion del proyecto</label>
+          <textarea id="message" name="message" class="neumor-input" rows="4" placeholder="Describe lo que necesitas..." required></textarea>
+        </div>
+
+        <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
+          Solicitar Presupuesto
+        </button>
+
+        <p class="form-disclaimer">
+          Te responderemos en menos de 48 horas.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .contact-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .contact-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    max-width: 400px;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .contact-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    color: var(--accent);
+  }
+
+  .shipping-info {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+
+  .shipping-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .shipping-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .shipping-info li {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .shipping-info li::before {
+    content: "✓";
+    color: var(--accent);
+    font-weight: bold;
+  }
+
+  .contact-form {
+    padding: 2rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+
+  textarea.neumor-input {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  select.neumor-input {
+    cursor: pointer;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .form-disclaimer {
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 968px) {
+    .contact-wrapper {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .contact-info-section {
+      text-align: center;
+    }
+
+    .contact-subtitle {
+      max-width: 100%;
+    }
+
+    .contact-info {
+      align-items: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const form = document.querySelector(".contact-form") as HTMLFormElement;
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const webhookUrl = form.dataset.webhook;
+    const websiteId = form.dataset.websiteId;
+    const formData = new FormData(form);
+    const rawData = Object.fromEntries(formData);
+
+    const details = {
+      work_type: rawData.work_type,
+      property_type: rawData.property_type,
+      location: rawData.location,
+      area: rawData.area,
+      timeline: rawData.timeline,
+      budget: rawData.budget,
+    };
+
+    const data = {
+      website_id: websiteId,
+      name: rawData.name,
+      email: rawData.email || "",
+      phone: rawData.phone || "",
+      message: rawData.message || "",
+      lead_type: "quote",
+      source: "website",
+      details,
+    };
+
+    if (webhookUrl) {
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (response.ok) {
+          alert("Solicitud enviada correctamente. Te contactaremos pronto.");
+          form.reset();
+        } else {
+          throw new Error("Error en respuesta");
+        }
+      } catch {
+        alert("Error al enviar la solicitud. Por favor, intentalo de nuevo.");
+      }
+    } else {
+      alert("Solicitud enviada correctamente. Te contactaremos pronto.");
+      form.reset();
+    }
+  });
+</script>
