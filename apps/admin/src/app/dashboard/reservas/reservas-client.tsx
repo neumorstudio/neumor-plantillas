@@ -78,14 +78,17 @@ export default function ReservasClient({
     if (!bookingEdit) return;
     setActionError(null);
 
+    const customerName = bookingEdit.customer_name.trim();
+    const customerPhone = bookingEdit.customer_phone?.trim() || "";
+
     const payload = {
-      customer_name: bookingEdit.customer_name.trim(),
-      customer_phone: bookingEdit.customer_phone?.trim() || null,
+      customer_name: customerName,
+      customer_phone: customerPhone,
       guests: bookingEdit.guests,
       notes: bookingEdit.notes?.trim() || null,
     };
 
-    if (!payload.customer_name || !payload.customer_phone) {
+    if (!customerName || !customerPhone) {
       setActionError("Nombre y telefono son obligatorios.");
       return;
     }
