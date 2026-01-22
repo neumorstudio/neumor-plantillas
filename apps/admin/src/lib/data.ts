@@ -490,3 +490,108 @@ export async function getRecentQuotes(limit = 5) {
 
   return data || [];
 }
+
+// ============================================
+// CUSTOMERS (CRM)
+// ============================================
+
+export async function getCustomers() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getCustomer(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// JOBS (Trabajos)
+// ============================================
+
+export async function getJobs() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getJob(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("*, job_tasks(*), job_photos(*)")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// PAYMENTS (Pagos)
+// ============================================
+
+export async function getPayments() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getPayment(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
