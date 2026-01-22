@@ -46,3 +46,4 @@ packages/supabase/supabase/
 
 # Worktrees
 .worktrees/
+supabase/.temp/
