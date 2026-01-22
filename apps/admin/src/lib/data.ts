@@ -1,32 +1,50 @@
 import { createClient } from "./supabase-server";
 
-// Get the current user's website ID
-async function getWebsiteId() {
+// Cached user context type
+interface UserContext {
+  userId: string;
+  clientId: string;
+  websiteId: string;
+}
+
+// Get user context with client and website in a single optimized query
+// Reduces from 3 sequential queries to 1 auth + 1 join query
+async function getUserContext(): Promise<UserContext | null> {
   const supabase = await createClient();
 
-  // Get current user
+  // Get current user (required for auth)
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Get client's website
-  const { data: client } = await supabase
+  // Single query with join: clients -> websites
+  // This replaces 2 sequential queries with 1
+  const { data } = await supabase
     .from("clients")
-    .select("id")
+    .select("id, websites(id)")
     .eq("auth_user_id", user.id)
     .single();
 
-  if (!client) return null;
+  if (!data || !data.websites) return null;
 
-  const { data: website } = await supabase
-    .from("websites")
-    .select("id")
-    .eq("client_id", client.id)
-    .single();
+  // Handle both array and single object response from Supabase
+  const website = Array.isArray(data.websites) ? data.websites[0] : data.websites;
+  if (!website?.id) return null;
 
-  return website?.id || null;
+  return {
+    userId: user.id,
+    clientId: data.id,
+    websiteId: website.id,
+  };
 }
 
-// Dashboard stats
+// Get the current user's website ID (optimized wrapper)
+// Exported for use in page components
+export async function getWebsiteId(): Promise<string | null> {
+  const context = await getUserContext();
+  return context?.websiteId || null;
+}
+
+// Dashboard stats - optimized with parallel queries
 export async function getDashboardStats() {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();
@@ -43,35 +61,36 @@ export async function getDashboardStats() {
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const firstDayStr = firstDayOfMonth.toISOString().split("T")[0];
 
-  // Get bookings this month
-  const { count: bookingsCount } = await supabase
-    .from("bookings")
-    .select("*", { count: "exact", head: true })
-    .eq("website_id", websiteId)
-    .gte("created_at", firstDayStr);
-
-  // Get new leads this month
-  const { count: leadsCount } = await supabase
-    .from("leads")
-    .select("*", { count: "exact", head: true })
-    .eq("website_id", websiteId)
-    .gte("created_at", firstDayStr);
-
-  // Get pending bookings
-  const { count: pendingCount } = await supabase
-    .from("bookings")
-    .select("*", { count: "exact", head: true })
-    .eq("website_id", websiteId)
-    .eq("status", "pending");
+  // Run all 3 count queries in parallel instead of sequentially
+  const [bookingsResult, leadsResult, pendingResult] = await Promise.all([
+    // Bookings this month
+    supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .eq("website_id", websiteId)
+      .gte("created_at", firstDayStr),
+    // New leads this month
+    supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("website_id", websiteId)
+      .gte("created_at", firstDayStr),
+    // Pending bookings
+    supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .eq("website_id", websiteId)
+      .eq("status", "pending"),
+  ]);
 
   return {
-    bookingsThisMonth: bookingsCount || 0,
-    newLeads: leadsCount || 0,
-    pendingBookings: pendingCount || 0,
+    bookingsThisMonth: bookingsResult.count || 0,
+    newLeads: leadsResult.count || 0,
+    pendingBookings: pendingResult.count || 0,
   };
 }
 
-// Recent bookings
+// Recent bookings - only select columns used in dashboard view
 export async function getRecentBookings(limit = 5) {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();
@@ -80,7 +99,7 @@ export async function getRecentBookings(limit = 5) {
 
   const { data } = await supabase
     .from("bookings")
-    .select("*")
+    .select("id, customer_name, booking_date, booking_time, guests, status")
     .eq("website_id", websiteId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -184,28 +203,30 @@ export async function updateLeadStatus(leadId: string, status: string) {
   return { error };
 }
 
-// Get client data with website info
+// Get client data with website info - optimized with join
 export async function getClientData() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { client: null, websiteId: null };
 
+  // Single query: get client with website in one request
   const { data: client } = await supabase
     .from("clients")
-    .select("*")
+    .select("*, websites(id)")
     .eq("auth_user_id", user.id)
     .single();
 
   if (!client) return { client: null, websiteId: null };
 
-  const { data: website } = await supabase
-    .from("websites")
-    .select("id")
-    .eq("client_id", client.id)
-    .single();
+  // Extract website id from joined data
+  const websites = client.websites;
+  const websiteId = Array.isArray(websites) ? websites[0]?.id : websites?.id;
 
-  return { client, websiteId: website?.id || null };
+  // Remove websites from client object to maintain original shape
+  const { websites: _, ...clientData } = client;
+
+  return { client: clientData, websiteId: websiteId || null };
 }
 
 // Update client data
