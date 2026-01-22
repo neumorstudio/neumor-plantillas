@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = rawBody as OrderIntentPayload;
+    const body = rawBody as unknown as OrderIntentPayload;
     const items = normalizeItems(body.items || []);
 
     if (
