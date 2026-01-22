@@ -304,3 +304,189 @@ export async function getWebsiteConfig() {
     config: (website.config || {}) as WebsiteConfig,
   };
 }
+
+// ============================================
+// DASHBOARD WIDGETS DATA
+// ============================================
+
+// Widget: Reservas de hoy
+export async function getBookingsToday() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const { count } = await supabase
+    .from("bookings")
+    .select("*", { count: "exact", head: true })
+    .eq("website_id", websiteId)
+    .eq("booking_date", today);
+
+  return { count: count || 0 };
+}
+
+// Widget: Presupuestos pendientes (para repairs/realestate)
+export async function getQuotesPending() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, totalAmount: 0 };
+
+  const { data, count } = await supabase
+    .from("leads")
+    .select("details", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .eq("status", "new");
+
+  // Sumar importes de los presupuestos (si tienen amount en details)
+  let totalAmount = 0;
+  if (data) {
+    for (const lead of data) {
+      const details = lead.details as { amount?: number } | null;
+      if (details?.amount) {
+        totalAmount += details.amount;
+      }
+    }
+  }
+
+  return { count: count || 0, totalAmount };
+}
+
+// Widget: Presupuestos aceptados este mes
+export async function getQuotesAccepted() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, totalAmount: 0 };
+
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayStr = firstDayOfMonth.toISOString().split("T")[0];
+
+  const { data, count } = await supabase
+    .from("leads")
+    .select("details", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .eq("status", "converted")
+    .gte("updated_at", firstDayStr);
+
+  let totalAmount = 0;
+  if (data) {
+    for (const lead of data) {
+      const details = lead.details as { amount?: number } | null;
+      if (details?.amount) {
+        totalAmount += details.amount;
+      }
+    }
+  }
+
+  return { count: count || 0, totalAmount };
+}
+
+// Widget: Trabajos activos (para repairs)
+export async function getJobsActive() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  const { count } = await supabase
+    .from("jobs")
+    .select("*", { count: "exact", head: true })
+    .eq("website_id", websiteId)
+    .in("status", ["pending", "in_progress", "waiting_material"]);
+
+  return { count: count || 0 };
+}
+
+// Widget: Pagos pendientes (para repairs)
+export async function getPaymentsPending() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, totalAmount: 0 };
+
+  const { data, count } = await supabase
+    .from("payments")
+    .select("amount", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("status", "pending");
+
+  let totalAmount = 0;
+  if (data) {
+    for (const payment of data) {
+      totalAmount += payment.amount || 0;
+    }
+  }
+
+  // Convertir de céntimos a euros
+  return { count: count || 0, totalAmount: totalAmount / 100 };
+}
+
+// Widget: Ingresos del mes
+export async function getRevenueMonth() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { totalAmount: 0 };
+
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayStr = firstDayOfMonth.toISOString().split("T")[0];
+
+  const { data } = await supabase
+    .from("payments")
+    .select("amount")
+    .eq("website_id", websiteId)
+    .eq("status", "paid")
+    .gte("paid_at", firstDayStr);
+
+  let totalAmount = 0;
+  if (data) {
+    for (const payment of data) {
+      totalAmount += payment.amount || 0;
+    }
+  }
+
+  // Convertir de céntimos a euros
+  return { totalAmount: totalAmount / 100 };
+}
+
+// Widget: Trabajos recientes (tabla para repairs)
+export async function getRecentJobs(limit = 5) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("id, client_name, address, status, estimated_end_date, total_amount")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}
+
+// Widget: Presupuestos recientes (tabla para repairs)
+export async function getRecentQuotes(limit = 5) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("leads")
+    .select("id, name, message, status, details, created_at")
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}
