@@ -53,34 +53,48 @@ const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID || ""; // Optional, for team d
 
 // ============================================
 // VERTICAL CONFIGURATION
-// Maps business types to verticals and Vercel projects
+// Maps business types to verticals and their Vercel projects
+// Each vertical has its own Vercel project deploying the corresponding template
 // ============================================
-type Vertical = "restaurant" | "peluqueria" | "reformas";
+type Vertical = "restaurant" | "salon" | "repairs" | "clinic" | "gym" | "store";
 
-const VERTICALS: Record<Vertical, { label: string; vercelProject: string; businessTypes: string[] }> = {
+const VERTICALS: Record<Vertical, { label: string; vercelProject: string; templateDir: string }> = {
   restaurant: {
     label: "Restaurantes",
     vercelProject: "web-restaurants",
-    businessTypes: ["restaurant", "clinic", "fitness"], // clinic/fitness use restaurant template
+    templateDir: "restaurant",
   },
-  peluqueria: {
+  salon: {
     label: "Peluquerías",
     vercelProject: "web-peluquerias",
-    businessTypes: ["salon"],
+    templateDir: "salon",
   },
-  reformas: {
+  repairs: {
     label: "Reformas",
     vercelProject: "web-reformas",
-    businessTypes: ["repairs", "realestate"], // realestate uses reformas template
+    templateDir: "repairs",
+  },
+  clinic: {
+    label: "Clínicas",
+    vercelProject: "web-clinics",
+    templateDir: "clinic",
+  },
+  gym: {
+    label: "Gimnasios",
+    vercelProject: "web-gyms",
+    templateDir: "gym",
+  },
+  store: {
+    label: "Tiendas",
+    vercelProject: "web-stores",
+    templateDir: "store",
   },
 };
 
-// Infer vertical from business type
+// Infer vertical from business type (now 1:1 mapping)
 function inferVertical(businessType: string): Vertical {
-  for (const [vertical, config] of Object.entries(VERTICALS)) {
-    if (config.businessTypes.includes(businessType)) {
-      return vertical as Vertical;
-    }
+  if (isValidVertical(businessType)) {
+    return businessType;
   }
   return "restaurant"; // Default fallback
 }
@@ -509,12 +523,11 @@ async function main() {
       message: chalk.cyan("   Tipo de negocio:"),
       choices: [
         { name: "🍽️   Restaurante", value: "restaurant" },
+        { name: "💇  Peluquería / Salón", value: "salon" },
+        { name: "🧰  Reformas", value: "repairs" },
         { name: "🏥  Clínica", value: "clinic" },
-        { name: "💇  Salón de belleza", value: "salon" },
-        { name: "🛒  Tienda", value: "shop" },
-        { name: "🏋️   Gimnasio/Fitness", value: "fitness" },
-        { name: "🏠  Inmobiliaria", value: "realestate" },
-        { name: "🧰  Reformas y reparaciones", value: "repairs" },
+        { name: "🏋️   Gimnasio", value: "gym" },
+        { name: "🛒  Tienda", value: "store" },
       ],
     }),
 
