@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
-// Cache invalidation: 2026-01-22
+// Cache invalidation: 2026-01-22-v2
 export default defineConfig({
   output: "server",
   adapter: vercel(),
