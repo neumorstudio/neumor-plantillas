@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 
 async function getWebsiteId() {
@@ -16,6 +17,66 @@ async function getWebsiteId() {
 
   // @ts-expect-error - Supabase types issue with nested select
   return client?.websites?.id || null;
+}
+
+// Convertir un presupuesto (lead con lead_type=quote) en trabajo
+export async function convertQuoteToJob(quoteId: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) {
+    return { error: "No website found" };
+  }
+
+  // Obtener datos del presupuesto
+  const { data: quote, error: quoteError } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("id", quoteId)
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .single();
+
+  if (quoteError || !quote) {
+    return { error: "Presupuesto no encontrado" };
+  }
+
+  // Extraer importe del details si existe
+  const details = quote.details as { amount?: number; description?: string; address?: string } | null;
+  const totalAmount = details?.amount ? Math.round(details.amount * 100) : null;
+
+  // Crear el trabajo
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .insert({
+      website_id: websiteId,
+      quote_id: quoteId,
+      client_name: quote.name,
+      client_email: quote.email,
+      client_phone: quote.phone,
+      address: details?.address || null,
+      description: details?.description || quote.message,
+      status: "pending",
+      total_amount: totalAmount,
+    })
+    .select()
+    .single();
+
+  if (jobError) {
+    return { error: jobError.message };
+  }
+
+  // Marcar el presupuesto como convertido
+  await supabase
+    .from("leads")
+    .update({ status: "converted" })
+    .eq("id", quoteId);
+
+  revalidatePath("/dashboard/presupuestos");
+  revalidatePath("/dashboard/trabajos");
+  revalidatePath("/dashboard");
+
+  return { success: true, jobId: job.id };
 }
 
 export async function createJob(formData: FormData) {

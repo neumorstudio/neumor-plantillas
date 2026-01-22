@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { updateLeadStatus } from "@/lib/actions";
+import { convertQuoteToJob } from "@/lib/actions/jobs";
 
 interface QuoteLead {
   id: string;
@@ -22,15 +24,42 @@ export default function PresupuestosClient({
 }: {
   initialQuotes: QuoteLead[];
 }) {
+  const router = useRouter();
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<QuoteLead[]>(initialQuotes);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   useEffect(() => {
     setQuotes(initialQuotes);
   }, [initialQuotes]);
+
+  const handleConvertToJob = async (quoteId: string) => {
+    if (!confirm("¿Convertir este presupuesto en un trabajo?")) return;
+
+    setConvertingId(quoteId);
+    setActionError(null);
+
+    try {
+      const result = await convertQuoteToJob(quoteId);
+      if (result.error) {
+        setActionError(result.error);
+      } else {
+        // Actualizar estado local
+        setQuotes((prev) =>
+          prev.map((quote) =>
+            quote.id === quoteId ? { ...quote, status: "converted" } : quote
+          )
+        );
+        // Redirigir a trabajos
+        router.push("/dashboard/trabajos");
+      }
+    } finally {
+      setConvertingId(null);
+    }
+  };
 
   const filteredQuotes = quotes.filter((quote) => {
     const status = quote.status || "new";
@@ -252,13 +281,27 @@ export default function PresupuestosClient({
                       </button>
                     )}
                     {quote.status === "contacted" && (
-                      <button
-                        className="neumor-btn neumor-btn-accent text-sm"
-                        onClick={() => handleStatusChange(quote.id, "converted")}
-                        disabled={isPending}
-                      >
-                        Marcar Convertido
-                      </button>
+                      <>
+                        <button
+                          className="neumor-btn-primary text-sm px-3 py-1.5 rounded-lg font-medium"
+                          onClick={() => handleConvertToJob(quote.id)}
+                          disabled={isPending || convertingId === quote.id}
+                        >
+                          {convertingId === quote.id ? "Convirtiendo..." : "Crear Trabajo"}
+                        </button>
+                        <button
+                          className="neumor-btn text-sm"
+                          onClick={() => handleStatusChange(quote.id, "lost")}
+                          disabled={isPending}
+                        >
+                          Marcar Perdido
+                        </button>
+                      </>
+                    )}
+                    {quote.status === "converted" && (
+                      <span className="text-xs text-green-600 font-medium">
+                        ✓ Trabajo creado
+                      </span>
                     )}
                   </div>
                 </div>

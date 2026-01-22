@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createJob, updateJob, deleteJob, updateJobStatus } from "@/lib/actions/jobs";
+import { createPayment } from "@/lib/actions/payments";
 
 interface Job {
   id: string;
@@ -31,11 +33,13 @@ const STATUS_OPTIONS = [
 ];
 
 export function TrabajosClient({ initialJobs }: TrabajosClientProps) {
+  const router = useRouter();
   const [jobs, setJobs] = useState(initialJobs);
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [creatingPaymentFor, setCreatingPaymentFor] = useState<string | null>(null);
 
   const filteredJobs = jobs.filter((j) => {
     if (filter === "all") return true;
@@ -106,6 +110,33 @@ export function TrabajosClient({ initialJobs }: TrabajosClientProps) {
       alert(result.error);
     } else {
       setJobs(jobs.map((j) => (j.id === id ? { ...j, status: newStatus } : j)));
+    }
+  }
+
+  async function handleCreatePayment(job: Job) {
+    if (!job.total_amount) {
+      alert("Este trabajo no tiene importe definido");
+      return;
+    }
+
+    setCreatingPaymentFor(job.id);
+
+    try {
+      const formData = new FormData();
+      formData.append("client_name", job.client_name);
+      formData.append("amount", (job.total_amount / 100).toString());
+      formData.append("status", "pending");
+      formData.append("job_id", job.id);
+      formData.append("notes", `Pago por trabajo: ${job.description || job.address || ""}`);
+
+      const result = await createPayment(formData);
+      if (result.error) {
+        alert(result.error);
+      } else {
+        router.push("/dashboard/pagos");
+      }
+    } finally {
+      setCreatingPaymentFor(null);
     }
   }
 
@@ -215,6 +246,19 @@ export function TrabajosClient({ initialJobs }: TrabajosClientProps) {
                         </option>
                       ))}
                     </select>
+                    {job.total_amount && job.status !== "cancelled" && (
+                      <button
+                        onClick={() => handleCreatePayment(job)}
+                        disabled={creatingPaymentFor === job.id}
+                        className="p-2 hover:bg-green-100 text-green-600 rounded-lg"
+                        title="Crear pago"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                          <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       onClick={() => openEdit(job)}
                       className="p-2 hover:bg-[var(--neumor-bg)] rounded-lg"
