@@ -4,8 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
+// Cache invalidation: 2026-01-22
 export default defineConfig({
-  // SSR para leer query params y config de Supabase en tiempo real
   output: "server",
   adapter: vercel(),
   vite: {
