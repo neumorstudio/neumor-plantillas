@@ -187,3 +187,48 @@ html.dark {
   color: var(--text-secondary);
   max-width: 300px;
 }
+
+/* Neumorphic Toggle Switch */
+.neumor-toggle {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--neumor-bg);
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -3px -3px 6px var(--shadow-light);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.neumor-toggle[data-active="true"] {
+  background: var(--accent);
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 0, 0, 0.15),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.neumor-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--neumor-bg);
+  box-shadow:
+    2px 2px 4px var(--shadow-dark),
+    -1px -1px 3px var(--shadow-light);
+  transition: all 0.3s ease;
+}
+
+.neumor-toggle[data-active="true"] .neumor-toggle-knob {
+  left: 27px;
+  background: white;
+  box-shadow:
+    2px 2px 4px rgba(0, 0, 0, 0.2);
+}

@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/vercel": "^9.0.4",
     "@neumorstudio/config-tailwind": "workspace:*",
     "@neumorstudio/config-typescript": "workspace:*",
     "@tailwindcss/vite": "^4.0.0",

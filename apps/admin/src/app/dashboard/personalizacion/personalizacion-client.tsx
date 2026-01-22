@@ -130,14 +130,10 @@ export function PersonalizacionClient({
   const [variants, setVariants] = useState<Variants>(initialConfig.variants || defaultVariants);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [localPreview, setLocalPreview] = useState(true);
-  const [localPort, setLocalPort] = useState("4321");
 
-  // Build preview URL with query params
+  // Build preview URL with query params - always use production domain with HTTPS
   const previewUrl = useMemo(() => {
-    const baseUrl = localPreview
-      ? `http://localhost:${localPort}`
-      : domain.startsWith("http") ? domain : `http://${domain}`;
+    const baseUrl = `https://${domain}`;
 
     const params = new URLSearchParams();
     params.set("preview", "1");
@@ -149,7 +145,7 @@ export function PersonalizacionClient({
     });
 
     return `${baseUrl}?${params.toString()}`;
-  }, [domain, theme, variants, localPreview, localPort]);
+  }, [domain, theme, variants]);
 
   // Handlers
   const handleVariantChange = useCallback((key: keyof Variants, value: string) => {
@@ -304,51 +300,17 @@ export function PersonalizacionClient({
         <div className="lg:col-span-2 neumor-card p-4 flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Vista Previa</h2>
-            <div className="flex items-center gap-4">
-              {/* Local/Production Toggle */}
-              <div className="flex items-center gap-2">
-                <span className={`text-xs ${localPreview ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`}>
-                  Local
-                </span>
-                <button
-                  onClick={() => setLocalPreview(!localPreview)}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${
-                    localPreview ? "bg-[var(--accent)]" : "bg-gray-400"
-                  }`}
-                  title={localPreview ? "Modo local (localhost)" : "Modo produccion"}
-                >
-                  <span
-                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                      localPreview ? "translate-x-0.5" : "translate-x-5"
-                    }`}
-                  />
-                </button>
-                <span className={`text-xs ${!localPreview ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`}>
-                  Prod
-                </span>
-              </div>
-              {localPreview && (
-                <input
-                  type="text"
-                  value={localPort}
-                  onChange={(e) => setLocalPort(e.target.value)}
-                  className="w-16 text-xs px-2 py-1 rounded border border-gray-300 text-center"
-                  placeholder="4321"
-                  title="Puerto del servidor local"
-                />
-              )}
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-[var(--accent)] hover:underline flex items-center gap-1"
-              >
-                Abrir
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
+            <a
+              href={previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-[var(--accent)] hover:underline flex items-center gap-1"
+            >
+              Abrir en nueva pestana
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-[var(--shadow-dark)] bg-white">
             <iframe
@@ -358,10 +320,7 @@ export function PersonalizacionClient({
             />
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-2 text-center">
-            {localPreview
-              ? `Conectado a localhost:${localPort} - Asegurate de tener el template corriendo`
-              : `Conectado a ${domain}`
-            }
+            Vista previa de tu web en {domain}
           </p>
         </div>
       </div>

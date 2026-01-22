@@ -8,12 +8,25 @@ import figlet from "figlet";
 import gradient from "gradient-string";
 import boxen from "boxen";
 import Table from "cli-table3";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..", "..", "..");
+
+// Parse CLI arguments
+const args = process.argv.slice(2);
+const CHECK_URL_FLAG = args.includes("--check-url");
+
+// Parse --vertical flag (e.g., --vertical=restaurant or --vertical restaurant)
+function parseVerticalArg(): string | undefined {
+  const idx = args.findIndex(a => a.startsWith("--vertical"));
+  if (idx === -1) return undefined;
+  const arg = args[idx];
+  if (arg.includes("=")) return arg.split("=")[1];
+  return args[idx + 1]; // next arg is the value
+}
+const VERTICAL_ARG = parseVerticalArg();
 
 // Cargar variables de entorno desde la raíz del proyecto
 config({ path: join(rootDir, ".env") });
@@ -22,16 +35,65 @@ config({ path: join(rootDir, ".env") });
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-// URL del webhook de reservas
+// URL del webhook de reservas (mostrada al final del proceso)
 const WEBHOOK_URL = process.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.neumorstudio.com/webhook/reservas";
-// URL del webhook de leads/presupuestos
-const CONTACT_WEBHOOK_URL = process.env.PUBLIC_CONTACT_WEBHOOK_URL
-  || process.env.PUBLIC_LEAD_WEBHOOK_URL
-  || "https://n8n.neumorstudio.com/webhook/lead";
 
-// Variables de Supabase para los templates (se copian al .env del cliente)
-const SUPABASE_PUBLIC_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+// Vercel API configuration
+const VERCEL_TOKEN = process.env.VERCEL_TOKEN || "";
+const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID || ""; // Optional, for team deployments
+
+// ============================================
+// VERTICAL CONFIGURATION
+// Maps business types to verticals and their Vercel projects
+// Each vertical has its own Vercel project deploying the corresponding template
+// ============================================
+type Vertical = "restaurant" | "salon" | "repairs" | "clinic" | "gym" | "store";
+
+const VERTICALS: Record<Vertical, { label: string; vercelProject: string; templateDir: string }> = {
+  restaurant: {
+    label: "Restaurantes",
+    vercelProject: "web-restaurants",
+    templateDir: "restaurant",
+  },
+  salon: {
+    label: "Peluquerías",
+    vercelProject: "web-peluquerias",
+    templateDir: "salon",
+  },
+  repairs: {
+    label: "Reformas",
+    vercelProject: "web-reformas",
+    templateDir: "repairs",
+  },
+  clinic: {
+    label: "Clínicas",
+    vercelProject: "web-clinics",
+    templateDir: "clinic",
+  },
+  gym: {
+    label: "Gimnasios",
+    vercelProject: "web-gyms",
+    templateDir: "gym",
+  },
+  store: {
+    label: "Tiendas",
+    vercelProject: "web-stores",
+    templateDir: "store",
+  },
+};
+
+// Infer vertical from business type (now 1:1 mapping)
+function inferVertical(businessType: string): Vertical {
+  if (isValidVertical(businessType)) {
+    return businessType;
+  }
+  return "restaurant"; // Default fallback
+}
+
+// Validate vertical value
+function isValidVertical(v: string): v is Vertical {
+  return v in VERTICALS;
+}
 
 // ============================================
 // ESTILOS Y COLORES PERSONALIZADOS
@@ -82,10 +144,124 @@ function showStep(step: number, total: number, title: string): void {
 // Función para delay visual
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Smoke check: verify website URL responds (no new dependencies - uses native fetch)
+const SMOKE_CHECK_OK_CODES = new Set([200, 301, 302, 307, 308]);
+
+async function checkWebsiteUrl(url: string): Promise<{ ok: boolean; status?: number; error?: string }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+  try {
+    const response = await fetch(url, {
+      method: "HEAD", // Lightweight check
+      signal: controller.signal,
+      redirect: "manual", // Don't follow redirects, just check status
+    });
+    clearTimeout(timeout);
+    return {
+      ok: SMOKE_CHECK_OK_CODES.has(response.status),
+      status: response.status,
+    };
+  } catch (err) {
+    clearTimeout(timeout);
+    const error = err as Error;
+    if (error.name === "AbortError") {
+      return { ok: false, error: "Timeout (5s)" };
+    }
+    return { ok: false, error: error.message };
+  }
+}
+
+// ============================================
+// VERCEL API FUNCTIONS
+// ============================================
+interface VercelDomainResult {
+  success: boolean;
+  verified: boolean;
+  error?: string;
+  verificationRecord?: { type: string; name: string; value: string };
+}
+
+async function assignVercelDomain(
+  projectName: string,
+  domain: string
+): Promise<VercelDomainResult> {
+  if (!VERCEL_TOKEN) {
+    return { success: false, verified: false, error: "VERCEL_TOKEN not configured" };
+  }
+
+  const baseUrl = "https://api.vercel.com";
+  const teamQuery = VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : "";
+
+  try {
+    // POST /v10/projects/{idOrName}/domains
+    const response = await fetch(
+      `${baseUrl}/v10/projects/${projectName}/domains${teamQuery}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${VERCEL_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: domain }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle specific errors
+      if (data.error?.code === "domain_already_in_use") {
+        return { success: false, verified: false, error: "Domain already assigned to another project" };
+      }
+      if (data.error?.code === "forbidden") {
+        return { success: false, verified: false, error: "Invalid VERCEL_TOKEN or insufficient permissions" };
+      }
+      return { success: false, verified: false, error: data.error?.message || `HTTP ${response.status}` };
+    }
+
+    // Domain added, check if verified
+    if (data.verified === false) {
+      // Need DNS verification
+      return {
+        success: true,
+        verified: false,
+        verificationRecord: data.verification?.[0] || undefined,
+      };
+    }
+
+    return { success: true, verified: true };
+  } catch (err) {
+    return { success: false, verified: false, error: (err as Error).message };
+  }
+}
+
+async function verifyVercelDomain(projectName: string, domain: string): Promise<boolean> {
+  if (!VERCEL_TOKEN) return false;
+
+  const baseUrl = "https://api.vercel.com";
+  const teamQuery = VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : "";
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/v9/projects/${projectName}/domains/${domain}/verify${teamQuery}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
+      }
+    );
+    const data = await response.json();
+    return data.verified === true;
+  } catch {
+    return false;
+  }
+}
+
 interface ClientData {
   businessName: string;
   email: string;
   businessType: string;
+  vertical: Vertical;
   phone: string;
   domain: string;
   theme: string;
@@ -276,11 +452,38 @@ async function main() {
     return true;
   }
 
-  async function validateDomain(domain: string): Promise<string | true> {
-    if (domain.length < 3) return "Mínimo 3 caracteres";
-    if (!/^[a-z0-9-]+$/.test(domain)) return "Solo letras minúsculas, números y guiones";
+  // Reserved subdomains that cannot be used by clients
+  const RESERVED_SUBDOMAINS = new Set([
+    "admin", "www", "api", "static", "assets", "support", "help",
+    "docs", "blog", "app", "dashboard", "mail", "email", "ftp",
+    "staging", "dev", "test", "demo", "cdn", "media", "images",
+    "auth", "login", "signup", "register", "status", "health",
+  ]);
 
-    const fullDomain = `${domain}.neumorstudio.com`;
+  async function validateDomain(domain: string): Promise<string | true> {
+    // Normalize input: trim whitespace and convert to lowercase
+    const normalized = domain.trim().toLowerCase();
+
+    // Length check: 3-30 characters
+    if (normalized.length < 3) return "Mínimo 3 caracteres";
+    if (normalized.length > 30) return "Máximo 30 caracteres";
+
+    // Format: must start and end with alphanumeric, only lowercase letters, numbers, and hyphens
+    // Regex: ^[a-z0-9](?:[a-z0-9-]{0,28}[a-z0-9])?$ allows 2-30 chars (but we already check min 3)
+    if (!/^[a-z0-9](?:[a-z0-9-]{0,28}[a-z0-9])?$/.test(normalized)) {
+      return "Debe empezar y terminar con letra o número. Solo minúsculas, números y guiones.";
+    }
+
+    // No consecutive hyphens
+    if (/--/.test(normalized)) return "No se permiten guiones consecutivos";
+
+    // Reserved subdomains check
+    if (RESERVED_SUBDOMAINS.has(normalized)) {
+      return `El subdominio "${normalized}" está reservado. Elige otro.`;
+    }
+
+    // Uniqueness check in database
+    const fullDomain = `${normalized}.neumorstudio.com`;
     const { data } = await supabase
       .from("websites")
       .select("id")
@@ -311,12 +514,11 @@ async function main() {
       message: chalk.cyan("   Tipo de negocio:"),
       choices: [
         { name: "🍽️   Restaurante", value: "restaurant" },
+        { name: "💇  Peluquería / Salón", value: "salon" },
+        { name: "🧰  Reformas", value: "repairs" },
         { name: "🏥  Clínica", value: "clinic" },
-        { name: "💇  Salón de belleza", value: "salon" },
-        { name: "🛒  Tienda", value: "shop" },
-        { name: "🏋️   Gimnasio/Fitness", value: "fitness" },
-        { name: "🏠  Inmobiliaria", value: "realestate" },
-        { name: "🧰  Reformas y reparaciones", value: "repairs" },
+        { name: "🏋️   Gimnasio", value: "gym" },
+        { name: "🛒  Tienda", value: "store" },
       ],
     }),
 
@@ -330,6 +532,7 @@ async function main() {
       validate: (value) => value.length > 0 || "La dirección es obligatoria",
     }),
 
+    vertical: "restaurant" as Vertical, // Will be set below
     domain: "",
     theme: "",
     preset: "",
@@ -337,19 +540,48 @@ async function main() {
     heroSubtitle: "",
   };
 
+  // Determine vertical: CLI flag > prompt (if business type maps to multiple) > inferred
+  let selectedVertical: Vertical;
+  if (VERTICAL_ARG && isValidVertical(VERTICAL_ARG)) {
+    selectedVertical = VERTICAL_ARG;
+    console.log(chalk.gray(`   Vertical (--vertical): ${chalk.white(VERTICALS[selectedVertical].label)}`));
+  } else {
+    // Infer from business type
+    const inferredVertical = inferVertical(clientData.businessType);
+
+    // If VERCEL_TOKEN is set, confirm vertical selection
+    if (VERCEL_TOKEN) {
+      selectedVertical = await select({
+        message: chalk.cyan("   Vertical (proyecto Vercel):"),
+        choices: Object.entries(VERTICALS).map(([key, val]) => ({
+          name: `${val.label} ${chalk.gray(`→ ${val.vercelProject}`)}${key === inferredVertical ? chalk.green(" ★") : ""}`,
+          value: key as Vertical,
+        })),
+        default: inferredVertical,
+      });
+    } else {
+      // No Vercel configured, use inferred
+      selectedVertical = inferredVertical;
+      console.log(chalk.gray(`   Vertical (inferida): ${chalk.white(VERTICALS[selectedVertical].label)}`));
+    }
+  }
+  clientData.vertical = selectedVertical;
+
   // ============================================
   // PASO 2: Configuración web
   // ============================================
   showStep(2, 4, "Configuración de la Web");
 
-  clientData.domain = await input({
+  const rawDomain = await input({
     message: chalk.cyan("   Subdominio:"),
     validate: validateDomain,
     transformer: (value) => {
-      const clean = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      const clean = value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
       return chalk.magenta(clean) + chalk.gray(".neumorstudio.com");
     },
   });
+  // Store normalized value (trim + lowercase) to match validation
+  clientData.domain = rawDomain.trim().toLowerCase();
 
   clientData.theme = await select({
     message: chalk.cyan("   Tema visual:"),
@@ -439,9 +671,11 @@ async function main() {
     [chalk.gray('Negocio'), chalk.white.bold(clientData.businessName)],
     [chalk.gray('Email'), chalk.cyan(clientData.email)],
     [chalk.gray('Tipo'), chalk.white(clientData.businessType)],
+    [chalk.gray('Vertical'), chalk.white(VERTICALS[clientData.vertical].label)],
     [chalk.gray('Teléfono'), chalk.white(clientData.phone || chalk.gray('(no especificado)'))],
     [chalk.gray('Dirección'), chalk.white(clientData.address)],
     [chalk.gray('Dominio'), chalk.magenta(fullDomain)],
+    [chalk.gray('Vercel Project'), chalk.cyan(VERTICALS[clientData.vertical].vercelProject)],
     [chalk.gray('Tema'), chalk.white(clientData.theme)],
     [chalk.gray('Preset'), chalk.white(clientData.preset)],
   );
@@ -513,6 +747,8 @@ async function main() {
         config: {
           businessName: clientData.businessName,
           businessType: clientData.businessType,
+          vertical: clientData.vertical,
+          vercelProject: VERTICALS[clientData.vertical].vercelProject,
           preset: clientData.preset,
           heroTitle: clientData.heroTitle,
           heroSubtitle: clientData.heroSubtitle,
@@ -579,6 +815,31 @@ async function main() {
 
     spinner.succeed(chalk.green("Cliente creado correctamente"));
 
+    // 6. Assign domain to Vercel project (if VERCEL_TOKEN configured)
+    let vercelResult: VercelDomainResult | null = null;
+    const vercelProject = VERTICALS[clientData.vertical].vercelProject;
+
+    if (VERCEL_TOKEN) {
+      const vercelSpinner = ora(`Asignando dominio a Vercel (${vercelProject})...`).start();
+      vercelResult = await assignVercelDomain(vercelProject, fullDomain);
+
+      if (vercelResult.success) {
+        if (vercelResult.verified) {
+          vercelSpinner.succeed(chalk.green(`Dominio asignado y verificado en ${vercelProject}`));
+        } else {
+          vercelSpinner.warn(chalk.yellow(`Dominio asignado pero pendiente de verificación`));
+          // Try automatic verification
+          const verified = await verifyVercelDomain(vercelProject, fullDomain);
+          if (verified) {
+            console.log(chalk.green("   ✓ Verificación automática exitosa"));
+            vercelResult.verified = true;
+          }
+        }
+      } else {
+        vercelSpinner.fail(chalk.red(`Error asignando dominio: ${vercelResult.error}`));
+      }
+    }
+
     // Mostrar resultados con estilo
     await sleep(300);
     console.log();
@@ -606,8 +867,66 @@ async function main() {
     idsTable.push(
       [chalk.gray('Client ID'), chalk.yellow(client.id)],
       [chalk.gray('Website ID'), chalk.yellow.bold(website.id)],
+      [chalk.gray('Domain'), chalk.magenta(fullDomain)],
+      [chalk.gray('Vertical'), chalk.white(VERTICALS[clientData.vertical].label)],
+      [chalk.gray('Vercel Project'), chalk.cyan(vercelProject)],
     );
+
+    // Add Vercel status row
+    if (VERCEL_TOKEN) {
+      if (vercelResult?.success && vercelResult.verified) {
+        idsTable.push([chalk.gray('Vercel Status'), chalk.green('✓ Assigned & Verified')]);
+      } else if (vercelResult?.success && !vercelResult.verified) {
+        idsTable.push([chalk.gray('Vercel Status'), chalk.yellow('⚠ Needs DNS Verification')]);
+      } else {
+        idsTable.push([chalk.gray('Vercel Status'), chalk.red('✗ Failed')]);
+      }
+    } else {
+      idsTable.push([chalk.gray('Vercel Status'), chalk.gray('— Not configured')]);
+    }
+
     console.log("\n" + idsTable.toString());
+
+    // Show DNS verification instructions if needed
+    if (vercelResult?.success && !vercelResult.verified && vercelResult.verificationRecord) {
+      const rec = vercelResult.verificationRecord;
+      console.log(
+        boxen(
+          chalk.yellow.bold("VERIFICACIÓN DNS REQUERIDA\n\n") +
+          chalk.gray("Añade el siguiente registro DNS:\n\n") +
+          chalk.white(`Tipo:  ${rec.type}\n`) +
+          chalk.white(`Name:  ${rec.name}\n`) +
+          chalk.white(`Value: ${rec.value}\n\n`) +
+          chalk.gray("Después ejecuta:\n") +
+          chalk.cyan(`pnpm cli:create-client --check-url`),
+          {
+            padding: 1,
+            margin: { top: 1 },
+            borderStyle: "round",
+            borderColor: "yellow",
+            title: "🌐 Verificación Pendiente",
+            titleAlignment: "left",
+          }
+        )
+      );
+    } else if (vercelResult && !vercelResult.success) {
+      console.log(
+        boxen(
+          chalk.red.bold("DOMINIO NO ASIGNADO A VERCEL\n\n") +
+          chalk.gray("Error: ") + chalk.white(vercelResult.error || "Unknown") + "\n\n" +
+          chalk.gray("Reintentar manualmente:\n") +
+          chalk.cyan(`vercel domains add ${fullDomain} --scope ${vercelProject}`),
+          {
+            padding: 1,
+            margin: { top: 1 },
+            borderStyle: "round",
+            borderColor: "red",
+            title: "⚠ Acción Requerida",
+            titleAlignment: "left",
+          }
+        )
+      );
+    }
 
     // Credenciales
     if (!authError && authUser) {
@@ -662,15 +981,42 @@ async function main() {
       )
     );
 
-    // Preguntar si quiere copiar la plantilla
-    console.log();
-    const copyTemplate = await confirm({
-      message: chalk.cyan("   ¿Crear proyecto de la plantilla para este cliente?"),
-      default: true,
-    });
+    // Smoke check: verify website URL (optional)
+    const websiteUrl = `https://${fullDomain}`;
+    let doSmokeCheck = CHECK_URL_FLAG;
 
-    if (copyTemplate) {
-      await createClientTemplate(clientData, website.id);
+    if (!CHECK_URL_FLAG) {
+      doSmokeCheck = await confirm({
+        message: chalk.cyan(`   ¿Verificar que ${fullDomain} responde?`),
+        default: false,
+      });
+    }
+
+    if (doSmokeCheck) {
+      const checkSpinner = ora(`Verificando ${websiteUrl}...`).start();
+      const result = await checkWebsiteUrl(websiteUrl);
+
+      if (result.ok) {
+        checkSpinner.succeed(chalk.green(`${fullDomain} responde (${result.status})`));
+      } else {
+        checkSpinner.warn(
+          chalk.yellow(`${fullDomain} no responde`) +
+          chalk.gray(` - ${result.error || `HTTP ${result.status}`}`)
+        );
+        console.log(
+          boxen(
+            chalk.yellow.bold("NOTA: ") + chalk.white("El registro en Supabase se ha creado correctamente.\n") +
+            chalk.gray("El subdominio puede tardar en propagarse o necesita configuración DNS.\n") +
+            chalk.gray("Verifica manualmente: ") + chalk.cyan(websiteUrl),
+            {
+              padding: 1,
+              margin: { top: 0 },
+              borderStyle: "round",
+              borderColor: "yellow",
+            }
+          )
+        );
+      }
     }
 
     // Mensaje final
@@ -693,259 +1039,5 @@ async function main() {
   }
 }
 
-async function createClientTemplate(clientData: ClientData, websiteId: string) {
-  // Preguntar dónde crear el proyecto
-  const defaultPath = join(process.env.HOME || "~", "NeumorStudio", "clientes", clientData.domain);
-
-  const outputPath = await input({
-    message: "Ruta donde crear el proyecto:",
-    default: defaultPath,
-  });
-
-  const clientDir = outputPath.startsWith("~")
-    ? outputPath.replace("~", process.env.HOME || "")
-    : outputPath;
-
-  const spinner = ora("Creando proyecto del cliente...").start();
-
-  try {
-    // Determinar paths
-    const templateName = clientData.businessType === "repairs" ? "repairs" : "restaurant";
-    const templateSource = join(rootDir, "apps", "templates", templateName);
-
-    // Verificar que existe la plantilla fuente
-    if (!existsSync(templateSource)) {
-      throw new Error(`No se encontró la plantilla en: ${templateSource}`);
-    }
-
-    // Verificar que no existe ya el directorio del cliente
-    if (existsSync(clientDir)) {
-      spinner.fail(`El directorio ya existe: ${clientDir}`);
-      const overwrite = await confirm({
-        message: "¿Quieres sobrescribirlo?",
-        default: false,
-      });
-      if (!overwrite) {
-        console.log(chalk.yellow("Operación cancelada."));
-        return;
-      }
-      // Eliminar directorio existente
-      const { execSync } = await import("child_process");
-      execSync(`rm -rf "${clientDir}"`, { stdio: "ignore" });
-      spinner.start("Creando proyecto del cliente...");
-    }
-
-    // Crear directorio padre si no existe
-    const parentDir = dirname(clientDir);
-    if (!existsSync(parentDir)) {
-      mkdirSync(parentDir, { recursive: true });
-    }
-
-    // Copiar plantilla
-    const { execSync } = await import("child_process");
-    execSync(`cp -r "${templateSource}" "${clientDir}"`, { stdio: "ignore" });
-
-    spinner.text = "Personalizando plantilla...";
-
-    // ============================================
-    // PERSONALIZAR index.astro
-    // ============================================
-    const indexPath = join(clientDir, "src", "pages", "index.astro");
-    let indexContent = readFileSync(indexPath, "utf-8");
-
-    // Generar el nuevo objeto config personalizado
-    const newConfig = `const config = {
-  // ID del website en Supabase (OBLIGATORIO - se asigna al crear el cliente)
-  websiteId: import.meta.env.PUBLIC_WEBSITE_ID || "",
-
-  // Informacion basica
-  restaurantName: "${clientData.businessName}",
-  theme: "${clientData.theme}" as const, // light | dark | colorful | rustic | elegant | neuglass | neuglass-dark
-
-  // OPCION 1: Seleccion manual de variantes
-  variants: {
-    hero: "classic" as const,      // classic | modern | bold | minimal
-    menu: "tabs" as const,         // tabs | grid | list | carousel
-    features: "cards" as const,    // cards | icons | banner
-    reviews: "grid" as const,      // grid | carousel | minimal
-    footer: "full" as const,       // full | minimal | centered
-  },
-
-  // OPCION 2: Usar un preset (cambia undefined por: "fine-dining" | "casual" | "fast-food" | "cafe-bistro")
-  preset: "${clientData.preset}" as "fine-dining" | "casual" | "fast-food" | "cafe-bistro" | undefined,
-
-  // SEO
-  siteTitle: "${clientData.businessName} | ${clientData.businessType === 'restaurant' ? 'Restaurante' : clientData.businessType === 'repairs' ? 'Reformas' : 'Bienvenido'}",
-  siteDescription:
-    "${clientData.heroSubtitle.replace(/"/g, '\\"')}",
-
-  // Hero
-  heroTitle: "${clientData.heroTitle.replace(/"/g, '\\"')}",
-  heroSubtitle:
-    "${clientData.heroSubtitle.replace(/"/g, '\\"')}",
-  heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-
-  // Reservas - webhook de n8n (configurar URL del webhook antes de desplegar)
-  webhookUrl: import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || "https://n8n.neumorstudio.com/webhook/reservas",
-
-  // Contacto
-  address: "${clientData.address.replace(/"/g, '\\"')}",
-  phone: "${clientData.phone || '+34 000 000 000'}",
-  email: "${clientData.email}",
-
-  // Redes sociales
-  socialLinks: {
-    instagram: "https://instagram.com/${clientData.domain}",
-    facebook: "https://facebook.com/${clientData.domain}",
-    tripadvisor: "https://tripadvisor.com/${clientData.domain}",
-  },
-
-  // Valoraciones
-  googleRating: 4.8,
-  totalReviews: 0,
-};`;
-
-    // Reemplazar el objeto config en el archivo
-    // Buscar desde "const config = {" hasta el cierre "};"
-    const configRegex = /const config = \{[\s\S]*?\n\};/;
-    indexContent = indexContent.replace(configRegex, newConfig);
-
-    writeFileSync(indexPath, indexContent);
-
-    spinner.text = "Configurando proyecto...";
-
-    // Crear archivo .env con la configuración completa
-    const webhookEnvBlock = clientData.businessType === "repairs"
-      ? `# Webhook de presupuestos (n8n)\nPUBLIC_CONTACT_WEBHOOK_URL=${CONTACT_WEBHOOK_URL}\n`
-      : `# Webhook de reservas (n8n)\nPUBLIC_RESERVATION_WEBHOOK_URL=${WEBHOOK_URL}\n`;
-
-    const envContent = `# ===========================================
-# ${clientData.businessName}
-# Generado automáticamente por NeumorStudio CLI
-# Fecha: ${new Date().toLocaleDateString("es-ES")}
-# ===========================================
-
-# Supabase - Conexión a la base de datos
-# El template lee la configuración (tema, preset, colores) desde Supabase
-PUBLIC_SUPABASE_URL=${SUPABASE_PUBLIC_URL}
-PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-
-# Website ID - Identificador único en Supabase
-PUBLIC_WEBSITE_ID=${websiteId}
-
-${webhookEnvBlock}
-`;
-
-    writeFileSync(join(clientDir, ".env"), envContent);
-
-    // Actualizar package.json - convertir a proyecto standalone
-    const pkgPath = join(clientDir, "package.json");
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-
-    // Cambiar nombre y eliminar referencias al workspace
-    pkg.name = clientData.domain;
-    delete pkg.devDependencies?.["@neumorstudio/config-tailwind"];
-    delete pkg.devDependencies?.["@neumorstudio/config-typescript"];
-
-    // Añadir dependencias necesarias
-    pkg.dependencies = {
-      ...pkg.dependencies,
-      "@astrojs/node": "^9.1.3",
-      "@supabase/supabase-js": "^2.49.1",
-      "astro": "^5.16.6",
-      "clsx": "^2.1.1"
-    };
-
-    // Añadir devDependencies que antes venían del workspace
-    pkg.devDependencies = {
-      ...pkg.devDependencies,
-      "@astrojs/check": "^0.9.4",
-      "@tailwindcss/vite": "^4.0.0",
-      "tailwindcss": "^4.0.0",
-      "typescript": "^5.7.2"
-    };
-
-    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
-
-    // Actualizar tsconfig.json para que sea standalone
-    const tsconfigPath = join(clientDir, "tsconfig.json");
-    if (existsSync(tsconfigPath)) {
-      const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf-8"));
-      // Eliminar referencia al workspace config
-      delete tsconfig.extends;
-      tsconfig.compilerOptions = {
-        target: "ES2022",
-        module: "ESNext",
-        moduleResolution: "bundler",
-        strict: true,
-        jsx: "preserve",
-        jsxImportSource: "astro",
-        baseUrl: ".",
-        paths: {
-          "@/*": ["src/*"],
-          "@components/*": ["src/components/*"],
-          "@layouts/*": ["src/layouts/*"],
-          "@styles/*": ["src/styles/*"],
-          "@lib/*": ["src/lib/*"]
-        }
-      };
-      tsconfig.include = ["src/**/*"];
-      tsconfig.exclude = ["node_modules", "dist"];
-      writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2) + "\n");
-    }
-
-    spinner.text = "Instalando dependencias...";
-
-    // Instalar dependencias
-    try {
-      execSync("pnpm install", { cwd: clientDir, stdio: "ignore" });
-      spinner.succeed(`Proyecto creado en: ${clientDir}`);
-    } catch {
-      spinner.warn(`Proyecto creado pero fallo pnpm install. Ejecuta manualmente.`);
-    }
-
-    // Mostrar resultado bonito
-    console.log(
-      boxen(
-        chalk.green.bold("  📂 PROYECTO PERSONALIZADO LISTO  \n\n") +
-        chalk.gray("La plantilla ya incluye:\n") +
-        chalk.white(`  • Nombre: ${chalk.cyan(clientData.businessName)}\n`) +
-        chalk.white(`  • Tema: ${chalk.cyan(clientData.theme)}\n`) +
-        chalk.white(`  • Preset: ${chalk.cyan(clientData.preset)}\n`) +
-        chalk.white(`  • Contacto configurado\n`) +
-        chalk.white(`  • Redes sociales personalizadas`),
-        {
-          padding: 1,
-          margin: { top: 1 },
-          borderStyle: "round",
-          borderColor: "green",
-        }
-      )
-    );
-
-    // Próximos pasos
-    console.log(
-      boxen(
-        chalk.white.bold("PRÓXIMOS PASOS\n\n") +
-        chalk.yellow("1. ") + chalk.white(`cd ${clientDir}\n`) +
-        chalk.yellow("2. ") + chalk.white("pnpm dev ") + chalk.gray("(puerto 4321)\n") +
-        chalk.yellow("3. ") + chalk.white("Personaliza imágenes y menú\n") +
-        chalk.yellow("4. ") + chalk.white("pnpm build ") + chalk.gray("para producción"),
-        {
-          padding: 1,
-          margin: { top: 1 },
-          borderStyle: "round",
-          borderColor: "cyan",
-          title: "🚀 Siguiente",
-          titleAlignment: "left",
-        }
-      )
-    );
-
-  } catch (error) {
-    spinner.fail("Error al crear el proyecto");
-    throw error;
-  }
-}
 
 main().catch(console.error);

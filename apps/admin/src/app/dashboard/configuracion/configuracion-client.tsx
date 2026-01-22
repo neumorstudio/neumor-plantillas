@@ -229,19 +229,10 @@ export function ConfiguracionClient({
               </div>
               <button
                 onClick={() => handleToggle("email_booking_confirmation")}
-                className={`relative w-14 h-8 rounded-full transition-colors ${
-                  settings.email_booking_confirmation
-                    ? "bg-[var(--accent)]"
-                    : "bg-gray-300"
-                }`}
+                className="neumor-toggle"
+                data-active={settings.email_booking_confirmation}
               >
-                <span
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    settings.email_booking_confirmation
-                      ? "translate-x-7"
-                      : "translate-x-1"
-                  }`}
-                />
+                <span className="neumor-toggle-knob" />
               </button>
             </div>
 
@@ -255,19 +246,10 @@ export function ConfiguracionClient({
               </div>
               <button
                 onClick={() => handleToggle("whatsapp_booking_confirmation")}
-                className={`relative w-14 h-8 rounded-full transition-colors ${
-                  settings.whatsapp_booking_confirmation
-                    ? "bg-[var(--accent)]"
-                    : "bg-gray-300"
-                }`}
+                className="neumor-toggle"
+                data-active={settings.whatsapp_booking_confirmation}
               >
-                <span
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    settings.whatsapp_booking_confirmation
-                      ? "translate-x-7"
-                      : "translate-x-1"
-                  }`}
-                />
+                <span className="neumor-toggle-knob" />
               </button>
             </div>
 
@@ -281,15 +263,10 @@ export function ConfiguracionClient({
               </div>
               <button
                 onClick={() => handleToggle("reminder_24h")}
-                className={`relative w-14 h-8 rounded-full transition-colors ${
-                  settings.reminder_24h ? "bg-[var(--accent)]" : "bg-gray-300"
-                }`}
+                className="neumor-toggle"
+                data-active={settings.reminder_24h}
               >
-                <span
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    settings.reminder_24h ? "translate-x-7" : "translate-x-1"
-                  }`}
-                />
+                <span className="neumor-toggle-knob" />
               </button>
             </div>
 
@@ -331,15 +308,10 @@ export function ConfiguracionClient({
               </div>
               <button
                 onClick={() => handleToggle("email_new_lead")}
-                className={`relative w-14 h-8 rounded-full transition-colors ${
-                  settings.email_new_lead ? "bg-[var(--accent)]" : "bg-gray-300"
-                }`}
+                className="neumor-toggle"
+                data-active={settings.email_new_lead}
               >
-                <span
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    settings.email_new_lead ? "translate-x-7" : "translate-x-1"
-                  }`}
-                />
+                <span className="neumor-toggle-knob" />
               </button>
             </div>
 
@@ -353,19 +325,10 @@ export function ConfiguracionClient({
               </div>
               <button
                 onClick={() => handleToggle("whatsapp_new_lead")}
-                className={`relative w-14 h-8 rounded-full transition-colors ${
-                  settings.whatsapp_new_lead
-                    ? "bg-[var(--accent)]"
-                    : "bg-gray-300"
-                }`}
+                className="neumor-toggle"
+                data-active={settings.whatsapp_new_lead}
               >
-                <span
-                  className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    settings.whatsapp_new_lead
-                      ? "translate-x-7"
-                      : "translate-x-1"
-                  }`}
-                />
+                <span className="neumor-toggle-knob" />
               </button>
             </div>
           </div>

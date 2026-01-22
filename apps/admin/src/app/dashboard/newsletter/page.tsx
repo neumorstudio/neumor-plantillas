@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
+import { getWebsiteId } from "@/lib/data";
 import { NewsletterClient } from "./newsletter-client";
 
 interface Template {
@@ -37,69 +38,45 @@ interface Automation {
   total_campaigns_sent: number;
 }
 
+// Optimized: parallel queries instead of sequential
 async function getNewsletterData(websiteId: string) {
   const supabase = await createClient();
 
-  // Get templates
-  const { data: templates } = await supabase
-    .from("newsletter_templates")
-    .select("*")
-    .eq("website_id", websiteId)
-    .order("created_at", { ascending: false });
-
-  // Get recent campaigns
-  const { data: campaigns } = await supabase
-    .from("newsletter_campaigns")
-    .select("*")
-    .eq("website_id", websiteId)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  // Get subscriber count from newsletter_subscribers table
-  const { count: subscriberCount } = await supabase
-    .from("newsletter_subscribers")
-    .select("*", { count: "exact", head: true })
-    .eq("website_id", websiteId)
-    .eq("is_subscribed", true);
-
-  // Get automation config
-  const { data: automation } = await supabase
-    .from("newsletter_automation")
-    .select("*")
-    .eq("website_id", websiteId)
-    .single();
+  // Run all queries in parallel
+  const [templatesResult, campaignsResult, subscriberResult, automationResult] = await Promise.all([
+    // Get templates
+    supabase
+      .from("newsletter_templates")
+      .select("*")
+      .eq("website_id", websiteId)
+      .order("created_at", { ascending: false }),
+    // Get recent campaigns
+    supabase
+      .from("newsletter_campaigns")
+      .select("*")
+      .eq("website_id", websiteId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    // Get subscriber count
+    supabase
+      .from("newsletter_subscribers")
+      .select("*", { count: "exact", head: true })
+      .eq("website_id", websiteId)
+      .eq("is_subscribed", true),
+    // Get automation config
+    supabase
+      .from("newsletter_automation")
+      .select("*")
+      .eq("website_id", websiteId)
+      .single(),
+  ]);
 
   return {
-    templates: templates || [],
-    campaigns: campaigns || [],
-    subscriberCount: subscriberCount || 0,
-    automation: automation || null,
+    templates: templatesResult.data || [],
+    campaigns: campaignsResult.data || [],
+    subscriberCount: subscriberResult.count || 0,
+    automation: automationResult.data || null,
   };
-}
-
-async function getWebsiteId() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("auth_user_id", user.id)
-    .single();
-
-  if (!client) return null;
-
-  const { data: website } = await supabase
-    .from("websites")
-    .select("id")
-    .eq("client_id", client.id)
-    .single();
-
-  return website?.id || null;
 }
 
 export default async function NewsletterPage() {
