@@ -300,57 +300,83 @@ export default function ReservasClient({
         )}
       </div>
 
-      {/* 🔹 Modal de edición */}
+      {/* Modal de edicion */}
       {bookingEdit && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Editar reserva</h2>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="neumor-card p-6 w-full max-w-md mx-4">
+            <h2 className="text-xl font-heading font-semibold mb-6 text-[var(--text-primary)]">
+              Editar reserva
+            </h2>
+
             {actionError && (
-              <div className="mb-3 p-2 rounded-lg bg-red-100 text-red-700 text-sm">
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
                 {actionError}
               </div>
             )}
 
-            <input
-              className="w-full border p-2 rounded mb-2"
-              placeholder="Nombre"
-              value={bookingEdit.customer_name}
-              onChange={(e) =>
-                setBookingEdit({ ...bookingEdit, customer_name: e.target.value })
-              }
-            />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Nombre del cliente
+                </label>
+                <input
+                  className="neumor-input w-full"
+                  placeholder="Nombre completo"
+                  value={bookingEdit.customer_name}
+                  onChange={(e) =>
+                    setBookingEdit({ ...bookingEdit, customer_name: e.target.value })
+                  }
+                />
+              </div>
 
-            <input
-              className="w-full border p-2 rounded mb-2"
-              placeholder="Teléfono"
-              value={bookingEdit.customer_phone ?? ""}
-              onChange={(e) =>
-                setBookingEdit({ ...bookingEdit, customer_phone: e.target.value })
-              }
-            />
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Telefono
+                </label>
+                <input
+                  className="neumor-input w-full"
+                  placeholder="+34 600 000 000"
+                  value={bookingEdit.customer_phone ?? ""}
+                  onChange={(e) =>
+                    setBookingEdit({ ...bookingEdit, customer_phone: e.target.value })
+                  }
+                />
+              </div>
 
-            <input
-              type="number"
-              className="w-full border p-2 rounded mb-2"
-              placeholder="Personas"
-              value={bookingEdit.guests}
-              onChange={(e) =>
-                setBookingEdit({ ...bookingEdit, guests: Number(e.target.value) })
-              }
-            />
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Numero de personas
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  className="neumor-input w-full"
+                  placeholder="2"
+                  value={bookingEdit.guests}
+                  onChange={(e) =>
+                    setBookingEdit({ ...bookingEdit, guests: Number(e.target.value) })
+                  }
+                />
+              </div>
 
-            <textarea
-              className="w-full border p-2 rounded mb-2"
-              placeholder="Notas"
-              value={bookingEdit.notes ?? ""}
-              onChange={(e) =>
-                setBookingEdit({ ...bookingEdit, notes: e.target.value })
-              }
-            />
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Notas
+                </label>
+                <textarea
+                  className="neumor-input w-full min-h-[80px] resize-none"
+                  placeholder="Notas adicionales..."
+                  value={bookingEdit.notes ?? ""}
+                  onChange={(e) =>
+                    setBookingEdit({ ...bookingEdit, notes: e.target.value })
+                  }
+                />
+              </div>
+            </div>
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-3 mt-6">
               <button
-                className="neumor-btn"
+                className="neumor-btn px-5"
                 onClick={() => {
                   setActionError(null);
                   setBookingEdit(null);
@@ -360,11 +386,11 @@ export default function ReservasClient({
               </button>
 
               <button
-                className="neumor-btn"
+                className="neumor-btn neumor-btn-accent px-5"
                 onClick={handleBookingSave}
                 disabled={isPending}
               >
-                Guardar
+                {isPending ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </div>
