@@ -35,6 +35,11 @@ coverage
 # Misc
 *.tsbuildinfo
 
-#Claude
+# Claude
 CLAUDE.md
+
+# Vercel
 .vercel
+
+# Supabase CLI
+packages/supabase/supabase/
