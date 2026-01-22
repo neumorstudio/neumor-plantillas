@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = rawBody as ReservationData;
+    const body = rawBody as unknown as ReservationData;
 
     // Validar campos requeridos
     if (
