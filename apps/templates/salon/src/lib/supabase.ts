@@ -40,6 +40,27 @@ export interface Website {
   is_active: boolean;
 }
 
+export interface ServiceCategory {
+  id: string;
+  website_id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  items: ServiceItem[];
+}
+
+export interface ServiceItem {
+  id: string;
+  category_id: string;
+  website_id: string;
+  name: string;
+  price_cents: number;
+  duration_minutes: number;
+  notes: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
 // Cliente Supabase (solo lectura para el template)
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -92,5 +113,58 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return null;
+  }
+}
+
+export async function getServiceCatalog(websiteId?: string): Promise<ServiceCategory[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data: categories, error: categoryError } = await supabase
+      .from("service_categories")
+      .select("id, website_id, name, sort_order, is_active")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (categoryError) {
+      console.error("Error fetching service categories:", categoryError.message);
+      return [];
+    }
+
+    const { data: items, error: itemError } = await supabase
+      .from("service_items")
+      .select(
+        "id, category_id, website_id, name, price_cents, duration_minutes, notes, sort_order, is_active"
+      )
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (itemError) {
+      console.error("Error fetching service items:", itemError.message);
+      return [];
+    }
+
+    const categoryMap = new Map<string, ServiceCategory>();
+    (categories as ServiceCategory[] | null || []).forEach((category) => {
+      categoryMap.set(category.id, { ...category, items: [] });
+    });
+
+    (items as ServiceItem[] | null || []).forEach((item) => {
+      const category = categoryMap.get(item.category_id);
+      if (category) {
+        category.items.push(item);
+      }
+    });
+
+    return Array.from(categoryMap.values());
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
   }
 }

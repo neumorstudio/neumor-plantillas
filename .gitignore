@@ -46,4 +46,6 @@ packages/supabase/supabase/
 
 # Worktrees
 .worktrees/
+
+# Supabase CLI temp
 supabase/.temp/

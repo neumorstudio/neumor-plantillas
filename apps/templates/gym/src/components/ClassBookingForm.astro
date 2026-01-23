@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = "Reserva tu Clase",
-  subtitle = "Elige tu actividad favorita y reserva tu plaza. Te confirmaremos la disponibilidad.",
+  title = "Reserva tu Sesion",
+  subtitle = "Agenda tu entrenamiento personalizado. Te confirmaremos tu cita en menos de 24h.",
   webhookUrl = "",
   websiteId = "",
 } = Astro.props;
@@ -38,7 +38,7 @@ const {
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
-            <span>Lun - Dom: 06:00 - 23:00</span>
+            <span>Lun - Sab: 07:00 - 21:00</span>
           </div>
 
           <div class="contact-item">
@@ -72,41 +72,33 @@ const {
 
         <div class="form-row">
           <div class="form-group">
-            <label for="class-type">Tipo de Clase</label>
+            <label for="class-type">Tipo de Sesion</label>
             <select id="class-type" name="class-type" class="neumor-input" required>
-              <option value="">Selecciona una clase</option>
-              <optgroup label="Cardio">
-                <option value="spinning">Spinning</option>
-                <option value="zumba">Zumba</option>
-                <option value="step">Step</option>
-                <option value="hiit">HIIT</option>
+              <option value="">Selecciona servicio</option>
+              <optgroup label="Sesiones Individuales">
+                <option value="personal-1on1">Entrenamiento 1-on-1 (60 min)</option>
+                <option value="personal-duo">Sesion Duo - 2 personas (60 min)</option>
+                <option value="valoracion">Valoracion Inicial (90 min)</option>
               </optgroup>
-              <optgroup label="Fuerza">
-                <option value="body-pump">Body Pump</option>
-                <option value="crossfit">CrossFit</option>
-                <option value="trx">TRX</option>
-                <option value="kettlebells">Kettlebells</option>
+              <optgroup label="Especialidades">
+                <option value="perdida-peso">Perdida de Peso</option>
+                <option value="ganancia-muscular">Ganancia Muscular</option>
+                <option value="preparacion-fisica">Preparacion Fisica</option>
+                <option value="rehabilitacion">Rehabilitacion</option>
               </optgroup>
-              <optgroup label="Mente y Cuerpo">
-                <option value="yoga">Yoga</option>
-                <option value="pilates">Pilates</option>
-                <option value="stretching">Stretching</option>
-                <option value="meditacion">Meditacion</option>
-              </optgroup>
-              <optgroup label="Acuaticos">
-                <option value="aquagym">Aquagym</option>
-                <option value="natacion-adultos">Natacion Adultos</option>
-                <option value="aqua-spinning">Aqua Spinning</option>
-                <option value="natacion-infantil">Natacion Infantil</option>
+              <optgroup label="Online">
+                <option value="online-sesion">Sesion Online (60 min)</option>
+                <option value="online-consultoria">Consultoria Nutricional</option>
               </optgroup>
             </select>
           </div>
           <div class="form-group">
-            <label for="level">Tu Nivel</label>
+            <label for="level">Tu Nivel Actual</label>
             <select id="level" name="level" class="neumor-input">
-              <option value="principiante">Principiante</option>
-              <option value="intermedio">Intermedio</option>
-              <option value="avanzado">Avanzado</option>
+              <option value="principiante">Principiante - Nunca he entrenado</option>
+              <option value="basico">Basico - Algo de experiencia</option>
+              <option value="intermedio">Intermedio - Entreno regularmente</option>
+              <option value="avanzado">Avanzado - Mucha experiencia</option>
             </select>
           </div>
         </div>
@@ -138,16 +130,16 @@ const {
         </div>
 
         <div class="form-group">
-          <label for="notes">Notas adicionales</label>
-          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Lesiones previas, objetivos, preferencias..."></textarea>
+          <label for="notes">Cuentame sobre ti y tus objetivos</label>
+          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="¿Cuales son tus objetivos? ¿Tienes alguna lesion o limitacion? ¿Has entrenado antes?"></textarea>
         </div>
 
         <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
-          Reservar Plaza
+          Reservar Sesion
         </button>
 
         <p class="form-disclaimer">
-          Te confirmaremos la disponibilidad por email o telefono.
+          Te contactare en menos de 24h para confirmar tu cita. ¡Sin compromiso!
         </p>
       </form>
     </div>

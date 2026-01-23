@@ -1,6 +1,6 @@
 ---
 /**
- * NEUMORSTUDIO - Plantilla Gym/Gimnasio
+ * NEUMORSTUDIO - Plantilla Entrenador Personal / Fitness
  *
  * Esta plantilla carga la configuracion desde Supabase automaticamente.
  * Si no hay conexion a Supabase, usa los valores por defecto.
@@ -25,7 +25,6 @@ import ClassBookingForm from "@components/ClassBookingForm.astro";
 import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
 import { ClassesTabs, ClassesGrid, ClassesList, ClassesCarousel } from "@components/Classes";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
-import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
@@ -43,7 +42,6 @@ const previewVariants = {
   hero: url.searchParams.get("v_hero"),
   classes: url.searchParams.get("v_classes"),
   features: url.searchParams.get("v_features"),
-  reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
 };
 
@@ -68,11 +66,6 @@ const componentMap = {
     icons: FeaturesIcons,
     banner: FeaturesBanner,
   },
-  reviews: {
-    grid: ReviewsGrid,
-    carousel: ReviewsCarousel,
-    minimal: ReviewsMinimal,
-  },
   footer: {
     full: FooterFull,
     minimal: FooterMinimal,
@@ -84,31 +77,28 @@ const componentMap = {
 // VALORES POR DEFECTO (fallback si no hay Supabase)
 // ============================================
 const defaultConfig = {
-  businessName: "Mi Gimnasio",
+  businessName: "Tu Entrenador Personal",
   theme: "light" as Theme,
   variants: {
     hero: "classic",
     classes: "tabs",
     features: "cards",
-    reviews: "grid",
     footer: "full",
   } as WebsiteVariants,
-  siteTitle: "Mi Gimnasio | Fitness y Bienestar",
-  siteDescription: "Gimnasio con estilo neumorfico",
-  heroTitle: "Transforma tu Cuerpo, Cambia tu Vida",
-  heroSubtitle: "Entrenadores certificados para alcanzar tus metas",
-  heroImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
+  siteTitle: "Tu Entrenador Personal | Transforma tu vida",
+  siteDescription: "Entrenamiento personalizado para alcanzar tus objetivos de fitness",
+  heroTitle: "Tu transformacion empieza hoy",
+  heroSubtitle: "Entrenamiento 100% personalizado. Resultados garantizados con seguimiento continuo.",
+  heroImage: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80",
   webhookUrl: import.meta.env.PUBLIC_BOOKING_WEBHOOK_URL || "",
   address: "Tu direccion aqui",
   phone: "+34 000 000 000",
-  email: "contacto@tugimnasio.com",
+  email: "hola@tuentrenador.com",
   socialLinks: {
     instagram: "#",
     facebook: "#",
     whatsapp: "#",
   } as { instagram: string; facebook: string; whatsapp: string },
-  googleRating: 4.8,
-  totalReviews: 150,
 };
 
 // ============================================
@@ -135,7 +125,7 @@ if (websiteData) {
     businessName: dbConfig.businessName || defaultConfig.businessName,
     theme: websiteData.theme || defaultConfig.theme,
     variants: dbConfig.variants || defaultConfig.variants,
-    siteTitle: `${dbConfig.businessName || defaultConfig.businessName} | Gym`,
+    siteTitle: `${dbConfig.businessName || defaultConfig.businessName} | Entrenador Personal`,
     siteDescription: defaultConfig.siteDescription,
     heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
     heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,
@@ -145,8 +135,6 @@ if (websiteData) {
     phone: dbConfig.phone || defaultConfig.phone,
     email: dbConfig.email || defaultConfig.email,
     socialLinks: mergedSocialLinks,
-    googleRating: dbConfig.googleRating || defaultConfig.googleRating,
-    totalReviews: dbConfig.totalReviews || defaultConfig.totalReviews,
   };
 
   console.log("Configuracion cargada desde Supabase:", websiteData.domain);
@@ -174,7 +162,6 @@ if (isPreview) {
     hero: (previewVariants.hero as WebsiteVariants["hero"]) || selectedVariants.hero,
     classes: (previewVariants.classes as WebsiteVariants["classes"]) || selectedVariants.classes,
     features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
-    reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
     footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
   };
 }
@@ -183,7 +170,6 @@ if (isPreview) {
 const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
 const Classes = componentMap.classes[selectedVariants.classes] || ClassesTabs;
 const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
-const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
 
 // Website ID para el formulario de citas
@@ -207,11 +193,6 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
     <Features />
 
     <Classes />
-
-    <Reviews
-      googleRating={config.googleRating}
-      totalReviews={config.totalReviews}
-    />
 
     <ClassBookingForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
   </main>

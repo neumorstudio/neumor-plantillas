@@ -304,3 +304,569 @@ export async function getWebsiteConfig() {
     config: (website.config || {}) as WebsiteConfig,
   };
 }
+
+// ============================================
+// DASHBOARD WIDGETS DATA
+// ============================================
+
+// Widget: Reservas de hoy
+export async function getBookingsToday() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const { count } = await supabase
+    .from("bookings")
+    .select("*", { count: "exact", head: true })
+    .eq("website_id", websiteId)
+    .eq("booking_date", today);
+
+  return { count: count || 0 };
+}
+
+// Widget: Presupuestos pendientes (para repairs/realestate)
+export async function getQuotesPending() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, totalAmount: 0 };
+
+  const { data, count } = await supabase
+    .from("leads")
+    .select("details", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .eq("status", "new");
+
+  // Sumar importes de los presupuestos (si tienen amount en details)
+  let totalAmount = 0;
+  if (data) {
+    for (const lead of data) {
+      const details = lead.details as { amount?: number } | null;
+      if (details?.amount) {
+        totalAmount += details.amount;
+      }
+    }
+  }
+
+  return { count: count || 0, totalAmount };
+}
+
+// Widget: Presupuestos aceptados este mes
+export async function getQuotesAccepted() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, totalAmount: 0 };
+
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayStr = firstDayOfMonth.toISOString().split("T")[0];
+
+  const { data, count } = await supabase
+    .from("leads")
+    .select("details", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .eq("status", "converted")
+    .gte("updated_at", firstDayStr);
+
+  let totalAmount = 0;
+  if (data) {
+    for (const lead of data) {
+      const details = lead.details as { amount?: number } | null;
+      if (details?.amount) {
+        totalAmount += details.amount;
+      }
+    }
+  }
+
+  return { count: count || 0, totalAmount };
+}
+
+// Widget: Trabajos activos (para repairs)
+export async function getJobsActive() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  const { count } = await supabase
+    .from("jobs")
+    .select("*", { count: "exact", head: true })
+    .eq("website_id", websiteId)
+    .in("status", ["pending", "in_progress", "waiting_material"]);
+
+  return { count: count || 0 };
+}
+
+// Widget: Pagos pendientes (para repairs)
+export async function getPaymentsPending() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, totalAmount: 0 };
+
+  const { data, count } = await supabase
+    .from("payments")
+    .select("amount", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("status", "pending");
+
+  let totalAmount = 0;
+  if (data) {
+    for (const payment of data) {
+      totalAmount += payment.amount || 0;
+    }
+  }
+
+  // Convertir de céntimos a euros
+  return { count: count || 0, totalAmount: totalAmount / 100 };
+}
+
+// Widget: Ingresos del mes
+export async function getRevenueMonth() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { totalAmount: 0 };
+
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayStr = firstDayOfMonth.toISOString().split("T")[0];
+
+  const { data } = await supabase
+    .from("payments")
+    .select("amount")
+    .eq("website_id", websiteId)
+    .eq("status", "paid")
+    .gte("paid_at", firstDayStr);
+
+  let totalAmount = 0;
+  if (data) {
+    for (const payment of data) {
+      totalAmount += payment.amount || 0;
+    }
+  }
+
+  // Convertir de céntimos a euros
+  return { totalAmount: totalAmount / 100 };
+}
+
+// Widget: Trabajos recientes (tabla para repairs)
+export async function getRecentJobs(limit = 5) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("id, client_name, address, status, estimated_end_date, total_amount")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}
+
+// Widget: Presupuestos recientes (tabla para repairs)
+export async function getRecentQuotes(limit = 5) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("leads")
+    .select("id, name, message, status, details, created_at")
+    .eq("website_id", websiteId)
+    .eq("lead_type", "quote")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}
+
+// ============================================
+// CUSTOMERS (CRM)
+// ============================================
+
+export async function getCustomers() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getCustomer(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// JOBS (Trabajos)
+// ============================================
+
+export async function getJobs() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getJob(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("jobs")
+    .select("*, job_tasks(*), job_photos(*)")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// PAYMENTS (Pagos)
+// ============================================
+
+export async function getPayments() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getPayment(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// TRAINER SERVICES (Servicios del entrenador)
+// ============================================
+
+export async function getTrainerServices() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("trainer_services")
+    .select("*")
+    .eq("website_id", websiteId)
+    .order("sort_order", { ascending: true });
+
+  return data || [];
+}
+
+export async function getTrainerService(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("trainer_services")
+    .select("*")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// CLIENT PACKAGES (Paquetes/Bonos)
+// ============================================
+
+export async function getClientPackages(customerId?: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  let query = supabase
+    .from("client_packages")
+    .select("*, customers(id, name, email)")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  if (customerId) {
+    query = query.eq("customer_id", customerId);
+  }
+
+  const { data } = await query;
+
+  return data || [];
+}
+
+export async function getClientPackage(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("client_packages")
+    .select("*, customers(id, name, email, phone)")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// Paquetes próximos a expirar (en los próximos 7 días)
+export async function getExpiringPackages(days = 7) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const today = new Date();
+  const futureDate = new Date(today);
+  futureDate.setDate(futureDate.getDate() + days);
+
+  const todayStr = today.toISOString().split("T")[0];
+  const futureStr = futureDate.toISOString().split("T")[0];
+
+  const { data } = await supabase
+    .from("client_packages")
+    .select("*, customers(id, name, email)")
+    .eq("website_id", websiteId)
+    .eq("status", "active")
+    .gte("valid_until", todayStr)
+    .lte("valid_until", futureStr)
+    .order("valid_until", { ascending: true });
+
+  return data || [];
+}
+
+// ============================================
+// CLIENT PROGRESS (Progreso/Medidas)
+// ============================================
+
+export async function getClientProgress(customerId: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("client_progress")
+    .select("*")
+    .eq("website_id", websiteId)
+    .eq("customer_id", customerId)
+    .order("recorded_at", { ascending: false });
+
+  return data || [];
+}
+
+export async function getClientProgressEntry(id: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data } = await supabase
+    .from("client_progress")
+    .select("*, customers(id, name)")
+    .eq("id", id)
+    .eq("website_id", websiteId)
+    .single();
+
+  return data;
+}
+
+// ============================================
+// CLIENT RECORDS (PRs/Logros)
+// ============================================
+
+export async function getClientRecords(customerId: string) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("client_records")
+    .select("*")
+    .eq("website_id", websiteId)
+    .eq("customer_id", customerId)
+    .order("achieved_at", { ascending: false });
+
+  return data || [];
+}
+
+// ============================================
+// FITNESS DASHBOARD WIDGETS
+// ============================================
+
+// Widget: Sesiones de hoy
+export async function getSessionsToday() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0, sessions: [] };
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data, count } = await supabase
+    .from("bookings")
+    .select("*, customers(id, name), trainer_services(id, name)", { count: "exact" })
+    .eq("website_id", websiteId)
+    .eq("booking_date", today)
+    .order("booking_time", { ascending: true });
+
+  return { count: count || 0, sessions: data || [] };
+}
+
+// Widget: Sesiones de la semana
+export async function getSessionsWeek() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Lunes
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Domingo
+
+  const startStr = startOfWeek.toISOString().split("T")[0];
+  const endStr = endOfWeek.toISOString().split("T")[0];
+
+  const { count } = await supabase
+    .from("bookings")
+    .select("*", { count: "exact", head: true })
+    .eq("website_id", websiteId)
+    .gte("booking_date", startStr)
+    .lte("booking_date", endStr);
+
+  return { count: count || 0 };
+}
+
+// Widget: Clientes activos (con paquete activo o sesión en los últimos 30 días)
+export async function getActiveClients() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  // Clientes con paquete activo
+  const { data: packagesData } = await supabase
+    .from("client_packages")
+    .select("customer_id")
+    .eq("website_id", websiteId)
+    .eq("status", "active");
+
+  // Clientes con sesión en los últimos 30 días
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysStr = thirtyDaysAgo.toISOString().split("T")[0];
+
+  const { data: bookingsData } = await supabase
+    .from("bookings")
+    .select("customer_id")
+    .eq("website_id", websiteId)
+    .gte("booking_date", thirtyDaysStr);
+
+  // Unir IDs únicos
+  const customerIds = new Set<string>();
+  packagesData?.forEach((p) => p.customer_id && customerIds.add(p.customer_id));
+  bookingsData?.forEach((b) => b.customer_id && customerIds.add(b.customer_id));
+
+  return { count: customerIds.size };
+}
+
+// Widget: Sesiones recientes (tabla para fitness)
+export async function getRecentSessions(limit = 5) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("bookings")
+    .select("id, booking_date, booking_time, status, session_notes, customers(id, name), trainer_services(id, name)")
+    .eq("website_id", websiteId)
+    .order("booking_date", { ascending: false })
+    .order("booking_time", { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}
+
+// Widget: Clientes con progreso reciente
+export async function getClientsWithRecentProgress(limit = 5) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("client_progress")
+    .select("id, recorded_at, weight_kg, customers(id, name)")
+    .eq("website_id", websiteId)
+    .order("recorded_at", { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}

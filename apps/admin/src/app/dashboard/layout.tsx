@@ -3,7 +3,27 @@
 import { createClient } from "@/lib/supabase-server";
 import { Sidebar } from "./Sidebar";
 
-// Obtener info del cliente desde el servidor
+// Tipo para la configuración del business type
+interface BusinessTypeConfig {
+  business_type: string;
+  label: string;
+  visible_sections: string[];
+  dashboard_widgets: string[];
+  default_section: string;
+  icon: string | null;
+}
+
+// Configuración por defecto si no se encuentra en la BD
+const DEFAULT_CONFIG: BusinessTypeConfig = {
+  business_type: "restaurant",
+  label: "Restaurante",
+  visible_sections: ["dashboard", "reservas", "presupuestos", "newsletter", "clientes", "personalizacion", "configuracion"],
+  dashboard_widgets: ["bookings_today", "bookings_month", "bookings_pending"],
+  default_section: "dashboard",
+  icon: "utensils",
+};
+
+// Obtener info del cliente y configuración del business type
 async function getClientInfo() {
   const supabase = await createClient();
 
@@ -13,44 +33,43 @@ async function getClientInfo() {
 
   if (!user) return null;
 
+  let businessName = "";
+  let businessType = "restaurant";
+  let email = "";
+
   // Primero intentar obtener de user_metadata (mas rapido)
   if (user.user_metadata?.business_name) {
-    return {
-      businessName: user.user_metadata.business_name as string,
-      businessType: (user.user_metadata.business_type as string) || "restaurant",
-      email: user.email || "",
-    };
+    businessName = user.user_metadata.business_name as string;
+    businessType = (user.user_metadata.business_type as string) || "restaurant";
+    email = user.email || "";
+  } else {
+    // Si no hay metadata, buscar en la tabla clients
+    const { data: client } = await supabase
+      .from("clients")
+      .select("business_name, business_type, email")
+      .eq("auth_user_id", user.id)
+      .single();
+
+    if (client) {
+      businessName = client.business_name;
+      businessType = client.business_type;
+      email = client.email;
+    }
   }
 
-  // Si no hay metadata, buscar en la tabla clients
-  const { data: client } = await supabase
-    .from("clients")
-    .select("business_name, business_type, email")
-    .eq("auth_user_id", user.id)
-    .single();
-
-  if (client) {
-    return {
-      businessName: client.business_name,
-      businessType: client.business_type,
-      email: client.email,
-    };
-  }
-
-  return null;
-}
-
-async function getBusinessTypeConfig(businessType?: string | null) {
-  if (!businessType) return null;
-
-  const supabase = await createClient();
-  const { data } = await supabase
+  // Obtener configuración del business type
+  const { data: config } = await supabase
     .from("business_type_config")
-    .select("visible_sections")
+    .select("*")
     .eq("business_type", businessType)
     .single();
 
-  return data;
+  return {
+    businessName,
+    businessType,
+    email,
+    config: (config as BusinessTypeConfig) || { ...DEFAULT_CONFIG, business_type: businessType },
+  };
 }
 
 export default async function DashboardLayout({
@@ -60,18 +79,30 @@ export default async function DashboardLayout({
 }) {
   // Obtener datos en el servidor - sin useEffect, sin flash
   const clientInfo = await getClientInfo();
-  const businessConfig = await getBusinessTypeConfig(clientInfo?.businessType);
   const showGoogleBusiness =
     process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
+
+  // Preparar props para el Sidebar
+  const sidebarProps = clientInfo
+    ? {
+        clientInfo: {
+          businessName: clientInfo.businessName,
+          businessType: clientInfo.businessType,
+          email: clientInfo.email,
+        },
+        visibleSections: clientInfo.config.visible_sections,
+        showGoogleBusiness,
+      }
+    : {
+        clientInfo: null,
+        visibleSections: DEFAULT_CONFIG.visible_sections,
+        showGoogleBusiness,
+      };
 
   return (
     <div className="min-h-screen flex">
       {/* Sidebar - Client Component para interactividad */}
-      <Sidebar
-        clientInfo={clientInfo}
-        showGoogleBusiness={showGoogleBusiness}
-        visibleSections={businessConfig?.visible_sections || null}
-      />
+      <Sidebar {...sidebarProps} />
 
       {/* Main Content */}
       <main

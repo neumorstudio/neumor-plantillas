@@ -1,4 +1,6 @@
 ---
+import { getServiceCatalog } from "@lib/supabase";
+
 interface Props {
   title?: string;
   subtitle?: string;
@@ -12,6 +14,9 @@ const {
   webhookUrl = "",
   websiteId = "",
 } = Astro.props;
+
+const serviceCatalog = await getServiceCatalog(websiteId);
+const hasServiceCatalog = serviceCatalog.length > 0;
 ---
 
 <section id="appointment" class="section">
@@ -53,7 +58,12 @@ const {
         </div>
       </div>
 
-      <form class="appointment-form neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
+      <form
+        class="appointment-form neumor-card"
+        data-webhook={webhookUrl}
+        data-website-id={websiteId}
+        data-has-services={hasServiceCatalog ? "true" : "false"}
+      >
         <div class="form-row">
           <div class="form-group">
             <label for="name">Nombre</label>
@@ -70,9 +80,35 @@ const {
           <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" />
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="service">Servicio</label>
+        <div class="form-group">
+          <label>Servicios</label>
+          {hasServiceCatalog ? (
+            <div class="service-catalog">
+              {serviceCatalog.map((category) => (
+                <div class="service-category" key={category.id}>
+                  <p class="service-category-title">{category.name}</p>
+                  <div class="service-items">
+                    {category.items.map((item) => (
+                      <label class="service-item" key={item.id}>
+                        <input
+                          type="checkbox"
+                          name="services"
+                          value={item.id}
+                          data-name={item.name}
+                          data-price={item.price_cents}
+                          data-duration={item.duration_minutes}
+                        />
+                        <span class="service-item-name">{item.name}</span>
+                        <span class="service-item-meta">
+                          {(item.price_cents / 100).toFixed(2)}€ · {item.duration_minutes} min
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
             <select id="service" name="service" class="neumor-input" required>
               <option value="">Selecciona un servicio</option>
               <option value="corte-caballero">Corte Caballero</option>
@@ -85,17 +121,23 @@ const {
               <option value="peinado">Peinado Evento</option>
               <option value="otro">Otro (especificar en notas)</option>
             </select>
-          </div>
-          <div class="form-group">
-            <label for="stylist">Profesional</label>
-            <select id="stylist" name="stylist" class="neumor-input">
-              <option value="">Sin preferencia</option>
-              <option value="maria">Maria</option>
-              <option value="carlos">Carlos</option>
-              <option value="laura">Laura</option>
-              <option value="antonio">Antonio</option>
-            </select>
-          </div>
+          )}
+          {hasServiceCatalog && (
+            <p class="service-hint">
+              Puedes seleccionar varios servicios.
+            </p>
+          )}
+        </div>
+
+        <div class="form-group">
+          <label for="stylist">Profesional</label>
+          <select id="stylist" name="stylist" class="neumor-input">
+            <option value="">Sin preferencia</option>
+            <option value="maria">Maria</option>
+            <option value="carlos">Carlos</option>
+            <option value="laura">Laura</option>
+            <option value="antonio">Antonio</option>
+          </select>
         </div>
 
         <div class="form-row">
@@ -221,6 +263,58 @@ const {
     margin-top: 0.5rem;
   }
 
+  .service-catalog {
+    display: grid;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  .service-category {
+    border: 1px solid var(--shadow-light);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .service-category-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .service-items {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .service-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--shadow-light);
+    cursor: pointer;
+  }
+
+  .service-item input {
+    accent-color: var(--accent);
+  }
+
+  .service-item-name {
+    font-weight: 500;
+  }
+
+  .service-item-meta {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .service-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+  }
+
   .form-disclaimer {
     text-align: center;
     font-size: 0.85rem;
@@ -264,13 +358,34 @@ const {
     const websiteId = form.dataset.websiteId;
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
+    const hasServiceCatalog = form.dataset.hasServices === "true";
+
+    let selectedServices = [];
+    if (hasServiceCatalog) {
+      const serviceInputs = Array.from(
+        form.querySelectorAll("input[name='services']:checked")
+      );
+      if (serviceInputs.length === 0) {
+        alert("Selecciona al menos un servicio.");
+        return;
+      }
+      selectedServices = serviceInputs.map((input) => ({
+        id: input.value,
+        name: input.dataset.name,
+        price_cents: Number(input.dataset.price || 0),
+        duration_minutes: Number(input.dataset.duration || 0),
+      }));
+    }
 
     const data = {
       website_id: websiteId,
       nombre: rawData.name,
       email: rawData.email || "",
       telefono: rawData.phone,
-      servicio: rawData.service,
+      servicio: hasServiceCatalog
+        ? selectedServices.map((service) => service.name).join(", ")
+        : rawData.service,
+      servicios: selectedServices,
       profesional: rawData.stylist || "sin preferencia",
       fecha: rawData.date,
       hora: rawData.time,

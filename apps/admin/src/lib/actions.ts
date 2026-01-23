@@ -126,7 +126,6 @@ export async function updateLeadStatus(
   }
 
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/leads");
   return { success: true };
 }
 
