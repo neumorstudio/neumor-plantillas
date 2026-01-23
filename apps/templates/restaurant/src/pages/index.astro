@@ -24,7 +24,6 @@ import Header from "@components/Header.astro";
 import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
 import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
-import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 import { StatusPulse, StatusMorph, StatusLiquid, StatusTime } from "@components/OpenStatus";
 import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@components/ReservationForm";
@@ -54,7 +53,6 @@ const previewVariants = {
   hero: url.searchParams.get("v_hero"),
   menu: url.searchParams.get("v_menu"),
   features: url.searchParams.get("v_features"),
-  reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
   openStatus: url.searchParams.get("v_status"),
   reservation: url.searchParams.get("v_reservation"),
@@ -81,11 +79,6 @@ const componentMap = {
     cards: FeaturesCards,
     icons: FeaturesIcons,
     banner: FeaturesBanner,
-  },
-  reviews: {
-    grid: ReviewsGrid,
-    carousel: ReviewsCarousel,
-    minimal: ReviewsMinimal,
   },
   footer: {
     full: FooterFull,
@@ -127,7 +120,6 @@ const defaultConfig = {
     hero: "classic",
     menu: "tabs",
     features: "cards",
-    reviews: "grid",
     footer: "full",
     openStatus: "pulse",
     reservation: "classic",
@@ -146,8 +138,6 @@ const defaultConfig = {
     facebook: "#",
     tripadvisor: "#",
   } as { instagram: string; facebook: string; tripadvisor: string },
-  googleRating: 4.5,
-  totalReviews: 100,
   // Configuración del indicador de estado
   openStatus: {
     enabled: true,
@@ -291,8 +281,6 @@ if (websiteData) {
     phone: dbConfig.phone || defaultConfig.phone,
     email: dbConfig.email || defaultConfig.email,
     socialLinks: mergedSocialLinks,
-    googleRating: dbConfig.googleRating || defaultConfig.googleRating,
-    totalReviews: dbConfig.totalReviews || defaultConfig.totalReviews,
     openStatus: mergedOpenStatus,
   };
 
@@ -326,7 +314,6 @@ if (isPreview) {
     hero: (previewVariants.hero as WebsiteVariants["hero"]) || selectedVariants.hero,
     menu: (previewVariants.menu as WebsiteVariants["menu"]) || selectedVariants.menu,
     features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
-    reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
     footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
     openStatus: (previewVariants.openStatus as WebsiteVariants["openStatus"]) || selectedVariants.openStatus,
     reservation: (previewVariants.reservation as WebsiteVariants["reservation"]) || selectedVariants.reservation,
@@ -337,7 +324,6 @@ if (isPreview) {
 const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
 const Menu = componentMap.menu[selectedVariants.menu] || MenuTabs;
 const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
-const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
 const OpenStatusComponent = componentMap.openStatus[selectedVariants.openStatus] || StatusPulse;
 const ReservationForm = componentMap.reservation[selectedVariants.reservation] || ReservationClassic;
@@ -398,11 +384,6 @@ const heroCtaLink = ordersEnabled ? "#orders" : undefined;
         pickupEnd={pickupEnd}
       />
     )}
-
-    <Reviews
-      googleRating={config.googleRating}
-      totalReviews={config.totalReviews}
-    />
 
     <ReservationForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
   </main>

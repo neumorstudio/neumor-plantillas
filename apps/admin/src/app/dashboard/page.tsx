@@ -21,7 +21,6 @@ import {
   BookingsTodayWidget,
   BookingsMonthWidget,
   BookingsPendingWidget,
-  LeadsNewWidget,
   QuotesPendingWidget,
   QuotesAcceptedWidget,
   JobsActiveWidget,
@@ -97,7 +96,7 @@ async function loadWidgetData(widgetIds: string[]) {
     );
   }
 
-  if (widgetIds.includes("bookings_month") || widgetIds.includes("bookings_pending") || widgetIds.includes("leads_new")) {
+  if (widgetIds.includes("bookings_month") || widgetIds.includes("bookings_pending")) {
     promises.push(
       getDashboardStats().then((result) => {
         data.dashboard_stats = result;
@@ -186,7 +185,7 @@ async function loadWidgetData(widgetIds: string[]) {
 export default async function DashboardPage() {
   // Obtener configuración del business type
   const config = await getBusinessTypeConfig();
-  const widgetIds = config?.dashboard_widgets || ["bookings_month", "leads_new", "bookings_pending"];
+  const widgetIds = config?.dashboard_widgets || ["bookings_month", "bookings_pending"];
   const businessType = config?.business_type || "restaurant";
 
   // Cargar datos de widgets
@@ -219,8 +218,6 @@ export default async function DashboardPage() {
         return <BookingsMonthWidget key={widgetId} count={stats.bookingsThisMonth} />;
       case "bookings_pending":
         return <BookingsPendingWidget key={widgetId} count={stats.pendingBookings} />;
-      case "leads_new":
-        return <LeadsNewWidget key={widgetId} count={stats.newLeads} />;
       case "quotes_pending":
         const qp = widgetData.quotes_pending as { count: number; totalAmount: number } | undefined;
         return (

@@ -17,8 +17,8 @@ interface BusinessTypeConfig {
 const DEFAULT_CONFIG: BusinessTypeConfig = {
   business_type: "restaurant",
   label: "Restaurante",
-  visible_sections: ["dashboard", "reservas", "leads", "presupuestos", "newsletter", "clientes", "personalizacion", "configuracion"],
-  dashboard_widgets: ["bookings_today", "bookings_month", "leads_new", "bookings_pending"],
+  visible_sections: ["dashboard", "reservas", "presupuestos", "newsletter", "clientes", "personalizacion", "configuracion"],
+  dashboard_widgets: ["bookings_today", "bookings_month", "bookings_pending"],
   default_section: "dashboard",
   icon: "utensils",
 };

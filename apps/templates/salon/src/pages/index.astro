@@ -25,7 +25,6 @@ import AppointmentForm from "@components/AppointmentForm.astro";
 import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
 import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@components/Services";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
-import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
@@ -43,7 +42,6 @@ const previewVariants = {
   hero: url.searchParams.get("v_hero"),
   services: url.searchParams.get("v_services"),
   features: url.searchParams.get("v_features"),
-  reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
 };
 
@@ -68,11 +66,6 @@ const componentMap = {
     icons: FeaturesIcons,
     banner: FeaturesBanner,
   },
-  reviews: {
-    grid: ReviewsGrid,
-    carousel: ReviewsCarousel,
-    minimal: ReviewsMinimal,
-  },
   footer: {
     full: FooterFull,
     minimal: FooterMinimal,
@@ -90,7 +83,6 @@ const defaultConfig = {
     hero: "classic",
     services: "tabs",
     features: "cards",
-    reviews: "grid",
     footer: "full",
   } as WebsiteVariants,
   siteTitle: "Mi Salon | Peluqueria y Estetica",
@@ -107,8 +99,6 @@ const defaultConfig = {
     facebook: "#",
     whatsapp: "#",
   } as { instagram: string; facebook: string; whatsapp: string },
-  googleRating: 4.8,
-  totalReviews: 150,
 };
 
 // ============================================
@@ -145,8 +135,6 @@ if (websiteData) {
     phone: dbConfig.phone || defaultConfig.phone,
     email: dbConfig.email || defaultConfig.email,
     socialLinks: mergedSocialLinks,
-    googleRating: dbConfig.googleRating || defaultConfig.googleRating,
-    totalReviews: dbConfig.totalReviews || defaultConfig.totalReviews,
   };
 
   console.log("Configuracion cargada desde Supabase:", websiteData.domain);
@@ -174,7 +162,6 @@ if (isPreview) {
     hero: (previewVariants.hero as WebsiteVariants["hero"]) || selectedVariants.hero,
     services: (previewVariants.services as WebsiteVariants["services"]) || selectedVariants.services,
     features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
-    reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
     footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
   };
 }
@@ -183,7 +170,6 @@ if (isPreview) {
 const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
 const Services = componentMap.services[selectedVariants.services] || ServicesTabs;
 const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
-const Reviews = componentMap.reviews[selectedVariants.reviews] || ReviewsGrid;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
 
 // Website ID para el formulario de citas
@@ -207,11 +193,6 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
     <Features />
 
     <Services />
-
-    <Reviews
-      googleRating={config.googleRating}
-      totalReviews={config.totalReviews}
-    />
 
     <AppointmentForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
   </main>
