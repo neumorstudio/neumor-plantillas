@@ -255,3 +255,96 @@ export function RecentQuotesTable({ quotes }: { quotes: Quote[] }) {
     </div>
   );
 }
+
+// ============================================
+// FITNESS / ENTRENADOR PERSONAL TABLES
+// ============================================
+
+// Tipo para sesiones - customers y trainer_services pueden ser array o objeto según el query
+interface Session {
+  id: string;
+  booking_date: string;
+  booking_time: string;
+  status: string;
+  session_notes: string | null;
+  customers?: { id: string; name: string } | { id: string; name: string }[] | null;
+  trainer_services?: { id: string; name: string } | { id: string; name: string }[] | null;
+}
+
+function getSessionStatusBadge(status: string) {
+  switch (status) {
+    case "confirmed":
+      return { class: "badge-confirmed", label: "Confirmada" };
+    case "completed":
+      return { class: "badge-confirmed", label: "Completada" };
+    case "cancelled":
+      return { class: "badge-cancelled", label: "Cancelada" };
+    case "no_show":
+      return { class: "badge-cancelled", label: "No asistio" };
+    default:
+      return { class: "badge-pending", label: "Pendiente" };
+  }
+}
+
+// Widget: Tabla de sesiones recientes (para fitness)
+export function RecentSessionsTable({ sessions }: { sessions: Session[] }) {
+  return (
+    <div className="neumor-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">Sesiones Recientes</h2>
+        <a
+          href="/dashboard/sesiones"
+          className="text-sm text-[var(--accent)] hover:underline"
+        >
+          Ver todas
+        </a>
+      </div>
+
+      {sessions.length === 0 ? (
+        <div className="text-center py-8 text-[var(--text-secondary)]">
+          <p>No hay sesiones todavia</p>
+          <p className="text-sm mt-2">
+            Las sesiones apareceran aqui cuando programes entrenamientos
+          </p>
+        </div>
+      ) : (
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Servicio</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((session) => {
+                const badge = getSessionStatusBadge(session.status);
+                // Handle both array and object for Supabase relations
+                const customer = Array.isArray(session.customers) ? session.customers[0] : session.customers;
+                const service = Array.isArray(session.trainer_services) ? session.trainer_services[0] : session.trainer_services;
+                return (
+                  <tr key={session.id}>
+                    <td className="font-medium">
+                      {customer?.name || "Cliente"}
+                    </td>
+                    <td>{formatDate(session.booking_date)}</td>
+                    <td>{session.booking_time?.slice(0, 5) || "-"}</td>
+                    <td>{service?.name || "-"}</td>
+                    <td>
+                      <span className={`badge ${badge.class}`}>
+                        {badge.label}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

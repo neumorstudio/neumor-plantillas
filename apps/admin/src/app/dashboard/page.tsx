@@ -11,6 +11,11 @@ import {
   getRevenueMonth,
   getRecentJobs,
   getRecentQuotes,
+  getSessionsToday,
+  getSessionsWeek,
+  getActiveClients,
+  getExpiringPackages,
+  getRecentSessions,
 } from "@/lib/data";
 import {
   BookingsTodayWidget,
@@ -23,11 +28,16 @@ import {
   PaymentsPendingWidget,
   RevenueMonthWidget,
   OrdersTodayWidget,
+  SessionsTodayWidget,
+  SessionsWeekWidget,
+  ActiveClientsWidget,
+  ExpiringPackagesWidget,
 } from "@/components/dashboard/StatWidgets";
 import {
   RecentBookingsTable,
   RecentJobsTable,
   RecentQuotesTable,
+  RecentSessionsTable,
 } from "@/components/dashboard/TableWidgets";
 
 // Obtener configuración del business type
@@ -135,6 +145,39 @@ async function loadWidgetData(widgetIds: string[]) {
     );
   }
 
+  // Fitness widgets
+  if (widgetIds.includes("sessions_today")) {
+    promises.push(
+      getSessionsToday().then((result) => {
+        data.sessions_today = result;
+      })
+    );
+  }
+
+  if (widgetIds.includes("sessions_week")) {
+    promises.push(
+      getSessionsWeek().then((result) => {
+        data.sessions_week = result;
+      })
+    );
+  }
+
+  if (widgetIds.includes("active_clients")) {
+    promises.push(
+      getActiveClients().then((result) => {
+        data.active_clients = result;
+      })
+    );
+  }
+
+  if (widgetIds.includes("expiring_packages")) {
+    promises.push(
+      getExpiringPackages().then((result) => {
+        data.expiring_packages = result;
+      })
+    );
+  }
+
   await Promise.all(promises);
 
   return data;
@@ -156,9 +199,11 @@ export default async function DashboardPage() {
 
   // Cargar tablas según tipo de negocio
   const isRepairsType = businessType === "repairs" || businessType === "realestate";
-  const recentBookings = !isRepairsType ? await getRecentBookings(5) : [];
+  const isFitnessType = businessType === "fitness";
+  const recentBookings = !isRepairsType && !isFitnessType ? await getRecentBookings(5) : [];
   const recentJobs = isRepairsType ? await getRecentJobs(5) : [];
   const recentQuotes = isRepairsType ? await getRecentQuotes(5) : [];
+  const recentSessions = isFitnessType ? await getRecentSessions(5) : [];
 
   // Renderizar widget según ID
   function renderWidget(widgetId: string) {
@@ -219,6 +264,36 @@ export default async function DashboardPage() {
         );
       case "orders_today":
         return <OrdersTodayWidget key={widgetId} count={0} />;
+      // Fitness widgets
+      case "sessions_today":
+        return (
+          <SessionsTodayWidget
+            key={widgetId}
+            count={(widgetData.sessions_today as { count: number })?.count || 0}
+          />
+        );
+      case "sessions_week":
+        return (
+          <SessionsWeekWidget
+            key={widgetId}
+            count={(widgetData.sessions_week as { count: number })?.count || 0}
+          />
+        );
+      case "active_clients":
+        return (
+          <ActiveClientsWidget
+            key={widgetId}
+            count={(widgetData.active_clients as { count: number })?.count || 0}
+          />
+        );
+      case "expiring_packages":
+        const ep = widgetData.expiring_packages as { length: number } | undefined;
+        return (
+          <ExpiringPackagesWidget
+            key={widgetId}
+            count={Array.isArray(ep) ? ep.length : 0}
+          />
+        );
       default:
         return null;
     }
@@ -240,7 +315,59 @@ export default async function DashboardPage() {
       </div>
 
       {/* Tablas según tipo de negocio */}
-      {isRepairsType ? (
+      {isFitnessType ? (
+        <>
+          {/* Dashboard para fitness/entrenador personal */}
+          <RecentSessionsTable sessions={recentSessions} />
+
+          {/* Acciones rápidas para fitness */}
+          <div className="mt-8 neumor-card p-6">
+            <h3 className="text-lg font-semibold mb-4">Acciones Rapidas</h3>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/dashboard/sesiones"
+                className="neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Nueva sesion
+              </a>
+              <a
+                href="/dashboard/clientes"
+                className="neumor-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                Ver clientes
+              </a>
+              <a
+                href="/dashboard/progreso"
+                className="neumor-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Registrar progreso
+              </a>
+              <a
+                href="/dashboard/paquetes"
+                className="neumor-btn px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>
+                Nuevo paquete
+              </a>
+            </div>
+          </div>
+        </>
+      ) : isRepairsType ? (
         <>
           {/* Dashboard para repairs/realestate */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
