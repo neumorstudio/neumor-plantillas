@@ -12,12 +12,14 @@ interface SidebarProps {
     email: string;
   } | null;
   showGoogleBusiness: boolean;
+  visibleSections?: string[] | null;
 }
 
 const navItems = [
   {
     href: "/dashboard",
     label: "Dashboard",
+    section: "dashboard",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -35,6 +37,7 @@ const navItems = [
   {
     href: "/dashboard/reservas",
     label: "Reservas",
+    section: "reservas",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -52,6 +55,7 @@ const navItems = [
   {
     href: "/dashboard/leads",
     label: "Leads",
+    section: "leads",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -69,6 +73,7 @@ const navItems = [
   {
     href: "/dashboard/presupuestos",
     label: "Presupuestos",
+    section: "presupuestos",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -86,6 +91,7 @@ const navItems = [
   {
     href: "/dashboard/newsletter",
     label: "Newsletter",
+    section: "newsletter",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -102,6 +108,7 @@ const navItems = [
     href: "/dashboard/google-business",
     label: "Google Business",
     feature: "googleBusiness",
+    section: "google-business",
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -114,6 +121,7 @@ const navItems = [
   {
     href: "/dashboard/personalizacion",
     label: "Personalizacion",
+    section: "personalizacion",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -131,6 +139,7 @@ const navItems = [
   {
     href: "/dashboard/configuracion",
     label: "Configuracion",
+    section: "configuracion",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -168,11 +177,15 @@ function getBusinessTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
-export function Sidebar({ clientInfo, showGoogleBusiness }: SidebarProps) {
+export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const visibleNavItems = navItems.filter(
+  const sectionFilteredItems = visibleSections?.length
+    ? navItems.filter((item) => !item.section || visibleSections.includes(item.section))
+    : navItems;
+
+  const visibleNavItems = sectionFilteredItems.filter(
     (item) => !item.feature || (item.feature === "googleBusiness" && showGoogleBusiness)
   );
 

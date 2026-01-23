@@ -40,6 +40,19 @@ async function getClientInfo() {
   return null;
 }
 
+async function getBusinessTypeConfig(businessType?: string | null) {
+  if (!businessType) return null;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("business_type_config")
+    .select("visible_sections")
+    .eq("business_type", businessType)
+    .single();
+
+  return data;
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -47,13 +60,18 @@ export default async function DashboardLayout({
 }) {
   // Obtener datos en el servidor - sin useEffect, sin flash
   const clientInfo = await getClientInfo();
+  const businessConfig = await getBusinessTypeConfig(clientInfo?.businessType);
   const showGoogleBusiness =
     process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
 
   return (
     <div className="min-h-screen flex">
       {/* Sidebar - Client Component para interactividad */}
-      <Sidebar clientInfo={clientInfo} showGoogleBusiness={showGoogleBusiness} />
+      <Sidebar
+        clientInfo={clientInfo}
+        showGoogleBusiness={showGoogleBusiness}
+        visibleSections={businessConfig?.visible_sections || null}
+      />
 
       {/* Main Content */}
       <main
