@@ -1,7 +1,7 @@
 ---
 /**
  * HeroBold - Variante split screen con colores vibrantes
- * Ideal para: Fast Food, restaurantes modernos/jovenes
+ * Ideal para: Gimnasios modernos, entrenadores dinamicos
  */
 interface Props {
   title: string;
@@ -14,8 +14,8 @@ interface Props {
 const {
   title,
   subtitle,
-  ctaText = "Pedir Ahora",
-  ctaLink = "#reserve",
+  ctaText = "Empezar Ahora",
+  ctaLink = "#booking",
   backgroundImage,
 } = Astro.props;
 
@@ -50,26 +50,26 @@ const words = title.split(' ');
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
-          <a href="#menu" class="hero-cta-secondary">
-            Ver Menu
+          <a href="#classes" class="hero-cta-secondary">
+            Ver Servicios
           </a>
         </div>
 
         <!-- Stats -->
         <div class="hero-stats animate-slide-right animation-delay-600">
           <div class="stat">
-            <span class="stat-number">4.9</span>
-            <span class="stat-label">Rating</span>
+            <span class="stat-number">150+</span>
+            <span class="stat-label">Clientes</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat">
-            <span class="stat-number">500+</span>
-            <span class="stat-label">Reviews</span>
+            <span class="stat-number">98%</span>
+            <span class="stat-label">Satisfaccion</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat">
-            <span class="stat-number">15min</span>
-            <span class="stat-label">Entrega</span>
+            <span class="stat-number">5+</span>
+            <span class="stat-label">Anos Exp.</span>
           </div>
         </div>
       </div>

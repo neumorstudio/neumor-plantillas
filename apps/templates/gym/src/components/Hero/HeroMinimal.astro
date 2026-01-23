@@ -1,7 +1,7 @@
 ---
 /**
  * HeroMinimal - Variante minimalista solo con texto
- * Ideal para: Cafe/Bistro, restaurantes acogedores
+ * Ideal para: Entrenadores personales, coaching
  */
 interface Props {
   title: string;
@@ -14,8 +14,8 @@ interface Props {
 const {
   title,
   subtitle,
-  ctaText = "Reservar",
-  ctaLink = "#reserve",
+  ctaText = "Reservar Sesion",
+  ctaLink = "#booking",
 } = Astro.props;
 ---
 
@@ -40,8 +40,8 @@ const {
         <a href={ctaLink} class="hero-cta">
           {ctaText}
         </a>
-        <a href="#menu" class="hero-link">
-          Explorar Menu
+        <a href="#classes" class="hero-link">
+          Ver Servicios
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -62,13 +62,13 @@ const {
     <div class="info-item">
       <span class="info-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
+          <circle cx="12" cy="13" r="8"/>
+          <path d="M12 9v4l2 2M10 2h4M21 6l-2 2"/>
         </svg>
       </span>
       <div class="info-text">
         <span class="info-label">Horario</span>
-        <span class="info-value">8:00 - 22:00</span>
+        <span class="info-value">7:00 - 21:00</span>
       </div>
     </div>
 
@@ -77,13 +77,12 @@ const {
     <div class="info-item">
       <span class="info-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-          <circle cx="12" cy="10" r="3"/>
+          <path d="M6.5 6.5h-2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h2M17.5 6.5h2a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-2M6.5 8v8M17.5 8v8M6.5 12h11"/>
         </svg>
       </span>
       <div class="info-text">
-        <span class="info-label">Ubicacion</span>
-        <span class="info-value">Centro, Madrid</span>
+        <span class="info-label">Modalidad</span>
+        <span class="info-value">Presencial y Online</span>
       </div>
     </div>
 
@@ -96,8 +95,8 @@ const {
         </svg>
       </span>
       <div class="info-text">
-        <span class="info-label">Reservas</span>
-        <span class="info-value">+34 912 345 678</span>
+        <span class="info-label">Contacto</span>
+        <span class="info-value">+34 600 000 000</span>
       </div>
     </div>
   </div>

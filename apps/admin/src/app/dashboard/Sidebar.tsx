@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 
 // Props recibidos desde el Server Component
 interface SidebarProps {
@@ -19,13 +20,12 @@ interface SidebarProps {
 interface NavItem {
   href: string;
   label: string;
-  slug: string; // Identificador para filtrar por visible_sections
+  slug: string;
   icon: React.ReactNode;
-  feature?: string; // Feature flag opcional
+  feature?: string;
 }
 
 // Catálogo completo de items de navegación
-// Cada item tiene un slug que se usa para filtrar según visible_sections
 const navItems: NavItem[] = [
   {
     href: "/dashboard",
@@ -196,7 +196,6 @@ const navItems: NavItem[] = [
   },
 ];
 
-// Helper functions
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -222,7 +221,44 @@ function getBusinessTypeLabel(type: string): string {
 export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Detectar cambios de tamaño de pantalla
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+      // Cerrar sidebar en desktop
+      if (window.innerWidth >= 1024) {
+        setIsOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Cerrar sidebar cuando cambia la ruta (en mobile)
+  useEffect(() => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  }, [pathname, isMobile]);
+
+  // Prevenir scroll del body cuando el drawer está abierto
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, isMobile]);
+
+<<<<<<< HEAD
   const sectionFilteredItems = visibleSections?.length
     ? navItems.filter((item) => visibleSections.includes(item.slug))
     : navItems;
@@ -230,6 +266,17 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
   const visibleNavItems = sectionFilteredItems.filter(
     (item) => !item.feature || (item.feature === "googleBusiness" && showGoogleBusiness)
   );
+=======
+  const visibleNavItems = navItems.filter((item) => {
+    if (!visibleSections.includes(item.slug)) {
+      return false;
+    }
+    if (item.feature === "googleBusiness" && !showGoogleBusiness) {
+      return false;
+    }
+    return true;
+  });
+>>>>>>> 61032e49ca22c8b1903dcd2dd8c48e084635a35e
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -238,48 +285,56 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
     router.refresh();
   };
 
+  const toggleSidebar = () => setIsOpen(!isOpen);
+
   return (
-    <aside
-      className="fixed left-0 top-0 h-full w-[var(--sidebar-width)] p-4 flex flex-col"
-      style={{
-        background: "var(--neumor-bg)",
-        boxShadow: "4px 0 20px var(--shadow-dark)",
-      }}
-    >
-      {/* Logo */}
-      <div className="mb-8 px-4">
-        <h1 className="text-xl font-heading font-bold text-[var(--text-primary)]">
-          NeumorStudio
+    <>
+      {/* Mobile Header con hamburger */}
+      <header className="mobile-header lg:hidden">
+        <button
+          onClick={toggleSidebar}
+          className="mobile-menu-btn"
+          aria-label="Abrir menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <h1 className="mobile-header-title">
+          {clientInfo?.businessName || "NeumorStudio"}
         </h1>
-        <p className="text-xs text-[var(--text-secondary)]">Panel de Cliente</p>
-      </div>
+        <div className="mobile-header-avatar">
+          {clientInfo ? getInitials(clientInfo.businessName) : "?"}
+        </div>
+      </header>
 
-      {/* Navigation */}
-      <nav className="sidebar-nav flex-1">
-        {visibleNavItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+      {/* Overlay para mobile */}
+      {isOpen && isMobile && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`nav-link ${isActive ? "active" : ""}`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User Info */}
-      <div className="neumor-card-sm p-4 mt-auto">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center text-white font-semibold">
-            {clientInfo ? getInitials(clientInfo.businessName) : "?"}
+      {/* Sidebar */}
+      <aside
+        className={`sidebar ${isOpen ? "sidebar-open" : ""}`}
+        style={{
+          background: "var(--neumor-bg)",
+        }}
+      >
+        {/* Header del sidebar */}
+        <div className="sidebar-header">
+          <div className="flex-1">
+            <h1 className="text-xl font-heading font-bold text-[var(--text-primary)]">
+              NeumorStudio
+            </h1>
+            <p className="text-xs text-[var(--text-secondary)]">Panel de Cliente</p>
           </div>
+<<<<<<< HEAD
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
               {clientInfo?.businessName || "Usuario"}
@@ -287,26 +342,77 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
             <p className="text-xs text-[var(--text-secondary)] truncate">
               {clientInfo ? getBusinessTypeLabel(clientInfo.businessType) : ""}
             </p>
+=======
+          {/* Boton cerrar solo en mobile */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="sidebar-close-btn lg:hidden"
+            aria-label="Cerrar menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="sidebar-nav flex-1 overflow-y-auto">
+          {visibleNavItems.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-link ${isActive ? "active" : ""}`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User Info */}
+        <div className="sidebar-footer">
+          <div className="neumor-card-sm p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center text-white font-semibold shrink-0">
+                {clientInfo ? getInitials(clientInfo.businessName) : "?"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {clientInfo?.businessName || "Usuario"}
+                </p>
+                <p className="text-xs text-[var(--text-secondary)] truncate">
+                  {businessTypeLabel}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="mt-3 w-full text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-[var(--shadow-light)]"
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16,17 21,12 16,7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Cerrar Sesion
+            </button>
+>>>>>>> 61032e49ca22c8b1903dcd2dd8c48e084635a35e
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="mt-3 w-full text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-[var(--shadow-light)]"
-        >
-          <svg
-            className="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16,17 21,12 16,7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          Cerrar Sesion
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
