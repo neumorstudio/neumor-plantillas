@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title = "Reserva tu Sesion",
-  subtitle = "Agenda tu entrenamiento personalizado. Te confirmaremos tu cita en menos de 24h.",
+  subtitle = "Completa estos pasos y te contactaremos en menos de 24h",
   webhookUrl = "",
   websiteId = "",
 } = Astro.props;
@@ -16,180 +16,436 @@ const {
 
 <section id="booking" class="section">
   <div class="container">
-    <div class="booking-wrapper">
-      <div class="booking-info">
-        <h2 class="booking-title">{title}</h2>
-        <p class="booking-subtitle">{subtitle}</p>
+    <div class="wizard-header">
+      <h2 class="wizard-title">{title}</h2>
+      <p class="wizard-subtitle">{subtitle}</p>
+    </div>
 
-        <div class="contact-info">
-          <div class="contact-item">
-            <div class="contact-icon neumor-inset">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-            </div>
-            <span>+34 912 345 678</span>
-          </div>
+    <!-- Progress Indicator -->
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-line">
+          <div class="progress-line-fill" data-progress></div>
+        </div>
+        <div class="progress-steps">
+          <button type="button" class="progress-step active" data-step-btn="1">
+            <span class="step-circle">1</span>
+            <span class="step-label">Objetivo</span>
+          </button>
+          <button type="button" class="progress-step" data-step-btn="2">
+            <span class="step-circle">2</span>
+            <span class="step-label">Nivel</span>
+          </button>
+          <button type="button" class="progress-step" data-step-btn="3">
+            <span class="step-circle">3</span>
+            <span class="step-label">Sesion</span>
+          </button>
+          <button type="button" class="progress-step" data-step-btn="4">
+            <span class="step-circle">4</span>
+            <span class="step-label">Contacto</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
-          <div class="contact-item">
-            <div class="contact-icon neumor-inset">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
-            <span>Lun - Sab: 07:00 - 21:00</span>
-          </div>
+    <!-- Wizard Card -->
+    <div class="wizard-card neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
 
-          <div class="contact-item">
-            <div class="contact-icon neumor-inset">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-            </div>
-            <span>Calle Principal 123</span>
-          </div>
+      <!-- Step 1: Objetivo -->
+      <div class="wizard-step active" data-step="1">
+        <h3 class="step-title">¿Cual es tu objetivo principal?</h3>
+        <div class="options-grid options-grid-2x2">
+          <button type="button" class="option-card" data-objetivo="perdida-peso">
+            <span class="option-icon">🔥</span>
+            <span class="option-title">Perder Peso</span>
+            <span class="option-desc">Quema grasa y define tu cuerpo</span>
+          </button>
+          <button type="button" class="option-card" data-objetivo="ganancia-muscular">
+            <span class="option-icon">💪</span>
+            <span class="option-title">Ganar Musculo</span>
+            <span class="option-desc">Aumenta fuerza y volumen</span>
+          </button>
+          <button type="button" class="option-card" data-objetivo="mejorar-salud">
+            <span class="option-icon">❤️</span>
+            <span class="option-title">Mejorar Salud</span>
+            <span class="option-desc">Bienestar y calidad de vida</span>
+          </button>
+          <button type="button" class="option-card" data-objetivo="rendimiento">
+            <span class="option-icon">🏃</span>
+            <span class="option-title">Rendimiento</span>
+            <span class="option-desc">Preparacion deportiva</span>
+          </button>
+        </div>
+        <div class="wizard-nav">
+          <div></div>
+          <button type="button" class="btn-next neumor-btn neumor-btn-accent" disabled data-next>
+            Continuar
+          </button>
         </div>
       </div>
 
-      <form class="booking-form neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name">Nombre</label>
-            <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
-          </div>
-          <div class="form-group">
-            <label for="phone">Telefono</label>
-            <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
-          </div>
+      <!-- Step 2: Nivel -->
+      <div class="wizard-step" data-step="2">
+        <h3 class="step-title">¿Cual es tu nivel actual?</h3>
+        <div class="options-grid options-grid-3">
+          <button type="button" class="option-card option-card-horizontal" data-nivel="principiante">
+            <span class="option-icon">🌱</span>
+            <div class="option-content">
+              <span class="option-title">Principiante</span>
+              <span class="option-desc">Empiezo de cero o casi</span>
+            </div>
+          </button>
+          <button type="button" class="option-card option-card-horizontal" data-nivel="intermedio">
+            <span class="option-icon">📈</span>
+            <div class="option-content">
+              <span class="option-title">Intermedio</span>
+              <span class="option-desc">Algo de experiencia</span>
+            </div>
+          </button>
+          <button type="button" class="option-card option-card-horizontal" data-nivel="avanzado">
+            <span class="option-icon">🏆</span>
+            <div class="option-content">
+              <span class="option-title">Avanzado</span>
+              <span class="option-desc">Entreno regularmente</span>
+            </div>
+          </button>
         </div>
-
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" required />
+        <div class="wizard-nav">
+          <button type="button" class="btn-back" data-back>
+            ← Atras
+          </button>
+          <button type="button" class="btn-next neumor-btn neumor-btn-accent" disabled data-next>
+            Continuar
+          </button>
         </div>
+      </div>
 
-        <div class="form-row">
+      <!-- Step 3: Sesion -->
+      <div class="wizard-step" data-step="3">
+        <h3 class="step-title">Elige tu sesion</h3>
+        <div class="form-compact">
           <div class="form-group">
             <label for="class-type">Tipo de Sesion</label>
             <select id="class-type" name="class-type" class="neumor-input" required>
-              <option value="">Selecciona servicio</option>
+              <option value="">Selecciona una opcion</option>
               <optgroup label="Sesiones Individuales">
                 <option value="personal-1on1">Entrenamiento 1-on-1 (60 min)</option>
                 <option value="personal-duo">Sesion Duo - 2 personas (60 min)</option>
                 <option value="valoracion">Valoracion Inicial (90 min)</option>
               </optgroup>
               <optgroup label="Especialidades">
-                <option value="perdida-peso">Perdida de Peso</option>
-                <option value="ganancia-muscular">Ganancia Muscular</option>
-                <option value="preparacion-fisica">Preparacion Fisica</option>
-                <option value="rehabilitacion">Rehabilitacion</option>
+                <option value="fuerza">Entrenamiento de Fuerza</option>
+                <option value="funcional">Entrenamiento Funcional</option>
+                <option value="hiit">HIIT / Cardio Intenso</option>
               </optgroup>
               <optgroup label="Online">
                 <option value="online-sesion">Sesion Online (60 min)</option>
-                <option value="online-consultoria">Consultoria Nutricional</option>
+                <option value="online-plan">Plan Personalizado Online</option>
               </optgroup>
             </select>
           </div>
-          <div class="form-group">
-            <label for="level">Tu Nivel Actual</label>
-            <select id="level" name="level" class="neumor-input">
-              <option value="principiante">Principiante - Nunca he entrenado</option>
-              <option value="basico">Basico - Algo de experiencia</option>
-              <option value="intermedio">Intermedio - Entreno regularmente</option>
-              <option value="avanzado">Avanzado - Mucha experiencia</option>
-            </select>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="date">Fecha preferida</label>
+              <input type="date" id="date" name="date" class="neumor-input" required />
+            </div>
+            <div class="form-group">
+              <label for="time">Horario</label>
+              <select id="time" name="time" class="neumor-input" required>
+                <option value="">Selecciona hora</option>
+                <option value="07:00">07:00 - Manana</option>
+                <option value="08:00">08:00 - Manana</option>
+                <option value="09:00">09:00 - Manana</option>
+                <option value="10:00">10:00 - Manana</option>
+                <option value="11:00">11:00 - Manana</option>
+                <option value="17:00">17:00 - Tarde</option>
+                <option value="18:00">18:00 - Tarde</option>
+                <option value="19:00">19:00 - Tarde</option>
+                <option value="20:00">20:00 - Noche</option>
+              </select>
+            </div>
           </div>
         </div>
+        <div class="wizard-nav">
+          <button type="button" class="btn-back" data-back>
+            ← Atras
+          </button>
+          <button type="button" class="btn-next neumor-btn neumor-btn-accent" disabled data-next>
+            Continuar
+          </button>
+        </div>
+      </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="date">Fecha</label>
-            <input type="date" id="date" name="date" class="neumor-input" required />
+      <!-- Step 4: Contacto -->
+      <div class="wizard-step" data-step="4">
+        <h3 class="step-title">Tus datos de contacto</h3>
+        <div class="form-compact">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Nombre</label>
+              <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+            </div>
+            <div class="form-group">
+              <label for="phone">Telefono</label>
+              <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+            </div>
           </div>
           <div class="form-group">
-            <label for="time">Horario preferido</label>
-            <select id="time" name="time" class="neumor-input" required>
-              <option value="">Selecciona horario</option>
-              <option value="06:00">06:00 - Manana temprano</option>
-              <option value="07:00">07:00 - Manana temprano</option>
-              <option value="08:00">08:00 - Manana</option>
-              <option value="09:00">09:00 - Manana</option>
-              <option value="10:00">10:00 - Manana</option>
-              <option value="11:00">11:00 - Mediodia</option>
-              <option value="12:00">12:00 - Mediodia</option>
-              <option value="13:00">13:00 - Mediodia</option>
-              <option value="17:00">17:00 - Tarde</option>
-              <option value="18:00">18:00 - Tarde</option>
-              <option value="19:00">19:00 - Tarde</option>
-              <option value="20:00">20:00 - Noche</option>
-              <option value="21:00">21:00 - Noche</option>
-            </select>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" required />
+          </div>
+          <div class="form-group">
+            <label for="notes">¿Algo mas que quieras contarme? <span class="optional">(opcional)</span></label>
+            <textarea id="notes" name="notes" class="neumor-input" rows="2" placeholder="Lesiones, disponibilidad, dudas..."></textarea>
           </div>
         </div>
-
-        <div class="form-group">
-          <label for="notes">Cuentame sobre ti y tus objetivos</label>
-          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="¿Cuales son tus objetivos? ¿Tienes alguna lesion o limitacion? ¿Has entrenado antes?"></textarea>
+        <div class="wizard-nav">
+          <button type="button" class="btn-back" data-back>
+            ← Atras
+          </button>
+          <button type="submit" class="btn-submit neumor-btn neumor-btn-accent" data-submit>
+            Reservar Sesion
+          </button>
         </div>
+      </div>
 
-        <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
-          Reservar Sesion
-        </button>
+      <!-- Success State -->
+      <div class="wizard-step wizard-success" data-step="success">
+        <div class="success-content">
+          <span class="success-icon">✓</span>
+          <h3 class="success-title">¡Solicitud enviada!</h3>
+          <p class="success-message">Te contactare en menos de 24h para confirmar tu sesion. ¡Gracias por confiar en mi!</p>
+          <button type="button" class="neumor-btn" data-reset>
+            Hacer otra reserva
+          </button>
+        </div>
+      </div>
 
-        <p class="form-disclaimer">
-          Te contactare en menos de 24h para confirmar tu cita. ¡Sin compromiso!
-        </p>
-      </form>
     </div>
   </div>
 </section>
 
 <style>
-  .booking-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-  }
-
-  .booking-title {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .booking-subtitle {
-    font-size: 1.1rem;
+  .wizard-header {
+    text-align: center;
     margin-bottom: 2rem;
-    max-width: 400px;
   }
 
-  .contact-info {
+  .wizard-title {
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .wizard-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  /* Progress Bar */
+  .progress-container {
+    max-width: 500px;
+    margin: 0 auto 2rem;
+  }
+
+  .progress-bar {
+    position: relative;
+  }
+
+  .progress-line {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    background: var(--shadow-dark);
+    border-radius: 2px;
+    z-index: 0;
+  }
+
+  .progress-line-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-step {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-  }
-
-  .contact-item {
-    display: flex;
     align-items: center;
-    gap: 1rem;
-    color: var(--text-secondary);
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.3s ease;
   }
 
-  .contact-icon {
-    width: 44px;
-    height: 44px;
+  .progress-step:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-neumor);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+  }
+
+  .progress-step.active .step-circle,
+  .progress-step.completed .step-circle {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4);
+  }
+
+  .progress-step.completed .step-circle {
+    background: var(--accent);
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+
+  .progress-step.active .step-label {
     color: var(--accent);
   }
 
-  .booking-form {
+  /* Wizard Card */
+  .wizard-card {
+    max-width: 600px;
+    margin: 0 auto;
     padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+  }
+
+  .wizard-step {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .wizard-step.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .step-title {
+    font-size: 1.35rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  /* Option Cards */
+  .options-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .options-grid-2x2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .options-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .option-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    background: var(--bg-primary);
+    border: 2px solid transparent;
+    border-radius: 1rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-neumor);
+    text-align: center;
+  }
+
+  .option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-neumor-hover);
+  }
+
+  .option-card.selected {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-neumor-inset);
+    background: var(--bg-secondary);
+  }
+
+  .option-card-horizontal {
+    flex-direction: row;
+    text-align: left;
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .option-card-horizontal .option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .option-icon {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .option-card-horizontal .option-icon {
+    font-size: 1.75rem;
+  }
+
+  .option-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  .option-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  /* Form Styles */
+  .form-compact {
+    margin-bottom: 1.5rem;
   }
 
   .form-row {
@@ -199,7 +455,7 @@ const {
   }
 
   .form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
   }
 
   .form-group label {
@@ -210,95 +466,407 @@ const {
     font-size: 0.9rem;
   }
 
+  .form-group .optional {
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+
   textarea.neumor-input {
     resize: vertical;
-    min-height: 80px;
+    min-height: 60px;
   }
 
-  select.neumor-input {
-    cursor: pointer;
+  /* Navigation */
+  .wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--shadow-light);
   }
 
-  .submit-btn {
-    width: 100%;
-    margin-top: 0.5rem;
-  }
-
-  .form-disclaimer {
-    text-align: center;
-    font-size: 0.85rem;
-    margin-top: 1rem;
+  .btn-back {
+    background: none;
+    border: none;
     color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    transition: color 0.2s ease;
   }
 
-  @media (max-width: 968px) {
-    .booking-wrapper {
+  .btn-back:hover {
+    color: var(--text-primary);
+  }
+
+  .btn-next,
+  .btn-submit {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    min-width: 140px;
+  }
+
+  .btn-next:disabled,
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Success State */
+  .wizard-success {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .success-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.4);
+    animation: successPop 0.5s ease;
+  }
+
+  @keyframes successPop {
+    0% {
+      transform: scale(0);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .success-title {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  .success-message {
+    color: var(--text-secondary);
+    max-width: 300px;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .wizard-card {
+      padding: 1.5rem 1rem;
+      min-height: auto;
+    }
+
+    .options-grid-2x2 {
       grid-template-columns: 1fr;
-      gap: 2rem;
     }
 
-    .booking-info {
-      text-align: center;
-    }
-
-    .booking-subtitle {
-      max-width: 100%;
-    }
-
-    .contact-info {
-      align-items: center;
-    }
-  }
-
-  @media (max-width: 480px) {
     .form-row {
       grid-template-columns: 1fr;
+    }
+
+    .step-label {
+      display: none;
+    }
+
+    .progress-line {
+      left: 30px;
+      right: 30px;
+    }
+
+    .wizard-nav {
+      flex-direction: column-reverse;
+      gap: 1rem;
+    }
+
+    .btn-next,
+    .btn-submit {
+      width: 100%;
+    }
+
+    .btn-back {
+      width: 100%;
+      text-align: center;
     }
   }
 </style>
 
 <script>
-  const form = document.querySelector(".booking-form") as HTMLFormElement;
+  const wizard = document.querySelector('.wizard-card') as HTMLElement;
+  const steps = wizard?.querySelectorAll('.wizard-step') as NodeListOf<HTMLElement>;
+  const progressBtns = document.querySelectorAll('[data-step-btn]') as NodeListOf<HTMLButtonElement>;
+  const progressFill = document.querySelector('[data-progress]') as HTMLElement;
 
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  interface WizardState {
+    currentStep: number;
+    objetivo: string | null;
+    nivel: string | null;
+    sesion: string | null;
+    fecha: string | null;
+    hora: string | null;
+    nombre: string;
+    telefono: string;
+    email: string;
+    notas: string;
+  }
 
-    const webhookUrl = form.dataset.webhook;
-    const websiteId = form.dataset.websiteId;
-    const formData = new FormData(form);
-    const rawData = Object.fromEntries(formData);
+  const state: WizardState = {
+    currentStep: 1,
+    objetivo: null,
+    nivel: null,
+    sesion: null,
+    fecha: null,
+    hora: null,
+    nombre: '',
+    telefono: '',
+    email: '',
+    notas: ''
+  };
+
+  function updateProgress() {
+    const progress = ((state.currentStep - 1) / 3) * 100;
+    progressFill.style.width = `${progress}%`;
+
+    progressBtns.forEach((btn, index) => {
+      const stepNum = index + 1;
+      btn.classList.remove('active', 'completed');
+
+      if (stepNum < state.currentStep) {
+        btn.classList.add('completed');
+        btn.disabled = false;
+      } else if (stepNum === state.currentStep) {
+        btn.classList.add('active');
+        btn.disabled = false;
+      } else {
+        btn.disabled = true;
+      }
+    });
+  }
+
+  function showStep(stepNum: number | 'success') {
+    steps.forEach(step => step.classList.remove('active'));
+
+    const targetStep = wizard?.querySelector(`[data-step="${stepNum}"]`) as HTMLElement;
+    if (targetStep) {
+      targetStep.classList.add('active');
+    }
+
+    if (typeof stepNum === 'number') {
+      state.currentStep = stepNum;
+      updateProgress();
+    }
+  }
+
+  function validateStep(stepNum: number): boolean {
+    switch (stepNum) {
+      case 1:
+        return state.objetivo !== null;
+      case 2:
+        return state.nivel !== null;
+      case 3:
+        return !!(state.sesion && state.fecha && state.hora);
+      case 4:
+        return !!(state.nombre && state.telefono && state.email);
+      default:
+        return false;
+    }
+  }
+
+  function updateNextButton(stepNum: number) {
+    const stepEl = wizard?.querySelector(`[data-step="${stepNum}"]`);
+    const nextBtn = stepEl?.querySelector('[data-next]') as HTMLButtonElement;
+    const submitBtn = stepEl?.querySelector('[data-submit]') as HTMLButtonElement;
+
+    const isValid = validateStep(stepNum);
+
+    if (nextBtn) nextBtn.disabled = !isValid;
+    if (submitBtn) submitBtn.disabled = !isValid;
+  }
+
+  // Option cards click handlers
+  wizard?.querySelectorAll('.option-card[data-objetivo]').forEach(card => {
+    card.addEventListener('click', () => {
+      wizard.querySelectorAll('.option-card[data-objetivo]').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.objetivo = (card as HTMLElement).dataset.objetivo || null;
+      updateNextButton(1);
+    });
+  });
+
+  wizard?.querySelectorAll('.option-card[data-nivel]').forEach(card => {
+    card.addEventListener('click', () => {
+      wizard.querySelectorAll('.option-card[data-nivel]').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.nivel = (card as HTMLElement).dataset.nivel || null;
+      updateNextButton(2);
+    });
+  });
+
+  // Form inputs handlers
+  const classSelect = wizard?.querySelector('#class-type') as HTMLSelectElement;
+  const dateInput = wizard?.querySelector('#date') as HTMLInputElement;
+  const timeSelect = wizard?.querySelector('#time') as HTMLSelectElement;
+  const nameInput = wizard?.querySelector('#name') as HTMLInputElement;
+  const phoneInput = wizard?.querySelector('#phone') as HTMLInputElement;
+  const emailInput = wizard?.querySelector('#email') as HTMLInputElement;
+  const notesInput = wizard?.querySelector('#notes') as HTMLTextAreaElement;
+
+  classSelect?.addEventListener('change', () => {
+    state.sesion = classSelect.value || null;
+    updateNextButton(3);
+  });
+
+  dateInput?.addEventListener('change', () => {
+    state.fecha = dateInput.value || null;
+    updateNextButton(3);
+  });
+
+  timeSelect?.addEventListener('change', () => {
+    state.hora = timeSelect.value || null;
+    updateNextButton(3);
+  });
+
+  nameInput?.addEventListener('input', () => {
+    state.nombre = nameInput.value;
+    updateNextButton(4);
+  });
+
+  phoneInput?.addEventListener('input', () => {
+    state.telefono = phoneInput.value;
+    updateNextButton(4);
+  });
+
+  emailInput?.addEventListener('input', () => {
+    state.email = emailInput.value;
+    updateNextButton(4);
+  });
+
+  notesInput?.addEventListener('input', () => {
+    state.notas = notesInput.value;
+  });
+
+  // Set min date to today
+  if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+  }
+
+  // Navigation handlers
+  wizard?.querySelectorAll('[data-next]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (validateStep(state.currentStep)) {
+        showStep(state.currentStep + 1);
+      }
+    });
+  });
+
+  wizard?.querySelectorAll('[data-back]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.currentStep > 1) {
+        showStep(state.currentStep - 1);
+      }
+    });
+  });
+
+  // Progress step clicks
+  progressBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetStep = parseInt(btn.dataset.stepBtn || '1');
+      if (targetStep < state.currentStep) {
+        showStep(targetStep);
+      }
+    });
+  });
+
+  // Submit handler
+  wizard?.querySelector('[data-submit]')?.addEventListener('click', async () => {
+    if (!validateStep(4)) return;
+
+    const webhookUrl = wizard.dataset.webhook;
+    const websiteId = wizard.dataset.websiteId;
+
+    const objetivoLabels: Record<string, string> = {
+      'perdida-peso': 'Pérdida de peso',
+      'ganancia-muscular': 'Ganancia muscular',
+      'mejorar-salud': 'Mejorar salud',
+      'rendimiento': 'Rendimiento deportivo'
+    };
 
     const data = {
       website_id: websiteId,
-      nombre: rawData.name,
-      email: rawData.email || "",
-      telefono: rawData.phone,
-      clase: rawData["class-type"],
-      nivel: rawData.level || "principiante",
-      fecha: rawData.date,
-      hora: rawData.time,
-      notas: rawData.notes || "",
+      nombre: state.nombre,
+      email: state.email,
+      telefono: state.telefono,
+      clase: state.sesion,
+      nivel: state.nivel,
+      fecha: state.fecha,
+      hora: state.hora,
+      notas: `Objetivo: ${objetivoLabels[state.objetivo || ''] || state.objetivo}${state.notas ? '. ' + state.notas : ''}`,
     };
 
     if (webhookUrl) {
       try {
         const response = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
         if (response.ok) {
-          alert("Reserva solicitada correctamente. Te contactaremos para confirmar tu plaza.");
-          form.reset();
+          showStep('success');
         } else {
-          throw new Error("Error en respuesta");
+          throw new Error('Error en respuesta');
         }
       } catch {
-        alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+        alert('Error al enviar la solicitud. Por favor, contacta directamente.');
       }
     } else {
-      alert("Reserva solicitada correctamente. Te contactaremos pronto.");
-      form.reset();
+      showStep('success');
     }
+  });
+
+  // Reset handler
+  wizard?.querySelector('[data-reset]')?.addEventListener('click', () => {
+    // Reset state
+    state.currentStep = 1;
+    state.objetivo = null;
+    state.nivel = null;
+    state.sesion = null;
+    state.fecha = null;
+    state.hora = null;
+    state.nombre = '';
+    state.telefono = '';
+    state.email = '';
+    state.notas = '';
+
+    // Reset form elements
+    wizard.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    if (classSelect) classSelect.value = '';
+    if (dateInput) dateInput.value = '';
+    if (timeSelect) timeSelect.value = '';
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (emailInput) emailInput.value = '';
+    if (notesInput) notesInput.value = '';
+
+    // Reset buttons
+    wizard.querySelectorAll('[data-next], [data-submit]').forEach(btn => {
+      (btn as HTMLButtonElement).disabled = true;
+    });
+
+    showStep(1);
   });
 </script>
