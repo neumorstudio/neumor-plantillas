@@ -168,7 +168,7 @@ export function ServiciosClient({ initialCategories }: Props) {
       <div className="mb-8">
         <h1 className="text-3xl font-heading font-bold mb-2">Servicios</h1>
         <p className="text-[var(--text-secondary)]">
-          Crea categorias y subcategorias para reservas del salon.
+          Organiza los servicios por categorias y define precio, duracion y notas.
         </p>
       </div>
 
@@ -185,7 +185,12 @@ export function ServiciosClient({ initialCategories }: Props) {
       )}
 
       <div className="neumor-card p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Nueva categoria</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h2 className="text-lg font-semibold">Nueva categoria</h2>
+          <span className="text-xs text-[var(--text-secondary)]">
+            Solo necesitas un nombre
+          </span>
+        </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
@@ -215,18 +220,20 @@ export function ServiciosClient({ initialCategories }: Props) {
           const newItem = getNewItemState(category.id);
           return (
             <div key={category.id} className="neumor-card p-6">
-              <form
-                className="flex flex-col gap-4"
-                onSubmit={(event) => handleUpdateCategory(event, category.id)}
-              >
-                <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
-                  <input
-                    name="name"
-                    defaultValue={category.name}
-                    className="neumor-input flex-1"
-                  />
+              <form onSubmit={(event) => handleUpdateCategory(event, category.id)}>
+                <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                  <div className="flex-1 space-y-2">
+                    <label className="text-xs text-[var(--text-secondary)]">
+                      Nombre de la categoria
+                    </label>
+                    <input
+                      name="name"
+                      defaultValue={category.name}
+                      className="neumor-input w-full"
+                    />
+                  </div>
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-[var(--text-secondary)]">Orden</label>
+                    <label className="text-xs text-[var(--text-secondary)]">Orden</label>
                     <input
                       name="sort_order"
                       type="number"
@@ -256,10 +263,23 @@ export function ServiciosClient({ initialCategories }: Props) {
                     </button>
                   </div>
                 </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+                  <span className="neumor-inset px-3 py-1 rounded-full">
+                    {category.items.length} subcategorias
+                  </span>
+                  <span className="neumor-inset px-3 py-1 rounded-full">
+                    {category.is_active ? "Activa" : "Inactiva"}
+                  </span>
+                </div>
               </form>
 
               <div className="mt-6 border-t border-[var(--shadow-light)] pt-6">
-                <h3 className="text-lg font-semibold mb-4">Subcategorias</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                  <h3 className="text-lg font-semibold">Subcategorias</h3>
+                  <span className="text-xs text-[var(--text-secondary)]">
+                    Precio en EUR y duracion en minutos
+                  </span>
+                </div>
 
                 <div className="space-y-4">
                   {category.items.length === 0 && (
@@ -274,27 +294,40 @@ export function ServiciosClient({ initialCategories }: Props) {
                       className="neumor-inset p-4 rounded-lg space-y-3"
                       onSubmit={(event) => handleUpdateItem(event, item.id)}
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input
-                          name="name"
-                          defaultValue={item.name}
-                          className="neumor-input"
-                        />
-                        <div className="flex gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-1">
+                          <label className="text-xs text-[var(--text-secondary)]">
+                            Nombre
+                          </label>
+                          <input
+                            name="name"
+                            defaultValue={item.name}
+                            className="neumor-input w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-[var(--text-secondary)]">
+                            Precio (EUR)
+                          </label>
                           <input
                             name="price"
                             type="number"
                             step="0.01"
                             min="0"
                             defaultValue={(item.price_cents / 100).toFixed(2)}
-                            className="neumor-input"
+                            className="neumor-input w-full"
                           />
+                        </div>
+                        <div>
+                          <label className="text-xs text-[var(--text-secondary)]">
+                            Duracion (min)
+                          </label>
                           <input
                             name="duration"
                             type="number"
                             min="1"
                             defaultValue={item.duration_minutes}
-                            className="neumor-input"
+                            className="neumor-input w-full"
                           />
                         </div>
                       </div>
@@ -340,8 +373,13 @@ export function ServiciosClient({ initialCategories }: Props) {
                 </div>
 
                 <div className="mt-6 neumor-inset p-4 rounded-lg">
-                  <h4 className="font-semibold mb-3">Nueva subcategoria</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <h4 className="font-semibold">Nueva subcategoria</h4>
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      Ejemplo: Corte pelo, Color unas
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     <input
                       type="text"
                       className="neumor-input"
@@ -357,41 +395,39 @@ export function ServiciosClient({ initialCategories }: Props) {
                         }))
                       }
                     />
-                    <div className="flex gap-3">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="neumor-input"
-                        placeholder="Precio (EUR)"
-                        value={newItem.price}
-                        onChange={(event) =>
-                          setNewItemByCategory((prev) => ({
-                            ...prev,
-                            [category.id]: {
-                              ...newItem,
-                              price: event.target.value,
-                            },
-                          }))
-                        }
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        className="neumor-input"
-                        placeholder="Minutos"
-                        value={newItem.duration}
-                        onChange={(event) =>
-                          setNewItemByCategory((prev) => ({
-                            ...prev,
-                            [category.id]: {
-                              ...newItem,
-                              duration: event.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="neumor-input"
+                      placeholder="Precio (EUR)"
+                      value={newItem.price}
+                      onChange={(event) =>
+                        setNewItemByCategory((prev) => ({
+                          ...prev,
+                          [category.id]: {
+                            ...newItem,
+                            price: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      className="neumor-input"
+                      placeholder="Minutos"
+                      value={newItem.duration}
+                      onChange={(event) =>
+                        setNewItemByCategory((prev) => ({
+                          ...prev,
+                          [category.id]: {
+                            ...newItem,
+                            duration: event.target.value,
+                          },
+                        }))
+                      }
+                    />
                   </div>
                   <textarea
                     className="neumor-input mb-3"
