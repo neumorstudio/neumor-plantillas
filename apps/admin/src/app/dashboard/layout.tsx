@@ -102,15 +102,12 @@ export default async function DashboardLayout({
       };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen bg-[var(--neumor-bg)]">
       {/* Sidebar - Client Component para interactividad */}
       <Sidebar {...sidebarProps} />
 
-      {/* Main Content */}
-      <main
-        className="flex-1 p-8"
-        style={{ marginLeft: "var(--sidebar-width)" }}
-      >
+      {/* Main Content - Responsive padding */}
+      <main className="main-content">
         {children}
       </main>
     </div>
