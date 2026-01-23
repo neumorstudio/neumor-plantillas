@@ -10,7 +10,7 @@ interface Props {
 
 const {
   title,
-  description = "Restaurante con estilo neumorfico",
+  description = "Entrenamiento personal con estilo neumorfico",
   theme = "light",
 } = Astro.props;
 
@@ -39,7 +39,7 @@ const themeClass = theme === "light" ? "" : `theme-${theme}`;
     <title>{title}</title>
 
     <style is:global>
-      /* Fuentes del restaurante */
+      /* Fuentes del entrenador personal */
       :root {
         --font-heading: "Playfair Display", serif;
         --font-body: "Inter", system-ui, sans-serif;
