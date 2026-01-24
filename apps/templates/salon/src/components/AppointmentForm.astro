@@ -10,13 +10,60 @@ interface Props {
 
 const {
   title = "Reserva tu Cita",
-  subtitle = "Completa el formulario y nos pondremos en contacto contigo para confirmar tu cita.",
+  subtitle = "Elige el servicio, luego fecha y hora. Confirmamos tu cita al instante.",
   webhookUrl = "",
   websiteId = "",
 } = Astro.props;
 
 const serviceCatalog = await getServiceCatalog(websiteId);
 const hasServiceCatalog = serviceCatalog.length > 0;
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+const fallbackCategories = [
+  {
+    id: "cortes",
+    name: "Cortes",
+    items: [
+      {
+        id: "corte-caballero",
+        name: "Corte Caballero",
+        price_cents: 1800,
+        duration_minutes: 30,
+        notes: "Corte clasico o moderno.",
+      },
+      {
+        id: "corte-senora",
+        name: "Corte Senora",
+        price_cents: 2500,
+        duration_minutes: 45,
+        notes: "Corte personalizado segun tu estilo.",
+      },
+      {
+        id: "corte-infantil",
+        name: "Corte Infantil",
+        price_cents: 1200,
+        duration_minutes: 20,
+        notes: "Para ninos hasta 12 anos.",
+      },
+    ],
+  },
+  {
+    id: "barba",
+    name: "Barba",
+    items: [
+      {
+        id: "corte-barba",
+        name: "Corte + Barba",
+        price_cents: 2800,
+        duration_minutes: 45,
+        notes: "Combo completo con perfilado.",
+      },
+    ],
+  },
+];
+
+const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
 ---
 
 <section id="appointment" class="section">
@@ -62,34 +109,43 @@ const hasServiceCatalog = serviceCatalog.length > 0;
         class="appointment-form neumor-card"
         data-webhook={webhookUrl}
         data-website-id={websiteId}
-        data-has-services={hasServiceCatalog ? "true" : "false"}
+        data-has-services={categories.length > 0 ? "true" : "false"}
+        data-supabase-url={supabaseUrl}
+        data-supabase-key={supabaseAnonKey}
       >
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name">Nombre</label>
-            <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
-          </div>
-          <div class="form-group">
-            <label for="phone">Telefono</label>
-            <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
-          </div>
-        </div>
+        <header class="appointment-header">
+          <h3>Reserva tu cita</h3>
+          <p>Completa los pasos para confirmar tu visita.</p>
+        </header>
 
-        <div class="form-group">
-          <label for="email">Email (opcional)</label>
-          <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" />
-        </div>
+        <ol class="stepper">
+          <li class="stepper-item is-active" data-step-dot="1">
+            <span class="stepper-circle">1</span>
+            <span class="stepper-label">Servicios</span>
+          </li>
+          <li class="stepper-item" data-step-dot="2">
+            <span class="stepper-circle">2</span>
+            <span class="stepper-label">Fecha y hora</span>
+          </li>
+          <li class="stepper-item" data-step-dot="3">
+            <span class="stepper-circle">3</span>
+            <span class="stepper-label">Contacto</span>
+          </li>
+        </ol>
 
-        <div class="form-group">
-          <label>Servicios</label>
-          {hasServiceCatalog ? (
+        <div class="step-panels">
+          <div class="step-panel is-active" data-step="1">
+            <div class="panel-header">
+              <h4>Selecciona servicios</h4>
+              <p>Elige uno o varios servicios para tu cita.</p>
+            </div>
             <div class="service-catalog">
-              {serviceCatalog.map((category) => (
+              {categories.map((category) => (
                 <div class="service-category" key={category.id}>
-                  <p class="service-category-title">{category.name}</p>
-                  <div class="service-items">
+                  <div class="service-category-title">{category.name}</div>
+                  <div class="service-grid">
                     {category.items.map((item) => (
-                      <label class="service-item" key={item.id}>
+                      <label class="service-card" key={item.id}>
                         <input
                           type="checkbox"
                           name="services"
@@ -98,9 +154,10 @@ const hasServiceCatalog = serviceCatalog.length > 0;
                           data-price={item.price_cents}
                           data-duration={item.duration_minutes}
                         />
-                        <span class="service-item-name">{item.name}</span>
-                        <span class="service-item-meta">
-                          {(item.price_cents / 100).toFixed(2)}€ · {item.duration_minutes} min
+                        <span class="service-card-title">{item.name}</span>
+                        {item.notes ? <span class="service-card-note">{item.notes}</span> : null}
+                        <span class="service-card-meta">
+                          {(item.price_cents / 100).toFixed(2)} EUR | {item.duration_minutes} min
                         </span>
                       </label>
                     ))}
@@ -108,74 +165,105 @@ const hasServiceCatalog = serviceCatalog.length > 0;
                 </div>
               ))}
             </div>
-          ) : (
-            <select id="service" name="service" class="neumor-input" required>
-              <option value="">Selecciona un servicio</option>
-              <option value="corte-caballero">Corte Caballero</option>
-              <option value="corte-senora">Corte Senora</option>
-              <option value="corte-barba">Corte + Barba</option>
-              <option value="tinte">Tinte Completo</option>
-              <option value="mechas">Mechas/Balayage</option>
-              <option value="keratina">Keratina</option>
-              <option value="botox">Botox Capilar</option>
-              <option value="peinado">Peinado Evento</option>
-              <option value="otro">Otro (especificar en notas)</option>
-            </select>
-          )}
-          {hasServiceCatalog && (
-            <p class="service-hint">
-              Puedes seleccionar varios servicios.
-            </p>
-          )}
-        </div>
-
-        <div class="form-group">
-          <label for="stylist">Profesional</label>
-          <select id="stylist" name="stylist" class="neumor-input">
-            <option value="">Sin preferencia</option>
-            <option value="maria">Maria</option>
-            <option value="carlos">Carlos</option>
-            <option value="laura">Laura</option>
-            <option value="antonio">Antonio</option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="date">Fecha preferida</label>
-            <input type="date" id="date" name="date" class="neumor-input" required />
           </div>
-          <div class="form-group">
-            <label for="time">Hora preferida</label>
-            <select id="time" name="time" class="neumor-input" required>
-              <option value="">Selecciona hora</option>
-              <option value="10:00">10:00</option>
-              <option value="10:30">10:30</option>
-              <option value="11:00">11:00</option>
-              <option value="11:30">11:30</option>
-              <option value="12:00">12:00</option>
-              <option value="12:30">12:30</option>
-              <option value="13:00">13:00</option>
-              <option value="16:00">16:00</option>
-              <option value="16:30">16:30</option>
-              <option value="17:00">17:00</option>
-              <option value="17:30">17:30</option>
-              <option value="18:00">18:00</option>
-              <option value="18:30">18:30</option>
-              <option value="19:00">19:00</option>
-              <option value="19:30">19:30</option>
-            </select>
+
+          <div class="step-panel" data-step="2">
+            <div class="panel-header">
+              <h4>Elige fecha y hora</h4>
+              <p>Selecciona un dia y una franja horaria disponible.</p>
+            </div>
+            <div class="calendar-wrapper">
+              <div class="calendar-card neumor-inset">
+                <div class="calendar-header">
+                  <button type="button" class="calendar-nav" data-calendar-prev aria-label="Mes anterior">
+                    &lt;
+                  </button>
+                  <div class="calendar-month" data-calendar-label></div>
+                  <button type="button" class="calendar-nav" data-calendar-next aria-label="Mes siguiente">
+                    &gt;
+                  </button>
+                </div>
+                <div class="calendar-weekdays">
+                  <span>Lu</span>
+                  <span>Ma</span>
+                  <span>Mi</span>
+                  <span>Ju</span>
+                  <span>Vi</span>
+                  <span>Sa</span>
+                  <span>Do</span>
+                </div>
+                <div class="calendar-grid" data-calendar-grid></div>
+              </div>
+              <div class="time-card neumor-inset">
+                <div class="time-grid" data-time-grid></div>
+              </div>
+            </div>
+            <input type="hidden" name="date" data-selected-date />
+            <input type="hidden" name="time" data-selected-time />
+          </div>
+
+          <div class="step-panel" data-step="3">
+            <div class="panel-header">
+              <h4>Completa tus datos</h4>
+              <p>Revisamos tu reserva y la confirmamos contigo.</p>
+            </div>
+            <div class="summary-card neumor-inset">
+              <div class="summary-row">
+                <span>Servicios</span>
+                <span data-summary-services>Sin seleccionar</span>
+              </div>
+              <div class="summary-row">
+                <span>Fecha y hora</span>
+                <span data-summary-datetime>Sin seleccionar</span>
+              </div>
+              <div class="summary-row">
+                <span>Total</span>
+                <span data-summary-total>0.00 EUR</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Nombre</label>
+                <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+              </div>
+              <div class="form-group">
+                <label for="phone">Telefono</label>
+                <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Email (opcional)</label>
+                <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" />
+              </div>
+              <div class="form-group">
+                <label for="stylist">Profesional</label>
+                <select id="stylist" name="stylist" class="neumor-input">
+                  <option value="">Sin preferencia</option>
+                  <option value="maria">Maria</option>
+                  <option value="carlos">Carlos</option>
+                  <option value="laura">Laura</option>
+                  <option value="antonio">Antonio</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notas adicionales</label>
+              <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Describe lo que buscas, referencias, etc."></textarea>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="notes">Notas adicionales</label>
-          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Describe lo que buscas, referencias, etc."></textarea>
+        <div class="step-actions">
+          <button type="button" class="neumor-btn" data-step-prev>Anterior</button>
+          <button type="button" class="neumor-btn neumor-btn-accent" data-step-next>Continuar</button>
+          <button type="submit" class="neumor-btn neumor-btn-accent" data-step-submit>
+            Confirmar reserva
+          </button>
         </div>
-
-        <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
-          Solicitar Cita
-        </button>
 
         <p class="form-disclaimer">
           Te confirmaremos la cita por telefono o WhatsApp.
@@ -188,9 +276,9 @@ const hasServiceCatalog = serviceCatalog.length > 0;
 <style>
   .appointment-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 3rem;
+    align-items: start;
   }
 
   .appointment-title {
@@ -201,7 +289,7 @@ const hasServiceCatalog = serviceCatalog.length > 0;
   .appointment-subtitle {
     font-size: 1.1rem;
     margin-bottom: 2rem;
-    max-width: 400px;
+    max-width: 420px;
   }
 
   .contact-info {
@@ -229,16 +317,305 @@ const hasServiceCatalog = serviceCatalog.length > 0;
 
   .appointment-form {
     padding: 2rem;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .appointment-form {
+    --appointment-accent: #1e67d2;
+  }
+
+  .appointment-header h3 {
+    margin: 0;
+  }
+
+  .appointment-header p {
+    margin: 0.35rem 0 0;
+    color: var(--text-secondary);
+  }
+
+  .stepper {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .stepper-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-size: 0.85rem;
+    gap: 0.4rem;
+    color: var(--text-secondary);
+  }
+
+  .stepper-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--shadow-light);
+    box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.08),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+  }
+
+  .stepper-item.is-active,
+  .stepper-item.is-complete {
+    color: var(--text-primary);
+  }
+
+  .stepper-item.is-active .stepper-circle,
+  .stepper-item.is-complete .stepper-circle {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .step-panels {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .step-panel {
+    display: none;
+    gap: 1rem;
+  }
+
+  .step-panel.is-active {
+    display: grid;
+  }
+
+  .panel-header h4 {
+    margin: 0;
+  }
+
+  .panel-header p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+  }
+
+  .service-catalog {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .service-category {
+    padding: 1rem;
+    border-radius: 1rem;
+    background: var(--shadow-light);
+  }
+
+  .service-category-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .service-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .service-card {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.85rem;
+    background: #fff;
+    box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.08),
+      -6px -6px 14px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+  }
+
+  .service-card input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .service-card-title {
+    font-weight: 600;
+  }
+
+  .service-card-note {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .service-card-meta {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .service-card:has(input:checked) {
+    border: 2px solid var(--accent);
+  }
+
+  .calendar-wrapper {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.5rem;
+  }
+
+  .calendar-card,
+  .time-card,
+  .summary-card {
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    background: var(--shadow-light);
+  }
+
+  .time-card {
+    max-height: 360px;
+    overflow: hidden;
+    position: relative;
+    min-width: 180px;
+  }
+
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .calendar-nav {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08),
+      -4px -4px 10px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+  }
+
+  .calendar-month {
+    font-weight: 600;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    pointer-events: auto;
+  }
+
+  .calendar-weekdays span {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  :global(.calendar-day) {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+  }
+
+  :global(.calendar-day.is-selected) {
+    background: var(--appointment-accent);
+    color: #fff;
+    box-shadow: none;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+  }
+
+  :global(.calendar-spacer) {
+    width: 38px;
+    height: 38px;
+  }
+
+  .time-header {
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .time-grid {
+    display: grid;
+    gap: 0.65rem;
+    overflow-y: auto;
+    max-height: 300px;
+    padding-right: 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  :global(.time-grid::-webkit-scrollbar) {
+    width: 0;
+    height: 0;
+  }
+
+  :global(.time-slot) {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0.7rem 0.75rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    text-align: center;
+    min-height: 40px;
+  }
+
+  :global(.time-slot.is-selected) {
+    background: var(--appointment-accent);
+    color: #fff;
+    box-shadow: none;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+  }
+
+  :global(.calendar-day:focus-visible),
+  :global(.time-slot:focus-visible) {
+    outline: 2px solid var(--appointment-accent);
+    outline-offset: 2px;
+  }
+
+  .summary-card {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .summary-row span:last-child {
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
-  }
-
-  .form-group {
-    margin-bottom: 1.25rem;
   }
 
   .form-group label {
@@ -258,139 +635,317 @@ const hasServiceCatalog = serviceCatalog.length > 0;
     cursor: pointer;
   }
 
-  .submit-btn {
-    width: 100%;
-    margin-top: 0.5rem;
-  }
-
-  .service-catalog {
-    display: grid;
-    gap: 1rem;
-    padding: 0.5rem 0;
-  }
-
-  .service-category {
-    border: 1px solid var(--shadow-light);
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-  }
-
-  .service-category-title {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .service-items {
-    display: grid;
-    gap: 0.5rem;
-  }
-
-  .service-item {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+  .step-actions {
+    display: flex;
     gap: 0.75rem;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    background: var(--shadow-light);
-    cursor: pointer;
-  }
-
-  .service-item input {
-    accent-color: var(--accent);
-  }
-
-  .service-item-name {
-    font-weight: 500;
-  }
-
-  .service-item-meta {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-
-  .service-hint {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .form-disclaimer {
     text-align: center;
     font-size: 0.85rem;
-    margin-top: 1rem;
+    margin: 0;
     color: var(--text-secondary);
   }
 
-  @media (max-width: 968px) {
+  @media (max-width: 1024px) {
     .appointment-wrapper {
       grid-template-columns: 1fr;
-      gap: 2rem;
     }
 
-    .appointment-info {
-      text-align: center;
-    }
-
-    .appointment-subtitle {
-      max-width: 100%;
-    }
-
-    .contact-info {
-      align-items: center;
+    .calendar-wrapper {
+      grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
     .form-row {
       grid-template-columns: 1fr;
+    }
+
+    .step-actions {
+      justify-content: center;
     }
   }
 </style>
 
 <script>
-  const form = document.querySelector(".appointment-form") as HTMLFormElement;
+  const form = document.querySelector(".appointment-form") as HTMLFormElement | null;
+  if (!form) {
+    console.warn("Appointment form not found");
+  } else {
+  const panels = Array.from(form.querySelectorAll<HTMLElement>(".step-panel"));
+  const stepDots = Array.from(form.querySelectorAll<HTMLElement>(".stepper-item"));
+  const prevBtn = form.querySelector<HTMLButtonElement>("[data-step-prev]");
+  const nextBtn = form.querySelector<HTMLButtonElement>("[data-step-next]");
+  const submitBtn = form.querySelector<HTMLButtonElement>("[data-step-submit]");
+  const summaryServices = form.querySelector<HTMLElement>("[data-summary-services]");
+  const summaryDatetime = form.querySelector<HTMLElement>("[data-summary-datetime]");
+  const summaryTotal = form.querySelector<HTMLElement>("[data-summary-total]");
+  const dateInput = form.querySelector<HTMLInputElement>("[data-selected-date]");
+  const timeInput = form.querySelector<HTMLInputElement>("[data-selected-time]");
+  const calendarLabel = form.querySelector<HTMLElement>("[data-calendar-label]");
+  const calendarGrid = form.querySelector<HTMLElement>("[data-calendar-grid]");
+  const timeGrid = form.querySelector<HTMLElement>("[data-time-grid]");
+  const prevMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-prev]");
+  const nextMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-next]");
 
-  form?.addEventListener("submit", async (e) => {
+  const hasServices = form.dataset.hasServices === "true";
+  const monthNames = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+
+  const timeSlots = [
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "12:00",
+    "12:30",
+    "13:00",
+    "16:00",
+    "16:30",
+    "17:00",
+    "17:30",
+    "18:00",
+    "18:30",
+    "19:00",
+  ];
+
+  let currentStep = 1;
+  let currentMonth = new Date();
+  currentMonth.setDate(1);
+
+  const renderCalendar = () => {
+    if (!calendarGrid || !calendarLabel) {
+      return;
+    }
+
+    calendarGrid.innerHTML = "";
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    calendarLabel.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+
+    for (let i = 0; i < startOffset; i += 1) {
+      const spacer = document.createElement("div");
+      spacer.className = "calendar-spacer";
+      calendarGrid.appendChild(spacer);
+    }
+
+    for (let day = 1; day <= lastDay.getDate(); day += 1) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "calendar-day";
+      button.textContent = String(day);
+      button.dataset.date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      button.addEventListener("click", () => {
+        const selected = button.dataset.date;
+        if (!selected || !dateInput) {
+          return;
+        }
+        dateInput.value = selected;
+        calendarGrid.querySelectorAll(".calendar-day").forEach((item) => {
+          item.classList.remove("is-selected");
+        });
+        button.classList.add("is-selected");
+        updateSummary();
+      });
+      calendarGrid.appendChild(button);
+    }
+  };
+
+  const renderTimeSlots = () => {
+    if (!timeGrid) {
+      return;
+    }
+    timeGrid.innerHTML = "";
+    timeSlots.forEach((slot) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "time-slot";
+      button.textContent = slot;
+      button.dataset.time = slot;
+      button.addEventListener("click", () => {
+        if (!timeInput) {
+          return;
+        }
+        timeInput.value = slot;
+        timeGrid.querySelectorAll(".time-slot").forEach((item) => {
+          item.classList.remove("is-selected");
+        });
+        button.classList.add("is-selected");
+        updateSummary();
+      });
+      timeGrid.appendChild(button);
+    });
+  };
+
+  const getSelectedServices = () => {
+    const selected = Array.from(
+      form.querySelectorAll<HTMLInputElement>("input[name='services']:checked")
+    );
+    return selected.map((input) => ({
+      id: input.value,
+      name: input.dataset.name || "",
+      price_cents: Number(input.dataset.price || 0),
+      duration_minutes: Number(input.dataset.duration || 0),
+    }));
+  };
+
+  const updateSummary = () => {
+    const services = getSelectedServices();
+    const totalPrice = services.reduce((sum, service) => sum + service.price_cents, 0);
+    const dateValue = dateInput?.value || "";
+    const timeValue = timeInput?.value || "";
+
+    if (summaryServices) {
+      summaryServices.textContent =
+        services.length > 0 ? services.map((service) => service.name).join(", ") : "Sin seleccionar";
+    }
+    if (summaryDatetime) {
+      summaryDatetime.textContent =
+        dateValue && timeValue ? `${dateValue} - ${timeValue}` : "Sin seleccionar";
+    }
+    if (summaryTotal) {
+      summaryTotal.textContent = `${(totalPrice / 100).toFixed(2)} EUR`;
+    }
+  };
+
+  const updateSteps = () => {
+    panels.forEach((panel) => {
+      panel.classList.toggle("is-active", Number(panel.dataset.step) === currentStep);
+    });
+
+    stepDots.forEach((dot, index) => {
+      const stepIndex = index + 1;
+      dot.classList.toggle("is-active", stepIndex === currentStep);
+      dot.classList.toggle("is-complete", stepIndex < currentStep);
+    });
+
+    if (prevBtn) {
+      prevBtn.disabled = currentStep === 1;
+    }
+
+    if (nextBtn && submitBtn) {
+      nextBtn.style.display = currentStep === panels.length ? "none" : "inline-flex";
+      submitBtn.style.display = currentStep === panels.length ? "inline-flex" : "none";
+    }
+
+    updateSummary();
+  };
+
+  const validateStep = () => {
+    if (currentStep === 1) {
+      const selectedServices = getSelectedServices();
+      if (hasServices && selectedServices.length === 0) {
+        alert("Selecciona al menos un servicio.");
+        return false;
+      }
+    }
+    if (currentStep === 2) {
+      if (!dateInput?.value || !timeInput?.value) {
+        alert("Selecciona fecha y hora.");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  prevBtn?.addEventListener("click", () => {
+    currentStep = Math.max(1, currentStep - 1);
+    updateSteps();
+  });
+
+  nextBtn?.addEventListener("click", () => {
+    if (!validateStep()) {
+      return;
+    }
+    currentStep = Math.min(panels.length, currentStep + 1);
+    updateSteps();
+  });
+
+  prevMonthBtn?.addEventListener("click", () => {
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    renderCalendar();
+  });
+
+  nextMonthBtn?.addEventListener("click", () => {
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+    renderCalendar();
+  });
+
+  renderCalendar();
+  renderTimeSlots();
+  updateSteps();
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!validateStep()) {
+      return;
+    }
 
     const webhookUrl = form.dataset.webhook;
     const websiteId = form.dataset.websiteId;
+    const supabaseUrl = form.dataset.supabaseUrl;
+    const supabaseKey = form.dataset.supabaseKey;
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
-    const hasServiceCatalog = form.dataset.hasServices === "true";
-
-    let selectedServices = [];
-    if (hasServiceCatalog) {
-      const serviceInputs = Array.from(
-        form.querySelectorAll("input[name='services']:checked")
-      );
-      if (serviceInputs.length === 0) {
-        alert("Selecciona al menos un servicio.");
-        return;
-      }
-      selectedServices = serviceInputs.map((input) => ({
-        id: input.value,
-        name: input.dataset.name,
-        price_cents: Number(input.dataset.price || 0),
-        duration_minutes: Number(input.dataset.duration || 0),
-      }));
-    }
+    const selectedServices = getSelectedServices();
+    const totalPrice = selectedServices.reduce((sum, service) => sum + service.price_cents, 0);
+    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0);
 
     const data = {
       website_id: websiteId,
       nombre: rawData.name,
       email: rawData.email || "",
       telefono: rawData.phone,
-      servicio: hasServiceCatalog
-        ? selectedServices.map((service) => service.name).join(", ")
-        : rawData.service,
+      servicio: selectedServices.map((service) => service.name).join(", "),
       servicios: selectedServices,
       profesional: rawData.stylist || "sin preferencia",
       fecha: rawData.date,
       hora: rawData.time,
       notas: rawData.notes || "",
+      total_price_cents: totalPrice,
+      total_duration_minutes: totalDuration,
     };
+
+    let bookingSuccess = false;
+
+    if (supabaseUrl && supabaseKey && websiteId) {
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/bookings`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify(data),
+        });
+        bookingSuccess = response.ok;
+      } catch {
+        bookingSuccess = false;
+      }
+    }
 
     if (webhookUrl) {
       try {
@@ -399,18 +954,22 @@ const hasServiceCatalog = serviceCatalog.length > 0;
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        if (response.ok) {
-          alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
-          form.reset();
-        } else {
-          throw new Error("Error en respuesta");
-        }
+        bookingSuccess = bookingSuccess || response.ok;
       } catch {
-        alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+        bookingSuccess = bookingSuccess || false;
       }
-    } else {
-      alert("Cita solicitada correctamente. Te contactaremos pronto.");
+    }
+
+    if (bookingSuccess) {
+      alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
       form.reset();
+      updateSummary();
+      currentStep = 1;
+      updateSteps();
+    } else {
+      alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
     }
   });
+  }
 </script>
+
