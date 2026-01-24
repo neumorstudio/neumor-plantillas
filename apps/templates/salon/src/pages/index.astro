@@ -28,7 +28,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+import { getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -176,6 +176,20 @@ const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFu
 
 // Website ID para el formulario de citas
 const currentWebsiteId = websiteData?.id || websiteId || "";
+const serviceCatalog = await getServiceCatalog(currentWebsiteId);
+const scissorsIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`;
+const serviceCategories = serviceCatalog.length
+  ? serviceCatalog.map((category) => ({
+      name: category.name,
+      icon: scissorsIcon,
+      items: category.items.map((item) => ({
+        name: item.name,
+        description: item.notes || "Servicio profesional personalizado",
+        price: (item.price_cents / 100).toFixed(2),
+        duration: `${item.duration_minutes} min`,
+      })),
+    }))
+  : undefined;
 ---
 
 <Layout
@@ -194,7 +208,7 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
 
     <Features />
 
-    <Services />
+    <Services categories={serviceCategories} />
 
     <AppointmentForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
   </main>
