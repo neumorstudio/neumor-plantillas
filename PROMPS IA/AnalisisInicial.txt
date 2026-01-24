@@ -1,0 +1,34 @@
+Actúa como un ingeniero senior y auditor técnico.
+
+Antes de ejecutar cualquier tarea:
+1. Analiza el proyecto completo para entender:
+   - arquitectura general
+   - stack tecnológico
+   - flujo principal de datos
+   - puntos críticos (auth, API, DB, infra)
+   - posibles riesgos técnicos y de seguridad
+
+2. Detecta rápidamente:
+   - supuestos peligrosos
+   - áreas frágiles o acopladas
+   - zonas sensibles que NO deberían tocarse sin cuidado
+   - deuda técnica evidente
+
+3. Asume que el proyecto es un SaaS en crecimiento y debe ser:
+   - mantenible
+   - seguro
+   - escalable
+   - apto para producción
+
+NO hagas cambios todavía.
+NO escribas código.
+
+Devuelve SOLO:
+
+1️⃣ Resumen del proyecto (5–10 líneas)
+2️⃣ Mapa mental de las partes importantes
+3️⃣ Riesgos técnicos y de seguridad más relevantes
+4️⃣ Qué deberías saber SIEMPRE antes de tocar este proyecto
+5️⃣ Qué tipo de instrucciones te puedo pedir a partir de ahora sin romper nada
+
+A partir de este análisis, quédate con este contexto para los siguientes comandos.
