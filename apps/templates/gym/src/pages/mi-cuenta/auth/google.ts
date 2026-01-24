@@ -5,7 +5,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData();
   const redirectTo = formData.get("redirectTo") as string || "/mi-cuenta/callback";
 
-  const supabase = createPortalClient(cookies);
+  const supabase = createPortalClient(cookies, request);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

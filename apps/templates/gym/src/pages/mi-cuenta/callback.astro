@@ -18,7 +18,7 @@ if (!code) {
 }
 
 // Intercambiar código por sesión
-const supabase = createPortalClient(Astro.cookies);
+const supabase = createPortalClient(Astro.cookies, Astro.request);
 
 const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -39,7 +39,7 @@ if (!email) {
 }
 
 // Obtener website por dominio actual
-const website = await getWebsiteByDomain(Astro.cookies, Astro.url.host);
+const website = await getWebsiteByDomain(Astro.cookies, Astro.url.host, Astro.request);
 
 if (!website) {
   console.error("Website no encontrado para dominio:", Astro.url.host);

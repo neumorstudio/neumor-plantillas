@@ -64,8 +64,10 @@ export interface CustomerPayment {
 /**
  * Crea un cliente Supabase para el servidor con manejo de cookies
  * Usar en páginas Astro para autenticación SSR
+ * @param cookies - AstroCookies object
+ * @param request - Optional Request object for reading raw cookie header
  */
-export function createPortalClient(cookies: AstroCookies) {
+export function createPortalClient(cookies: AstroCookies, request?: Request) {
   const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
@@ -76,12 +78,25 @@ export function createPortalClient(cookies: AstroCookies) {
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
-        return parseCookieHeader(cookies.get("sb-auth")?.value ?? "");
+        // Parse all cookies from the raw Cookie header
+        if (request) {
+          return parseCookieHeader(request.headers.get("Cookie") ?? "");
+        }
+        // Fallback: try to get Supabase auth cookies by common patterns
+        const allCookies: { name: string; value: string }[] = [];
+        // Supabase cookies typically follow pattern: sb-<project-ref>-auth-token
+        const cookieHeader = cookies.get("Cookie")?.value;
+        if (cookieHeader) {
+          return parseCookieHeader(cookieHeader);
+        }
+        return allCookies;
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           cookies.set(name, value, {
             path: "/",
+            secure: true,
+            sameSite: "lax",
             ...options,
           });
         });
@@ -117,7 +132,8 @@ let cachedWebsite: { id: string; domain: string } | null = null;
  */
 export async function getWebsiteByDomain(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<{ id: string; domain: string } | null> {
   // Si hay variable de entorno, usarla (desarrollo local)
   const envWebsiteId = import.meta.env.PUBLIC_WEBSITE_ID;
@@ -130,7 +146,7 @@ export async function getWebsiteByDomain(
     return cachedWebsite;
   }
 
-  const supabase = createPortalClient(cookies);
+  const supabase = createPortalClient(cookies, request);
 
   // Limpiar dominio (quitar protocolo y puerto)
   const cleanDomain = currentDomain
