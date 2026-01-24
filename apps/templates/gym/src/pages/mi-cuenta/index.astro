@@ -64,16 +64,6 @@ const themeClass = `theme-${theme}`;
 
         <GoogleLoginButton />
 
-        <div style="margin-top: 1rem; text-align: center;">
-          <span style="font-size: 0.875rem; color: var(--text-secondary);">¿No tienes cuenta?</span>
-          <button
-            id="openRegisterModal"
-            style="background: none; border: none; color: var(--accent); font-size: 0.875rem; cursor: pointer; text-decoration: underline; margin-left: 0.25rem;"
-          >
-            Regístrate
-          </button>
-        </div>
-
         <p style="margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-secondary);">
           Al continuar, aceptas nuestros términos de servicio y política de privacidad.
         </p>
@@ -83,100 +73,5 @@ const themeClass = `theme-${theme}`;
         &larr; Volver al inicio
       </a>
     </div>
-
-    <!-- Modal de Registro -->
-    <div id="registerModal" class="portal-modal" style="display: none;">
-      <div class="portal-modal-backdrop" id="modalBackdrop"></div>
-      <div class="portal-modal-content">
-        <button id="closeModal" class="portal-modal-close">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-
-        <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">
-          Crear cuenta
-        </h2>
-        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-          Regístrate en segundos con tu cuenta de Google
-        </p>
-
-        <GoogleLoginButton text="Registrarse con Google" />
-
-        <p style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-secondary);">
-          Si ya tienes cuenta, simplemente inicia sesión con el mismo método.
-        </p>
-      </div>
-    </div>
-
-    <style>
-      .portal-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .portal-modal-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-      }
-      .portal-modal-content {
-        position: relative;
-        background: var(--card-bg);
-        border-radius: 1rem;
-        padding: 2rem;
-        max-width: 400px;
-        width: 100%;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        text-align: center;
-      }
-      .portal-modal-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        padding: 0.25rem;
-        border-radius: 0.5rem;
-        transition: color 0.2s;
-      }
-      .portal-modal-close:hover {
-        color: var(--text-primary);
-      }
-    </style>
-
-    <script>
-      const modal = document.getElementById('registerModal');
-      const openBtn = document.getElementById('openRegisterModal');
-      const closeBtn = document.getElementById('closeModal');
-      const backdrop = document.getElementById('modalBackdrop');
-
-      openBtn?.addEventListener('click', () => {
-        modal!.style.display = 'flex';
-      });
-
-      closeBtn?.addEventListener('click', () => {
-        modal!.style.display = 'none';
-      });
-
-      backdrop?.addEventListener('click', () => {
-        modal!.style.display = 'none';
-      });
-
-      // Cerrar con Escape
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal?.style.display === 'flex') {
-          modal.style.display = 'none';
-        }
-      });
-    </script>
   </body>
 </html>
