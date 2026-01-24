@@ -90,7 +90,9 @@ const defaultConfig = {
   heroTitle: "Reformas sin complicaciones",
   heroSubtitle: "Presupuesto claro, tiempos reales y un equipo que cuida cada detalle.",
   heroImage: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80",
-  webhookUrl: import.meta.env.PUBLIC_CONTACT_WEBHOOK_URL || "",
+  webhookUrl: import.meta.env.PUBLIC_ADMIN_URL
+    ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/presupuestos`
+    : (import.meta.env.PUBLIC_CONTACT_WEBHOOK_URL || ""),
   address: "Tu direccion aqui",
   phone: "+34 000 000 000",
   email: "hola@tureforma.com",

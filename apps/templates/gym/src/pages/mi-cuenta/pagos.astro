@@ -1,0 +1,110 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { getCustomerProfile, getCustomerPayments } from "../../lib/supabase-portal";
+
+const currentDomain = Astro.url.host;
+const request = Astro.request;
+
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
+if (!customer) return Astro.redirect("/mi-cuenta");
+
+const payments = await getCustomerPayments(Astro.cookies, currentDomain, request);
+
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount);
+}
+
+function getStatusBadge(status: string) {
+  const badges: Record<string, { class: string; label: string }> = {
+    pending: { class: "portal-badge-pending", label: "Pendiente" },
+    paid: { class: "portal-badge-completed", label: "Pagado" },
+    refunded: { class: "portal-badge-cancelled", label: "Reembolsado" },
+  };
+  return badges[status] || { class: "", label: status };
+}
+
+// Calcular totales
+const totalPaid = payments
+  .filter((p) => p.status === "paid")
+  .reduce((sum, p) => sum + p.amount, 0);
+
+const totalPending = payments
+  .filter((p) => p.status === "pending")
+  .reduce((sum, p) => sum + p.amount, 0);
+---
+
+<PortalLayout title="Pagos" customer={customer} currentPage="pagos">
+  <h1 class="portal-page-title">Mis Pagos</h1>
+
+  {payments.length > 0 && (
+    <>
+      <!-- Resumen -->
+      <div class="portal-stats-grid" style="margin-bottom: 1.5rem;">
+        <div class="portal-stat-card">
+          <div class="portal-stat-value" style="color: #10b981;">
+            {formatCurrency(totalPaid)}
+          </div>
+          <div class="portal-stat-label">Total pagado</div>
+        </div>
+        {totalPending > 0 && (
+          <div class="portal-stat-card">
+            <div class="portal-stat-value" style="color: #f59e0b;">
+              {formatCurrency(totalPending)}
+            </div>
+            <div class="portal-stat-label">Pendiente</div>
+          </div>
+        )}
+      </div>
+
+      <!-- Lista de pagos -->
+      <h2 class="portal-section-title" style="margin-bottom: 1rem;">Historial</h2>
+      <div class="portal-list">
+        {payments.map((payment) => {
+          const badge = getStatusBadge(payment.status);
+          return (
+            <div class="portal-list-item">
+              <div class="portal-list-item-header">
+                <span class="portal-list-item-title">
+                  {formatCurrency(payment.amount)}
+                </span>
+                <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
+              </div>
+              <div class="portal-list-item-meta">{payment.description}</div>
+              <div class="portal-list-item-meta" style="margin-top: 0.25rem;">
+                {payment.status === "paid"
+                  ? `Pagado el ${formatDate(payment.payment_date)}`
+                  : `Creado el ${formatDate(payment.created_at)}`}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  )}
+
+  {payments.length === 0 && (
+    <div class="portal-empty">
+      <svg class="portal-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+        <line x1="1" y1="10" x2="23" y2="10"></line>
+      </svg>
+      <p class="portal-empty-title">Sin pagos</p>
+      <p class="portal-empty-text">
+        No tienes pagos registrados en tu cuenta.
+      </p>
+    </div>
+  )}
+</PortalLayout>

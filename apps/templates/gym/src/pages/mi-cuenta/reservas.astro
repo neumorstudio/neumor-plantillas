@@ -1,0 +1,112 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { getCustomerProfile, getCustomerSessions } from "../../lib/supabase-portal";
+
+const currentDomain = Astro.url.host;
+const request = Astro.request;
+
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
+if (!customer) return Astro.redirect("/mi-cuenta");
+
+const sessions = await getCustomerSessions(Astro.cookies, currentDomain, request);
+
+// Agrupar por estado
+const upcoming = sessions.filter(
+  (s) => s.status === "scheduled" && new Date(s.date) >= new Date()
+);
+const past = sessions.filter(
+  (s) => s.status !== "scheduled" || new Date(s.date) < new Date()
+);
+
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+function getStatusBadge(status: string) {
+  const badges: Record<string, { class: string; label: string }> = {
+    scheduled: { class: "portal-badge-confirmed", label: "Programada" },
+    completed: { class: "portal-badge-completed", label: "Completada" },
+    cancelled: { class: "portal-badge-cancelled", label: "Cancelada" },
+    no_show: { class: "portal-badge-cancelled", label: "No asistió" },
+  };
+  return badges[status] || { class: "", label: status };
+}
+---
+
+<PortalLayout title="Sesiones" customer={customer} currentPage="reservas">
+  <h1 class="portal-page-title">Mis Sesiones</h1>
+
+  {upcoming.length > 0 && (
+    <div style="margin-bottom: 2rem;">
+      <h2 class="portal-section-title" style="margin-bottom: 1rem;">Próximas</h2>
+      <div class="portal-list">
+        {upcoming.map((session) => {
+          const badge = getStatusBadge(session.status);
+          return (
+            <div class="portal-list-item">
+              <div class="portal-list-item-header">
+                <span class="portal-list-item-title">{session.class_name}</span>
+                <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
+              </div>
+              <div class="portal-list-item-meta">
+                {formatDate(session.date)} a las {session.time}
+              </div>
+              {session.trainer_name && (
+                <div class="portal-list-item-meta">
+                  Entrenador: {session.trainer_name}
+                </div>
+              )}
+              {session.notes && (
+                <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                  {session.notes}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+
+  {past.length > 0 && (
+    <div>
+      <h2 class="portal-section-title" style="margin-bottom: 1rem;">Historial</h2>
+      <div class="portal-list">
+        {past.map((session) => {
+          const badge = getStatusBadge(session.status);
+          return (
+            <div class="portal-list-item" style="opacity: 0.8;">
+              <div class="portal-list-item-header">
+                <span class="portal-list-item-title">{session.class_name}</span>
+                <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
+              </div>
+              <div class="portal-list-item-meta">
+                {formatDate(session.date)} a las {session.time}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+
+  {sessions.length === 0 && (
+    <div class="portal-empty">
+      <svg class="portal-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <p class="portal-empty-title">Sin sesiones</p>
+      <p class="portal-empty-text">
+        Aún no tienes sesiones registradas. Contacta con nosotros para programar tu primera sesión.
+      </p>
+    </div>
+  )}
+</PortalLayout>

@@ -90,7 +90,9 @@ const defaultConfig = {
   heroTitle: "Tu Salud, Nuestra Prioridad",
   heroSubtitle: "Profesionales de la salud a tu servicio",
   heroImage: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80",
-  webhookUrl: import.meta.env.PUBLIC_APPOINTMENT_WEBHOOK_URL || "",
+  webhookUrl: import.meta.env.PUBLIC_ADMIN_URL
+    ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/citas`
+    : (import.meta.env.PUBLIC_APPOINTMENT_WEBHOOK_URL || ""),
   address: "Tu direccion aqui",
   phone: "+34 000 000 000",
   email: "contacto@tuclinica.com",

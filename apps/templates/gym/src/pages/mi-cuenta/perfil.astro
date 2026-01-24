@@ -1,0 +1,131 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { getCustomerProfile, updateCustomerProfile, createPortalClient } from "../../lib/supabase-portal";
+
+const currentDomain = Astro.url.host;
+const request = Astro.request;
+
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
+if (!customer) return Astro.redirect("/mi-cuenta");
+
+let message = "";
+let messageType: "success" | "error" = "success";
+
+// Procesar formulario si es POST
+if (request.method === "POST") {
+  const formData = await request.formData();
+  const name = formData.get("name") as string;
+  const phone = formData.get("phone") as string;
+  const address = formData.get("address") as string;
+
+  const result = await updateCustomerProfile(Astro.cookies, currentDomain, {
+    name: name || customer.name,
+    phone: phone || null,
+    address: address || null,
+  }, request);
+
+  if (result.success) {
+    message = "Perfil actualizado correctamente";
+    messageType = "success";
+    // Recargar datos del cliente
+    const updatedCustomer = await getCustomerProfile(Astro.cookies, currentDomain, request);
+    if (updatedCustomer) {
+      customer.name = updatedCustomer.name;
+      customer.phone = updatedCustomer.phone;
+      customer.address = updatedCustomer.address;
+    }
+  } else {
+    message = result.error || "Error al actualizar el perfil";
+    messageType = "error";
+  }
+}
+---
+
+<PortalLayout title="Perfil" customer={customer} currentPage="perfil">
+  <h1 class="portal-page-title">Mi Perfil</h1>
+
+  {message && (
+    <div
+      class="portal-card"
+      style={`margin-bottom: 1rem; padding: 1rem; background: ${
+        messageType === "success" ? "#d1fae5" : "#fee2e2"
+      }; color: ${messageType === "success" ? "#065f46" : "#991b1b"};`}
+    >
+      {message}
+    </div>
+  )}
+
+  <form method="POST" class="portal-card">
+    <div class="portal-form-group">
+      <label class="portal-form-label" for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        class="portal-form-input"
+        value={customer.email}
+        disabled
+        style="opacity: 0.7; cursor: not-allowed;"
+      />
+      <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+        El email no se puede modificar
+      </p>
+    </div>
+
+    <div class="portal-form-group">
+      <label class="portal-form-label" for="name">Nombre</label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        class="portal-form-input"
+        value={customer.name}
+        required
+      />
+    </div>
+
+    <div class="portal-form-group">
+      <label class="portal-form-label" for="phone">Teléfono</label>
+      <input
+        type="tel"
+        id="phone"
+        name="phone"
+        class="portal-form-input"
+        value={customer.phone || ""}
+        placeholder="Ej: +34 600 000 000"
+      />
+    </div>
+
+    <div class="portal-form-group">
+      <label class="portal-form-label" for="address">Dirección</label>
+      <input
+        type="text"
+        id="address"
+        name="address"
+        class="portal-form-input"
+        value={customer.address || ""}
+        placeholder="Tu dirección (opcional)"
+      />
+    </div>
+
+    <button type="submit" class="portal-form-submit" style="margin-top: 1rem;">
+      Guardar cambios
+    </button>
+  </form>
+
+  <!-- Info adicional -->
+  <div class="portal-card" style="margin-top: 1.5rem;">
+    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.75rem;">
+      Información de la cuenta
+    </h3>
+    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+      <p>
+        <strong>Cliente desde:</strong>{" "}
+        {new Date(customer.created_at).toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+      </p>
+    </div>
+  </div>
+</PortalLayout>

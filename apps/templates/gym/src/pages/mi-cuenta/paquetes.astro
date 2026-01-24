@@ -1,0 +1,113 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { getCustomerProfile, getCustomerPackages } from "../../lib/supabase-portal";
+
+const currentDomain = Astro.url.host;
+const request = Astro.request;
+
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
+if (!customer) return Astro.redirect("/mi-cuenta");
+
+const packages = await getCustomerPackages(Astro.cookies, currentDomain, request);
+
+const activePackages = packages.filter((p) => p.status === "active");
+const otherPackages = packages.filter((p) => p.status !== "active");
+
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "Sin vencimiento";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function getStatusBadge(status: string) {
+  const badges: Record<string, { class: string; label: string }> = {
+    active: { class: "portal-badge-active", label: "Activo" },
+    expired: { class: "portal-badge-expired", label: "Expirado" },
+    depleted: { class: "portal-badge-cancelled", label: "Agotado" },
+  };
+  return badges[status] || { class: "", label: status };
+}
+---
+
+<PortalLayout title="Paquetes" customer={customer} currentPage="paquetes">
+  <h1 class="portal-page-title">Mis Paquetes</h1>
+
+  {activePackages.length > 0 && (
+    <div style="margin-bottom: 2rem;">
+      <h2 class="portal-section-title" style="margin-bottom: 1rem;">Paquetes activos</h2>
+      <div class="portal-list">
+        {activePackages.map((pkg) => {
+          const badge = getStatusBadge(pkg.status);
+          const progressPercent = (pkg.sessions_used / pkg.sessions_total) * 100;
+          return (
+            <div class="portal-list-item">
+              <div class="portal-list-item-header">
+                <span class="portal-list-item-title">{pkg.package_name}</span>
+                <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
+              </div>
+
+              <!-- Barra de progreso -->
+              <div style="margin: 1rem 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                  <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                    {pkg.sessions_used} de {pkg.sessions_total} usadas
+                  </span>
+                  <span style="font-size: 0.875rem; font-weight: 600; color: var(--accent);">
+                    {pkg.sessions_remaining} disponibles
+                  </span>
+                </div>
+                <div style="height: 8px; background: var(--shadow-dark); border-radius: 4px; overflow: hidden;">
+                  <div
+                    style={`height: 100%; width: ${progressPercent}%; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); border-radius: 4px;`}
+                  />
+                </div>
+              </div>
+
+              <div class="portal-list-item-meta">
+                Vence: {formatDate(pkg.expires_at)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+
+  {otherPackages.length > 0 && (
+    <div>
+      <h2 class="portal-section-title" style="margin-bottom: 1rem;">Historial</h2>
+      <div class="portal-list">
+        {otherPackages.map((pkg) => {
+          const badge = getStatusBadge(pkg.status);
+          return (
+            <div class="portal-list-item" style="opacity: 0.7;">
+              <div class="portal-list-item-header">
+                <span class="portal-list-item-title">{pkg.package_name}</span>
+                <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
+              </div>
+              <div class="portal-list-item-meta">
+                {pkg.sessions_used} de {pkg.sessions_total} sesiones usadas
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+
+  {packages.length === 0 && (
+    <div class="portal-empty">
+      <svg class="portal-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      </svg>
+      <p class="portal-empty-title">Sin paquetes</p>
+      <p class="portal-empty-text">
+        No tienes paquetes de sesiones. Contacta con nosotros para adquirir uno.
+      </p>
+    </div>
+  )}
+</PortalLayout>

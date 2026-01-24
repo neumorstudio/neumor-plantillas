@@ -1,0 +1,52 @@
+---
+import type { CustomerProfile } from "../../lib/supabase-portal";
+
+interface Props {
+  customer: CustomerProfile;
+}
+
+const { customer } = Astro.props;
+
+// Obtener iniciales del nombre
+const initials = customer.name
+  .split(" ")
+  .map((n) => n[0])
+  .join("")
+  .slice(0, 2)
+  .toUpperCase();
+---
+
+<header class="portal-header">
+  <a href="/mi-cuenta/inicio" class="portal-header-logo">
+    <!-- Dumbbell Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6.5 6.5a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V6.5Z"/>
+      <path d="M12.5 6.5a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V6.5Z"/>
+      <path d="M4 10h1"/>
+      <path d="M4 14h1"/>
+      <path d="M19 10h1"/>
+      <path d="M19 14h1"/>
+      <path d="M11.5 6v12"/>
+      <path d="M2 12h2"/>
+      <path d="M20 12h2"/>
+    </svg>
+    <span>Mi Cuenta</span>
+  </a>
+
+  <div class="portal-header-avatar">
+    <div class="portal-avatar" title={customer.name}>
+      {initials}
+    </div>
+
+    <form action="/mi-cuenta/logout" method="POST">
+      <button type="submit" class="portal-logout-btn" title="Cerrar sesión">
+        <!-- Logout Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</header>

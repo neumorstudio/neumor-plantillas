@@ -1,0 +1,98 @@
+---
+import { createPortalClient, getWebsiteByDomain } from "../../lib/supabase-portal";
+
+// Obtener el código de autenticación de la URL
+const code = Astro.url.searchParams.get("code");
+const error = Astro.url.searchParams.get("error");
+const errorDescription = Astro.url.searchParams.get("error_description");
+
+// Si hay error en la URL, redirigir al login
+if (error) {
+  console.error("OAuth error:", error, errorDescription);
+  return Astro.redirect("/mi-cuenta?error=" + error);
+}
+
+// Si no hay código, redirigir al login
+if (!code) {
+  return Astro.redirect("/mi-cuenta?error=no_code");
+}
+
+// Intercambiar código por sesión
+const supabase = createPortalClient(Astro.cookies, Astro.request);
+
+const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+
+if (sessionError || !sessionData.user) {
+  console.error("Error exchanging code:", sessionError?.message);
+  return Astro.redirect("/mi-cuenta?error=session_failed");
+}
+
+const user = sessionData.user;
+
+// Obtener datos del usuario de Google
+const email = user.email;
+const name = user.user_metadata?.full_name || user.user_metadata?.name || email?.split("@")[0] || "Cliente";
+
+if (!email) {
+  console.error("No email in user data");
+  return Astro.redirect("/mi-cuenta?error=no_email");
+}
+
+// Obtener website por dominio actual
+const website = await getWebsiteByDomain(Astro.cookies, Astro.url.host, Astro.request);
+
+if (!website) {
+  console.error("Website no encontrado para dominio:", Astro.url.host);
+  return Astro.redirect("/mi-cuenta?error=website_not_found");
+}
+
+// Vincular o crear customer
+console.log("Attempting to link/create customer:", { website_id: website.id, auth_user_id: user.id, email, name });
+
+const { data: customerId, error: linkError } = await supabase
+  .rpc("link_or_create_customer", {
+    p_website_id: website.id,
+    p_auth_user_id: user.id,
+    p_email: email,
+    p_name: name,
+  });
+
+console.log("RPC result:", { customerId, linkError: linkError?.message });
+
+let customerCreated = !linkError && customerId;
+
+if (linkError) {
+  console.error("Error linking customer (RPC):", linkError.message, linkError.details, linkError.hint);
+
+  // Intentar crear directamente como fallback
+  const { data: insertData, error: insertError } = await supabase
+    .from("customers")
+    .upsert({
+      website_id: website.id,
+      auth_user_id: user.id,
+      email: email,
+      name: name,
+    }, {
+      onConflict: "website_id,email",
+    })
+    .select("id")
+    .single();
+
+  console.log("Upsert result:", { insertData, insertError: insertError?.message });
+
+  if (insertError) {
+    console.error("Error creating customer (upsert):", insertError.message, insertError.details, insertError.hint);
+    // Redirigir con error para debug
+    return Astro.redirect(`/mi-cuenta?error=customer_creation_failed&details=${encodeURIComponent(insertError.message)}`);
+  } else {
+    customerCreated = true;
+  }
+}
+
+if (!customerCreated) {
+  return Astro.redirect("/mi-cuenta?error=no_customer");
+}
+
+// Redirigir al dashboard
+return Astro.redirect("/mi-cuenta/inicio");
+---

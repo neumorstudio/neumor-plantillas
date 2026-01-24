@@ -1,0 +1,77 @@
+---
+import "../../styles/global.css";
+import "../../styles/portal.css";
+import GoogleLoginButton from "../../components/portal/GoogleLoginButton.astro";
+import { createPortalClient, getCustomerProfile } from "../../lib/supabase-portal";
+
+// Verificar si ya está autenticado
+const supabase = createPortalClient(Astro.cookies, Astro.request);
+const { data: { user } } = await supabase.auth.getUser();
+
+// Si está autenticado, redirigir al inicio
+if (user) {
+  const customer = await getCustomerProfile(Astro.cookies, Astro.url.host, Astro.request);
+  if (customer) {
+    return Astro.redirect("/mi-cuenta/inicio");
+  }
+}
+
+const theme = "neuglass";
+const themeClass = `theme-${theme}`;
+---
+
+<!doctype html>
+<html lang="es" class={themeClass}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Accede a tu cuenta de cliente" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>Acceder | Mi Cuenta</title>
+  </head>
+  <body class="portal-body" style="padding-bottom: 0;">
+    <div class="portal-login-container">
+      <div class="portal-login-card">
+        <div class="portal-login-logo">
+          <!-- Dumbbell Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 6.5a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V6.5Z"/>
+            <path d="M12.5 6.5a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V6.5Z"/>
+            <path d="M4 10h1"/>
+            <path d="M4 14h1"/>
+            <path d="M19 10h1"/>
+            <path d="M19 14h1"/>
+            <path d="M11.5 6v12"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+          </svg>
+        </div>
+
+        <h1 class="portal-login-title">Bienvenido</h1>
+        <p class="portal-login-subtitle">
+          Accede a tu cuenta para ver tus sesiones, progreso y más.
+        </p>
+
+        <GoogleLoginButton />
+
+        <p style="margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+          Al continuar, aceptas nuestros términos de servicio y política de privacidad.
+        </p>
+      </div>
+
+      <a href="/" style="margin-top: 2rem; font-size: 0.875rem; color: var(--text-secondary);">
+        &larr; Volver al inicio
+      </a>
+    </div>
+  </body>
+</html>
