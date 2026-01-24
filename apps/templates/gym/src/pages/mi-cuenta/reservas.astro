@@ -3,11 +3,12 @@ import PortalLayout from "../../layouts/PortalLayout.astro";
 import { getCustomerProfile, getCustomerSessions } from "../../lib/supabase-portal";
 
 const currentDomain = Astro.url.host;
+const request = Astro.request;
 
-const customer = await getCustomerProfile(Astro.cookies, currentDomain);
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
 if (!customer) return Astro.redirect("/mi-cuenta");
 
-const sessions = await getCustomerSessions(Astro.cookies, currentDomain);
+const sessions = await getCustomerSessions(Astro.cookies, currentDomain, request);
 
 // Agrupar por estado
 const upcoming = sessions.filter(

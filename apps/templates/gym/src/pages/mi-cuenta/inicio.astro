@@ -8,9 +8,10 @@ import {
 } from "../../lib/supabase-portal";
 
 const currentDomain = Astro.url.host;
+const request = Astro.request;
 
 // Obtener datos del cliente
-const customer = await getCustomerProfile(Astro.cookies, currentDomain);
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
 
 // Si no hay cliente, redirigir al login
 if (!customer) {
@@ -18,9 +19,9 @@ if (!customer) {
 }
 
 // Obtener datos para el dashboard
-const sessions = await getCustomerSessions(Astro.cookies, currentDomain);
-const packages = await getCustomerPackages(Astro.cookies, currentDomain);
-const progress = await getCustomerProgress(Astro.cookies, currentDomain);
+const sessions = await getCustomerSessions(Astro.cookies, currentDomain, request);
+const packages = await getCustomerPackages(Astro.cookies, currentDomain, request);
+const progress = await getCustomerProgress(Astro.cookies, currentDomain, request);
 
 // Calcular estadísticas
 const upcomingSessions = sessions.filter(

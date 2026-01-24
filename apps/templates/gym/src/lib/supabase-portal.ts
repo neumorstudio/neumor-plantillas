@@ -75,6 +75,9 @@ export function createPortalClient(cookies: AstroCookies, request?: Request) {
     throw new Error("Supabase no configurado. Configura PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY");
   }
 
+  // Extract project ref from URL (e.g., "jekrqkdvgcwruhghtgkj" from "https://jekrqkdvgcwruhghtgkj.supabase.co")
+  const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase/)?.[1] || "";
+
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
@@ -82,13 +85,29 @@ export function createPortalClient(cookies: AstroCookies, request?: Request) {
         if (request) {
           return parseCookieHeader(request.headers.get("Cookie") ?? "");
         }
-        // Fallback: try to get Supabase auth cookies by common patterns
+
+        // Fallback: try to get Supabase auth cookies by known patterns
+        // Supabase uses chunked cookies: sb-<ref>-auth-token, sb-<ref>-auth-token.0, .1, etc.
         const allCookies: { name: string; value: string }[] = [];
-        // Supabase cookies typically follow pattern: sb-<project-ref>-auth-token
-        const cookieHeader = cookies.get("Cookie")?.value;
-        if (cookieHeader) {
-          return parseCookieHeader(cookieHeader);
+        const baseName = `sb-${projectRef}-auth-token`;
+
+        // Try to get the main cookie and chunked versions
+        const cookieNames = [
+          baseName,
+          `${baseName}.0`,
+          `${baseName}.1`,
+          `${baseName}.2`,
+          `${baseName}.3`,
+          `${baseName}.4`,
+        ];
+
+        for (const name of cookieNames) {
+          const cookie = cookies.get(name);
+          if (cookie?.value) {
+            allCookies.push({ name, value: cookie.value });
+          }
         }
+
         return allCookies;
       },
       setAll(cookiesToSet) {
@@ -186,17 +205,19 @@ export function getWebsiteId(): string {
  * Verifica si el usuario está autenticado y obtiene su perfil de cliente
  * @param cookies - Cookies de Astro
  * @param currentDomain - Dominio actual (ej: Astro.url.host)
+ * @param request - Optional Request object for reading raw cookie header
  */
 export async function getCustomerProfile(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<CustomerProfile | null> {
-  const supabase = createPortalClient(cookies);
+  const supabase = createPortalClient(cookies, request);
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const website = await getWebsiteByDomain(cookies, currentDomain);
+  const website = await getWebsiteByDomain(cookies, currentDomain, request);
   if (!website) return null;
 
   const { data: customer, error } = await supabase
@@ -216,10 +237,11 @@ export async function getCustomerProfile(
  */
 export async function getCustomerBookings(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<CustomerBooking[]> {
-  const supabase = createPortalClient(cookies);
-  const customer = await getCustomerProfile(cookies, currentDomain);
+  const supabase = createPortalClient(cookies, request);
+  const customer = await getCustomerProfile(cookies, currentDomain, request);
   if (!customer) return [];
 
   const { data, error } = await supabase
@@ -255,10 +277,11 @@ export async function getCustomerBookings(
  */
 export async function getCustomerSessions(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<CustomerSession[]> {
-  const supabase = createPortalClient(cookies);
-  const customer = await getCustomerProfile(cookies, currentDomain);
+  const supabase = createPortalClient(cookies, request);
+  const customer = await getCustomerProfile(cookies, currentDomain, request);
   if (!customer) return [];
 
   const { data, error } = await supabase
@@ -294,10 +317,11 @@ export async function getCustomerSessions(
  */
 export async function getCustomerPackages(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<CustomerPackage[]> {
-  const supabase = createPortalClient(cookies);
-  const customer = await getCustomerProfile(cookies, currentDomain);
+  const supabase = createPortalClient(cookies, request);
+  const customer = await getCustomerProfile(cookies, currentDomain, request);
   if (!customer) return [];
 
   const { data, error } = await supabase
@@ -331,10 +355,11 @@ export async function getCustomerPackages(
  */
 export async function getCustomerProgress(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<CustomerProgress[]> {
-  const supabase = createPortalClient(cookies);
-  const customer = await getCustomerProfile(cookies, currentDomain);
+  const supabase = createPortalClient(cookies, request);
+  const customer = await getCustomerProfile(cookies, currentDomain, request);
   if (!customer) return [];
 
   const { data, error } = await supabase
@@ -354,10 +379,11 @@ export async function getCustomerProgress(
  */
 export async function getCustomerPayments(
   cookies: AstroCookies,
-  currentDomain: string
+  currentDomain: string,
+  request?: Request
 ): Promise<CustomerPayment[]> {
-  const supabase = createPortalClient(cookies);
-  const customer = await getCustomerProfile(cookies, currentDomain);
+  const supabase = createPortalClient(cookies, request);
+  const customer = await getCustomerProfile(cookies, currentDomain, request);
   if (!customer) return [];
 
   const { data, error } = await supabase
@@ -378,10 +404,11 @@ export async function getCustomerPayments(
 export async function updateCustomerProfile(
   cookies: AstroCookies,
   currentDomain: string,
-  updates: { name?: string; phone?: string; address?: string }
+  updates: { name?: string; phone?: string; address?: string },
+  request?: Request
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createPortalClient(cookies);
-  const customer = await getCustomerProfile(cookies, currentDomain);
+  const supabase = createPortalClient(cookies, request);
+  const customer = await getCustomerProfile(cookies, currentDomain, request);
   if (!customer) return { success: false, error: "No autenticado" };
 
   const { error } = await supabase

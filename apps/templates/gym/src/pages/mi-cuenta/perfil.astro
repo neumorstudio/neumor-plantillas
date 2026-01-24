@@ -3,16 +3,17 @@ import PortalLayout from "../../layouts/PortalLayout.astro";
 import { getCustomerProfile, updateCustomerProfile, createPortalClient } from "../../lib/supabase-portal";
 
 const currentDomain = Astro.url.host;
+const request = Astro.request;
 
-const customer = await getCustomerProfile(Astro.cookies, currentDomain);
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
 if (!customer) return Astro.redirect("/mi-cuenta");
 
 let message = "";
 let messageType: "success" | "error" = "success";
 
 // Procesar formulario si es POST
-if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
+if (request.method === "POST") {
+  const formData = await request.formData();
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
   const address = formData.get("address") as string;
@@ -21,13 +22,13 @@ if (Astro.request.method === "POST") {
     name: name || customer.name,
     phone: phone || null,
     address: address || null,
-  });
+  }, request);
 
   if (result.success) {
     message = "Perfil actualizado correctamente";
     messageType = "success";
     // Recargar datos del cliente
-    const updatedCustomer = await getCustomerProfile(Astro.cookies, currentDomain);
+    const updatedCustomer = await getCustomerProfile(Astro.cookies, currentDomain, request);
     if (updatedCustomer) {
       customer.name = updatedCustomer.name;
       customer.phone = updatedCustomer.phone;

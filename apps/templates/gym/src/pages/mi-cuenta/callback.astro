@@ -47,6 +47,8 @@ if (!website) {
 }
 
 // Vincular o crear customer
+console.log("Attempting to link/create customer:", { website_id: website.id, auth_user_id: user.id, email, name });
+
 const { data: customerId, error: linkError } = await supabase
   .rpc("link_or_create_customer", {
     p_website_id: website.id,
@@ -55,10 +57,15 @@ const { data: customerId, error: linkError } = await supabase
     p_name: name,
   });
 
+console.log("RPC result:", { customerId, linkError: linkError?.message });
+
+let customerCreated = !linkError && customerId;
+
 if (linkError) {
-  console.error("Error linking customer:", linkError.message);
+  console.error("Error linking customer (RPC):", linkError.message, linkError.details, linkError.hint);
+
   // Intentar crear directamente como fallback
-  const { error: insertError } = await supabase
+  const { data: insertData, error: insertError } = await supabase
     .from("customers")
     .upsert({
       website_id: website.id,
@@ -67,11 +74,23 @@ if (linkError) {
       name: name,
     }, {
       onConflict: "website_id,email",
-    });
+    })
+    .select("id")
+    .single();
+
+  console.log("Upsert result:", { insertData, insertError: insertError?.message });
 
   if (insertError) {
-    console.error("Error creating customer:", insertError.message);
+    console.error("Error creating customer (upsert):", insertError.message, insertError.details, insertError.hint);
+    // Redirigir con error para debug
+    return Astro.redirect(`/mi-cuenta?error=customer_creation_failed&details=${encodeURIComponent(insertError.message)}`);
+  } else {
+    customerCreated = true;
   }
+}
+
+if (!customerCreated) {
+  return Astro.redirect("/mi-cuenta?error=no_customer");
 }
 
 // Redirigir al dashboard

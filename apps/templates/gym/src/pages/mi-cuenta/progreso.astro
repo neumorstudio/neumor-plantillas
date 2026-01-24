@@ -3,11 +3,12 @@ import PortalLayout from "../../layouts/PortalLayout.astro";
 import { getCustomerProfile, getCustomerProgress } from "../../lib/supabase-portal";
 
 const currentDomain = Astro.url.host;
+const request = Astro.request;
 
-const customer = await getCustomerProfile(Astro.cookies, currentDomain);
+const customer = await getCustomerProfile(Astro.cookies, currentDomain, request);
 if (!customer) return Astro.redirect("/mi-cuenta");
 
-const progress = await getCustomerProgress(Astro.cookies, currentDomain);
+const progress = await getCustomerProgress(Astro.cookies, currentDomain, request);
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);

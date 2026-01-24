@@ -5,12 +5,12 @@ import GoogleLoginButton from "../../components/portal/GoogleLoginButton.astro";
 import { createPortalClient, getCustomerProfile } from "../../lib/supabase-portal";
 
 // Verificar si ya está autenticado
-const supabase = createPortalClient(Astro.cookies);
+const supabase = createPortalClient(Astro.cookies, Astro.request);
 const { data: { user } } = await supabase.auth.getUser();
 
 // Si está autenticado, redirigir al inicio
 if (user) {
-  const customer = await getCustomerProfile(Astro.cookies, Astro.url.host);
+  const customer = await getCustomerProfile(Astro.cookies, Astro.url.host, Astro.request);
   if (customer) {
     return Astro.redirect("/mi-cuenta/inicio");
   }
