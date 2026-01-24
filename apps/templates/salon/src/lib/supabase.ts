@@ -38,6 +38,9 @@ export interface Website {
   theme: Theme;
   config: WebsiteConfig;
   is_active: boolean;
+  clients?: {
+    business_name?: string | null;
+  } | null;
 }
 
 export interface ServiceCategory {
@@ -89,7 +92,7 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
   try {
     let query = supabase
       .from("websites")
-      .select("id, client_id, domain, theme, config, is_active");
+      .select("id, client_id, domain, theme, config, is_active, clients ( business_name )");
 
     // Buscar por ID si esta disponible
     if (websiteId) {

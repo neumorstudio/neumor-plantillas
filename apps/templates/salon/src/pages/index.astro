@@ -123,11 +123,17 @@ if (websiteData) {
     whatsapp: dbConfig.socialLinks?.whatsapp || defaultConfig.socialLinks.whatsapp,
   };
 
+  const resolvedBusinessName =
+    dbConfig.businessName ||
+    dbConfig.business_name ||
+    websiteData.clients?.business_name ||
+    defaultConfig.businessName;
+
   config = {
-    businessName: dbConfig.businessName || defaultConfig.businessName,
+    businessName: resolvedBusinessName,
     theme: websiteData.theme || defaultConfig.theme,
     variants: dbConfig.variants || defaultConfig.variants,
-    siteTitle: `${dbConfig.businessName || defaultConfig.businessName} | Salon`,
+    siteTitle: `${resolvedBusinessName} | Salon`,
     siteDescription: defaultConfig.siteDescription,
     heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
     heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,

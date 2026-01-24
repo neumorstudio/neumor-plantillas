@@ -15,6 +15,13 @@ interface Booking {
   notes: string | null;
   status: string;
   created_at: string;
+  services?: {
+    name: string;
+    price_cents?: number;
+    duration_minutes?: number;
+  }[] | null;
+  total_price_cents?: number | null;
+  total_duration_minutes?: number | null;
 }
 
 type FilterStatus = "all" | "pending" | "confirmed" | "cancelled" | "completed";
@@ -32,6 +39,7 @@ export default function ReservasClient({
 
   // 🔹 NUEVO: estado para la reserva que se está editando
   const [bookingEdit, setBookingEdit] = useState<Booking | null>(null);
+  const [servicesText, setServicesText] = useState("");
 
   useEffect(() => {
     setBookings(initialBookings);
@@ -53,6 +61,11 @@ export default function ReservasClient({
       month: "short",
       year: "numeric",
     });
+  };
+
+  const formatPrice = (cents?: number | null) => {
+    if (!Number.isFinite(cents)) return "-";
+    return `${(Number(cents) / 100).toFixed(2)} EUR`;
   };
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
@@ -81,11 +94,21 @@ export default function ReservasClient({
     const customerName = bookingEdit.customer_name.trim();
     const customerPhone = bookingEdit.customer_phone?.trim() || "";
 
+    const servicesList = servicesText
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((name) => {
+        const existing = bookingEdit.services?.find((service) => service.name === name);
+        return existing || { name };
+      });
+
     const payload = {
       customer_name: customerName,
       customer_phone: customerPhone,
       guests: bookingEdit.guests,
       notes: bookingEdit.notes?.trim() || null,
+      services: servicesList.length ? servicesList : null,
     };
 
     if (!customerName || !customerPhone) {
@@ -213,7 +236,8 @@ export default function ReservasClient({
                   <th>Cliente</th>
                   <th>Contacto</th>
                   <th>Fecha y Hora</th>
-                  <th>Personas</th>
+                  <th>Servicios</th>
+                  <th>Precio</th>
                   <th>Notas</th>
                   <th>Estado</th>
                   <th>Acciones</th>
@@ -239,7 +263,17 @@ export default function ReservasClient({
                         </div>
                       </div>
                     </td>
-                    <td>{booking.guests}</td>
+                    <td>
+                      <span
+                        className="text-sm text-[var(--text-secondary)] max-w-[180px] truncate block"
+                        title={booking.services?.map((service) => service.name).join(", ") || ""}
+                      >
+                        {booking.services?.length
+                          ? booking.services.map((service) => service.name).join(", ")
+                          : "-"}
+                      </span>
+                    </td>
+                    <td>{formatPrice(booking.total_price_cents)}</td>
                     <td>
                       <span
                         className="text-sm text-[var(--text-secondary)] max-w-[150px] truncate block"
@@ -285,6 +319,9 @@ export default function ReservasClient({
                           onClick={() => {
                             setActionError(null);
                             setBookingEdit(booking);
+                            setServicesText(
+                              booking.services?.map((service) => service.name).join(", ") || ""
+                            );
                           }}
                         >
                           <Pencil size={14} />
@@ -345,17 +382,13 @@ export default function ReservasClient({
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                  Numero de personas
+                  Servicios
                 </label>
                 <input
-                  type="number"
-                  min="1"
                   className="neumor-input w-full"
-                  placeholder="2"
-                  value={bookingEdit.guests}
-                  onChange={(e) =>
-                    setBookingEdit({ ...bookingEdit, guests: Number(e.target.value) })
-                  }
+                  placeholder="Corte, Color, Peinado"
+                  value={servicesText}
+                  onChange={(e) => setServicesText(e.target.value)}
                 />
               </div>
 

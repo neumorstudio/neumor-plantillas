@@ -51,6 +51,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { data: website } = await supabase
+      .from("websites")
+      .select("id, config")
+      .eq("id", websiteId)
+      .single();
+
+    if (website) {
+      const nextConfig = {
+        ...(website.config || {}),
+        businessName: businessData.business_name,
+        phone: businessData.phone || null,
+      };
+
+      const { error: websiteError } = await supabase
+        .from("websites")
+        .update({ config: nextConfig })
+        .eq("id", websiteId);
+
+      if (websiteError) {
+        console.error("Error updating website config:", websiteError);
+        return NextResponse.json(
+          { error: "Error al actualizar configuracion del sitio" },
+          { status: 500 }
+        );
+      }
+    }
+
     // Upsert notification settings
     const { error: settingsError } = await supabase
       .from("notification_settings")

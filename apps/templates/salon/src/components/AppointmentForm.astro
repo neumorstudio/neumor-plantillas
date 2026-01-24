@@ -322,7 +322,7 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
   }
 
   .appointment-form {
-    --appointment-accent: #1e67d2;
+    --appointment-accent: oklch(0.55 0.12 250);
   }
 
   .appointment-header h3 {
@@ -914,20 +914,27 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
 
     const data = {
       website_id: websiteId,
-      nombre: rawData.name,
-      email: rawData.email || "",
-      telefono: rawData.phone,
-      servicio: selectedServices.map((service) => service.name).join(", "),
-      servicios: selectedServices,
-      profesional: rawData.stylist || "sin preferencia",
-      fecha: rawData.date,
-      hora: rawData.time,
-      notas: rawData.notes || "",
+      customer_name: rawData.name,
+      customer_email: rawData.email || null,
+      customer_phone: rawData.phone,
+      booking_date: rawData.date,
+      booking_time: rawData.time,
+      guests: 1,
+      notes: rawData.notes || null,
+      status: "pending",
+      source: "website",
+      services: selectedServices,
       total_price_cents: totalPrice,
       total_duration_minutes: totalDuration,
     };
 
+    if (!websiteId) {
+      alert("No se pudo identificar el website. Revisa la configuracion.");
+      return;
+    }
+
     let bookingSuccess = false;
+    let lastError = "";
 
     if (supabaseUrl && supabaseKey && websiteId) {
       try {
@@ -941,9 +948,14 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
           },
           body: JSON.stringify(data),
         });
-        bookingSuccess = response.ok;
+        if (response.ok) {
+          bookingSuccess = true;
+        } else {
+          const errorText = await response.text();
+          lastError = errorText || `Supabase error ${response.status}`;
+        }
       } catch {
-        bookingSuccess = false;
+        lastError = "Error de red al guardar en Supabase.";
       }
     }
 
@@ -954,9 +966,16 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        bookingSuccess = bookingSuccess || response.ok;
+        if (response.ok) {
+          bookingSuccess = true;
+        } else if (!lastError) {
+          const errorText = await response.text();
+          lastError = errorText || `Webhook error ${response.status}`;
+        }
       } catch {
-        bookingSuccess = bookingSuccess || false;
+        if (!lastError) {
+          lastError = "Error de red al enviar webhook.";
+        }
       }
     }
 
@@ -967,7 +986,7 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
       currentStep = 1;
       updateSteps();
     } else {
-      alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+      alert(`Error al enviar la solicitud. ${lastError || "Por favor, llamanos directamente."}`);
     }
   });
   }
