@@ -90,7 +90,9 @@ const defaultConfig = {
   heroTitle: "Descubre Nuestra Coleccion",
   heroSubtitle: "Productos de calidad seleccionados para ti",
   heroImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80",
-  webhookUrl: import.meta.env.PUBLIC_CONTACT_WEBHOOK_URL || "",
+  webhookUrl: import.meta.env.PUBLIC_ADMIN_URL
+    ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/contacto`
+    : (import.meta.env.PUBLIC_CONTACT_WEBHOOK_URL || ""),
   address: "Tu direccion aqui",
   phone: "+34 000 000 000",
   email: "info@tutienda.com",

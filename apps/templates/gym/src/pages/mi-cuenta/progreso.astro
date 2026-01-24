@@ -1,0 +1,146 @@
+---
+import PortalLayout from "../../layouts/PortalLayout.astro";
+import { getCustomerProfile, getCustomerProgress } from "../../lib/supabase-portal";
+
+const currentDomain = Astro.url.host;
+
+const customer = await getCustomerProfile(Astro.cookies, currentDomain);
+if (!customer) return Astro.redirect("/mi-cuenta");
+
+const progress = await getCustomerProgress(Astro.cookies, currentDomain);
+
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// Calcular cambios entre mediciones
+function calculateChange(current: number | null, previous: number | null): string | null {
+  if (!current || !previous) return null;
+  const diff = current - previous;
+  const sign = diff > 0 ? "+" : "";
+  return `${sign}${diff.toFixed(1)}`;
+}
+
+const latestProgress = progress[0];
+const previousProgress = progress[1];
+---
+
+<PortalLayout title="Progreso" customer={customer} currentPage="progreso">
+  <h1 class="portal-page-title">Mi Progreso</h1>
+
+  {latestProgress ? (
+    <>
+      <!-- Resumen actual -->
+      <div class="portal-card" style="margin-bottom: 1.5rem;">
+        <div class="portal-card-header">
+          <span class="portal-card-title">Última medición</span>
+          <span style="font-size: 0.75rem; color: var(--text-secondary);">
+            {formatDate(latestProgress.date)}
+          </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; margin-top: 1rem;">
+          {latestProgress.weight && (
+            <div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">
+                {latestProgress.weight}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">kg</div>
+              {previousProgress?.weight && (
+                <div style={`font-size: 0.75rem; color: ${
+                  latestProgress.weight < previousProgress.weight ? "#10b981" : "#ef4444"
+                };`}>
+                  {calculateChange(latestProgress.weight, previousProgress.weight)} kg
+                </div>
+              )}
+            </div>
+          )}
+          {latestProgress.body_fat && (
+            <div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">
+                {latestProgress.body_fat}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">% grasa</div>
+              {previousProgress?.body_fat && (
+                <div style={`font-size: 0.75rem; color: ${
+                  latestProgress.body_fat < previousProgress.body_fat ? "#10b981" : "#ef4444"
+                };`}>
+                  {calculateChange(latestProgress.body_fat, previousProgress.body_fat)}%
+                </div>
+              )}
+            </div>
+          )}
+          {latestProgress.muscle_mass && (
+            <div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">
+                {latestProgress.muscle_mass}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">kg músculo</div>
+              {previousProgress?.muscle_mass && (
+                <div style={`font-size: 0.75rem; color: ${
+                  latestProgress.muscle_mass > previousProgress.muscle_mass ? "#10b981" : "#ef4444"
+                };`}>
+                  {calculateChange(latestProgress.muscle_mass, previousProgress.muscle_mass)} kg
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- Historial -->
+      <h2 class="portal-section-title" style="margin-bottom: 1rem;">Historial de mediciones</h2>
+      <div class="portal-list">
+        {progress.map((p) => (
+          <div class="portal-list-item">
+            <div class="portal-list-item-header">
+              <span class="portal-list-item-title">{formatDate(p.date)}</span>
+            </div>
+            <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+              {p.weight && (
+                <div style="font-size: 0.875rem;">
+                  <span style="color: var(--text-secondary);">Peso:</span>{" "}
+                  <strong>{p.weight} kg</strong>
+                </div>
+              )}
+              {p.body_fat && (
+                <div style="font-size: 0.875rem;">
+                  <span style="color: var(--text-secondary);">Grasa:</span>{" "}
+                  <strong>{p.body_fat}%</strong>
+                </div>
+              )}
+              {p.muscle_mass && (
+                <div style="font-size: 0.875rem;">
+                  <span style="color: var(--text-secondary);">Músculo:</span>{" "}
+                  <strong>{p.muscle_mass} kg</strong>
+                </div>
+              )}
+            </div>
+            {p.notes && (
+              <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                {p.notes}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  ) : (
+    <div class="portal-empty">
+      <svg class="portal-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10"></line>
+        <line x1="12" y1="20" x2="12" y2="4"></line>
+        <line x1="6" y1="20" x2="6" y2="14"></line>
+      </svg>
+      <p class="portal-empty-title">Sin mediciones</p>
+      <p class="portal-empty-text">
+        Aún no tienes mediciones de progreso. Tu entrenador registrará tus avances.
+      </p>
+    </div>
+  )}
+</PortalLayout>

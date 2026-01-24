@@ -1,0 +1,53 @@
+---
+import "../styles/global.css";
+import "../styles/portal.css";
+import PortalHeader from "../components/portal/PortalHeader.astro";
+import BottomNav from "../components/portal/BottomNav.astro";
+import type { CustomerProfile } from "../lib/supabase-portal";
+
+interface Props {
+  title: string;
+  customer: CustomerProfile | null;
+  currentPage?: "inicio" | "reservas" | "progreso" | "paquetes" | "perfil" | "pagos";
+  theme?: "light" | "dark" | "neuglass" | "neuglass-dark";
+}
+
+const {
+  title,
+  customer,
+  currentPage = "inicio",
+  theme = "neuglass",
+} = Astro.props;
+
+const themeClass = theme === "light" ? "" : `theme-${theme}`;
+---
+
+<!doctype html>
+<html lang="es" class={themeClass}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Portal de cliente" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>{title} | Mi Cuenta</title>
+  </head>
+  <body class="portal-body">
+    {customer && <PortalHeader customer={customer} />}
+
+    <main class="portal-main">
+      <slot />
+    </main>
+
+    {customer && <BottomNav currentPage={currentPage} />}
+  </body>
+</html>
