@@ -584,6 +584,15 @@ html.dark {
   font-size: 16px; /* Prevents zoom on iOS */
 }
 
+input[type="time"].no-native-time::-webkit-calendar-picker-indicator {
+  display: none;
+  opacity: 0;
+}
+
+input[type="time"].no-native-time::-webkit-clear-button {
+  display: none;
+}
+
 @media (min-width: 640px) {
   .neumor-input {
     min-height: auto;

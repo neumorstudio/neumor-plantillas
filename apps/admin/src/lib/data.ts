@@ -172,6 +172,22 @@ export async function getBookingsForMonth(year: number, month: number) {
   return data || [];
 }
 
+export async function getBusinessHourSlots() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("business_hour_slots")
+    .select("id, day_of_week, open_time, close_time, sort_order, is_active")
+    .eq("website_id", websiteId)
+    .order("day_of_week", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  return data || [];
+}
+
 export async function getSpecialDays() {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();

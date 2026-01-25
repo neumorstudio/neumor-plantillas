@@ -10,6 +10,16 @@ interface BusinessHour {
   close_time: string;
 }
 
+interface BusinessHourSlot {
+  id?: string;
+  temp_id?: string;
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 interface Booking {
   id: string;
   customer_name: string;
@@ -35,6 +45,7 @@ interface SpecialDay {
 
 interface Props {
   initialHours: BusinessHour[];
+  initialSlots: BusinessHourSlot[];
   initialBookings: Booking[];
   initialSpecialDays: SpecialDay[];
   year: number;
@@ -45,13 +56,36 @@ const dayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 
 export default function CalendarioClient({
   initialHours,
+  initialSlots,
   initialBookings,
   initialSpecialDays,
   year,
   month,
 }: Props) {
+  const createTempId = () =>
+    (typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+  const normalizeTime = (value: string) => {
+    const [hours = "00", minutes = "00"] = value.split(":");
+    return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+  };
+  const fallbackSlots =
+    initialSlots.length > 0
+      ? initialSlots
+      : initialHours
+          .filter((hour) => hour.is_open)
+          .map((hour) => ({
+            temp_id: createTempId(),
+            day_of_week: hour.day_of_week,
+            open_time: hour.open_time,
+            close_time: hour.close_time,
+            sort_order: 0,
+            is_active: true,
+          }));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [hours, setHours] = useState<BusinessHour[]>(initialHours);
+  const [slots, setSlots] = useState<BusinessHourSlot[]>(fallbackSlots);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [calendarYear, setCalendarYear] = useState(year);
@@ -129,12 +163,82 @@ export default function CalendarioClient({
   }, [bookingsForDay]);
 
 
-  const handleHourChange = (day: number, field: keyof BusinessHour, value: string | boolean) => {
-    setHours((prev) =>
-      prev.map((item) =>
-        item.day_of_week === day ? { ...item, [field]: value } : item
-      )
+  const getSlotsForDay = (day: number, source = slots) =>
+    source
+      .filter((slot) => slot.day_of_week === day && slot.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order);
+
+  const handleSlotChange = (
+    slotId: string,
+    field: keyof BusinessHourSlot,
+    value: string
+  ) => {
+    setSlots((prev) =>
+      prev.map((slot) => {
+        const key = slot.id || slot.temp_id || "";
+        if (key !== slotId) return slot;
+        return { ...slot, [field]: value };
+      })
     );
+  };
+
+  const handleAddSlot = (day: number) => {
+    setSlots((prev) => {
+      const daySlots = getSlotsForDay(day, prev);
+      const nextOrder = daySlots.length;
+      return [
+        ...prev,
+        {
+          temp_id: createTempId(),
+          day_of_week: day,
+          open_time: "09:00",
+          close_time: "14:00",
+          sort_order: nextOrder,
+          is_active: true,
+        },
+      ];
+    });
+  };
+
+  const handleRemoveSlot = (day: number, slotId: string) => {
+    setSlots((prev) => {
+      const filtered = prev.filter((slot) => {
+        if (slot.day_of_week !== day) return true;
+        const key = slot.id || slot.temp_id || "";
+        return key !== slotId;
+      });
+      const updatedDaySlots = getSlotsForDay(day, filtered).map((slot, idx) => ({
+        ...slot,
+        sort_order: idx,
+      }));
+      return [
+        ...filtered.filter((slot) => slot.day_of_week !== day),
+        ...updatedDaySlots,
+      ];
+    });
+  };
+
+  const handleToggleDay = (day: number, isOpen: boolean) => {
+    if (!isOpen) {
+      setSlots((prev) => prev.filter((slot) => slot.day_of_week !== day));
+      return;
+    }
+    setSlots((prev) => {
+      if (getSlotsForDay(day, prev).length > 0) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          temp_id: createTempId(),
+          day_of_week: day,
+          open_time: "09:00",
+          close_time: "14:00",
+          sort_order: 0,
+          is_active: true,
+        },
+      ];
+    });
   };
 
   const fetchBookings = async (nextYear: number, nextMonth: number) => {
@@ -182,7 +286,7 @@ export default function CalendarioClient({
       const response = await fetch("/api/calendario/horarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hours }),
+        body: JSON.stringify({ slots }),
       });
 
       if (!response.ok) {
@@ -482,45 +586,149 @@ export default function CalendarioClient({
             <h3 className="text-lg font-semibold mb-4">Horarios del local</h3>
             <div className="space-y-3">
               {dayLabels.map((label, index) => {
-                const day = hours.find((item) => item.day_of_week === index) || {
-                  day_of_week: index,
-                  is_open: true,
-                  open_time: "09:00",
-                  close_time: "19:00",
-                };
+                const daySlots = getSlotsForDay(index);
+                const isOpen = daySlots.length > 0;
 
                 return (
-                  <div key={label} className="flex items-center gap-3">
-                    <span className="w-10 text-sm font-medium">{label}</span>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={day.is_open}
-                        onChange={(event) =>
-                          handleHourChange(index, "is_open", event.target.checked)
-                        }
-                      />
-                      Abierto
-                    </label>
-                    <input
-                      type="time"
-                      value={day.open_time}
-                      onChange={(event) =>
-                        handleHourChange(index, "open_time", event.target.value)
-                      }
-                      className="neumor-input w-24"
-                      disabled={!day.is_open}
-                    />
-                    <span className="text-xs text-[var(--text-secondary)]">a</span>
-                    <input
-                      type="time"
-                      value={day.close_time}
-                      onChange={(event) =>
-                        handleHourChange(index, "close_time", event.target.value)
-                      }
-                      className="neumor-input w-24"
-                      disabled={!day.is_open}
-                    />
+                  <div key={label} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 text-sm font-medium">{label}</span>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={isOpen}
+                          onChange={(event) => handleToggleDay(index, event.target.checked)}
+                        />
+                        Abierto
+                      </label>
+                      <button
+                        type="button"
+                        className="neumor-btn text-xs px-3 py-1"
+                        onClick={() => handleAddSlot(index)}
+                        disabled={!isOpen}
+                      >
+                        Agregar tramo
+                      </button>
+                    </div>
+
+                    {isOpen ? (
+                      <div className="space-y-2">
+                        {daySlots.map((slot, slotIndex) => {
+                          const slotKey = slot.id || slot.temp_id || `${index}-${slotIndex}`;
+                          return (
+                            <div key={slotKey} className="flex items-center gap-3">
+                              <span className="text-xs text-[var(--text-secondary)] w-14">
+                                Tramo {slotIndex + 1}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="time"
+                                  value={normalizeTime(slot.open_time)}
+                                  onChange={(event) =>
+                                    handleSlotChange(
+                                      slotKey,
+                                      "open_time",
+                                      normalizeTime(event.target.value)
+                                    )
+                                  }
+                                  className="neumor-input w-28 no-native-time"
+                                />
+                                <button
+                                  type="button"
+                                  className="neumor-inset w-8 h-8 flex items-center justify-center"
+                                  onClick={(event) => {
+                                    const input = event.currentTarget
+                                      .closest("div")
+                                      ?.querySelector("input") as HTMLInputElement | null;
+                                    if (!input) return;
+                                    if (typeof input.showPicker === "function") {
+                                      input.showPicker();
+                                    } else {
+                                      input.focus();
+                                    }
+                                  }}
+                                  aria-label="Seleccionar hora de apertura"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                </button>
+                              </div>
+                              <span className="text-xs text-[var(--text-secondary)]">a</span>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="time"
+                                  value={normalizeTime(slot.close_time)}
+                                  onChange={(event) =>
+                                    handleSlotChange(
+                                      slotKey,
+                                      "close_time",
+                                      normalizeTime(event.target.value)
+                                    )
+                                  }
+                                  className="neumor-input w-28 no-native-time"
+                                />
+                                <button
+                                  type="button"
+                                  className="neumor-inset w-8 h-8 flex items-center justify-center"
+                                  onClick={(event) => {
+                                    const input = event.currentTarget
+                                      .closest("div")
+                                      ?.querySelector("input") as HTMLInputElement | null;
+                                    if (!input) return;
+                                    if (typeof input.showPicker === "function") {
+                                      input.showPicker();
+                                    } else {
+                                      input.focus();
+                                    }
+                                  }}
+                                  aria-label="Seleccionar hora de cierre"
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                </button>
+                              </div>
+                              {daySlots.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="neumor-btn text-xs px-3 py-1"
+                                  onClick={() => handleRemoveSlot(index, slotKey)}
+                                >
+                                  Quitar
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Cerrado.
+                      </p>
+                    )}
                   </div>
                 );
               })}

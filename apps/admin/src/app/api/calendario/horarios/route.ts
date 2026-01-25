@@ -13,18 +13,24 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { hours } = body as {
-      hours: {
+    const { hours, slots } = body as {
+      hours?: {
         day_of_week: number;
         is_open: boolean;
         open_time: string;
         close_time: string;
       }[];
+      slots?: {
+        day_of_week: number;
+        open_time: string;
+        close_time: string;
+        sort_order?: number;
+        is_active?: boolean;
+      }[];
     };
 
-    if (!Array.isArray(hours)) {
-      return NextResponse.json({ error: "Horas invalidas" }, { status: 400 });
-    }
+    const slotsArray = Array.isArray(slots) ? slots : [];
+    const hoursArray = Array.isArray(hours) ? hours : [];
 
     const { data: client } = await supabase
       .from("clients")
@@ -46,13 +52,86 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Website no encontrado" }, { status: 404 });
     }
 
-    const payload = hours.map((item) => ({
-      website_id: website.id,
-      day_of_week: item.day_of_week,
-      is_open: item.is_open,
-      open_time: item.open_time,
-      close_time: item.close_time,
-    }));
+    if (slotsArray.length) {
+      const cleanedSlots = slotsArray
+        .filter((slot) => slot.is_active !== false)
+        .map((slot, index) => ({
+          website_id: website.id,
+          day_of_week: slot.day_of_week,
+          open_time: slot.open_time,
+          close_time: slot.close_time,
+          sort_order: Number.isFinite(slot.sort_order) ? Number(slot.sort_order) : index,
+          is_active: true,
+        }));
+
+      const { error: deleteError } = await supabase
+        .from("business_hour_slots")
+        .delete()
+        .eq("website_id", website.id);
+
+      if (deleteError) {
+        return NextResponse.json({ error: "No se pudo actualizar tramos" }, { status: 500 });
+      }
+
+      if (cleanedSlots.length) {
+        const { error: insertError } = await supabase
+          .from("business_hour_slots")
+          .insert(cleanedSlots);
+
+        if (insertError) {
+          return NextResponse.json({ error: "No se pudo guardar tramos" }, { status: 500 });
+        }
+      }
+    }
+
+    const toMinutes = (value: string) => {
+      const [hoursValue, minutesValue] = value.split(":").map(Number);
+      return (hoursValue || 0) * 60 + (minutesValue || 0);
+    };
+
+    const dayMap = new Map<number, { open: string; close: string }>();
+    slotsArray.forEach((slot) => {
+      if (slot.is_active === false) return;
+      const current = dayMap.get(slot.day_of_week);
+      if (!current) {
+        dayMap.set(slot.day_of_week, { open: slot.open_time, close: slot.close_time });
+        return;
+      }
+      if (toMinutes(slot.open_time) < toMinutes(current.open)) {
+        current.open = slot.open_time;
+      }
+      if (toMinutes(slot.close_time) > toMinutes(current.close)) {
+        current.close = slot.close_time;
+      }
+    });
+
+    const payload = slotsArray.length
+      ? Array.from({ length: 7 }).map((_, idx) => {
+          const day = dayMap.get(idx);
+          if (day) {
+            return {
+              website_id: website.id,
+              day_of_week: idx,
+              is_open: true,
+              open_time: day.open,
+              close_time: day.close,
+            };
+          }
+          return {
+            website_id: website.id,
+            day_of_week: idx,
+            is_open: false,
+            open_time: "09:00",
+            close_time: "19:00",
+          };
+        })
+      : hoursArray.map((item) => ({
+          website_id: website.id,
+          day_of_week: item.day_of_week,
+          is_open: item.is_open,
+          open_time: item.open_time,
+          close_time: item.close_time,
+        }));
 
     const { error } = await supabase
       .from("business_hours")

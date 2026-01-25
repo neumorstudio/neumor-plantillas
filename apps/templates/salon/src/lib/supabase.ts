@@ -73,6 +73,16 @@ export interface BusinessHour {
   close_time: string;
 }
 
+export interface BusinessHourSlot {
+  id?: string;
+  website_id: string;
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 export interface SpecialDay {
   id?: string;
   website_id: string;
@@ -209,6 +219,32 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
     }
 
     return (data as BusinessHour[] | null) || [];
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
+  }
+}
+
+export async function getBusinessHourSlots(websiteId?: string): Promise<BusinessHourSlot[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("business_hour_slots")
+      .select("id, website_id, day_of_week, open_time, close_time, sort_order, is_active")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("day_of_week", { ascending: true })
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching business hour slots:", error.message);
+      return [];
+    }
+
+    return (data as BusinessHourSlot[] | null) || [];
   } catch (error) {
     console.error("Error connecting to Supabase:", error);
     return [];

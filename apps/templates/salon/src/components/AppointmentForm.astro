@@ -1,5 +1,5 @@
 ---
-import { getBusinessHours, getServiceCatalog, getSpecialDays } from "@lib/supabase";
+import { getBusinessHourSlots, getBusinessHours, getServiceCatalog, getSpecialDays } from "@lib/supabase";
 
 interface Props {
   title?: string;
@@ -18,6 +18,7 @@ const {
 const serviceCatalog = await getServiceCatalog(websiteId);
 const hasServiceCatalog = serviceCatalog.length > 0;
 const businessHours = await getBusinessHours(websiteId);
+const businessHourSlots = await getBusinessHourSlots(websiteId);
 const specialDays = await getSpecialDays(websiteId);
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -67,6 +68,7 @@ const fallbackCategories = [
 
 const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
 const hoursPayload = JSON.stringify(businessHours);
+const slotsPayload = JSON.stringify(businessHourSlots);
 const specialDaysPayload = JSON.stringify(specialDays);
 ---
 
@@ -117,6 +119,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
         data-supabase-url={supabaseUrl}
         data-supabase-key={supabaseAnonKey}
         data-business-hours={hoursPayload}
+        data-business-hour-slots={slotsPayload}
         data-special-days={specialDaysPayload}
       >
         <header class="appointment-header">
@@ -708,6 +711,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
   const supabaseKey = form.dataset.supabaseKey || "";
   const websiteId = form.dataset.websiteId || "";
   const businessHoursRaw = form.dataset.businessHours || "[]";
+  const businessHourSlotsRaw = form.dataset.businessHourSlots || "[]";
   const specialDaysRaw = form.dataset.specialDays || "[]";
   const parsedBusinessHours = JSON.parse(businessHoursRaw) as {
     day_of_week: number;
@@ -716,6 +720,15 @@ const specialDaysPayload = JSON.stringify(specialDays);
     close_time: string;
   }[] | null;
   const businessHours = Array.isArray(parsedBusinessHours) ? parsedBusinessHours : [];
+  const parsedBusinessHourSlots = JSON.parse(businessHourSlotsRaw) as {
+    day_of_week: number;
+    open_time: string;
+    close_time: string;
+    sort_order?: number;
+  }[] | null;
+  const businessHourSlots = Array.isArray(parsedBusinessHourSlots)
+    ? parsedBusinessHourSlots
+    : [];
   const parsedSpecialDays = JSON.parse(specialDaysRaw) as {
     date: string;
     is_open: boolean;
@@ -778,25 +791,49 @@ const specialDaysPayload = JSON.stringify(specialDays);
     const special = specialDays.find((item) => item.date === dateValue);
     if (special) {
       if (!special.is_open) {
-        return { ...defaultSchedule, is_open: false };
+        return { is_open: false, slots: [] };
       }
       return {
         is_open: true,
-        open_time: special.open_time || defaultSchedule.open_time,
-        close_time: special.close_time || defaultSchedule.close_time,
+        slots: [
+          {
+            open_time: special.open_time || defaultSchedule.open_time,
+            close_time: special.close_time || defaultSchedule.close_time,
+          },
+        ],
       };
     }
 
     const date = new Date(dateValue);
     const dayIndex = (date.getDay() + 6) % 7;
+    const slotMatches = businessHourSlots
+      .filter((slot) => slot.day_of_week === dayIndex)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    if (slotMatches.length) {
+      return {
+        is_open: true,
+        slots: slotMatches.map((slot) => ({
+          open_time: slot.open_time || defaultSchedule.open_time,
+          close_time: slot.close_time || defaultSchedule.close_time,
+        })),
+      };
+    }
+
     const day = businessHours.find((item) => item.day_of_week === dayIndex);
     if (!day) {
-      return defaultSchedule;
+      return { is_open: true, slots: [{ open_time: defaultSchedule.open_time, close_time: defaultSchedule.close_time }] };
+    }
+    if (!day.is_open) {
+      return { is_open: false, slots: [] };
     }
     return {
-      is_open: day.is_open,
-      open_time: day.open_time || defaultSchedule.open_time,
-      close_time: day.close_time || defaultSchedule.close_time,
+      is_open: true,
+      slots: [
+        {
+          open_time: day.open_time || defaultSchedule.open_time,
+          close_time: day.close_time || defaultSchedule.close_time,
+        },
+      ],
     };
   };
 
@@ -912,40 +949,42 @@ const specialDaysPayload = JSON.stringify(specialDays);
     }
     const duration = getSelectedDuration();
     const schedule = getDaySchedule(dateValue);
-    if (!schedule.is_open) {
+    if (!schedule.is_open || !schedule.slots.length) {
       return;
     }
-    const startMinutes = timeToMinutes(schedule.open_time);
-    const endMinutes = timeToMinutes(schedule.close_time);
     const bookedSlots = dateValue ? await loadBookedSlots(dateValue) : [];
+    schedule.slots.forEach((slotRange) => {
+      const startMinutes = timeToMinutes(slotRange.open_time);
+      const endMinutes = timeToMinutes(slotRange.close_time);
 
-    for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
-      const slot = minutesToTime(minutes);
-      const slotEnd = minutes + duration;
-      const isBlocked = bookedSlots.some((booked) => minutes < booked.end && slotEnd > booked.start);
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `time-slot${isBlocked ? " is-disabled" : ""}`;
-      button.textContent = slot;
-      button.dataset.time = slot;
-      if (isBlocked) {
-        button.disabled = true;
-        button.setAttribute("aria-disabled", "true");
-      } else {
-        button.addEventListener("click", () => {
-          if (!timeInput) {
-            return;
-          }
-          timeInput.value = slot;
-          timeGrid.querySelectorAll(".time-slot").forEach((item) => {
-            item.classList.remove("is-selected");
+      for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
+        const slot = minutesToTime(minutes);
+        const slotEnd = minutes + duration;
+        const isBlocked = bookedSlots.some((booked) => minutes < booked.end && slotEnd > booked.start);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `time-slot${isBlocked ? " is-disabled" : ""}`;
+        button.textContent = slot;
+        button.dataset.time = slot;
+        if (isBlocked) {
+          button.disabled = true;
+          button.setAttribute("aria-disabled", "true");
+        } else {
+          button.addEventListener("click", () => {
+            if (!timeInput) {
+              return;
+            }
+            timeInput.value = slot;
+            timeGrid.querySelectorAll(".time-slot").forEach((item) => {
+              item.classList.remove("is-selected");
+            });
+            button.classList.add("is-selected");
+            updateSummary();
           });
-          button.classList.add("is-selected");
-          updateSummary();
-        });
+        }
+        timeGrid.appendChild(button);
       }
-      timeGrid.appendChild(button);
-    }
+    });
   };
 
   const getSelectedServices = () => {
