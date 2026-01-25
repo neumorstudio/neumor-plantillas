@@ -494,6 +494,11 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     cursor: pointer;
   }
 
+  .calendar-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
   .calendar-month {
     font-weight: 600;
   }
@@ -587,6 +592,11 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     box-shadow: none;
     border: 2px solid rgba(255, 255, 255, 0.6);
     font-weight: 600;
+  }
+
+  :global(.time-slot.is-disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   :global(.calendar-day:focus-visible),
@@ -690,8 +700,14 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
   const timeGrid = form.querySelector<HTMLElement>("[data-time-grid]");
   const prevMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-prev]");
   const nextMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-next]");
+  const serviceInputs = Array.from(
+    form.querySelectorAll<HTMLInputElement>("input[name='services']")
+  );
 
   const hasServices = form.dataset.hasServices === "true";
+  const supabaseUrl = form.dataset.supabaseUrl || "";
+  const supabaseKey = form.dataset.supabaseKey || "";
+  const websiteId = form.dataset.websiteId || "";
   const monthNames = [
     "Enero",
     "Febrero",
@@ -707,28 +723,84 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     "Diciembre",
   ];
 
-  const timeSlots = [
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-    "18:00",
-    "18:30",
-    "19:00",
-  ];
+  const businessHours = { start: "09:00", end: "19:00" };
+  const slotStepMinutes = 15;
+  const bookingsCache = new Map<string, { start: number; end: number }[]>();
 
   let currentStep = 1;
-  let currentMonth = new Date();
+  const currentMonth = new Date();
   currentMonth.setDate(1);
+  currentMonth.setHours(0, 0, 0, 0);
+
+  const timeToMinutes = (value: string) => {
+    const parts = value.split(":").map(Number);
+    const hours = parts[0] || 0;
+    const minutes = parts[1] || 0;
+    return hours * 60 + minutes;
+  };
+
+  const minutesToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+  };
+
+  const bufferMinutes = 10;
+
+  const getSelectedDuration = () => {
+    const services = getSelectedServices();
+    const totalDuration = services.reduce((sum, service) => sum + service.duration_minutes, 0);
+    const baseDuration = totalDuration > 0 ? totalDuration : 30;
+    return baseDuration + bufferMinutes;
+  };
+
+  const loadBookedSlots = async (dateValue: string) => {
+    if (bookingsCache.has(dateValue)) {
+      return bookingsCache.get(dateValue) || [];
+    }
+
+    if (!supabaseUrl || !supabaseKey || !websiteId) {
+      bookingsCache.set(dateValue, []);
+      return [];
+    }
+
+    try {
+      const url = `${supabaseUrl}/rest/v1/bookings?select=booking_time,total_duration_minutes,services,status&website_id=eq.${websiteId}&booking_date=eq.${dateValue}&status=in.(pending,confirmed)`;
+      const response = await fetch(url, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        bookingsCache.set(dateValue, []);
+        return [];
+      }
+
+      const data = await response.json();
+      const slots = (data || [])
+        .filter((item: { booking_time?: string | null }) => item.booking_time)
+        .map((item: {
+          booking_time: string;
+          total_duration_minutes?: number | null;
+          services?: { duration_minutes?: number }[] | null;
+        }) => {
+          const durationFromServices = Array.isArray(item.services)
+            ? item.services.reduce((sum, service) => sum + (service.duration_minutes || 0), 0)
+            : 0;
+          const duration = item.total_duration_minutes || durationFromServices || 30;
+          const start = timeToMinutes(item.booking_time);
+          return { start, end: start + duration };
+        });
+
+      bookingsCache.set(dateValue, slots);
+      return slots;
+    } catch {
+      bookingsCache.set(dateValue, []);
+      return [];
+    }
+  };
 
   const renderCalendar = () => {
     if (!calendarGrid || !calendarLabel) {
@@ -762,40 +834,58 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
           return;
         }
         dateInput.value = selected;
+        if (timeInput) {
+          timeInput.value = "";
+        }
         calendarGrid.querySelectorAll(".calendar-day").forEach((item) => {
           item.classList.remove("is-selected");
         });
         button.classList.add("is-selected");
         updateSummary();
+        renderTimeSlots();
       });
       calendarGrid.appendChild(button);
     }
   };
 
-  const renderTimeSlots = () => {
+  const renderTimeSlots = async () => {
     if (!timeGrid) {
       return;
     }
     timeGrid.innerHTML = "";
-    timeSlots.forEach((slot) => {
+    const dateValue = dateInput?.value || "";
+    const duration = getSelectedDuration();
+    const startMinutes = timeToMinutes(businessHours.start);
+    const endMinutes = timeToMinutes(businessHours.end);
+    const bookedSlots = dateValue ? await loadBookedSlots(dateValue) : [];
+
+    for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
+      const slot = minutesToTime(minutes);
+      const slotEnd = minutes + duration;
+      const isBlocked = bookedSlots.some((booked) => minutes < booked.end && slotEnd > booked.start);
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "time-slot";
+      button.className = `time-slot${isBlocked ? " is-disabled" : ""}`;
       button.textContent = slot;
       button.dataset.time = slot;
-      button.addEventListener("click", () => {
-        if (!timeInput) {
-          return;
-        }
-        timeInput.value = slot;
-        timeGrid.querySelectorAll(".time-slot").forEach((item) => {
-          item.classList.remove("is-selected");
+      if (isBlocked) {
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+      } else {
+        button.addEventListener("click", () => {
+          if (!timeInput) {
+            return;
+          }
+          timeInput.value = slot;
+          timeGrid.querySelectorAll(".time-slot").forEach((item) => {
+            item.classList.remove("is-selected");
+          });
+          button.classList.add("is-selected");
+          updateSummary();
         });
-        button.classList.add("is-selected");
-        updateSummary();
-      });
+      }
       timeGrid.appendChild(button);
-    });
+    }
   };
 
   const getSelectedServices = () => {
@@ -882,19 +972,57 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     updateSteps();
   });
 
+  const now = new Date();
+  const baseMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const daysUntilEnd = Math.ceil(
+    (lastDayOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const canMoveNextMonth = daysUntilEnd <= 7;
+
+  const updateMonthNav = () => {
+    if (prevMonthBtn) {
+      prevMonthBtn.disabled =
+        currentMonth.getFullYear() === baseMonth.getFullYear() &&
+        currentMonth.getMonth() === baseMonth.getMonth();
+    }
+    if (nextMonthBtn) {
+      const isAtBase =
+        currentMonth.getFullYear() === baseMonth.getFullYear() &&
+        currentMonth.getMonth() === baseMonth.getMonth();
+      nextMonthBtn.disabled = !(canMoveNextMonth && isAtBase);
+    }
+  };
+
   prevMonthBtn?.addEventListener("click", () => {
-    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    if (prevMonthBtn?.disabled) {
+      return;
+    }
+    currentMonth.setMonth(currentMonth.getMonth() - 1);
     renderCalendar();
+    updateMonthNav();
   });
 
   nextMonthBtn?.addEventListener("click", () => {
-    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+    if (nextMonthBtn?.disabled) {
+      return;
+    }
+    currentMonth.setMonth(currentMonth.getMonth() + 1);
     renderCalendar();
+    updateMonthNav();
   });
 
   renderCalendar();
   renderTimeSlots();
   updateSteps();
+  updateMonthNav();
+
+  serviceInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      renderTimeSlots();
+      updateSummary();
+    });
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -903,9 +1031,6 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     }
 
     const webhookUrl = form.dataset.webhook;
-    const websiteId = form.dataset.websiteId;
-    const supabaseUrl = form.dataset.supabaseUrl;
-    const supabaseKey = form.dataset.supabaseKey;
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
     const selectedServices = getSelectedServices();
