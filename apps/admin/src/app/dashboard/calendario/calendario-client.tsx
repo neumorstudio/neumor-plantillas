@@ -324,7 +324,7 @@ export default function CalendarioClient({
   };
 
   const handleBookingDelete = async (bookingId: string) => {
-    const confirmed = window.confirm("Eliminar esta reserva?");
+    const confirmed = window.confirm("Borrado permanente de reserva. Deseas continuar?");
     if (!confirmed) return;
     setBookingError(null);
 

@@ -739,7 +739,11 @@ const specialDaysPayload = JSON.stringify(specialDays);
   ];
 
   const slotStepMinutes = 15;
-  const bookingsCache = new Map<string, { start: number; end: number }[]>();
+  const bookingsCache = new Map<
+    string,
+    { slots: { start: number; end: number }[]; fetchedAt: number }
+  >();
+  const cacheTtlMs = 0;
 
   let currentStep = 1;
   const currentMonth = new Date();
@@ -797,12 +801,13 @@ const specialDaysPayload = JSON.stringify(specialDays);
   };
 
   const loadBookedSlots = async (dateValue: string) => {
-    if (bookingsCache.has(dateValue)) {
-      return bookingsCache.get(dateValue) || [];
+    const cached = bookingsCache.get(dateValue);
+    if (cached && Date.now() - cached.fetchedAt < cacheTtlMs) {
+      return cached.slots;
     }
 
     if (!supabaseUrl || !supabaseKey || !websiteId) {
-      bookingsCache.set(dateValue, []);
+      bookingsCache.set(dateValue, { slots: [], fetchedAt: Date.now() });
       return [];
     }
 
@@ -816,7 +821,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
       });
 
       if (!response.ok) {
-        bookingsCache.set(dateValue, []);
+        bookingsCache.set(dateValue, { slots: [], fetchedAt: Date.now() });
         return [];
       }
 
@@ -836,10 +841,10 @@ const specialDaysPayload = JSON.stringify(specialDays);
           return { start, end: start + duration };
         });
 
-      bookingsCache.set(dateValue, slots);
+      bookingsCache.set(dateValue, { slots, fetchedAt: Date.now() });
       return slots;
     } catch {
-      bookingsCache.set(dateValue, []);
+      bookingsCache.set(dateValue, { slots: [], fetchedAt: Date.now() });
       return [];
     }
   };
@@ -1163,11 +1168,12 @@ const specialDaysPayload = JSON.stringify(specialDays);
       const bookedDate = typeof rawData.date === "string" ? rawData.date : "";
       const bookedTime = typeof rawData.time === "string" ? rawData.time : "";
       if (bookedDate && bookedTime) {
-        const duration = totalDuration || 30;
+        const duration = getSelectedDuration();
         const start = timeToMinutes(bookedTime);
         const end = start + duration;
-        const existing = bookingsCache.get(bookedDate) || [];
-        bookingsCache.set(bookedDate, [...existing, { start, end }]);
+        const existing = bookingsCache.get(bookedDate);
+        const slots = existing?.slots || [];
+        bookingsCache.set(bookedDate, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
       }
 
       alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
