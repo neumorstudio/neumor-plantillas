@@ -50,6 +50,20 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: "/dashboard/calendario",
+    label: "Calendario",
+    slug: "calendario",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <path d="M8 14h.01M12 14h.01M16 14h.01" />
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/presupuestos",
     label: "Presupuestos",
     slug: "presupuestos",
@@ -69,17 +83,6 @@ const navItems: NavItem[] = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/dashboard/clientes",
-    label: "Clientes",
-    slug: "clientes",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
       </svg>
     ),
   },
@@ -221,8 +224,18 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
   const pathname = usePathname();
   const router = useRouter();
 
-  const sectionFilteredItems = visibleSections?.length
-    ? navItems.filter((item) => visibleSections.includes(item.slug))
+  const resolvedSections = visibleSections?.length ? [...visibleSections] : null;
+  if (clientInfo?.businessType === "salon" && resolvedSections) {
+    if (!resolvedSections.includes("reservas")) {
+      resolvedSections.push("reservas");
+    }
+    if (!resolvedSections.includes("calendario")) {
+      resolvedSections.push("calendario");
+    }
+  }
+
+  const sectionFilteredItems = resolvedSections?.length
+    ? navItems.filter((item) => resolvedSections.includes(item.slug))
     : navItems;
 
   const visibleNavItems = sectionFilteredItems.filter(
@@ -305,3 +318,4 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
     </aside>
   );
 }
+

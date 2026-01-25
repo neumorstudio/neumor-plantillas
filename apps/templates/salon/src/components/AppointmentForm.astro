@@ -1,5 +1,5 @@
 ---
-import { getServiceCatalog } from "@lib/supabase";
+import { getBusinessHours, getServiceCatalog, getSpecialDays } from "@lib/supabase";
 
 interface Props {
   title?: string;
@@ -17,6 +17,8 @@ const {
 
 const serviceCatalog = await getServiceCatalog(websiteId);
 const hasServiceCatalog = serviceCatalog.length > 0;
+const businessHours = await getBusinessHours(websiteId);
+const specialDays = await getSpecialDays(websiteId);
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -64,6 +66,8 @@ const fallbackCategories = [
 ];
 
 const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
+const hoursPayload = JSON.stringify(businessHours);
+const specialDaysPayload = JSON.stringify(specialDays);
 ---
 
 <section id="appointment" class="section">
@@ -112,6 +116,8 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
         data-has-services={categories.length > 0 ? "true" : "false"}
         data-supabase-url={supabaseUrl}
         data-supabase-key={supabaseAnonKey}
+        data-business-hours={hoursPayload}
+        data-special-days={specialDaysPayload}
       >
         <header class="appointment-header">
           <h3>Reserva tu cita</h3>
@@ -605,6 +611,11 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     outline-offset: 2px;
   }
 
+  :global(.calendar-day.is-disabled) {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
   .summary-card {
     display: grid;
     gap: 0.75rem;
@@ -708,6 +719,22 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
   const supabaseUrl = form.dataset.supabaseUrl || "";
   const supabaseKey = form.dataset.supabaseKey || "";
   const websiteId = form.dataset.websiteId || "";
+  const businessHoursRaw = form.dataset.businessHours || "[]";
+  const specialDaysRaw = form.dataset.specialDays || "[]";
+  const parsedBusinessHours = JSON.parse(businessHoursRaw) as {
+    day_of_week: number;
+    is_open: boolean;
+    open_time: string;
+    close_time: string;
+  }[] | null;
+  const businessHours = Array.isArray(parsedBusinessHours) ? parsedBusinessHours : [];
+  const parsedSpecialDays = JSON.parse(specialDaysRaw) as {
+    date: string;
+    is_open: boolean;
+    open_time: string;
+    close_time: string;
+  }[] | null;
+  const specialDays = Array.isArray(parsedSpecialDays) ? parsedSpecialDays : [];
   const monthNames = [
     "Enero",
     "Febrero",
@@ -723,7 +750,6 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     "Diciembre",
   ];
 
-  const businessHours = { start: "09:00", end: "19:00" };
   const slotStepMinutes = 15;
   const bookingsCache = new Map<string, { start: number; end: number }[]>();
 
@@ -745,13 +771,41 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
   };
 
-  const bufferMinutes = 10;
+  const bufferMinutes = 5;
 
   const getSelectedDuration = () => {
     const services = getSelectedServices();
     const totalDuration = services.reduce((sum, service) => sum + service.duration_minutes, 0);
     const baseDuration = totalDuration > 0 ? totalDuration : 30;
     return baseDuration + bufferMinutes;
+  };
+
+  const defaultSchedule = { is_open: true, open_time: "09:00", close_time: "19:00" };
+
+  const getDaySchedule = (dateValue: string) => {
+    const special = specialDays.find((item) => item.date === dateValue);
+    if (special) {
+      if (!special.is_open) {
+        return { ...defaultSchedule, is_open: false };
+      }
+      return {
+        is_open: true,
+        open_time: special.open_time || defaultSchedule.open_time,
+        close_time: special.close_time || defaultSchedule.close_time,
+      };
+    }
+
+    const date = new Date(dateValue);
+    const dayIndex = (date.getDay() + 6) % 7;
+    const day = businessHours.find((item) => item.day_of_week === dayIndex);
+    if (!day) {
+      return defaultSchedule;
+    }
+    return {
+      is_open: day.is_open,
+      open_time: day.open_time || defaultSchedule.open_time,
+      close_time: day.close_time || defaultSchedule.close_time,
+    };
   };
 
   const loadBookedSlots = async (dateValue: string) => {
@@ -827,7 +881,13 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
       button.type = "button";
       button.className = "calendar-day";
       button.textContent = String(day);
-      button.dataset.date = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      button.dataset.date = dateValue;
+      const schedule = getDaySchedule(dateValue);
+      if (!schedule.is_open) {
+        button.classList.add("is-disabled");
+        button.disabled = true;
+      }
       button.addEventListener("click", () => {
         const selected = button.dataset.date;
         if (!selected || !dateInput) {
@@ -854,9 +914,16 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     }
     timeGrid.innerHTML = "";
     const dateValue = dateInput?.value || "";
+    if (!dateValue) {
+      return;
+    }
     const duration = getSelectedDuration();
-    const startMinutes = timeToMinutes(businessHours.start);
-    const endMinutes = timeToMinutes(businessHours.end);
+    const schedule = getDaySchedule(dateValue);
+    if (!schedule.is_open) {
+      return;
+    }
+    const startMinutes = timeToMinutes(schedule.open_time);
+    const endMinutes = timeToMinutes(schedule.close_time);
     const bookedSlots = dateValue ? await loadBookedSlots(dateValue) : [];
 
     for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
@@ -1105,6 +1172,16 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
     }
 
     if (bookingSuccess) {
+      const bookedDate = typeof rawData.date === "string" ? rawData.date : "";
+      const bookedTime = typeof rawData.time === "string" ? rawData.time : "";
+      if (bookedDate && bookedTime) {
+        const duration = totalDuration || 30;
+        const start = timeToMinutes(bookedTime);
+        const end = start + duration;
+        const existing = bookingsCache.get(bookedDate) || [];
+        bookingsCache.set(bookedDate, [...existing, { start, end }]);
+      }
+
       alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
       form.reset();
       updateSummary();

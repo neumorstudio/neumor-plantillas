@@ -127,6 +127,66 @@ export async function getBookings(page = 1, pageSize = 10) {
   return { data: data || [], count: count || 0 };
 }
 
+export async function getBusinessHours() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("business_hours")
+    .select("day_of_week, is_open, open_time, close_time")
+    .eq("website_id", websiteId)
+    .order("day_of_week", { ascending: true });
+
+  if (data && data.length) return data;
+
+  return Array.from({ length: 7 }).map((_, index) => ({
+    day_of_week: index,
+    is_open: true,
+    open_time: "09:00",
+    close_time: "19:00",
+  }));
+}
+
+export async function getBookingsForMonth(year: number, month: number) {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+  const end = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+    new Date(year, month + 1, 0).getDate()
+  ).padStart(2, "0")}`;
+
+  const { data } = await supabase
+    .from("bookings")
+    .select("id, customer_name, customer_phone, booking_date, booking_time, services, status, notes, total_price_cents")
+    .eq("website_id", websiteId)
+    .gte("booking_date", start)
+    .lte("booking_date", end)
+    .order("booking_date", { ascending: true })
+    .order("booking_time", { ascending: true });
+
+  return data || [];
+}
+
+export async function getSpecialDays() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("special_days")
+    .select("id, date, is_open, open_time, close_time, note")
+    .eq("website_id", websiteId)
+    .order("date", { ascending: true });
+
+  return data || [];
+}
+
 // All leads with pagination
 export async function getLeads(page = 1, pageSize = 10) {
   const supabase = await createClient();

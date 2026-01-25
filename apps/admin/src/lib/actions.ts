@@ -93,6 +93,21 @@ export async function updateBooking(
   if (error) throw new Error(error.message);
 }
 
+export async function deleteBooking(bookingId: string): Promise<void> {
+  const supabase = await getSupabase();
+
+  const { error } = await supabase
+    .from("bookings")
+    .delete()
+    .eq("id", bookingId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/reservas");
+  revalidatePath("/dashboard/calendario");
+}
+
 // ============================================
 // LEADS ACTIONS
 // ============================================

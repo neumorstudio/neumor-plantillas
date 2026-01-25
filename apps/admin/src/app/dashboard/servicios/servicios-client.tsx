@@ -113,6 +113,10 @@ export function ServiciosClient({ initialCategories }: Props) {
     if (!name) return;
     const priceCents = Math.round(Number(formState.price || 0) * 100);
     const durationMinutes = Number(formState.duration || 0);
+    if (!durationMinutes || durationMinutes % 15 !== 0) {
+      setMessage({ type: "error", text: "La duracion debe ser multiplo de 15 minutos." });
+      return;
+    }
     await runAction(
       {
         action: "createItem",
@@ -135,6 +139,10 @@ export function ServiciosClient({ initialCategories }: Props) {
     const formData = new FormData(event.currentTarget);
     const price = Number(formData.get("price") || 0);
     const duration = Number(formData.get("duration") || 0);
+    if (!duration || duration % 15 !== 0) {
+      setMessage({ type: "error", text: "La duracion debe ser multiplo de 15 minutos." });
+      return;
+    }
     await runAction(
       {
         action: "updateItem",
@@ -325,10 +333,14 @@ export function ServiciosClient({ initialCategories }: Props) {
                           <input
                             name="duration"
                             type="number"
-                            min="1"
+                            min="15"
+                            step="15"
                             defaultValue={item.duration_minutes}
                             className="neumor-input w-full"
                           />
+                          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
+                            Multiplo de 15 minutos.
+                          </p>
                         </div>
                       </div>
                       <textarea
@@ -414,7 +426,8 @@ export function ServiciosClient({ initialCategories }: Props) {
                     />
                     <input
                       type="number"
-                      min="1"
+                      min="15"
+                      step="15"
                       className="neumor-input"
                       placeholder="Minutos"
                       value={newItem.duration}

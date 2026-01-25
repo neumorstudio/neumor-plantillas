@@ -64,6 +64,25 @@ export interface ServiceItem {
   is_active: boolean;
 }
 
+export interface BusinessHour {
+  id?: string;
+  website_id: string;
+  day_of_week: number;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
+export interface SpecialDay {
+  id?: string;
+  website_id: string;
+  date: string;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+  note: string | null;
+}
+
 // Cliente Supabase (solo lectura para el template)
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -166,6 +185,54 @@ export async function getServiceCatalog(websiteId?: string): Promise<ServiceCate
     });
 
     return Array.from(categoryMap.values());
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
+  }
+}
+
+export async function getBusinessHours(websiteId?: string): Promise<BusinessHour[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("business_hours")
+      .select("id, website_id, day_of_week, is_open, open_time, close_time")
+      .eq("website_id", websiteId)
+      .order("day_of_week", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching business hours:", error.message);
+      return [];
+    }
+
+    return (data as BusinessHour[] | null) || [];
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
+  }
+}
+
+export async function getSpecialDays(websiteId?: string): Promise<SpecialDay[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("special_days")
+      .select("id, website_id, date, is_open, open_time, close_time, note")
+      .eq("website_id", websiteId)
+      .order("date", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching special days:", error.message);
+      return [];
+    }
+
+    return (data as SpecialDay[] | null) || [];
   } catch (error) {
     console.error("Error connecting to Supabase:", error);
     return [];
