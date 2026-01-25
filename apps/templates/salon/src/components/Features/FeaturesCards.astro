@@ -10,6 +10,8 @@ interface Feature {
 
 interface Props {
   features?: Feature[];
+  title?: string;
+  subtitle?: string;
 }
 
 const defaultFeatures: Feature[] = [
@@ -33,11 +35,19 @@ const defaultFeatures: Feature[] = [
   },
 ];
 
-const { features = defaultFeatures } = Astro.props;
+const {
+  features = defaultFeatures,
+  title = "Lo Mejor del Salon",
+  subtitle = "Servicios y detalles pensados para ti",
+} = Astro.props;
 ---
 
 <section id="features" class="section">
   <div class="container">
+    <div class="features-header">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+    </div>
     <div class="grid-cards">
       {
         features.map((feature, index) => (
@@ -53,3 +63,25 @@ const { features = defaultFeatures } = Astro.props;
     </div>
   </div>
 </section>
+
+<style>
+  .features-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .features-header h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .features-header p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+</style>
