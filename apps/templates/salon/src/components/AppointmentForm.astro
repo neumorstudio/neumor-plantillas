@@ -400,6 +400,15 @@ const specialDaysPayload = JSON.stringify(specialDays);
   .service-catalog {
     display: grid;
     gap: 1.25rem;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 0.4rem;
+    scrollbar-width: none;
+  }
+
+  .service-catalog::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 
   .service-category {
