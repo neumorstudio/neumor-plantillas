@@ -94,7 +94,8 @@ export default function CalendarioClient({
             sort_order: 0,
             is_active: true,
           }));
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const todayIso = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState<string | null>(todayIso);
   const [slots, setSlots] = useState<BusinessHourSlot[]>(fallbackSlots);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -574,7 +575,7 @@ export default function CalendarioClient({
                 disabled={!date}
                 onClick={() => date && setSelectedDate(date)}
                 className={`neumor-btn h-10 text-sm ${
-                  date === selectedDate ? "neumor-btn-accent" : ""
+                  date === selectedDate ? "day-selected" : ""
                 } ${!date ? "opacity-30 cursor-not-allowed" : ""}`}
               >
                 {date ? Number(date.split("-")[2]) : ""}
@@ -586,7 +587,7 @@ export default function CalendarioClient({
         <div className="space-y-6">
           <div className="neumor-card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Reservas del dia</h3>
+              <h3 className="text-lg font-semibold">Citas del dia</h3>
               {selectedDate && (
                 <span className="text-sm text-[var(--text-secondary)]">{selectedDate}</span>
               )}
