@@ -162,7 +162,7 @@ export async function getBookingsForMonth(year: number, month: number) {
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, customer_name, customer_email, customer_phone, booking_date, booking_time, services, status, notes, total_price_cents, created_at")
+    .select("id, customer_name, customer_email, customer_phone, booking_date, booking_time, professional_id, services, status, notes, total_price_cents, created_at")
     .eq("website_id", websiteId)
     .gte("booking_date", start)
     .lte("booking_date", end)
@@ -184,6 +184,22 @@ export async function getBusinessHourSlots() {
     .eq("website_id", websiteId)
     .order("day_of_week", { ascending: true })
     .order("sort_order", { ascending: true });
+
+  return data || [];
+}
+
+export async function getProfessionals() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("professionals")
+    .select("id, name, is_active, sort_order")
+    .eq("website_id", websiteId)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
 
   return data || [];
 }

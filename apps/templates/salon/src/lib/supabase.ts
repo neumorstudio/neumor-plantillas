@@ -83,6 +83,14 @@ export interface BusinessHourSlot {
   is_active: boolean;
 }
 
+export interface Professional {
+  id: string;
+  website_id: string;
+  name: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
 export interface SpecialDay {
   id?: string;
   website_id: string;
@@ -245,6 +253,32 @@ export async function getBusinessHourSlots(websiteId?: string): Promise<Business
     }
 
     return (data as BusinessHourSlot[] | null) || [];
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
+  }
+}
+
+export async function getProfessionals(websiteId?: string): Promise<Professional[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("professionals")
+      .select("id, website_id, name, is_active, sort_order")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching professionals:", error.message);
+      return [];
+    }
+
+    return (data as Professional[] | null) || [];
   } catch (error) {
     console.error("Error connecting to Supabase:", error);
     return [];

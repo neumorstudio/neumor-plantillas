@@ -1,5 +1,5 @@
 ---
-import { getBusinessHourSlots, getBusinessHours, getServiceCatalog, getSpecialDays } from "@lib/supabase";
+import { getBusinessHourSlots, getBusinessHours, getProfessionals, getServiceCatalog, getSpecialDays } from "@lib/supabase";
 
 interface Props {
   title?: string;
@@ -20,6 +20,7 @@ const hasServiceCatalog = serviceCatalog.length > 0;
 const businessHours = await getBusinessHours(websiteId);
 const businessHourSlots = await getBusinessHourSlots(websiteId);
 const specialDays = await getSpecialDays(websiteId);
+const professionals = await getProfessionals(websiteId);
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -70,6 +71,7 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
 const hoursPayload = JSON.stringify(businessHours);
 const slotsPayload = JSON.stringify(businessHourSlots);
 const specialDaysPayload = JSON.stringify(specialDays);
+const professionalsPayload = JSON.stringify(professionals);
 ---
 
 <section id="appointment" class="section">
@@ -121,6 +123,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
         data-business-hours={hoursPayload}
         data-business-hour-slots={slotsPayload}
         data-special-days={specialDaysPayload}
+        data-professionals={professionalsPayload}
       >
         <header class="appointment-header">
           <h3>Reserva tu cita</h3>
@@ -180,6 +183,28 @@ const specialDaysPayload = JSON.stringify(specialDays);
             <div class="panel-header">
               <h4>Elige fecha y hora</h4>
               <p>Selecciona un dia y una franja horaria disponible.</p>
+            </div>
+            <div class="professional-select">
+              <h5>Selecciona profesional</h5>
+              {professionals.length ? (
+                <div class="professional-list">
+                  {professionals.map((professional) => (
+                    <label class="professional-chip" key={professional.id}>
+                      <input
+                        type="radio"
+                        name="professional_id"
+                        value={professional.id}
+                        required
+                      />
+                      <span>{professional.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p class="professional-empty">
+                  No hay profesionales disponibles.
+                </p>
+              )}
             </div>
             <div class="calendar-wrapper">
               <div class="calendar-card neumor-inset">
@@ -461,6 +486,47 @@ const specialDaysPayload = JSON.stringify(specialDays);
     border: 2px solid var(--accent);
   }
 
+  .professional-select {
+    margin-bottom: 1.25rem;
+  }
+
+  .professional-select h5 {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+  }
+
+  .professional-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .professional-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08),
+      -4px -4px 10px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+
+  .professional-chip input {
+    accent-color: var(--accent);
+  }
+
+  .professional-chip:has(input:checked) {
+    border: 2px solid var(--accent);
+  }
+
+  .professional-empty {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
   .calendar-wrapper {
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
@@ -714,6 +780,9 @@ const specialDaysPayload = JSON.stringify(specialDays);
   const serviceInputs = Array.from(
     form.querySelectorAll<HTMLInputElement>("input[name='services']")
   );
+  const professionalInputs = Array.from(
+    form.querySelectorAll<HTMLInputElement>("input[name='professional_id']")
+  );
 
   const hasServices = form.dataset.hasServices === "true";
   const supabaseUrl = form.dataset.supabaseUrl || "";
@@ -846,19 +915,29 @@ const specialDaysPayload = JSON.stringify(specialDays);
     };
   };
 
-  const loadBookedSlots = async (dateValue: string) => {
-    const cached = bookingsCache.get(dateValue);
+  const getSelectedProfessionalId = () =>
+    professionalInputs.find((input) => input.checked)?.value || "";
+
+  const getCacheKey = (dateValue: string, professionalId: string) =>
+    `${dateValue}:${professionalId}`;
+
+  const loadBookedSlots = async (dateValue: string, professionalId: string) => {
+    if (!professionalId) {
+      return [];
+    }
+    const cacheKey = getCacheKey(dateValue, professionalId);
+    const cached = bookingsCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < cacheTtlMs) {
       return cached.slots;
     }
 
     if (!supabaseUrl || !supabaseKey || !websiteId) {
-      bookingsCache.set(dateValue, { slots: [], fetchedAt: Date.now() });
+      bookingsCache.set(cacheKey, { slots: [], fetchedAt: Date.now() });
       return [];
     }
 
     try {
-      const url = `${supabaseUrl}/rest/v1/bookings?select=booking_time,total_duration_minutes,services,status&website_id=eq.${websiteId}&booking_date=eq.${dateValue}&status=in.(pending,confirmed)`;
+      const url = `${supabaseUrl}/rest/v1/bookings?select=booking_time,total_duration_minutes,services,status&website_id=eq.${websiteId}&booking_date=eq.${dateValue}&professional_id=eq.${professionalId}&status=in.(pending,confirmed)`;
       const response = await fetch(url, {
         headers: {
           apikey: supabaseKey,
@@ -867,7 +946,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
       });
 
       if (!response.ok) {
-        bookingsCache.set(dateValue, { slots: [], fetchedAt: Date.now() });
+        bookingsCache.set(cacheKey, { slots: [], fetchedAt: Date.now() });
         return [];
       }
 
@@ -887,10 +966,10 @@ const specialDaysPayload = JSON.stringify(specialDays);
           return { start, end: start + duration };
         });
 
-      bookingsCache.set(dateValue, { slots, fetchedAt: Date.now() });
+      bookingsCache.set(cacheKey, { slots, fetchedAt: Date.now() });
       return slots;
     } catch {
-      bookingsCache.set(dateValue, { slots: [], fetchedAt: Date.now() });
+      bookingsCache.set(cacheKey, { slots: [], fetchedAt: Date.now() });
       return [];
     }
   };
@@ -956,12 +1035,16 @@ const specialDaysPayload = JSON.stringify(specialDays);
     if (!dateValue) {
       return;
     }
+    const professionalId = getSelectedProfessionalId();
+    if (!professionalId) {
+      return;
+    }
     const duration = getSelectedDuration();
     const schedule = getDaySchedule(dateValue);
     if (!schedule.is_open || !schedule.slots.length) {
       return;
     }
-    const bookedSlots = dateValue ? await loadBookedSlots(dateValue) : [];
+    const bookedSlots = dateValue ? await loadBookedSlots(dateValue, professionalId) : [];
     schedule.slots.forEach((slotRange) => {
       const startMinutes = timeToMinutes(slotRange.open_time);
       const endMinutes = timeToMinutes(slotRange.close_time);
@@ -1059,6 +1142,10 @@ const specialDaysPayload = JSON.stringify(specialDays);
       }
     }
     if (currentStep === 2) {
+      if (!getSelectedProfessionalId()) {
+        alert("Selecciona un profesional.");
+        return false;
+      }
       if (!dateInput?.value || !timeInput?.value) {
         alert("Selecciona fecha y hora.");
         return false;
@@ -1132,6 +1219,16 @@ const specialDaysPayload = JSON.stringify(specialDays);
     });
   });
 
+  professionalInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      if (timeInput) {
+        timeInput.value = "";
+      }
+      renderTimeSlots();
+      updateSummary();
+    });
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!validateStep()) {
@@ -1142,6 +1239,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
     const selectedServices = getSelectedServices();
+    const selectedProfessionalId = getSelectedProfessionalId();
     const totalPrice = selectedServices.reduce((sum, service) => sum + service.price_cents, 0);
     const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0);
 
@@ -1152,6 +1250,7 @@ const specialDaysPayload = JSON.stringify(specialDays);
       customer_phone: rawData.phone,
       booking_date: rawData.date,
       booking_time: rawData.time,
+      professional_id: selectedProfessionalId || null,
       guests: 1,
       notes: rawData.notes || null,
       status: "pending",
@@ -1163,6 +1262,10 @@ const specialDaysPayload = JSON.stringify(specialDays);
 
     if (!websiteId) {
       alert("No se pudo identificar el website. Revisa la configuracion.");
+      return;
+    }
+    if (!selectedProfessionalId) {
+      alert("Selecciona un profesional.");
       return;
     }
 
@@ -1215,13 +1318,14 @@ const specialDaysPayload = JSON.stringify(specialDays);
     if (bookingSuccess) {
       const bookedDate = typeof rawData.date === "string" ? rawData.date : "";
       const bookedTime = typeof rawData.time === "string" ? rawData.time : "";
-      if (bookedDate && bookedTime) {
+      if (bookedDate && bookedTime && selectedProfessionalId) {
         const duration = getSelectedDuration();
         const start = timeToMinutes(bookedTime);
         const end = start + duration;
-        const existing = bookingsCache.get(bookedDate);
+        const cacheKey = getCacheKey(bookedDate, selectedProfessionalId);
+        const existing = bookingsCache.get(cacheKey);
         const slots = existing?.slots || [];
-        bookingsCache.set(bookedDate, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
+        bookingsCache.set(cacheKey, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
       }
 
       alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
