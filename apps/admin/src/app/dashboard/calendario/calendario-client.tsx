@@ -13,9 +13,11 @@ interface BusinessHour {
 interface Booking {
   id: string;
   customer_name: string;
+  customer_email?: string | null;
   customer_phone: string | null;
   booking_date: string;
   booking_time: string | null;
+  created_at?: string | null;
   services?: { name: string }[] | null;
   status: string;
   notes?: string | null;
@@ -95,6 +97,37 @@ export default function CalendarioClient({
         return timeA.localeCompare(timeB);
       });
   }, [bookings, selectedDate]);
+
+  const parseHour = (value: string | null) => {
+    if (!value) return null;
+    const parts = value.split(":").map(Number);
+    return Number.isFinite(parts[0]) ? (parts[0] as number) : null;
+  };
+
+  const getTimeBucket = (bookingTime: string | null) => {
+    const hour = parseHour(bookingTime);
+    if (hour === null) return "Sin hora";
+    if (hour < 13) return "Manana";
+    if (hour < 20) return "Tarde";
+    return "Noche";
+  };
+
+  const bookingsByBucket = useMemo(() => {
+    const groups: Record<string, Booking[]> = {
+      Manana: [],
+      Tarde: [],
+      Noche: [],
+      "Sin hora": [],
+    };
+
+    bookingsForDay.forEach((booking) => {
+      const bucket = getTimeBucket(booking.booking_time);
+      groups[bucket] = [...(groups[bucket] || []), booking];
+    });
+
+    return groups;
+  }, [bookingsForDay]);
+
 
   const handleHourChange = (day: number, field: keyof BusinessHour, value: string | boolean) => {
     setHours((prev) =>
@@ -327,7 +360,7 @@ export default function CalendarioClient({
               className="neumor-btn text-sm"
               disabled={loadingBookings}
             >
-              ?
+              ←
             </button>
             <h2 className="text-xl font-semibold capitalize">{monthLabel}</h2>
             <button
@@ -336,7 +369,7 @@ export default function CalendarioClient({
               className="neumor-btn text-sm"
               disabled={loadingBookings}
             >
-              ?
+              →
             </button>
           </div>
 
@@ -376,58 +409,62 @@ export default function CalendarioClient({
             {selectedDate ? (
               <div className="space-y-3">
                 {bookingsForDay.length ? (
-                  bookingsForDay.map((booking, index) => (
-                    <div key={booking.id} className="space-y-3">
-                      <div className="neumor-card-sm p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{booking.customer_name}</span>
-                        <span className="text-sm text-[var(--text-secondary)]">
-                          {booking.booking_time || "-"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        {(booking.services || [])
-                          .map((service) => service.name)
-                          .join(", ") || "Sin servicios"}
-                      </p>
-                      <p className="text-xs text-[var(--text-secondary)] mt-1">
-                        Total:{" "}
-                        {Number.isFinite(booking.total_price_cents)
-                          ? `${(Number(booking.total_price_cents) / 100).toFixed(2)} EUR`
-                          : "-"}
-                      </p>
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          type="button"
-                          className="neumor-btn text-xs px-3 py-1"
-                          onClick={() => {
-                            setBookingEdit(booking);
-                            setServicesText(
-                              booking.services?.map((service) => service.name).join(", ") || ""
-                            );
-                            setPriceText(
-                              Number.isFinite(booking.total_price_cents)
-                                ? (Number(booking.total_price_cents) / 100).toFixed(2)
-                                : ""
-                            );
-                          }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className="neumor-btn text-xs px-3 py-1"
-                          onClick={() => handleBookingDelete(booking.id)}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                      </div>
-                      {index < bookingsForDay.length - 1 && (
-                        <div className="h-px bg-[var(--shadow-dark)] opacity-40" />
-                      )}
-                    </div>
-                  ))
+                  <div className="space-y-5">
+                    {(["Manana", "Tarde", "Noche", "Sin hora"] as const).map((bucket) => {
+                      const bucketBookings = bookingsByBucket[bucket] || [];
+                      if (!bucketBookings.length) {
+                        return null;
+                      }
+                      return (
+                        <div key={bucket} className="space-y-3">
+                          <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold neumor-inset">
+                            {bucket}
+                          </span>
+                          {bucketBookings.map((booking, index) => (
+                            <div key={booking.id} className="space-y-3">
+                              <div className="neumor-card-sm p-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{booking.customer_name}</span>
+                                  <span className="text-lg font-semibold text-[var(--text-primary)]">
+                                    {booking.booking_time || "-"}
+                                  </span>
+                                </div>
+                                <div className="flex gap-2 mt-3">
+                                  <button
+                                    type="button"
+                                    className="neumor-btn text-xs px-3 py-1"
+                                    onClick={() => {
+                                      setBookingEdit(booking);
+                                      setServicesText(
+                                        booking.services?.map((service) => service.name).join(", ") || ""
+                                      );
+                                      setPriceText(
+                                        Number.isFinite(booking.total_price_cents)
+                                          ? (Number(booking.total_price_cents) / 100).toFixed(2)
+                                          : ""
+                                      );
+                                    }}
+                                  >
+                                    Ver
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="neumor-btn text-xs px-3 py-1"
+                                    onClick={() => handleBookingDelete(booking.id)}
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </div>
+                              {index < bucketBookings.length - 1 && (
+                                <div className="h-px bg-[var(--shadow-dark)] opacity-40" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <p className="text-sm text-[var(--text-secondary)]">
                     No hay reservas para este dia.

@@ -162,7 +162,7 @@ export async function getBookingsForMonth(year: number, month: number) {
 
   const { data } = await supabase
     .from("bookings")
-    .select("id, customer_name, customer_phone, booking_date, booking_time, services, status, notes, total_price_cents")
+    .select("id, customer_name, customer_email, customer_phone, booking_date, booking_time, services, status, notes, total_price_cents, created_at")
     .eq("website_id", websiteId)
     .gte("booking_date", start)
     .lte("booking_date", end)

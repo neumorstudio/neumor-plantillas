@@ -45,14 +45,39 @@ export default function ReservasClient({
     setBookings(initialBookings);
   }, [initialBookings]);
 
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesFilter = filter === "all" || booking.status === filter;
-    const matchesSearch =
-      booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (booking.customer_phone?.includes(searchTerm) ?? false) ||
-      (booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    return matchesFilter && matchesSearch;
-  });
+  const parseHour = (value: string | null) => {
+    if (!value) return null;
+    const parts = value.split(":").map(Number);
+    return Number.isFinite(parts[0]) ? (parts[0] as number) : null;
+  };
+
+  const getTimeBucket = (bookingTime: string | null) => {
+    const hour = parseHour(bookingTime);
+    if (hour === null) return "Sin hora";
+    if (hour < 13) return "Manana";
+    if (hour < 20) return "Tarde";
+    return "Noche";
+  };
+
+  const filteredBookings = bookings
+    .filter((booking) => {
+      const matchesFilter = filter === "all" || booking.status === filter;
+      const matchesSearch =
+        booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (booking.customer_phone?.includes(searchTerm) ?? false) ||
+        (booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const recentIds = new Set(filteredBookings.slice(0, 3).map((booking) => booking.id));
+
+  const groupedBookings = [
+    { label: "Manana", items: filteredBookings.filter((b) => getTimeBucket(b.booking_time) === "Manana") },
+    { label: "Tarde", items: filteredBookings.filter((b) => getTimeBucket(b.booking_time) === "Tarde") },
+    { label: "Noche", items: filteredBookings.filter((b) => getTimeBucket(b.booking_time) === "Noche") },
+    { label: "Sin hora", items: filteredBookings.filter((b) => getTimeBucket(b.booking_time) === "Sin hora") },
+  ].filter((group) => group.items.length > 0);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -236,6 +261,7 @@ export default function ReservasClient({
                   <th>Cliente</th>
                   <th>Contacto</th>
                   <th>Fecha y Hora</th>
+                  <th>Franja</th>
                   <th>Servicios</th>
                   <th>Precio</th>
                   <th>Notas</th>
@@ -246,7 +272,16 @@ export default function ReservasClient({
               <tbody>
                 {filteredBookings.map((booking) => (
                   <tr key={booking.id} className={isPending ? "opacity-50" : ""}>
-                    <td className="font-medium">{booking.customer_name}</td>
+                    <td className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{booking.customer_name}</span>
+                        {recentIds.has(booking.id) && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full neumor-inset">
+                            Nueva
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td>
                       <div className="text-sm">
                         <div>{booking.customer_phone || "-"}</div>
@@ -262,6 +297,11 @@ export default function ReservasClient({
                           {booking.booking_time || "-"}
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full neumor-inset">
+                        {getTimeBucket(booking.booking_time)}
+                      </span>
                     </td>
                     <td>
                       <span
