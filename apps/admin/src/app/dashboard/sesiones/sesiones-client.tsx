@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createSession, updateSession, deleteSession, completeSession, updateSessionStatus } from "@/lib/actions/sessions";
+import { Plus, ChevronLeft, ChevronRight, Clock, User, Pencil, Trash2, Check, X, Calendar } from "lucide-react";
+import { BottomSheet, ConfirmDialog } from "@/components/mobile";
 
 interface Customer {
   id: string;
