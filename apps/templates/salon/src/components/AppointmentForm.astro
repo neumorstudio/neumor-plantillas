@@ -1003,7 +1003,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       panel.style.width = previous.width;
     });
 
-    stepPanels.style.minHeight = `${maxHeight}px`;
+    stepPanels.style.minHeight = `${Math.max(0, maxHeight - 12)}px`;
   };
 
   const showToast = (message: string, type: "error" | "success" | "warning" = "error", duration = 3500) => {
@@ -1145,6 +1145,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   const updateProfessionalAvailability = () => {
     const requiredCategoryIds = getSelectedCategoryIds();
     let hasAvailable = false;
+    let selectedAvailable = false;
+    let firstAvailable: HTMLInputElement | null = null;
 
     professionalInputs.forEach((input) => {
       const label = input.closest(".professional-chip") as HTMLElement | null;
@@ -1159,10 +1161,25 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       input.disabled = !isAvailable;
       if (isAvailable) {
         hasAvailable = true;
+        if (!firstAvailable) {
+          firstAvailable = input;
+        }
+        if (input.checked) {
+          selectedAvailable = true;
+        }
       } else if (input.checked) {
         input.checked = false;
       }
     });
+
+    if (!selectedAvailable && firstAvailable) {
+      firstAvailable.checked = true;
+      if (timeInput) {
+        timeInput.value = "";
+      }
+      renderTimeSlots();
+      updateSummary();
+    }
 
     if (professionalWarning) {
       professionalWarning.hidden = hasAvailable;
@@ -1314,6 +1331,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       calendarGrid.appendChild(spacer);
     }
 
+    const dateInputValue = dateInput?.value || "";
+    const todayIso = `${year}-${String(month + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
     for (let day = 1; day <= lastDay.getDate(); day += 1) {
       const button = document.createElement("button");
       button.type = "button";
@@ -1326,6 +1346,13 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       if (dateObj < today || !schedule.is_open) {
         button.classList.add("is-disabled");
         button.disabled = true;
+      }
+      if (dateInputValue === dateValue) {
+        button.classList.add("is-selected");
+      }
+      if (!dateInputValue && dateValue === todayIso && !button.disabled && dateInput) {
+        dateInput.value = dateValue;
+        button.classList.add("is-selected");
       }
       button.addEventListener("click", () => {
         const selected = button.dataset.date;
