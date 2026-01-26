@@ -194,17 +194,19 @@ export function ServiciosClient({ initialCategories }: Props) {
 
       <div className="neumor-card p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-          <h2 className="text-lg font-semibold">Nueva categoria</h2>
-          <span className="text-xs text-[var(--text-secondary)]">
-            Solo necesitas un nombre
-          </span>
+          <div>
+            <h2 className="text-lg font-semibold">Nueva categoria</h2>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
+              Solo necesitas un nombre para empezar.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
           <input
             type="text"
             value={newCategoryName}
             onChange={(event) => setNewCategoryName(event.target.value)}
-            className="neumor-input flex-1"
+            className="neumor-input w-full"
             placeholder="Ej: Peluqueria, Salon de unas, Estetica"
           />
           <button
@@ -229,7 +231,7 @@ export function ServiciosClient({ initialCategories }: Props) {
           return (
             <div key={category.id} className="neumor-card p-6">
               <form onSubmit={(event) => handleUpdateCategory(event, category.id)}>
-                <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                <div className="flex flex-col xl:flex-row xl:items-end gap-4">
                   <div className="flex-1 space-y-2">
                     <label className="text-xs text-[var(--text-secondary)]">
                       Nombre de la categoria
@@ -240,20 +242,20 @@ export function ServiciosClient({ initialCategories }: Props) {
                       className="neumor-input w-full"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-[var(--text-secondary)]">Orden</label>
-                    <input
-                      name="sort_order"
-                      type="number"
-                      defaultValue={category.sort_order}
-                      className="neumor-input w-24"
-                    />
-                  </div>
-                  <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                    <input type="checkbox" name="is_active" defaultChecked={category.is_active} />
-                    Activa
-                  </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-[var(--text-secondary)]">Orden</label>
+                      <input
+                        name="sort_order"
+                        type="number"
+                        defaultValue={category.sort_order}
+                        className="neumor-input w-20"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                      <input type="checkbox" name="is_active" defaultChecked={category.is_active} />
+                      Activa
+                    </label>
                     <button
                       type="submit"
                       className="neumor-btn neumor-btn-accent"
@@ -283,13 +285,15 @@ export function ServiciosClient({ initialCategories }: Props) {
 
               <div className="mt-6 border-t border-[var(--shadow-light)] pt-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                  <h3 className="text-lg font-semibold">Subcategorias</h3>
-                  <span className="text-xs text-[var(--text-secondary)]">
-                    Precio en EUR y duracion en minutos
-                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold">Subcategorias</h3>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">
+                      Precio en EUR y duracion en minutos.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {category.items.length === 0 && (
                     <div className="text-sm text-[var(--text-secondary)]">
                       No hay subcategorias en esta categoria.
@@ -299,10 +303,10 @@ export function ServiciosClient({ initialCategories }: Props) {
                   {category.items.map((item) => (
                     <form
                       key={item.id}
-                      className="neumor-inset p-4 rounded-lg space-y-3"
+                      className="neumor-inset p-4 rounded-xl space-y-3"
                       onSubmit={(event) => handleUpdateItem(event, item.id)}
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-[1.3fr_0.7fr_0.7fr] gap-3">
                         <div className="md:col-span-1">
                           <label className="text-xs text-[var(--text-secondary)]">
                             Nombre
@@ -471,26 +475,6 @@ export function ServiciosClient({ initialCategories }: Props) {
         })}
       </div>
 
-      <div className="mt-8 text-sm text-[var(--text-secondary)]">
-        <button
-          onClick={() => {
-            setLoading(true);
-            setMessage(null);
-            loadServices()
-              .catch((error) =>
-                setMessage({
-                  type: "error",
-                  text: error instanceof Error ? error.message : "Error al actualizar",
-                })
-              )
-              .finally(() => setLoading(false));
-          }}
-          disabled={loading}
-          className="neumor-btn"
-        >
-          Actualizar lista
-        </button>
-      </div>
     </div>
   );
 }
