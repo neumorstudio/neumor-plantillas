@@ -617,12 +617,14 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     grid-template-columns: repeat(7, 1fr);
     gap: 0.35rem;
     pointer-events: auto;
+    justify-items: center;
   }
 
   .calendar-weekdays span {
     text-align: center;
     font-size: 0.75rem;
     color: var(--text-secondary);
+    width: 100%;
   }
 
   :global(.calendar-day) {
@@ -800,6 +802,35 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
     .step-panels {
       min-height: 560px;
+    }
+
+    .calendar-card {
+      padding: 1rem;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      gap: 0.3rem;
+      grid-template-columns: repeat(7, 26px);
+      justify-content: center;
+      justify-items: center;
+    }
+
+    .calendar-weekdays span {
+      width: 26px;
+    }
+
+    .calendar-weekdays span {
+      font-size: 0.7rem;
+    }
+
+    :global(.calendar-day),
+    :global(.calendar-spacer) {
+      width: 26px;
+      height: 26px;
     }
   }
 
