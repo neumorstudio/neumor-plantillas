@@ -452,7 +452,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   .service-catalog {
     display: grid;
     gap: 1.25rem;
-    max-height: 340px;
+    max-height: 460px;
     overflow-y: auto;
     padding-right: 0.4rem;
     scrollbar-width: none;
@@ -1452,6 +1452,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
 
     updateSummary();
+    syncStepPanelHeight();
   };
 
   const validateStep = () => {
@@ -1535,6 +1536,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   renderCalendar();
   renderTimeSlots();
   updateSteps();
+  window.addEventListener("resize", () => {
+    syncStepPanelHeight();
+  });
   updateMonthNav();
   updateProfessionalAvailability();
 
