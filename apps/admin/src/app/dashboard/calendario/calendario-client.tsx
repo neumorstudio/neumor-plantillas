@@ -157,6 +157,7 @@ export default function CalendarioClient({
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [savingBooking, setSavingBooking] = useState(false);
   const [priceText, setPriceText] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<Booking | null>(null);
   const [specialDays, setSpecialDays] = useState<SpecialDay[]>(initialSpecialDays);
   const [savingSpecialDays, setSavingSpecialDays] = useState(false);
   const [specialDaysMessage, setSpecialDaysMessage] = useState<string | null>(null);
@@ -785,15 +786,15 @@ export default function CalendarioClient({
   };
 
   const handleBookingDelete = async (bookingId: string) => {
-    const confirmed = window.confirm("Borrado permanente de reserva. Deseas continuar?");
-    if (!confirmed) return;
     setBookingError(null);
 
     try {
       await deleteBooking(bookingId);
       setBookings((prev) => prev.filter((booking) => booking.id !== bookingId));
+      return true;
     } catch (error) {
       setBookingError(error instanceof Error ? error.message : "No se pudo eliminar.");
+      return false;
     }
   };
 
@@ -916,38 +917,57 @@ export default function CalendarioClient({
                           </span>
                           {bucketBookings.map((booking, index) => (
                             <div key={booking.id} className="space-y-3">
-                              <div className="neumor-card-sm p-3">
+                              <div
+                                className="neumor-card-sm p-3 cursor-pointer rounded-2xl transition focus:outline-none hover:ring-2 hover:ring-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] active:ring-2 active:ring-[var(--accent)]"
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => {
+                                  setBookingEdit(booking);
+                                  setServicesText(
+                                    booking.services?.map((service) => service.name).join(", ") || ""
+                                  );
+                                  setPriceText(
+                                    Number.isFinite(booking.total_price_cents)
+                                      ? (Number(booking.total_price_cents) / 100).toFixed(2)
+                                      : ""
+                                  );
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    setBookingEdit(booking);
+                                    setServicesText(
+                                      booking.services?.map((service) => service.name).join(", ") || ""
+                                    );
+                                    setPriceText(
+                                      Number.isFinite(booking.total_price_cents)
+                                        ? (Number(booking.total_price_cents) / 100).toFixed(2)
+                                        : ""
+                                    );
+                                  }
+                                }}
+                              >
                                 <div className="flex items-center justify-between">
-                                  <span className="font-medium">{booking.customer_name}</span>
+                                  <span className="flex items-center gap-2 font-medium">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="16"
+                                      height="16"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M19 21a7 7 0 0 0-14 0" />
+                                      <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                    {booking.customer_name}
+                                  </span>
                                   <span className="text-lg font-semibold text-[var(--text-primary)]">
                                     {booking.booking_time || "-"}
                                   </span>
-                                </div>
-                                <div className="flex gap-2 mt-3">
-                                  <button
-                                    type="button"
-                                    className="neumor-btn text-xs px-3 py-1"
-                                    onClick={() => {
-                                      setBookingEdit(booking);
-                                      setServicesText(
-                                        booking.services?.map((service) => service.name).join(", ") || ""
-                                      );
-                                      setPriceText(
-                                        Number.isFinite(booking.total_price_cents)
-                                          ? (Number(booking.total_price_cents) / 100).toFixed(2)
-                                          : ""
-                                      );
-                                    }}
-                                  >
-                                    Ver
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="neumor-btn text-xs px-3 py-1"
-                                    onClick={() => handleBookingDelete(booking.id)}
-                                  >
-                                    Eliminar
-                                  </button>
                                 </div>
                               </div>
                               {index < bucketBookings.length - 1 && (
@@ -1613,7 +1633,7 @@ export default function CalendarioClient({
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="neumor-card p-6 w-full max-w-md mx-4">
             <h2 className="text-xl font-heading font-semibold mb-6 text-[var(--text-primary)]">
-              Editar reserva
+              Editar cita
             </h2>
 
             {bookingError && (
@@ -1701,7 +1721,17 @@ export default function CalendarioClient({
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex flex-wrap justify-end gap-3 mt-6">
+              <button
+                className="neumor-btn px-5 text-red-600"
+                onClick={async () => {
+                  if (!bookingEdit) return;
+                  setDeleteConfirm(bookingEdit);
+                }}
+                disabled={savingBooking}
+              >
+                Eliminar
+              </button>
               <button
                 className="neumor-btn px-5"
                 onClick={() => {
@@ -1718,6 +1748,45 @@ export default function CalendarioClient({
                 disabled={savingBooking}
               >
                 {savingBooking ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="neumor-card p-6 w-full max-w-md mx-4">
+            <h2 className="text-xl font-heading font-semibold mb-3 text-[var(--text-primary)]">
+              Eliminar cita
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Esta accion es permanente. Se eliminara la cita de{" "}
+              <span className="font-semibold text-[var(--text-primary)]">
+                {deleteConfirm.customer_name}
+              </span>{" "}
+              y se liberara la hora para nuevas citas.
+            </p>
+
+            <div className="flex flex-wrap justify-end gap-3 mt-6">
+              <button
+                className="neumor-btn px-5"
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="neumor-btn px-5 text-red-600"
+                onClick={async () => {
+                  const removed = await handleBookingDelete(deleteConfirm.id);
+                  if (removed) {
+                    setDeleteConfirm(null);
+                    setBookingEdit(null);
+                    setBookingError(null);
+                  }
+                }}
+              >
+                Eliminar cita
               </button>
             </div>
           </div>
