@@ -719,7 +719,7 @@ export default function CalendarioClient({
                               <span className="text-xs text-[var(--text-secondary)] w-14">
                                 Tramo {slotIndex + 1}
                               </span>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 time-field">
                                 <input
                                   type="time"
                                   value={normalizeTime(slot.open_time)}
@@ -737,7 +737,7 @@ export default function CalendarioClient({
                                   className="neumor-inset w-8 h-8 flex items-center justify-center"
                                   onClick={(event) => {
                                     const input = event.currentTarget
-                                      .closest("div")
+                                      .closest(".time-field")
                                       ?.querySelector("input") as HTMLInputElement | null;
                                     if (!input) return;
                                     if (typeof input.showPicker === "function") {
@@ -765,7 +765,7 @@ export default function CalendarioClient({
                                 </button>
                               </div>
                               <span className="text-xs text-[var(--text-secondary)]">a</span>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 time-field">
                                 <input
                                   type="time"
                                   value={normalizeTime(slot.close_time)}
@@ -783,7 +783,7 @@ export default function CalendarioClient({
                                   className="neumor-inset w-8 h-8 flex items-center justify-center"
                                   onClick={(event) => {
                                     const input = event.currentTarget
-                                      .closest("div")
+                                      .closest(".time-field")
                                       ?.querySelector("input") as HTMLInputElement | null;
                                     if (!input) return;
                                     if (typeof input.showPicker === "function") {
@@ -966,25 +966,99 @@ export default function CalendarioClient({
                         />
                         Abierto
                       </label>
-                      <input
-                        type="time"
-                        value={item.open_time}
-                        onChange={(event) =>
-                          handleSpecialDayChange(index, "open_time", event.target.value)
-                        }
-                        className="neumor-input w-24"
-                        disabled={!item.is_open}
-                      />
+                      <div className="flex items-center gap-2 time-field">
+                        <input
+                          type="time"
+                          value={normalizeTime(item.open_time)}
+                          onChange={(event) =>
+                            handleSpecialDayChange(
+                              index,
+                              "open_time",
+                              normalizeTime(event.target.value)
+                            )
+                          }
+                          className="neumor-input w-24 no-native-time"
+                          disabled={!item.is_open}
+                        />
+                        <button
+                          type="button"
+                          className="neumor-inset w-8 h-8 flex items-center justify-center"
+                          onClick={(event) => {
+                            const input = event.currentTarget
+                              .closest(".time-field")
+                              ?.querySelector("input") as HTMLInputElement | null;
+                            if (!input || input.disabled) return;
+                            if (typeof input.showPicker === "function") {
+                              input.showPicker();
+                            } else {
+                              input.focus();
+                            }
+                          }}
+                          aria-label="Seleccionar hora de apertura"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                        </button>
+                      </div>
                       <span className="text-xs text-[var(--text-secondary)]">a</span>
-                      <input
-                        type="time"
-                        value={item.close_time}
-                        onChange={(event) =>
-                          handleSpecialDayChange(index, "close_time", event.target.value)
-                        }
-                        className="neumor-input w-24"
-                        disabled={!item.is_open}
-                      />
+                      <div className="flex items-center gap-2 time-field">
+                        <input
+                          type="time"
+                          value={normalizeTime(item.close_time)}
+                          onChange={(event) =>
+                            handleSpecialDayChange(
+                              index,
+                              "close_time",
+                              normalizeTime(event.target.value)
+                            )
+                          }
+                          className="neumor-input w-24 no-native-time"
+                          disabled={!item.is_open}
+                        />
+                        <button
+                          type="button"
+                          className="neumor-inset w-8 h-8 flex items-center justify-center"
+                          onClick={(event) => {
+                            const input = event.currentTarget
+                              .closest(".time-field")
+                              ?.querySelector("input") as HTMLInputElement | null;
+                            if (!input || input.disabled) return;
+                            if (typeof input.showPicker === "function") {
+                              input.showPicker();
+                            } else {
+                              input.focus();
+                            }
+                          }}
+                          aria-label="Seleccionar hora de cierre"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                        </button>
+                      </div>
                       <button
                         type="button"
                         className="neumor-btn text-xs px-3"
