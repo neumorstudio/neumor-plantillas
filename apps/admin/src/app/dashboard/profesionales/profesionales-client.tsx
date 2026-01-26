@@ -127,9 +127,9 @@ export default function ProfesionalesClient({
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold mb-2">Profesionales</h1>
+        <h1 className="text-3xl font-heading font-bold mb-2">Equipo</h1>
         <p className="text-[var(--text-secondary)]">
-          Agrega, edita o elimina profesionales del salon.
+          Agrega, edita o elimina miembros del equipo.
         </p>
       </div>
 

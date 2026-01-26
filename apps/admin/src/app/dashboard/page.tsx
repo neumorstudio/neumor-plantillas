@@ -16,6 +16,7 @@ import {
   getActiveClients,
   getExpiringPackages,
   getRecentSessions,
+  getWebsiteId,
 } from "@/lib/data";
 import {
   BookingsTodayWidget,
@@ -37,6 +38,7 @@ import {
   RecentJobsTable,
   RecentQuotesTable,
   RecentSessionsTable,
+  ProfessionalRevenueTable,
 } from "@/components/dashboard/TableWidgets";
 
 // Obtener configuración del business type
@@ -185,8 +187,12 @@ async function loadWidgetData(widgetIds: string[]) {
 export default async function DashboardPage() {
   // Obtener configuración del business type
   const config = await getBusinessTypeConfig();
-  const widgetIds = config?.dashboard_widgets || ["bookings_month", "bookings_pending"];
+  const baseWidgetIds = config?.dashboard_widgets || ["bookings_month", "bookings_pending"];
   const businessType = config?.business_type || "restaurant";
+  const widgetIds =
+    businessType === "salon"
+      ? baseWidgetIds.map((id) => (id === "bookings_pending" ? "revenue_month" : id))
+      : baseWidgetIds;
 
   // Cargar datos de widgets
   const widgetData = await loadWidgetData(widgetIds);
@@ -195,6 +201,33 @@ export default async function DashboardPage() {
     newLeads: 0,
     pendingBookings: 0,
   };
+  let salonRevenueMonth: number | null = null;
+  if (businessType === "salon") {
+    const websiteId = await getWebsiteId();
+    if (websiteId) {
+      const supabase = await createClient();
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString()
+        .split("T")[0];
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        .toISOString()
+        .split("T")[0];
+      const { data } = await supabase
+        .from("bookings")
+        .select("total_price_cents, status, booking_date")
+        .eq("website_id", websiteId)
+        .in("status", ["confirmed", "completed"])
+        .gte("booking_date", firstDayOfMonth);
+      const filtered = (data || []).filter((item) =>
+        typeof (item as { booking_date?: string }).booking_date === "string"
+          ? (item as { booking_date: string }).booking_date < today
+          : true
+      );
+      salonRevenueMonth =
+        filtered.reduce((sum, item) => sum + (item.total_price_cents || 0), 0) / 100;
+    }
+  }
 
   // Cargar tablas según tipo de negocio
   const isRepairsType = businessType === "repairs" || businessType === "realestate";
@@ -203,6 +236,43 @@ export default async function DashboardPage() {
   const recentJobs = isRepairsType ? await getRecentJobs(5) : [];
   const recentQuotes = isRepairsType ? await getRecentQuotes(5) : [];
   const recentSessions = isFitnessType ? await getRecentSessions(5) : [];
+  let professionalRevenue: { name: string; total: number; count: number }[] = [];
+  if (businessType === "salon") {
+    const websiteId = await getWebsiteId();
+    if (websiteId) {
+      const supabase = await createClient();
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString()
+        .split("T")[0];
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        .toISOString()
+        .split("T")[0];
+      const { data } = await supabase
+        .from("bookings")
+        .select("total_price_cents, status, booking_date, professional:professionals(name)")
+        .eq("website_id", websiteId)
+        .in("status", ["confirmed", "completed"])
+        .gte("booking_date", firstDayOfMonth)
+        .lt("booking_date", today);
+
+      const map = new Map<string, { total: number; count: number }>();
+      (data || []).forEach((item) => {
+        const name = item.professional?.name || "Sin asignar";
+        const entry = map.get(name) || { total: 0, count: 0 };
+        entry.total += item.total_price_cents || 0;
+        entry.count += 1;
+        map.set(name, entry);
+      });
+      professionalRevenue = Array.from(map.entries())
+        .map(([name, value]) => ({
+          name,
+          total: value.total / 100,
+          count: value.count,
+        }))
+        .sort((a, b) => b.total - a.total);
+    }
+  }
 
   // Renderizar widget según ID
   function renderWidget(widgetId: string) {
@@ -217,7 +287,15 @@ export default async function DashboardPage() {
       case "bookings_month":
         return <BookingsMonthWidget key={widgetId} count={stats.bookingsThisMonth} />;
       case "bookings_pending":
-        return <BookingsPendingWidget key={widgetId} count={stats.pendingBookings} />;
+        return businessType === "salon" ? (
+          <RevenueMonthWidget
+            key={widgetId}
+            totalAmount={salonRevenueMonth ?? ((widgetData.revenue_month as { totalAmount: number })?.totalAmount || 0)}
+            label="Ganado en el mes"
+          />
+        ) : (
+          <BookingsPendingWidget key={widgetId} count={stats.pendingBookings} />
+        );
       case "quotes_pending":
         const qp = widgetData.quotes_pending as { count: number; totalAmount: number } | undefined;
         return (
@@ -256,7 +334,8 @@ export default async function DashboardPage() {
         return (
           <RevenueMonthWidget
             key={widgetId}
-            totalAmount={(widgetData.revenue_month as { totalAmount: number })?.totalAmount || 0}
+            totalAmount={salonRevenueMonth ?? ((widgetData.revenue_month as { totalAmount: number })?.totalAmount || 0)}
+            label={businessType === "salon" ? "Ganado en el mes" : undefined}
           />
         );
       case "orders_today":
@@ -411,10 +490,18 @@ export default async function DashboardPage() {
       ) : (
         <>
           {/* Dashboard para restaurant/salon/clinic/etc */}
-          <RecentBookingsTable bookings={recentBookings} />
+          {businessType === "salon" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <RecentBookingsTable bookings={recentBookings} variant="salon" />
+              <ProfessionalRevenueTable rows={professionalRevenue} />
+            </div>
+          ) : (
+            <RecentBookingsTable bookings={recentBookings} variant="default" />
+          )}
 
           {/* Status Panels */}
-          <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {businessType !== "salon" && (
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="neumor-card p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold mb-4">
                 Estado de Automatizaciones
@@ -473,7 +560,8 @@ export default async function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </>
       )}
     </div>

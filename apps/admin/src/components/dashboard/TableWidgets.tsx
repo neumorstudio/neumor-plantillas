@@ -59,6 +59,7 @@ interface Booking {
   booking_time: string | null;
   guests: number | null;
   status: string;
+  professional?: { name: string } | null;
 }
 
 // Tipo para trabajos
@@ -82,24 +83,36 @@ interface Quote {
 }
 
 // Widget: Tabla de reservas recientes
-export function RecentBookingsTable({ bookings }: { bookings: Booking[] }) {
+export function RecentBookingsTable({
+  bookings,
+  variant = "default",
+}: {
+  bookings: Booking[];
+  variant?: "default" | "salon";
+}) {
   return (
     <div className="neumor-card p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold">Reservas Recientes</h2>
-        <a
-          href="/dashboard/reservas"
-          className="text-sm text-[var(--accent)] hover:underline"
-        >
-          Ver todas
-        </a>
+        <h2 className="text-xl font-semibold">
+          {variant === "salon" ? "Citas recientes" : "Reservas Recientes"}
+        </h2>
+        {variant !== "salon" && (
+          <a
+            href="/dashboard/reservas"
+            className="text-sm text-[var(--accent)] hover:underline"
+          >
+            Ver todas
+          </a>
+        )}
       </div>
 
       {bookings.length === 0 ? (
         <div className="text-center py-8 text-[var(--text-secondary)]">
-          <p>No hay reservas todavia</p>
+          <p>{variant === "salon" ? "No hay citas todavia" : "No hay reservas todavia"}</p>
           <p className="text-sm mt-2">
-            Las reservas apareceran aqui cuando los clientes reserven
+            {variant === "salon"
+              ? "Las citas apareceran aqui cuando los clientes reserven"
+              : "Las reservas apareceran aqui cuando los clientes reserven"}
           </p>
         </div>
       ) : (
@@ -110,27 +123,83 @@ export function RecentBookingsTable({ bookings }: { bookings: Booking[] }) {
                 <th>Cliente</th>
                 <th>Fecha</th>
                 <th>Hora</th>
-                <th>Personas</th>
-                <th>Estado</th>
+                {variant === "salon" ? <th>Profesional</th> : <th>Personas</th>}
+                {variant !== "salon" && <th>Estado</th>}
               </tr>
             </thead>
             <tbody>
               {bookings.map((booking) => {
-                const badge = getBookingStatusBadge(booking.status);
                 return (
                   <tr key={booking.id}>
                     <td className="font-medium">{booking.customer_name}</td>
                     <td>{formatDate(booking.booking_date)}</td>
                     <td>{booking.booking_time || "-"}</td>
-                    <td>{booking.guests || 1}</td>
-                    <td>
-                      <span className={`badge ${badge.class}`}>
-                        {badge.label}
-                      </span>
-                    </td>
+                    {variant === "salon" ? (
+                      <td>{booking.professional?.name || "-"}</td>
+                    ) : (
+                      <td>{booking.guests || 1}</td>
+                    )}
+                    {variant !== "salon" && (
+                      <td>
+                        <span className={`badge ${getBookingStatusBadge(booking.status).class}`}>
+                          {getBookingStatusBadge(booking.status).label}
+                        </span>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ProfessionalRevenueRow {
+  name: string;
+  total: number;
+  count: number;
+}
+
+export function ProfessionalRevenueTable({
+  rows,
+}: {
+  rows: ProfessionalRevenueRow[];
+}) {
+  return (
+    <div className="neumor-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">Ingresos por profesional</h2>
+        <span className="text-sm text-[var(--text-secondary)]">Este mes</span>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="text-center py-8 text-[var(--text-secondary)]">
+          <p>No hay ingresos registrados todavia</p>
+          <p className="text-sm mt-2">
+            Se mostraran cuando las citas esten completadas
+          </p>
+        </div>
+      ) : (
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Profesional</th>
+                <th>Citas</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.name}>
+                  <td className="font-medium">{row.name}</td>
+                  <td>{row.count}</td>
+                  <td>{row.total.toLocaleString("es-ES")} €</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

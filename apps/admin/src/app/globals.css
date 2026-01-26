@@ -633,6 +633,15 @@ input[type="time"].no-native-time::-webkit-clear-button {
   display: none;
 }
 
+.scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 .segment {
   flex: 1;
   min-width: max-content;

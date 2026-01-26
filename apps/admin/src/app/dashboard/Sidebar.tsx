@@ -45,12 +45,6 @@ const navItems: NavItem[] = [
     icon: <Calendar className="w-5 h-5" />,
   },
   {
-    href: "/dashboard/profesionales",
-    label: "Profesionales",
-    slug: "profesionales",
-    icon: <UserRound className="w-5 h-5" />,
-  },
-  {
     href: "/dashboard/presupuestos",
     label: "Presupuestos",
     slug: "presupuestos",
@@ -97,6 +91,12 @@ const navItems: NavItem[] = [
     label: "Servicios",
     slug: "servicios",
     icon: <BarChart3 className="w-5 h-5" />,
+  },
+  {
+    href: "/dashboard/profesionales",
+    label: "Equipo",
+    slug: "profesionales",
+    icon: <UserRound className="w-5 h-5" />,
   },
   {
     href: "/dashboard/newsletter",

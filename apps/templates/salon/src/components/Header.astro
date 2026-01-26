@@ -16,13 +16,12 @@ const { businessName, logo } = Astro.props;
       </a>
 
       <ul class="nav-links">
-        <li><a href="#menu">Menu</a></li>
-        <li><a href="#specials">Especiales</a></li>
-        <li><a href="#reviews">Opiniones</a></li>
+        <li><a href="#services">Servicios</a></li>
+        <li><a href="#appointment">Reservar cita</a></li>
         <li><a href="#contact">Contacto</a></li>
       </ul>
 
-      <a href="#reserve" class="neumor-btn neumor-btn-accent nav-cta">
+      <a href="#appointment" class="neumor-btn neumor-btn-accent nav-cta">
         Reservar Cita
       </a>
 
@@ -44,6 +43,17 @@ const { businessName, logo } = Astro.props;
         </svg>
       </button>
     </nav>
+
+    <div class="mobile-menu" data-mobile-menu>
+      <ul class="mobile-links">
+        <li><a href="#services">Servicios</a></li>
+        <li><a href="#appointment">Reservar cita</a></li>
+        <li><a href="#contact">Contacto</a></li>
+      </ul>
+      <a href="#appointment" class="neumor-btn neumor-btn-accent mobile-cta">
+        Reservar Cita
+      </a>
+    </div>
   </div>
 </header>
 
@@ -121,6 +131,41 @@ const { businessName, logo } = Astro.props;
     padding: 0.5rem;
   }
 
+  .mobile-menu {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.75rem 0;
+    border-radius: 1rem;
+    background: transparent;
+    box-shadow: none;
+    text-align: center;
+  }
+
+  .mobile-menu.is-open {
+    display: block;
+  }
+
+  .mobile-links {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .mobile-links a {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .mobile-cta {
+    width: min(320px, 100%);
+    justify-content: center;
+    margin: 0 auto;
+  }
+
   @media (max-width: 768px) {
     .nav-links,
     .nav-cta {
@@ -132,3 +177,19 @@ const { businessName, logo } = Astro.props;
     }
   }
 </style>
+
+<script>
+  const header = document.querySelector(".header");
+  const menuBtn = header?.querySelector(".mobile-menu-btn");
+  const mobileMenu = header?.querySelector("[data-mobile-menu]");
+
+  menuBtn?.addEventListener("click", () => {
+    mobileMenu?.classList.toggle("is-open");
+  });
+
+  mobileMenu?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      mobileMenu?.classList.remove("is-open");
+    });
+  });
+</script>

@@ -34,7 +34,7 @@ function StatCard({ label, value, subValue, icon }: StatCardProps) {
 export function BookingsTodayWidget({ count }: { count: number }) {
   return (
     <StatCard
-      label="Reservas hoy"
+      label="Citas hoy"
       value={count.toString()}
       icon={
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -52,7 +52,7 @@ export function BookingsTodayWidget({ count }: { count: number }) {
 export function BookingsMonthWidget({ count }: { count: number }) {
   return (
     <StatCard
-      label="Reservas este mes"
+      label="Citas este mes"
       value={count.toString()}
       icon={
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -153,10 +153,16 @@ export function PaymentsPendingWidget({ count, totalAmount }: { count: number; t
 }
 
 // Widget: Ingresos del mes
-export function RevenueMonthWidget({ totalAmount }: { totalAmount: number }) {
+export function RevenueMonthWidget({
+  totalAmount,
+  label = "Ingresos este mes",
+}: {
+  totalAmount: number;
+  label?: string;
+}) {
   return (
     <StatCard
-      label="Ingresos este mes"
+      label={label}
       value={`${totalAmount.toLocaleString("es-ES")} €`}
       icon={
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       guests: 1,
       notes: notes || null,
       status: "confirmed",
-      source: "admin",
+      source: "phone",
       services,
       total_price_cents: totalPrice,
       total_duration_minutes: totalDuration,

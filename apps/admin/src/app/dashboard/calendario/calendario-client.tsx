@@ -1346,7 +1346,7 @@ export default function CalendarioClient({
 
       {createOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="neumor-card p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="neumor-card p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto scroll-hidden">
             <h2 className="text-xl font-heading font-semibold mb-4 text-[var(--text-primary)]">
               Nueva reserva interna
             </h2>
@@ -1402,7 +1402,7 @@ export default function CalendarioClient({
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Servicios
                 </label>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="space-y-3 max-h-64 overflow-y-auto scroll-hidden">
                   {serviceCatalog.length ? (
                     serviceCatalog.map((category) => (
                       <div key={category.id} className="neumor-card-sm p-3">
@@ -1519,22 +1519,24 @@ export default function CalendarioClient({
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Hora
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                <div className="neumor-inset p-3 max-h-52 overflow-y-auto scroll-hidden">
                   {availableTimes.length ? (
-                    availableTimes.map((time) => (
-                      <button
-                        key={time}
-                        type="button"
-                        className={`neumor-btn text-xs px-3 py-1 ${
-                          createForm.booking_time === time ? "day-selected" : ""
-                        }`}
-                        onClick={() =>
-                          setCreateForm((prev) => ({ ...prev, booking_time: time }))
-                        }
-                      >
-                        {time}
-                      </button>
-                    ))
+                    <div className="flex flex-col gap-3">
+                      {availableTimes.map((time) => (
+                        <button
+                          key={time}
+                          type="button"
+                          className={`w-full rounded-full py-2 text-sm neumor-inset ${
+                            createForm.booking_time === time ? "day-selected" : ""
+                          }`}
+                          onClick={() =>
+                            setCreateForm((prev) => ({ ...prev, booking_time: time }))
+                          }
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
                   ) : (
                     <span className="text-xs text-[var(--text-secondary)]">
                       Selecciona servicios, profesional y fecha para ver horas.
