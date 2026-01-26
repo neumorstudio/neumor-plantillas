@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp } from "lucide-react";
+import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound } from "lucide-react";
 
 interface SidebarProps {
   clientInfo: {
@@ -43,6 +43,12 @@ const navItems: NavItem[] = [
     label: "Calendario",
     slug: "calendario",
     icon: <Calendar className="w-5 h-5" />,
+  },
+  {
+    href: "/dashboard/profesionales",
+    label: "Profesionales",
+    slug: "profesionales",
+    icon: <UserRound className="w-5 h-5" />,
   },
   {
     href: "/dashboard/presupuestos",
@@ -163,14 +169,18 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const resolvedSections = visibleSections?.length ? [...visibleSections] : null;
-  if (clientInfo?.businessType === "salon" && resolvedSections) {
-    if (!resolvedSections.includes("reservas")) {
-      resolvedSections.push("reservas");
+  let resolvedSections = visibleSections?.length ? [...visibleSections] : null;
+  if (clientInfo?.businessType === "salon") {
+    const baseSections = resolvedSections ?? navItems.map((item) => item.slug);
+    if (!baseSections.includes("calendario")) {
+      baseSections.push("calendario");
     }
-    if (!resolvedSections.includes("calendario")) {
-      resolvedSections.push("calendario");
+    if (!baseSections.includes("profesionales")) {
+      baseSections.push("profesionales");
     }
+    resolvedSections = baseSections.filter(
+      (section) => !["reservas", "clientes", "newsletter"].includes(section)
+    );
   }
 
   const sectionFilteredItems = resolvedSections?.length
