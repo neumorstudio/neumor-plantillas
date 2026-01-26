@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deleteBooking, updateBooking } from "@/lib/actions";
 
 interface BusinessHour {
@@ -29,10 +29,11 @@ interface Booking {
   booking_time: string | null;
   professional_id?: string | null;
   created_at?: string | null;
-  services?: { name: string }[] | null;
+  services?: { name: string; duration_minutes?: number }[] | null;
   status: string;
   notes?: string | null;
   total_price_cents?: number | null;
+  total_duration_minutes?: number | null;
 }
 
 interface SpecialDay {
@@ -60,12 +61,38 @@ interface Professional {
   sort_order: number;
 }
 
+interface ServiceItem {
+  id: string;
+  category_id: string;
+  name: string;
+  price_cents: number;
+  duration_minutes: number;
+  notes: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+interface ServiceCategory {
+  id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  items: ServiceItem[];
+}
+
+interface ProfessionalCategory {
+  professional_id: string;
+  category_id: string;
+}
+
 interface Props {
   initialHours: BusinessHour[];
   initialSlots: BusinessHourSlot[];
   initialBookings: Booking[];
   initialSpecialDays: SpecialDay[];
   initialProfessionals: Professional[];
+  serviceCatalog: ServiceCategory[];
+  professionalCategories: ProfessionalCategory[];
   year: number;
   month: number;
 }
@@ -78,6 +105,8 @@ export default function CalendarioClient({
   initialBookings,
   initialSpecialDays,
   initialProfessionals,
+  serviceCatalog,
+  professionalCategories,
   year,
   month,
 }: Props) {
@@ -89,6 +118,17 @@ export default function CalendarioClient({
   const normalizeTime = (value: string) => {
     const [hours = "00", minutes = "00"] = value.split(":");
     return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+  };
+
+  const timeToMinutes = (value: string) => {
+    const [hours = "0", minutes = "0"] = value.split(":");
+    return Number(hours) * 60 + Number(minutes);
+  };
+
+  const minutesToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
   };
   const fallbackSlots =
     initialSlots.length > 0
@@ -122,6 +162,33 @@ export default function CalendarioClient({
   const [specialDaysMessage, setSpecialDaysMessage] = useState<string | null>(null);
   const [professionals] = useState<Professional[]>(initialProfessionals);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [savingCreate, setSavingCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    customer_name: "",
+    customer_phone: "",
+    customer_email: "",
+    booking_date: todayIso,
+    booking_time: "",
+    professional_id: "",
+    notes: "",
+    service_ids: [] as string[],
+  });
+
+  const allServiceItems = useMemo(
+    () => serviceCatalog.flatMap((category) => category.items),
+    [serviceCatalog]
+  );
+  const professionalCategoryMap = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    professionalCategories.forEach((item) => {
+      const existing = map.get(item.professional_id) || new Set<string>();
+      existing.add(item.category_id);
+      map.set(item.professional_id, existing);
+    });
+    return map;
+  }, [professionalCategories]);
 
   const monthLabel = new Date(calendarYear, calendarMonth, 1).toLocaleDateString("es-ES", {
     month: "long",
@@ -198,6 +265,140 @@ export default function CalendarioClient({
     source
       .filter((slot) => slot.day_of_week === day && slot.is_active)
       .sort((a, b) => a.sort_order - b.sort_order);
+
+  const getScheduleForDate = (dateValue: string) => {
+    const special = specialDays.find((item) => item.date === dateValue);
+    if (special) {
+      if (!special.is_open) {
+        return { is_open: false, slots: [] as { open_time: string; close_time: string }[] };
+      }
+      if (special.slots?.length) {
+        return {
+          is_open: true,
+          slots: special.slots
+            .slice()
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .map((slot) => ({
+              open_time: slot.open_time,
+              close_time: slot.close_time,
+            })),
+        };
+      }
+      return {
+        is_open: true,
+        slots: [{ open_time: special.open_time, close_time: special.close_time }],
+      };
+    }
+
+    const date = new Date(dateValue);
+    const dayIndex = (date.getDay() + 6) % 7;
+    const daySlots = getSlotsForDay(dayIndex);
+    if (daySlots.length) {
+      return {
+        is_open: true,
+        slots: daySlots.map((slot) => ({
+          open_time: slot.open_time,
+          close_time: slot.close_time,
+        })),
+      };
+    }
+
+    return { is_open: false, slots: [] as { open_time: string; close_time: string }[] };
+  };
+
+  const getSelectedServiceItems = () =>
+    allServiceItems.filter((item) => createForm.service_ids.includes(item.id));
+
+  const getSelectedCategoryNames = () => {
+    const ids = new Set(getSelectedServiceItems().map((item) => item.category_id));
+    return serviceCatalog
+      .filter((category) => ids.has(category.id))
+      .map((category) => category.name);
+  };
+
+  const getSelectedServiceCategories = () =>
+    Array.from(
+      new Set(getSelectedServiceItems().map((item) => item.category_id).filter(Boolean))
+    );
+
+  const getAvailableProfessionals = () => {
+    const requiredCategories = getSelectedServiceCategories();
+    const activeProfessionals = professionals.filter((professional) => professional.is_active);
+    if (!requiredCategories.length) return activeProfessionals;
+    return activeProfessionals.filter((professional) => {
+      const categories = professionalCategoryMap.get(professional.id) || new Set<string>();
+      return requiredCategories.every((categoryId) => categories.has(categoryId));
+    });
+  };
+
+  const getAvailableTimes = () => {
+    const dateValue = createForm.booking_date;
+    const professionalId = createForm.professional_id;
+    if (!dateValue || !professionalId) return [];
+    const schedule = getScheduleForDate(dateValue);
+    if (!schedule.is_open || !schedule.slots.length) return [];
+
+    const selectedServices = getSelectedServiceItems();
+    const totalDuration = selectedServices.reduce(
+      (sum, service) => sum + (service.duration_minutes || 0),
+      0
+    );
+    const duration = totalDuration > 0 ? totalDuration : 30;
+
+    const bookedIntervals = bookings
+      .filter(
+        (booking) =>
+          booking.booking_date === dateValue &&
+          booking.professional_id === professionalId &&
+          ["pending", "confirmed"].includes(booking.status)
+      )
+      .map((booking) => {
+        const durationFromServices = Array.isArray(booking.services)
+          ? booking.services.reduce(
+              (sum, service) => sum + (service.duration_minutes || 0),
+              0
+            )
+          : 0;
+        const durationMinutes =
+          booking.total_duration_minutes || durationFromServices || 30;
+        const start = timeToMinutes(booking.booking_time || "00:00");
+        return { start, end: start + durationMinutes };
+      });
+
+    const step = 15;
+    const times: string[] = [];
+    schedule.slots.forEach((slot) => {
+      const start = timeToMinutes(slot.open_time);
+      const end = timeToMinutes(slot.close_time);
+      for (let minutes = start; minutes + duration <= end; minutes += step) {
+        const slotEnd = minutes + duration;
+        const overlaps = bookedIntervals.some(
+          (interval) => minutes < interval.end && slotEnd > interval.start
+        );
+        if (!overlaps) {
+          times.push(minutesToTime(minutes));
+        }
+      }
+    });
+
+    return times;
+  };
+
+  const availableProfessionals = useMemo(
+    () => getAvailableProfessionals(),
+    [createForm.service_ids, professionals, professionalCategoryMap]
+  );
+  const availableTimes = useMemo(
+    () => getAvailableTimes(),
+    [
+      createForm.booking_date,
+      createForm.professional_id,
+      createForm.service_ids,
+      bookings,
+      slots,
+      specialDays,
+    ]
+  );
 
   const handleSlotChange = (
     slotId: string,
@@ -290,6 +491,18 @@ export default function CalendarioClient({
       setLoadingBookings(false);
     }
   };
+
+  useEffect(() => {
+    if (!createOpen) return;
+    fetchBookings(calendarYear, calendarMonth);
+  }, [createOpen, calendarMonth, calendarYear]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchBookings(calendarYear, calendarMonth);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [calendarYear, calendarMonth]);
 
   const handlePrevMonth = () => {
     const nextMonth = calendarMonth === 0 ? 11 : calendarMonth - 1;
@@ -461,6 +674,67 @@ export default function CalendarioClient({
     }
   };
 
+  const handleCreateBooking = async () => {
+    setCreateError(null);
+    const selectedServices = getSelectedServiceItems();
+    if (!createForm.customer_name.trim() || !createForm.customer_phone.trim()) {
+      setCreateError("Nombre y telefono son obligatorios.");
+      return;
+    }
+    if (!selectedServices.length) {
+      setCreateError("Selecciona al menos un servicio.");
+      return;
+    }
+    if (!createForm.professional_id) {
+      setCreateError("Selecciona un profesional.");
+      return;
+    }
+    if (!createForm.booking_date || !createForm.booking_time) {
+      setCreateError("Selecciona fecha y hora.");
+      return;
+    }
+
+    setSavingCreate(true);
+    try {
+      const response = await fetch("/api/calendario/reservas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: createForm.customer_name,
+          customer_phone: createForm.customer_phone,
+          customer_email: createForm.customer_email || null,
+          booking_date: createForm.booking_date,
+          booking_time: createForm.booking_time,
+          professional_id: createForm.professional_id,
+          notes: createForm.notes || null,
+          services: selectedServices,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo crear la reserva.");
+      }
+      if (data.booking) {
+        setBookings((prev) => [...prev, data.booking]);
+      }
+      setCreateOpen(false);
+      setCreateForm({
+        customer_name: "",
+        customer_phone: "",
+        customer_email: "",
+        booking_date: selectedDate || todayIso,
+        booking_time: "",
+        professional_id: "",
+        notes: "",
+        service_ids: [],
+      });
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "No se pudo crear la reserva.");
+    } finally {
+      setSavingCreate(false);
+    }
+  };
+
   const handleBookingSave = async () => {
     if (!bookingEdit) return;
     setSavingBooking(true);
@@ -592,6 +866,22 @@ export default function CalendarioClient({
               {selectedDate && (
                 <span className="text-sm text-[var(--text-secondary)]">{selectedDate}</span>
               )}
+            </div>
+            <div className="mb-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                className="neumor-btn text-xs px-3 py-1"
+                onClick={() => {
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    booking_date: selectedDate || todayIso,
+                  }));
+                  setCreateOpen(true);
+                  setCreateError(null);
+                }}
+              >
+                Nueva reserva
+              </button>
             </div>
             <div className="mb-4">
               <label className="text-xs text-[var(--text-secondary)] block mb-2">
@@ -1053,6 +1343,269 @@ export default function CalendarioClient({
           </div>
         </div>
       </div>
+
+      {createOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="neumor-card p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-heading font-semibold mb-4 text-[var(--text-primary)]">
+              Nueva reserva interna
+            </h2>
+
+            {createError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                {createError}
+              </div>
+            )}
+
+            <div className="space-y-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Nombre
+                  </label>
+                  <input
+                    className="neumor-input w-full"
+                    value={createForm.customer_name}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({ ...prev, customer_name: event.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Telefono
+                  </label>
+                  <input
+                    className="neumor-input w-full"
+                    value={createForm.customer_phone}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({ ...prev, customer_phone: event.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Email (opcional)
+                </label>
+                <input
+                  className="neumor-input w-full"
+                  value={createForm.customer_email}
+                  onChange={(event) =>
+                    setCreateForm((prev) => ({ ...prev, customer_email: event.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                  Servicios
+                </label>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {serviceCatalog.length ? (
+                    serviceCatalog.map((category) => (
+                      <div key={category.id} className="neumor-card-sm p-3">
+                        <p className="text-sm font-semibold mb-2">{category.name}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {category.items.map((item) => {
+                            const selected = createForm.service_ids.includes(item.id);
+                            return (
+                              <label
+                                key={item.id}
+                                className="neumor-inset px-3 py-1 rounded-full text-xs flex items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  onChange={(event) => {
+                                    const checked = event.target.checked;
+                                    setCreateForm((prev) => {
+                                      const nextServiceIds = checked
+                                        ? [...prev.service_ids, item.id]
+                                        : prev.service_ids.filter((id) => id !== item.id);
+                                      const requiredCategories = new Set(
+                                        allServiceItems
+                                          .filter((service) => nextServiceIds.includes(service.id))
+                                          .map((service) => service.category_id)
+                                          .filter(Boolean)
+                                      );
+                                      const currentCategories =
+                                        professionalCategoryMap.get(prev.professional_id) || new Set();
+                                      const keepProfessional =
+                                        prev.professional_id &&
+                                        Array.from(requiredCategories).every((categoryId) =>
+                                          currentCategories.has(categoryId)
+                                        );
+
+                                      return {
+                                        ...prev,
+                                        service_ids: nextServiceIds,
+                                        professional_id: keepProfessional
+                                          ? prev.professional_id
+                                          : "",
+                                        booking_time: "",
+                                      };
+                                    });
+                                  }}
+                                />
+                                <span>
+                                  {item.name} · {(item.price_cents / 100).toFixed(2)} EUR ·{" "}
+                                  {item.duration_minutes} min
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      No hay servicios configurados.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Profesional
+                  </label>
+                  <select
+                    className="neumor-input w-full"
+                    value={createForm.professional_id}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({
+                        ...prev,
+                        professional_id: event.target.value,
+                        booking_time: "",
+                      }))
+                    }
+                  >
+                    <option value="">Selecciona profesional</option>
+                    {availableProfessionals.map((professional) => (
+                      <option key={professional.id} value={professional.id}>
+                        {professional.name}
+                      </option>
+                    ))}
+                  </select>
+                  {createForm.service_ids.length > 0 && !availableProfessionals.length && (
+                    <p className="text-xs text-red-600 mt-2">
+                      No hay profesionales que cubran esos servicios.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    className="neumor-input w-full"
+                    value={createForm.booking_date}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({
+                        ...prev,
+                        booking_date: event.target.value,
+                        booking_time: "",
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                  Hora
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                  {availableTimes.length ? (
+                    availableTimes.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        className={`neumor-btn text-xs px-3 py-1 ${
+                          createForm.booking_time === time ? "day-selected" : ""
+                        }`}
+                        onClick={() =>
+                          setCreateForm((prev) => ({ ...prev, booking_time: time }))
+                        }
+                      >
+                        {time}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-xs text-[var(--text-secondary)]">
+                      Selecciona servicios, profesional y fecha para ver horas.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Precio total
+                  </label>
+                  <div className="neumor-input w-full">
+                    {(
+                      getSelectedServiceItems().reduce(
+                        (sum, service) => sum + (service.price_cents || 0),
+                        0
+                      ) / 100
+                    ).toFixed(2)}{" "}
+                    EUR
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Categorias
+                  </label>
+                  <div className="neumor-input w-full">
+                    {getSelectedCategoryNames().length
+                      ? getSelectedCategoryNames().join(", ")
+                      : "Sin categorias"}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Notas (opcional)
+                </label>
+                <textarea
+                  className="neumor-input w-full"
+                  rows={3}
+                  value={createForm.notes}
+                  onChange={(event) =>
+                    setCreateForm((prev) => ({ ...prev, notes: event.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                className="neumor-btn"
+                onClick={() => setCreateOpen(false)}
+                disabled={savingCreate}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="neumor-btn neumor-btn-accent"
+                onClick={handleCreateBooking}
+                disabled={savingCreate}
+              >
+                {savingCreate ? "Guardando..." : "Guardar reserva"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {bookingEdit && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
