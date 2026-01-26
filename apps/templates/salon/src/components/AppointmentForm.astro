@@ -290,6 +290,14 @@ const professionalsPayload = JSON.stringify(professionals);
         <p class="form-disclaimer">
           Te confirmaremos la cita por telefono o WhatsApp.
         </p>
+
+        <!-- Toast notification -->
+        <div class="toast-container" data-toast-container>
+          <div class="toast" data-toast>
+            <span class="toast-icon" data-toast-icon></span>
+            <span class="toast-message" data-toast-message></span>
+          </div>
+        </div>
       </form>
     </div>
   </div>
@@ -755,6 +763,106 @@ const professionalsPayload = JSON.stringify(professionals);
       justify-content: center;
     }
   }
+
+  /* Toast notification */
+  .toast-container {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .toast {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    background: var(--neumor-bg, #e8e8e8);
+    box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.15),
+      -8px -8px 20px rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+    animation: toastIn 0.3s ease;
+    max-width: 90vw;
+    pointer-events: auto;
+  }
+
+  .toast.is-visible {
+    display: flex;
+  }
+
+  .toast.is-error {
+    border-left: 4px solid #ef4444;
+  }
+
+  .toast.is-success {
+    border-left: 4px solid #10b981;
+  }
+
+  .toast.is-warning {
+    border-left: 4px solid #f59e0b;
+  }
+
+  .toast-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .toast.is-error .toast-icon::before {
+    content: "⚠️";
+  }
+
+  .toast.is-success .toast-icon::before {
+    content: "✅";
+  }
+
+  .toast.is-warning .toast-icon::before {
+    content: "⚡";
+  }
+
+  @keyframes toastIn {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes toastOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+  }
+
+  .toast.is-hiding {
+    animation: toastOut 0.25s ease forwards;
+  }
+
+  @media (max-width: 640px) {
+    .toast-container {
+      bottom: 1.5rem;
+      left: 1rem;
+      right: 1rem;
+      transform: none;
+    }
+
+    .toast {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 
 <script>
@@ -783,6 +891,30 @@ const professionalsPayload = JSON.stringify(professionals);
   const professionalInputs = Array.from(
     form.querySelectorAll<HTMLInputElement>("input[name='professional_id']")
   );
+  const toastEl = form.querySelector<HTMLElement>("[data-toast]");
+  const toastMessage = form.querySelector<HTMLElement>("[data-toast-message]");
+
+  let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  const showToast = (message: string, type: "error" | "success" | "warning" = "error", duration = 3500) => {
+    if (!toastEl || !toastMessage) return;
+
+    if (toastTimeout) {
+      clearTimeout(toastTimeout);
+      toastEl.classList.remove("is-visible", "is-hiding", "is-error", "is-success", "is-warning");
+    }
+
+    toastMessage.textContent = message;
+    toastEl.classList.remove("is-error", "is-success", "is-warning");
+    toastEl.classList.add("is-visible", `is-${type}`);
+
+    toastTimeout = setTimeout(() => {
+      toastEl.classList.add("is-hiding");
+      setTimeout(() => {
+        toastEl.classList.remove("is-visible", "is-hiding", "is-error", "is-success", "is-warning");
+      }, 250);
+    }, duration);
+  };
 
   const hasServices = form.dataset.hasServices === "true";
   const supabaseUrl = form.dataset.supabaseUrl || "";
@@ -1137,17 +1269,21 @@ const professionalsPayload = JSON.stringify(professionals);
     if (currentStep === 1) {
       const selectedServices = getSelectedServices();
       if (hasServices && selectedServices.length === 0) {
-        alert("Selecciona al menos un servicio.");
+        showToast("Selecciona al menos un servicio.", "warning");
         return false;
       }
     }
     if (currentStep === 2) {
       if (!getSelectedProfessionalId()) {
-        alert("Selecciona un profesional.");
+        showToast("Selecciona un profesional.", "warning");
         return false;
       }
-      if (!dateInput?.value || !timeInput?.value) {
-        alert("Selecciona fecha y hora.");
+      if (!dateInput?.value) {
+        showToast("Selecciona una fecha.", "warning");
+        return false;
+      }
+      if (!timeInput?.value) {
+        showToast("Selecciona una hora.", "warning");
         return false;
       }
     }
@@ -1261,11 +1397,11 @@ const professionalsPayload = JSON.stringify(professionals);
     };
 
     if (!websiteId) {
-      alert("No se pudo identificar el website. Revisa la configuracion.");
+      showToast("No se pudo identificar el website. Revisa la configuracion.", "error");
       return;
     }
     if (!selectedProfessionalId) {
-      alert("Selecciona un profesional.");
+      showToast("Selecciona un profesional.", "warning");
       return;
     }
 
@@ -1328,13 +1464,13 @@ const professionalsPayload = JSON.stringify(professionals);
         bookingsCache.set(cacheKey, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
       }
 
-      alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
+      showToast("Cita solicitada correctamente. Te contactaremos para confirmar.", "success", 5000);
       form.reset();
       updateSummary();
       currentStep = 1;
       updateSteps();
     } else {
-      alert(`Error al enviar la solicitud. ${lastError || "Por favor, llamanos directamente."}`);
+      showToast(`Error al enviar. ${lastError || "Por favor, llamanos directamente."}`, "error", 5000);
     }
   });
   }
