@@ -299,15 +299,15 @@ export default async function DashboardPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold mb-2">Dashboard</h1>
-        <p className="text-[var(--text-secondary)]">
+      <div className="page-header mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Dashboard</h1>
+        <p className="text-sm text-[var(--text-secondary)]">
           Resumen de tu actividad
         </p>
       </div>
 
       {/* Stats Grid - Widgets dinámicos */}
-      <div className="dashboard-grid mb-8">
+      <div className="dashboard-grid mb-6 sm:mb-8">
         {widgetIds.map((widgetId) => renderWidget(widgetId))}
       </div>
 
@@ -318,9 +318,9 @@ export default async function DashboardPage() {
           <RecentSessionsTable sessions={recentSessions} />
 
           {/* Acciones rápidas para fitness */}
-          <div className="mt-8 neumor-card p-6">
-            <h3 className="text-lg font-semibold mb-4">Acciones Rapidas</h3>
-            <div className="flex flex-wrap gap-3">
+          <div className="mt-6 sm:mt-8 neumor-card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Acciones Rapidas</h3>
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
               <a
                 href="/dashboard/sesiones"
                 className="neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
@@ -367,15 +367,15 @@ export default async function DashboardPage() {
       ) : isRepairsType ? (
         <>
           {/* Dashboard para repairs/realestate */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <RecentQuotesTable quotes={recentQuotes} />
             <RecentJobsTable jobs={recentJobs} />
           </div>
 
           {/* Acciones rápidas para repairs */}
-          <div className="neumor-card p-6">
-            <h3 className="text-lg font-semibold mb-4">Acciones Rapidas</h3>
-            <div className="flex flex-wrap gap-3">
+          <div className="neumor-card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Acciones Rapidas</h3>
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
               <a
                 href="/dashboard/presupuestos"
                 className="neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
@@ -414,9 +414,9 @@ export default async function DashboardPage() {
           <RecentBookingsTable bookings={recentBookings} />
 
           {/* Status Panels */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="neumor-card p-6">
-              <h3 className="text-lg font-semibold mb-4">
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="neumor-card p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-4">
                 Estado de Automatizaciones
               </h3>
               <div className="space-y-4">
@@ -444,8 +444,8 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            <div className="neumor-card p-6">
-              <h3 className="text-lg font-semibold mb-4">Guia Rapida</h3>
+            <div className="neumor-card p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-4">Guia Rapida</h3>
               <div className="space-y-3">
                 <div className="flex gap-3 items-start">
                   <div className="w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-xs font-bold shrink-0">

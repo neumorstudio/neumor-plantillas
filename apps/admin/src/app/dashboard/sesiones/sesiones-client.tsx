@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createSession, updateSession, deleteSession, completeSession, updateSessionStatus } from "@/lib/actions/sessions";
+import { ConfirmDialog } from "@/components/mobile";
 
 interface Customer {
   id: string;
@@ -15,6 +16,9 @@ interface TrainerService {
   name: string;
   duration_minutes: number;
   price_cents: number;
+  description?: string | null;
+  is_active?: boolean;
+  sort_order?: number;
 }
 
 interface ClientPackage {
@@ -51,16 +55,23 @@ interface SesionesClientProps {
   packages: ClientPackage[];
 }
 
-export function SesionesClient({ initialSessions, customers, services, packages }: SesionesClientProps) {
+type TabType = "sesiones" | "servicios";
+
+export function SesionesClient({ initialSessions, customers, services: initialServices, packages }: SesionesClientProps) {
+  const [activeTab, setActiveTab] = useState<TabType>("sesiones");
   const [sessions, setSessions] = useState(initialSessions);
+  const [services, setServices] = useState(initialServices);
   const [showForm, setShowForm] = useState(false);
   const [showCompleteForm, setShowCompleteForm] = useState(false);
+  const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [editingService, setEditingService] = useState<TrainerService | null>(null);
   const [completingSession, setCompletingSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>("");
   const [customerPackages, setCustomerPackages] = useState<ClientPackage[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "session" | "service"; id: string } | null>(null);
 
   // Filtrar paquetes del cliente seleccionado
   useEffect(() => {
@@ -152,15 +163,14 @@ export function SesionesClient({ initialSessions, customers, services, packages 
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("¿Seguro que quieres eliminar esta sesion?")) return;
-
+  async function handleDeleteSession(id: string) {
     const result = await deleteSession(id);
     if (result.error) {
       alert(result.error);
     } else {
       setSessions(sessions.filter((s) => s.id !== id));
     }
+    setDeleteConfirm(null);
   }
 
   function openEdit(session: Session) {
@@ -220,172 +230,356 @@ export function SesionesClient({ initialSessions, customers, services, packages 
     }
   }
 
+  // ==================== SERVICIOS ====================
+
+  async function handleServiceSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const serviceData = {
+      id: editingService?.id,
+      name: formData.get("name") as string,
+      duration_minutes: parseInt(formData.get("duration_minutes") as string) || 60,
+      price_cents: Math.round(parseFloat(formData.get("price") as string || "0") * 100),
+      description: formData.get("description") as string || null,
+      is_active: formData.get("is_active") === "true",
+    };
+
+    try {
+      const res = await fetch("/api/trainer-services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: editingService ? "update" : "create",
+          service: serviceData,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setServices(data.services);
+        setShowServiceForm(false);
+        setEditingService(null);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Error al guardar");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteService(id: string) {
+    try {
+      const res = await fetch("/api/trainer-services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", service: { id } }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setServices(data.services);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Error al eliminar");
+      }
+    } finally {
+      setDeleteConfirm(null);
+    }
+  }
+
+  function openServiceEdit(service: TrainerService) {
+    setEditingService(service);
+    setShowServiceForm(true);
+  }
+
+  function closeServiceForm() {
+    setShowServiceForm(false);
+    setEditingService(null);
+  }
+
   return (
     <>
-      {/* Selector de fecha y acciones */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              const d = new Date(selectedDate);
-              d.setDate(d.getDate() - 1);
-              setSelectedDate(d.toISOString().split("T")[0]);
-            }}
-            className="p-2 neumor-btn rounded-lg"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="neumor-input"
-          />
-          <button
-            onClick={() => {
-              const d = new Date(selectedDate);
-              d.setDate(d.getDate() + 1);
-              setSelectedDate(d.toISOString().split("T")[0]);
-            }}
-            className="p-2 neumor-btn rounded-lg"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
-            className="px-3 py-1.5 text-sm neumor-btn rounded-lg"
-          >
-            Hoy
-          </button>
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-[var(--neumor-shadow)]">
         <button
-          onClick={() => setShowForm(true)}
-          className="neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+          onClick={() => setActiveTab("sesiones")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "sesiones"
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          }`}
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Nueva sesion
+          Sesiones
+        </button>
+        <button
+          onClick={() => setActiveTab("servicios")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "servicios"
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          }`}
+        >
+          Mis Servicios
         </button>
       </div>
 
-      {/* Fecha seleccionada */}
-      <div className="text-lg font-semibold">
-        {new Date(selectedDate + "T00:00:00").toLocaleDateString("es-ES", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-      </div>
-
-      {/* Lista de sesiones */}
-      {loading ? (
-        <div className="neumor-card p-8 text-center">
-          <p className="text-[var(--text-secondary)]">Cargando...</p>
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className="neumor-card p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
-            <svg className="w-8 h-8 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
+      {activeTab === "sesiones" ? (
+        <>
+          {/* Selector de fecha y acciones */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  const d = new Date(selectedDate);
+                  d.setDate(d.getDate() - 1);
+                  setSelectedDate(d.toISOString().split("T")[0]);
+                }}
+                className="p-2 neumor-btn rounded-lg"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="neumor-input"
+              />
+              <button
+                onClick={() => {
+                  const d = new Date(selectedDate);
+                  d.setDate(d.getDate() + 1);
+                  setSelectedDate(d.toISOString().split("T")[0]);
+                }}
+                className="p-2 neumor-btn rounded-lg"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
+                className="px-3 py-1.5 text-sm neumor-btn rounded-lg"
+              >
+                Hoy
+              </button>
+            </div>
+            <button
+              onClick={() => setShowForm(true)}
+              className="neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Nueva sesion
+            </button>
           </div>
-          <h2 className="text-lg font-semibold mb-2">No hay sesiones para este dia</h2>
-          <p className="text-[var(--text-secondary)]">
-            Programa una nueva sesion de entrenamiento
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {sessions
-            .sort((a, b) => a.booking_time.localeCompare(b.booking_time))
-            .map((session) => (
-              <div key={session.id} className={`neumor-card p-4 ${session.status === "cancelled" ? "opacity-60" : ""}`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{formatTime(session.booking_time)}</div>
-                      <div className="text-xs text-[var(--text-secondary)]">
-                        {session.duration_minutes || 60} min
-                      </div>
-                    </div>
-                    <div>
-                      <div className="font-semibold">{session.customer_name}</div>
-                      {session.trainer_services && (
-                        <div className="text-sm text-[var(--text-secondary)]">
-                          {session.trainer_services.name}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 mt-1">
-                        {getStatusBadge(session.status)}
-                        {session.is_paid && (
-                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Pagado</span>
-                        )}
-                        {session.package_id && (
-                          <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Bono</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    {session.status !== "completed" && session.status !== "cancelled" && (
-                      <>
+          {/* Fecha seleccionada */}
+          <div className="text-lg font-semibold">
+            {new Date(selectedDate + "T00:00:00").toLocaleDateString("es-ES", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </div>
+
+          {/* Lista de sesiones */}
+          {loading ? (
+            <div className="neumor-card p-8 text-center">
+              <p className="text-[var(--text-secondary)]">Cargando...</p>
+            </div>
+          ) : sessions.length === 0 ? (
+            <div className="neumor-card p-8 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold mb-2">No hay sesiones para este dia</h2>
+              <p className="text-[var(--text-secondary)]">
+                Programa una nueva sesion de entrenamiento
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sessions
+                .sort((a, b) => a.booking_time.localeCompare(b.booking_time))
+                .map((session) => (
+                  <div key={session.id} className={`neumor-card p-4 ${session.status === "cancelled" ? "opacity-60" : ""}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{formatTime(session.booking_time)}</div>
+                          <div className="text-xs text-[var(--text-secondary)]">
+                            {session.duration_minutes || 60} min
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-semibold">{session.customer_name}</div>
+                          {session.trainer_services && (
+                            <div className="text-sm text-[var(--text-secondary)]">
+                              {session.trainer_services.name}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            {getStatusBadge(session.status)}
+                            {session.is_paid && (
+                              <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Pagado</span>
+                            )}
+                            {session.package_id && (
+                              <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Bono</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {session.status !== "completed" && session.status !== "cancelled" && (
+                          <>
+                            <button
+                              onClick={() => openComplete(session)}
+                              className="px-3 py-1.5 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
+                              title="Completar sesion"
+                            >
+                              Completar
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(session, "cancelled")}
+                              className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
+                              title="Cancelar sesion"
+                            >
+                              Cancelar
+                            </button>
+                          </>
+                        )}
                         <button
-                          onClick={() => openComplete(session)}
-                          className="px-3 py-1.5 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
-                          title="Completar sesion"
+                          onClick={() => openEdit(session)}
+                          className="p-2 hover:bg-[var(--neumor-bg)] rounded-lg transition-colors"
+                          title="Editar"
                         >
-                          Completar
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
                         </button>
                         <button
-                          onClick={() => handleStatusChange(session, "cancelled")}
-                          className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
-                          title="Cancelar sesion"
+                          onClick={() => setDeleteConfirm({ type: "session", id: session.id })}
+                          className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                          title="Eliminar"
                         >
-                          Cancelar
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
                         </button>
-                      </>
+                      </div>
+                    </div>
+
+                    {session.session_notes && (
+                      <div className="mt-3 pt-3 border-t border-[var(--neumor-shadow)] text-sm text-[var(--text-secondary)]">
+                        {session.session_notes}
+                      </div>
                     )}
-                    <button
-                      onClick={() => openEdit(session)}
-                      className="p-2 hover:bg-[var(--neumor-bg)] rounded-lg transition-colors"
-                      title="Editar"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(session.id)}
-                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
-                      title="Eliminar"
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
+        </>
+      ) : (
+        /* ==================== SERVICIOS TAB ==================== */
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Define los tipos de sesiones que ofreces con su duracion y precio
+            </p>
+            <button
+              onClick={() => setShowServiceForm(true)}
+              className="neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Nuevo servicio
+            </button>
+          </div>
+
+          {services.length === 0 ? (
+            <div className="neumor-card p-8 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold mb-2">No tienes servicios configurados</h2>
+              <p className="text-[var(--text-secondary)]">
+                Crea tus tipos de sesiones para usarlos al programar entrenamientos
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {services.map((service) => (
+                <div key={service.id} className={`neumor-card p-4 ${service.is_active === false ? "opacity-60" : ""}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{service.name}</span>
+                        {service.is_active === false && (
+                          <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">Inactivo</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-[var(--text-secondary)]">
+                        <span className="flex items-center gap-1">
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                          {service.duration_minutes} min
+                        </span>
+                        <span className="font-medium text-[var(--text-primary)]">
+                          {(service.price_cents / 100).toFixed(2)}€
+                        </span>
+                      </div>
+                      {service.description && (
+                        <p className="mt-2 text-sm text-[var(--text-secondary)]">{service.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openServiceEdit(service)}
+                        className="p-2 hover:bg-[var(--neumor-bg)] rounded-lg transition-colors"
+                        title="Editar"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm({ type: "service", id: service.id })}
+                        className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                        title="Eliminar"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {session.session_notes && (
-                  <div className="mt-3 pt-3 border-t border-[var(--neumor-shadow)] text-sm text-[var(--text-secondary)]">
-                    {session.session_notes}
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal nueva/editar sesion */}
@@ -484,7 +678,7 @@ export function SesionesClient({ initialSessions, customers, services, packages 
                   className="neumor-input w-full"
                 >
                   <option value="">-- Sin servicio --</option>
-                  {services.map((s) => (
+                  {services.filter(s => s.is_active !== false).map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name} ({s.duration_minutes}min - {(s.price_cents / 100).toFixed(2)}€)
                     </option>
@@ -637,6 +831,120 @@ export function SesionesClient({ initialSessions, customers, services, packages 
           </div>
         </div>
       )}
+
+      {/* Modal nuevo/editar servicio */}
+      {showServiceForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="neumor-card p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">
+                {editingService ? "Editar servicio" : "Nuevo servicio"}
+              </h2>
+              <button onClick={closeServiceForm} className="p-2 hover:bg-[var(--neumor-bg)] rounded-lg">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleServiceSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nombre del servicio *</label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  defaultValue={editingService?.name || ""}
+                  className="neumor-input w-full"
+                  placeholder="Ej: Entrenamiento personal"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Duracion (min) *</label>
+                  <input
+                    type="number"
+                    name="duration_minutes"
+                    required
+                    defaultValue={editingService?.duration_minutes || 60}
+                    className="neumor-input w-full"
+                    min="15"
+                    step="15"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Precio (€) *</label>
+                  <input
+                    type="number"
+                    name="price"
+                    required
+                    defaultValue={editingService ? (editingService.price_cents / 100).toFixed(2) : ""}
+                    className="neumor-input w-full"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Descripcion</label>
+                <textarea
+                  name="description"
+                  defaultValue={editingService?.description || ""}
+                  className="neumor-input w-full"
+                  rows={2}
+                  placeholder="Descripcion opcional del servicio..."
+                />
+              </div>
+
+              {editingService && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    value="true"
+                    defaultChecked={editingService?.is_active !== false}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm">Servicio activo</span>
+                </label>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={closeServiceForm} className="flex-1 neumor-btn px-4 py-2 rounded-lg">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={loading} className="flex-1 neumor-btn-primary px-4 py-2 rounded-lg disabled:opacity-50">
+                  {loading ? "Guardando..." : editingService ? "Guardar" : "Crear"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (deleteConfirm?.type === "session") {
+            handleDeleteSession(deleteConfirm.id);
+          } else if (deleteConfirm?.type === "service") {
+            handleDeleteService(deleteConfirm.id);
+          }
+        }}
+        title={deleteConfirm?.type === "session" ? "Eliminar sesion" : "Eliminar servicio"}
+        description={deleteConfirm?.type === "session"
+          ? "¿Seguro que quieres eliminar esta sesion? Esta accion no se puede deshacer."
+          : "¿Seguro que quieres eliminar este servicio? Las sesiones existentes mantendran el servicio asociado."
+        }
+        confirmText="Eliminar"
+        variant="danger"
+      />
     </>
   );
 }

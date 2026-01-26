@@ -44,6 +44,28 @@ export async function getWebsiteId(): Promise<string | null> {
   return context?.websiteId || null;
 }
 
+// Get the current user's business type
+export async function getBusinessType(): Promise<string> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return "restaurant";
+
+  // Check user_metadata first (faster)
+  if (user.user_metadata?.business_type) {
+    return user.user_metadata.business_type as string;
+  }
+
+  // Fallback to clients table
+  const { data: client } = await supabase
+    .from("clients")
+    .select("business_type")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  return client?.business_type || "restaurant";
+}
+
 // Dashboard stats - optimized with parallel queries
 export async function getDashboardStats() {
   const supabase = await createClient();
@@ -944,6 +966,79 @@ export async function getRecentSessions(limit = 5) {
     .limit(limit);
 
   return data || [];
+}
+
+// Session type for fitness calendar
+interface FitnessSession {
+  id: string;
+  customer_id: string | null;
+  customer_name: string;
+  customer_email: string | null;
+  customer_phone: string | null;
+  booking_date: string;
+  booking_time: string | null;
+  service_id: string | null;
+  package_id: string | null;
+  duration_minutes: number | null;
+  status: string;
+  session_notes: string | null;
+  workout_summary: string | null;
+  is_paid: boolean;
+  created_at: string;
+  customers?: { id: string; name: string; email: string | null; phone: string | null };
+  trainer_services?: { id: string; name: string; duration_minutes: number; price_cents: number };
+  client_packages?: { id: string; name: string; remaining_sessions: number | null };
+}
+
+// Get sessions for a month (for fitness calendar)
+export async function getSessionsForMonth(year: number, month: number): Promise<FitnessSession[]> {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const start = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+  const end = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+    new Date(year, month + 1, 0).getDate()
+  ).padStart(2, "0")}`;
+
+  const { data } = await supabase
+    .from("bookings")
+    .select(`
+      id,
+      customer_id,
+      customer_name,
+      customer_email,
+      customer_phone,
+      booking_date,
+      booking_time,
+      service_id,
+      package_id,
+      duration_minutes,
+      status,
+      session_notes,
+      workout_summary,
+      is_paid,
+      created_at,
+      customers(id, name, email, phone),
+      trainer_services(id, name, duration_minutes, price_cents),
+      client_packages(id, name, remaining_sessions)
+    `)
+    .eq("website_id", websiteId)
+    .gte("booking_date", start)
+    .lte("booking_date", end)
+    .order("booking_date", { ascending: true })
+    .order("booking_time", { ascending: true });
+
+  if (!data) return [];
+
+  // Normalize Supabase response - extract single objects from arrays
+  return data.map((item) => ({
+    ...item,
+    customers: Array.isArray(item.customers) ? item.customers[0] : item.customers,
+    trainer_services: Array.isArray(item.trainer_services) ? item.trainer_services[0] : item.trainer_services,
+    client_packages: Array.isArray(item.client_packages) ? item.client_packages[0] : item.client_packages,
+  })) as FitnessSession[];
 }
 
 // Widget: Clientes con progreso reciente
