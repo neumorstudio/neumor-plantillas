@@ -91,6 +91,13 @@ export interface Professional {
   sort_order: number;
 }
 
+export interface ProfessionalCategory {
+  id?: string;
+  website_id: string;
+  professional_id: string;
+  category_id: string;
+}
+
 export interface SpecialDay {
   id?: string;
   website_id: string;
@@ -99,6 +106,14 @@ export interface SpecialDay {
   open_time: string;
   close_time: string;
   note: string | null;
+}
+
+export interface SpecialDaySlot {
+  id?: string;
+  special_day_id: string;
+  open_time: string;
+  close_time: string;
+  sort_order: number;
 }
 
 // Cliente Supabase (solo lectura para el template)
@@ -285,6 +300,31 @@ export async function getProfessionals(websiteId?: string): Promise<Professional
   }
 }
 
+export async function getProfessionalCategories(
+  websiteId?: string
+): Promise<ProfessionalCategory[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("professional_categories")
+      .select("id, website_id, professional_id, category_id")
+      .eq("website_id", websiteId);
+
+    if (error) {
+      console.error("Error fetching professional categories:", error.message);
+      return [];
+    }
+
+    return (data as ProfessionalCategory[] | null) || [];
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
+  }
+}
+
 export async function getSpecialDays(websiteId?: string): Promise<SpecialDay[]> {
   if (!supabase || !websiteId) {
     return [];
@@ -303,6 +343,45 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDay[]> 
     }
 
     return (data as SpecialDay[] | null) || [];
+  } catch (error) {
+    console.error("Error connecting to Supabase:", error);
+    return [];
+  }
+}
+
+export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDaySlot[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data: specialDays, error: specialError } = await supabase
+      .from("special_days")
+      .select("id")
+      .eq("website_id", websiteId);
+
+    if (specialError) {
+      console.error("Error fetching special days:", specialError.message);
+      return [];
+    }
+
+    if (!specialDays?.length) {
+      return [];
+    }
+
+    const ids = specialDays.map((day) => day.id);
+    const { data, error } = await supabase
+      .from("special_day_slots")
+      .select("id, special_day_id, open_time, close_time, sort_order")
+      .in("special_day_id", ids)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching special day slots:", error.message);
+      return [];
+    }
+
+    return (data as SpecialDaySlot[] | null) || [];
   } catch (error) {
     console.error("Error connecting to Supabase:", error);
     return [];

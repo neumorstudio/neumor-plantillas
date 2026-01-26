@@ -238,7 +238,26 @@ export async function getSpecialDays() {
     .eq("website_id", websiteId)
     .order("date", { ascending: true });
 
-  return data || [];
+  if (!data?.length) return [];
+
+  const specialDayIds = data.map((item) => item.id);
+  const { data: slots } = await supabase
+    .from("special_day_slots")
+    .select("id, special_day_id, open_time, close_time, sort_order")
+    .in("special_day_id", specialDayIds)
+    .order("sort_order", { ascending: true });
+
+  const slotsByDay = (slots || []).reduce<Record<string, typeof slots>>((acc, slot) => {
+    const key = slot.special_day_id;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(slot);
+    return acc;
+  }, {});
+
+  return data.map((item) => ({
+    ...item,
+    slots: slotsByDay[item.id] || [],
+  }));
 }
 
 // All leads with pagination

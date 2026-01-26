@@ -6,6 +6,7 @@ interface ProfessionalInput {
   name: string;
   is_active?: boolean;
   sort_order?: number;
+  category_ids?: string[];
 }
 
 export async function POST(request: Request) {
@@ -58,17 +59,40 @@ export async function POST(request: Request) {
         .limit(1);
 
       const nextOrder = (existing?.[0]?.sort_order ?? 0) + 1;
-      const { error } = await supabase
+      const { data: created, error } = await supabase
         .from("professionals")
         .insert({
           website_id: website.id,
           name: professional.name,
           is_active: true,
           sort_order: nextOrder,
-        });
+        })
+        .select("id")
+        .single();
 
       if (error) {
         return NextResponse.json({ error: "No se pudo crear" }, { status: 500 });
+      }
+
+      if (created?.id) {
+        const { data: categories } = await supabase
+          .from("service_categories")
+          .select("id")
+          .eq("website_id", website.id);
+        const categoryIds =
+          professional.category_ids?.length
+            ? professional.category_ids
+            : (categories || []).map((category) => category.id);
+
+        if (categoryIds.length) {
+          await supabase.from("professional_categories").insert(
+            categoryIds.map((categoryId) => ({
+              website_id: website.id,
+              professional_id: created.id,
+              category_id: categoryId,
+            }))
+          );
+        }
       }
     }
 
@@ -85,6 +109,34 @@ export async function POST(request: Request) {
 
       if (error) {
         return NextResponse.json({ error: "No se pudo actualizar" }, { status: 500 });
+      }
+
+      if (professional.category_ids) {
+        await supabase
+          .from("professional_categories")
+          .delete()
+          .eq("website_id", website.id)
+          .eq("professional_id", professional.id);
+
+        if (professional.category_ids.length) {
+          const payload = professional.category_ids.map((categoryId) => ({
+            website_id: website.id,
+            professional_id: professional.id,
+            category_id: categoryId,
+          }));
+          const { error: categoryError } = await supabase
+            .from("professional_categories")
+            .insert(payload);
+          if (categoryError) {
+            return NextResponse.json(
+              {
+                error: categoryError.message || "No se pudo guardar categorias",
+                details: categoryError.details || null,
+              },
+              { status: 500 }
+            );
+          }
+        }
       }
     }
 
@@ -107,7 +159,15 @@ export async function POST(request: Request) {
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
 
-    return NextResponse.json({ professionals: data || [] });
+    const { data: categories } = await supabase
+      .from("professional_categories")
+      .select("professional_id, category_id")
+      .eq("website_id", website.id);
+
+    return NextResponse.json({
+      professionals: data || [],
+      professionalCategories: categories || [],
+    });
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }

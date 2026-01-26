@@ -8,6 +8,12 @@ interface SpecialDayInput {
   open_time: string;
   close_time: string;
   note?: string | null;
+  slots?: {
+    id?: string;
+    open_time: string;
+    close_time: string;
+    sort_order?: number;
+  }[];
 }
 
 export async function POST(request: Request) {
@@ -48,15 +54,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Website no encontrado" }, { status: 404 });
     }
 
-    const payload = specialDays.map((item) => ({
-      ...(item.id ? { id: item.id } : {}),
-      website_id: website.id,
-      date: item.date,
-      is_open: item.is_open,
-      open_time: item.open_time,
-      close_time: item.close_time,
-      note: item.note || null,
-    }));
+    const payload = specialDays.map((item) => {
+      const slotFallback =
+        item.slots && item.slots.length
+          ? item.slots
+          : item.is_open
+            ? [
+                {
+                  open_time: item.open_time,
+                  close_time: item.close_time,
+                },
+              ]
+            : [];
+      const firstSlot = slotFallback[0];
+      const lastSlot = slotFallback[slotFallback.length - 1];
+
+      return {
+        ...(item.id ? { id: item.id } : {}),
+        website_id: website.id,
+        date: item.date,
+        is_open: item.is_open,
+        open_time: firstSlot?.open_time || item.open_time,
+        close_time: lastSlot?.close_time || item.close_time,
+        note: item.note || null,
+      };
+    });
 
     const { data, error } = await supabase
       .from("special_days")
@@ -71,7 +93,64 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(data || []);
+    const dayIds = (data || []).map((item) => item.id);
+    if (dayIds.length) {
+      await supabase.from("special_day_slots").delete().in("special_day_id", dayIds);
+    }
+
+    const slotPayload = (specialDays || []).flatMap((item) => {
+      const match = (data || []).find((day) => day.date === item.date);
+      if (!match || !item.is_open) return [];
+      const sourceSlots =
+        item.slots && item.slots.length
+          ? item.slots
+          : [
+              {
+                open_time: item.open_time,
+                close_time: item.close_time,
+              },
+            ];
+
+      return sourceSlots.map((slot, index) => ({
+        ...(slot.id ? { id: slot.id } : {}),
+        special_day_id: match.id,
+        open_time: slot.open_time,
+        close_time: slot.close_time,
+        sort_order: slot.sort_order ?? index,
+      }));
+    });
+
+    if (slotPayload.length) {
+      const { error: slotError } = await supabase
+        .from("special_day_slots")
+        .insert(slotPayload);
+      if (slotError) {
+        return NextResponse.json(
+          { error: slotError.message || "No se pudo guardar", details: slotError.details || null },
+          { status: 500 }
+        );
+      }
+    }
+
+    const { data: slots } = await supabase
+      .from("special_day_slots")
+      .select("id, special_day_id, open_time, close_time, sort_order")
+      .in("special_day_id", dayIds)
+      .order("sort_order", { ascending: true });
+
+    const slotsByDay = (slots || []).reduce<Record<string, typeof slots>>((acc, slot) => {
+      const key = slot.special_day_id;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(slot);
+      return acc;
+    }, {});
+
+    const merged = (data || []).map((item) => ({
+      ...item,
+      slots: slotsByDay[item.id] || [],
+    }));
+
+    return NextResponse.json(merged);
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }

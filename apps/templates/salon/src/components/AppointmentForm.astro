@@ -1,5 +1,5 @@
 ---
-import { getBusinessHourSlots, getBusinessHours, getProfessionals, getServiceCatalog, getSpecialDays } from "@lib/supabase";
+import { getBusinessHourSlots, getBusinessHours, getProfessionals, getProfessionalCategories, getServiceCatalog, getSpecialDays, getSpecialDaySlots } from "@lib/supabase";
 
 interface Props {
   title?: string;
@@ -20,7 +20,9 @@ const hasServiceCatalog = serviceCatalog.length > 0;
 const businessHours = await getBusinessHours(websiteId);
 const businessHourSlots = await getBusinessHourSlots(websiteId);
 const specialDays = await getSpecialDays(websiteId);
+const specialDaySlots = await getSpecialDaySlots(websiteId);
 const professionals = await getProfessionals(websiteId);
+const professionalCategories = await getProfessionalCategories(websiteId);
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -71,7 +73,9 @@ const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
 const hoursPayload = JSON.stringify(businessHours);
 const slotsPayload = JSON.stringify(businessHourSlots);
 const specialDaysPayload = JSON.stringify(specialDays);
+const specialDaySlotsPayload = JSON.stringify(specialDaySlots);
 const professionalsPayload = JSON.stringify(professionals);
+const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 ---
 
 <section id="appointment" class="section">
@@ -123,7 +127,9 @@ const professionalsPayload = JSON.stringify(professionals);
         data-business-hours={hoursPayload}
         data-business-hour-slots={slotsPayload}
         data-special-days={specialDaysPayload}
+        data-special-day-slots={specialDaySlotsPayload}
         data-professionals={professionalsPayload}
+        data-professional-categories={professionalCategoriesPayload}
       >
         <header class="appointment-header">
           <h3>Reserva tu cita</h3>
@@ -162,6 +168,7 @@ const professionalsPayload = JSON.stringify(professionals);
                           type="checkbox"
                           name="services"
                           value={item.id}
+                          data-category-id={item.category_id}
                           data-name={item.name}
                           data-price={item.price_cents}
                           data-duration={item.duration_minutes}
@@ -205,6 +212,9 @@ const professionalsPayload = JSON.stringify(professionals);
                   No hay profesionales disponibles.
                 </p>
               )}
+              <p class="professional-empty" data-professional-warning hidden>
+                No hay profesionales que cubran esos servicios.
+              </p>
             </div>
             <div class="calendar-wrapper">
               <div class="calendar-card neumor-inset">
@@ -528,6 +538,11 @@ const professionalsPayload = JSON.stringify(professionals);
 
   .professional-chip:has(input:checked) {
     border: 2px solid var(--accent);
+  }
+
+  .professional-chip.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 
   .professional-empty {
@@ -891,6 +906,7 @@ const professionalsPayload = JSON.stringify(professionals);
   const professionalInputs = Array.from(
     form.querySelectorAll<HTMLInputElement>("input[name='professional_id']")
   );
+  const professionalWarning = form.querySelector<HTMLElement>("[data-professional-warning]");
   const toastEl = form.querySelector<HTMLElement>("[data-toast]");
   const toastMessage = form.querySelector<HTMLElement>("[data-toast-message]");
 
@@ -923,6 +939,8 @@ const professionalsPayload = JSON.stringify(professionals);
   const businessHoursRaw = form.dataset.businessHours || "[]";
   const businessHourSlotsRaw = form.dataset.businessHourSlots || "[]";
   const specialDaysRaw = form.dataset.specialDays || "[]";
+  const specialDaySlotsRaw = form.dataset.specialDaySlots || "[]";
+  const professionalCategoriesRaw = form.dataset.professionalCategories || "[]";
   const parsedBusinessHours = JSON.parse(businessHoursRaw) as {
     day_of_week: number;
     is_open: boolean;
@@ -940,12 +958,27 @@ const professionalsPayload = JSON.stringify(professionals);
     ? parsedBusinessHourSlots
     : [];
   const parsedSpecialDays = JSON.parse(specialDaysRaw) as {
+    id?: string;
     date: string;
     is_open: boolean;
     open_time: string;
     close_time: string;
   }[] | null;
   const specialDays = Array.isArray(parsedSpecialDays) ? parsedSpecialDays : [];
+  const parsedSpecialDaySlots = JSON.parse(specialDaySlotsRaw) as {
+    special_day_id: string;
+    open_time: string;
+    close_time: string;
+    sort_order?: number;
+  }[] | null;
+  const specialDaySlots = Array.isArray(parsedSpecialDaySlots) ? parsedSpecialDaySlots : [];
+  const parsedProfessionalCategories = JSON.parse(professionalCategoriesRaw) as {
+    professional_id: string;
+    category_id: string;
+  }[] | null;
+  const professionalCategories = Array.isArray(parsedProfessionalCategories)
+    ? parsedProfessionalCategories
+    : [];
   const monthNames = [
     "Enero",
     "Febrero",
@@ -995,6 +1028,53 @@ const professionalsPayload = JSON.stringify(professionals);
     return baseDuration + bufferMinutes;
   };
 
+  const professionalCategoryMap = new Map<string, Set<string>>();
+  professionalCategories.forEach((item) => {
+    const existing = professionalCategoryMap.get(item.professional_id) || new Set<string>();
+    existing.add(item.category_id);
+    professionalCategoryMap.set(item.professional_id, existing);
+  });
+
+  const getSelectedCategoryIds = () => {
+    const selected = Array.from(
+      form.querySelectorAll<HTMLInputElement>("input[name='services']:checked")
+    );
+    return Array.from(
+      new Set(
+        selected
+          .map((input) => input.dataset.categoryId || "")
+          .filter((value) => value.length > 0)
+      )
+    );
+  };
+
+  const updateProfessionalAvailability = () => {
+    const requiredCategoryIds = getSelectedCategoryIds();
+    let hasAvailable = false;
+
+    professionalInputs.forEach((input) => {
+      const label = input.closest(".professional-chip") as HTMLElement | null;
+      const categories = professionalCategoryMap.get(input.value) || new Set<string>();
+      const isAvailable =
+        requiredCategoryIds.length === 0 ||
+        requiredCategoryIds.every((categoryId) => categories.has(categoryId));
+
+      if (label) {
+        label.classList.toggle("is-disabled", !isAvailable);
+      }
+      input.disabled = !isAvailable;
+      if (isAvailable) {
+        hasAvailable = true;
+      } else if (input.checked) {
+        input.checked = false;
+      }
+    });
+
+    if (professionalWarning) {
+      professionalWarning.hidden = hasAvailable;
+    }
+  };
+
   const defaultSchedule = { is_open: true, open_time: "09:00", close_time: "19:00" };
 
   const getDaySchedule = (dateValue: string) => {
@@ -1002,6 +1082,18 @@ const professionalsPayload = JSON.stringify(professionals);
     if (special) {
       if (!special.is_open) {
         return { is_open: false, slots: [] };
+      }
+      const daySlots = specialDaySlots
+        .filter((slot) => slot.special_day_id === special.id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      if (daySlots.length) {
+        return {
+          is_open: true,
+          slots: daySlots.map((slot) => ({
+            open_time: slot.open_time,
+            close_time: slot.close_time,
+          })),
+        };
       }
       return {
         is_open: true,
@@ -1347,9 +1439,14 @@ const professionalsPayload = JSON.stringify(professionals);
   renderTimeSlots();
   updateSteps();
   updateMonthNav();
+  updateProfessionalAvailability();
 
   serviceInputs.forEach((input) => {
     input.addEventListener("change", () => {
+      updateProfessionalAvailability();
+      if (timeInput) {
+        timeInput.value = "";
+      }
       renderTimeSlots();
       updateSummary();
     });
