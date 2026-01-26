@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     if (action === "create") {
       const { data: existing } = await supabase
         .from("professionals")
-        .select("id")
+        .select("id, sort_order")
         .eq("website_id", website.id)
         .order("sort_order", { ascending: false })
         .limit(1);
