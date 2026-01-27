@@ -974,6 +974,10 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
   const syncStepPanelHeight = () => {
     if (!stepPanels) return;
+    if (window.innerWidth < 900) {
+      stepPanels.style.minHeight = "";
+      return;
+    }
     const panels = Array.from(stepPanels.querySelectorAll<HTMLElement>(".step-panel"));
     if (panels.length === 0) return;
     const containerWidth = stepPanels.clientWidth;
