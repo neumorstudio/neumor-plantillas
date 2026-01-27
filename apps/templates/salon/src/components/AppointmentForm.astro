@@ -1772,8 +1772,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       return;
     }
 
-    const session = await ensureAuth();
-    if (!session || !currentCustomerId) {
+    // Check auth from SSR props (currentUserId and currentCustomerId set in setAuthState)
+    if (!currentUserId || !currentCustomerId) {
       showToast("Debes iniciar sesion con Google para confirmar.", "warning");
       return;
     }
