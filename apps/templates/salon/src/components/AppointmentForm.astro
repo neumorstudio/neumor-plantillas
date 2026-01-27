@@ -304,7 +304,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         <div class="step-actions">
           <button type="button" class="neumor-btn" data-step-prev>Anterior</button>
           <button type="button" class="neumor-btn neumor-btn-accent" data-step-next>Continuar</button>
-          <button type="submit" class="neumor-btn neumor-btn-accent" data-step-submit>
+          <button type="submit" class="neumor-btn neumor-btn-accent" data-step-submit style="display: none;">
             Confirmar reserva
           </button>
         </div>
@@ -1553,6 +1553,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     if (nextBtn && submitBtn) {
       nextBtn.style.display = currentStep === panels.length ? "none" : "inline-flex";
       submitBtn.style.display = currentStep === panels.length ? "inline-flex" : "none";
+      if (currentStep !== panels.length) {
+        submitBtn.disabled = true;
+      }
     }
 
     updateSummary();
