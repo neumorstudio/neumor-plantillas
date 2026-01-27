@@ -258,7 +258,8 @@ export default async function DashboardPage() {
 
       const map = new Map<string, { total: number; count: number }>();
       (data || []).forEach((item) => {
-        const name = item.professional?.name || "Sin asignar";
+        const prof = Array.isArray(item.professional) ? item.professional[0] : item.professional;
+        const name = prof?.name || "Sin asignar";
         const entry = map.get(name) || { total: 0, count: 0 };
         entry.total += item.total_price_cents || 0;
         entry.count += 1;

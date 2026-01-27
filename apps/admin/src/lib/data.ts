@@ -128,7 +128,13 @@ export async function getRecentBookings(limit = 5) {
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  return data || [];
+  // Map professional from array to object (Supabase returns array for relations)
+  return (data || []).map((item) => ({
+    ...item,
+    professional: Array.isArray(item.professional)
+      ? item.professional[0] || null
+      : item.professional,
+  }));
 }
 
 // All bookings with pagination

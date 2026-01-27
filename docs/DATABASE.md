@@ -1,8 +1,10 @@
 # NeumorStudio - Documentacion de Base de Datos
 
-> **Ultima actualizacion:** 23 Enero 2026
+> **Ultima actualizacion:** 27 Enero 2026
 > **Motor:** PostgreSQL (Supabase)
-> **Migraciones:** 27 archivos en `packages/supabase/migrations/`
+> **Proyecto Supabase:** neumor-plantillas (jekrqkdvgcwruhghtgkj)
+> **Migraciones:** 50 archivos en `packages/supabase/migrations/`
+> **Tablas:** 37 tablas en schema public
 
 ## Tabla de Contenidos
 
@@ -10,16 +12,18 @@
 2. [Diagrama de Relaciones](#diagrama-de-relaciones)
 3. [Tablas Core](#tablas-core)
 4. [Tablas de Negocio - Universal](#tablas-de-negocio---universal)
-5. [Tablas de Restaurante](#tablas-de-restaurante)
-6. [Tablas de Reparaciones/Reformas](#tablas-de-reparacionesreformas)
-7. [Tablas de Fitness/Entrenador Personal](#tablas-de-fitnessentrenador-personal)
-8. [Tablas de Integraciones](#tablas-de-integraciones)
-9. [Tablas de Newsletter](#tablas-de-newsletter)
-10. [Enums y Tipos](#enums-y-tipos)
-11. [Row Level Security (RLS)](#row-level-security-rls)
-12. [Funciones y Triggers](#funciones-y-triggers)
-13. [Indices](#indices)
-14. [Historial de Migraciones](#historial-de-migraciones)
+5. [Tablas de Salon/Peluqueria](#tablas-de-salonpeluqueria)
+6. [Tablas de Restaurante](#tablas-de-restaurante)
+7. [Tablas de Reparaciones/Reformas](#tablas-de-reparacionesreformas)
+8. [Tablas de Fitness/Entrenador Personal](#tablas-de-fitnessentrenador-personal)
+9. [Tablas de Calendario/Horarios](#tablas-de-calendariohorarios)
+10. [Tablas de Integraciones](#tablas-de-integraciones)
+11. [Tablas de Newsletter](#tablas-de-newsletter)
+12. [Enums y Tipos](#enums-y-tipos)
+13. [Row Level Security (RLS)](#row-level-security-rls)
+14. [Funciones y Triggers](#funciones-y-triggers)
+15. [Indices](#indices)
+16. [Historial de Migraciones](#historial-de-migraciones)
 
 ---
 
@@ -436,6 +440,78 @@ Reservaciones/citas (restaurantes, clinicas, salones, sesiones fitness).
 
 ---
 
+## Tablas de Salon/Peluqueria
+
+### `service_categories`
+
+Categorias de servicios para salones de belleza/peluquerias.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `name` | TEXT | NOT NULL | Nombre de la categoria |
+| `sort_order` | INTEGER | DEFAULT 0 | Orden de visualizacion |
+| `is_active` | BOOLEAN | DEFAULT true | Activa |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+**RLS:** Lectura publica para categorias activas, escritura solo para propietario.
+
+---
+
+### `service_items`
+
+Servicios individuales dentro de cada categoria.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `category_id` | UUID | FK -> service_categories(id) ON DELETE CASCADE | Categoria padre |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `name` | TEXT | NOT NULL | Nombre del servicio |
+| `price_cents` | INTEGER | NOT NULL, CHECK >= 0 | Precio en centimos |
+| `duration_minutes` | INTEGER | NOT NULL, DEFAULT 30, CHECK > 0 | Duracion en minutos |
+| `notes` | TEXT | - | Notas adicionales |
+| `sort_order` | INTEGER | DEFAULT 0 | Orden de visualizacion |
+| `is_active` | BOOLEAN | DEFAULT true | Activo |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+**RLS:** Lectura publica para servicios activos, escritura solo para propietario.
+
+---
+
+### `professionals`
+
+Profesionales/empleados del salon.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `name` | TEXT | NOT NULL | Nombre del profesional |
+| `is_active` | BOOLEAN | DEFAULT true | Activo |
+| `sort_order` | INTEGER | DEFAULT 0 | Orden de visualizacion |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+---
+
+### `professional_categories`
+
+Relacion muchos-a-muchos entre profesionales y categorias de servicios.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) | Sitio asociado |
+| `professional_id` | UUID | FK -> professionals(id) | Profesional |
+| `category_id` | UUID | FK -> service_categories(id) | Categoria de servicio |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+
+---
+
 ## Tablas de Restaurante
 
 ### `menu_items`
@@ -698,6 +774,96 @@ Records personales / PRs.
 | `achieved_at` | DATE | DEFAULT CURRENT_DATE | Fecha del record |
 | `notes` | TEXT | - | Notas |
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+
+---
+
+## Tablas de Calendario/Horarios
+
+### `business_hours`
+
+Horarios regulares del negocio por dia de la semana.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `day_of_week` | SMALLINT | NOT NULL, CHECK 0-6 | Dia (0=Domingo, 6=Sabado) |
+| `is_open` | BOOLEAN | DEFAULT true | Abierto este dia |
+| `open_time` | TIME | NOT NULL, DEFAULT '09:00' | Hora de apertura |
+| `close_time` | TIME | NOT NULL, DEFAULT '19:00' | Hora de cierre |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+**Constraint:** UNIQUE(website_id, day_of_week)
+
+---
+
+### `business_hour_slots`
+
+Franjas horarias multiples por dia (para negocios con horario partido).
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `day_of_week` | INTEGER | NOT NULL | Dia de la semana |
+| `open_time` | TIME | NOT NULL | Hora de apertura |
+| `close_time` | TIME | NOT NULL | Hora de cierre |
+| `sort_order` | INTEGER | DEFAULT 0 | Orden |
+| `is_active` | BOOLEAN | DEFAULT true | Activo |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+---
+
+### `special_days`
+
+Dias especiales (festivos, vacaciones, horarios especiales).
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `date` | DATE | NOT NULL | Fecha del dia especial |
+| `is_open` | BOOLEAN | DEFAULT false | Abierto (false = cerrado) |
+| `open_time` | TIME | DEFAULT '09:00' | Hora de apertura |
+| `close_time` | TIME | DEFAULT '19:00' | Hora de cierre |
+| `note` | TEXT | - | Nota (ej: "Festivo", "Vacaciones") |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+---
+
+### `special_day_slots`
+
+Franjas horarias para dias especiales.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `special_day_id` | UUID | FK -> special_days(id) ON DELETE CASCADE | Dia especial padre |
+| `open_time` | TIME | NOT NULL | Hora de apertura |
+| `close_time` | TIME | NOT NULL | Hora de cierre |
+| `sort_order` | INTEGER | DEFAULT 0 | Orden |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
+
+---
+
+### `restaurants`
+
+Configuracion especifica de restaurantes.
+
+| Columna | Tipo | Restricciones | Descripcion |
+|---------|------|---------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
+| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
+| `is_open` | BOOLEAN | DEFAULT true | Restaurante abierto |
+| `kitchen_open` | BOOLEAN | DEFAULT true | Cocina abierta |
+| `takeaway_enabled` | BOOLEAN | DEFAULT false | Pedidos para llevar |
+| `capacity` | INTEGER | DEFAULT 20 | Capacidad de comensales |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
+| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
 
 ---
 
@@ -1145,6 +1311,29 @@ CREATE INDEX idx_reviews_location ON google_reviews_cache(location_id);
 | 0025 | `client_packages.sql` | Paquetes/bonos de sesiones |
 | 0026 | `client_progress.sql` | Progreso y records del cliente |
 | 0027 | `fitness_enhancements.sql` | Campos adicionales en customers y bookings para fitness |
+| 0028 | `customer_auth.sql` | Autenticacion de clientes finales |
+| 0029 | `public_bookings_insert.sql` | Permitir INSERT publico en bookings |
+| 0030 | `public_bookings_insert_fix.sql` | Fix policy INSERT bookings |
+| 0031 | `booking_services_columns.sql` | Columnas services y total_price en bookings |
+| 0032 | `grant_bookings_insert.sql` | Grant INSERT en bookings para anon |
+| 0033 | `public_read_bookings.sql` | Lectura publica de bookings |
+| 0034 | `business_hours.sql` | Horarios de negocio |
+| 0035 | `special_days.sql` | Dias especiales (festivos, vacaciones) |
+| 0036 | `public_read_hours_special_days.sql` | Lectura publica de horarios |
+| 0037 | `delete_bookings_policy.sql` | Policy DELETE para bookings |
+| 0038 | `business_hour_slots.sql` | Franjas horarias multiples |
+| 0039 | `public_read_business_hour_slots.sql` | Lectura publica de franjas |
+| 0040 | `professionals.sql` | Profesionales del salon |
+| 0041 | `public_read_professionals.sql` | Lectura publica de profesionales |
+| 0042 | `booking_professional_id.sql` | FK professional_id en bookings |
+| 0043 | `special_day_slots.sql` | Franjas horarias para dias especiales |
+| 0044 | `public_read_special_day_slots.sql` | Lectura publica de franjas especiales |
+| 0045 | `professional_categories.sql` | Relacion profesional-categoria |
+| 0046 | `public_read_professional_categories.sql` | Lectura publica |
+| 0047 | `admin_insert_bookings.sql` | INSERT policy para admin en bookings |
+| 0048 | `salon_services.sql` | Categorias y servicios de salon |
+| 0049 | `fix_fitness_sections.sql` | Fix secciones visibles para fitness |
+| 0050 | `add_calendario_fitness.sql` | Anadir calendario a fitness |
 
 ---
 
