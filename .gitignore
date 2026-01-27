@@ -49,3 +49,4 @@ packages/supabase/supabase/
 
 # Supabase CLI temp
 supabase/.temp/
+.env*.local
