@@ -12,12 +12,15 @@
     "dev:clinic": "turbo dev --filter=@neumorstudio/template-clinic",
     "dev:gym": "turbo dev --filter=@neumorstudio/template-gym",
     "dev:store": "turbo dev --filter=@neumorstudio/template-store",
+    "dev:docs": "pnpm --filter=@neumorstudio/docs dev",
     "build": "turbo build",
+    "build:docs": "pnpm --filter=@neumorstudio/docs build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "clean": "turbo clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "create-client": "pnpm --filter=@neumorstudio/cli create-client"
+    "create-client": "pnpm --filter=@neumorstudio/cli create-client",
+    "serve:docs": "pnpm --filter=@neumorstudio/docs serve"
   },
   "devDependencies": {
     "prettier": "^3.4.2",
