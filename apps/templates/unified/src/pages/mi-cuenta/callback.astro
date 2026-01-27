@@ -137,22 +137,30 @@ console.log("[Callback] No code, client will handle hash fragment");
         // Create client and explicitly set the session to persist it
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+        console.log("[Callback] Calling setSession with tokens...");
         const { data, error } = await supabase.auth.setSession({
           access_token,
           refresh_token: refresh_token || "",
         });
 
         if (error) {
-          console.error("Error setting session:", error);
+          console.error("[Callback] Error setting session:", error);
           window.location.href = "/mi-cuenta?error=session_failed";
           return;
         }
 
         if (data.session) {
-          console.log("Session established and persisted:", data.session.user.email);
+          console.log("[Callback] Session established:", data.session.user.email);
+
+          // Verify session is in localStorage
+          const storageKey = `sb-${supabaseUrl.split("//")[1].split(".")[0]}-auth-token`;
+          const stored = localStorage.getItem(storageKey);
+          console.log("[Callback] LocalStorage key:", storageKey);
+          console.log("[Callback] Session in localStorage:", stored ? "YES" : "NO");
 
           // Check for return URL in sessionStorage
           const returnUrl = sessionStorage.getItem("auth_return_url");
+          console.log("[Callback] Return URL:", returnUrl);
           if (returnUrl) {
             sessionStorage.removeItem("auth_return_url");
             window.location.href = returnUrl;
@@ -160,6 +168,8 @@ console.log("[Callback] No code, client will handle hash fragment");
             window.location.href = "/mi-cuenta/inicio";
           }
           return;
+        } else {
+          console.error("[Callback] No session in response");
         }
       }
 

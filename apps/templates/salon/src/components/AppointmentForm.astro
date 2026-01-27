@@ -1754,8 +1754,16 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   updateProfessionalAvailability();
 
   if (supabaseClient) {
+    // Debug: check localStorage for session
+    const storageKey = `sb-${supabaseUrl.split("//")[1].split(".")[0]}-auth-token`;
+    const storedSession = localStorage.getItem(storageKey);
+    console.log("[Form] Supabase URL:", supabaseUrl);
+    console.log("[Form] Storage key:", storageKey);
+    console.log("[Form] Session in localStorage:", storedSession ? "YES (" + storedSession.substring(0, 50) + "...)" : "NO");
+
     supabaseClient.auth.getSession().then(async ({ data }) => {
       const session = data.session;
+      console.log("[Form] getSession result:", session ? `User: ${session.user.email}` : "No session");
       if (session?.user) {
         const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
         const customerId = await linkOrCreateCustomer(
