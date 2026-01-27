@@ -1,11 +1,20 @@
 ---
 import { getBusinessHourSlots, getBusinessHours, getProfessionals, getProfessionalCategories, getServiceCatalog, getSpecialDays, getSpecialDaySlots } from "@lib/supabase";
 
+// User info passed from server (SSR auth check)
+interface AuthUser {
+  email: string;
+  id: string;
+  customerId: string | null;
+  name?: string;
+}
+
 interface Props {
   title?: string;
   subtitle?: string;
   webhookUrl?: string;
   websiteId?: string;
+  currentUser?: AuthUser | null;
 }
 
 const {
@@ -13,6 +22,7 @@ const {
   subtitle = "Elige el servicio, luego fecha y hora. Confirmamos tu cita al instante.",
   webhookUrl = "",
   websiteId = "",
+  currentUser = null,
 } = Astro.props;
 
 const serviceCatalog = await getServiceCatalog(websiteId);
@@ -23,8 +33,6 @@ const specialDays = await getSpecialDays(websiteId);
 const specialDaySlots = await getSpecialDaySlots(websiteId);
 const professionals = await getProfessionals(websiteId);
 const professionalCategories = await getProfessionalCategories(websiteId);
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 const fallbackCategories = [
   {
@@ -122,14 +130,13 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         data-webhook={webhookUrl}
         data-website-id={websiteId}
         data-has-services={categories.length > 0 ? "true" : "false"}
-        data-supabase-url={supabaseUrl}
-        data-supabase-key={supabaseAnonKey}
         data-business-hours={hoursPayload}
         data-business-hour-slots={slotsPayload}
         data-special-days={specialDaysPayload}
         data-special-day-slots={specialDaySlotsPayload}
         data-professionals={professionalsPayload}
         data-professional-categories={professionalCategoriesPayload}
+        data-current-user={currentUser ? JSON.stringify(currentUser) : ""}
       >
         <header class="appointment-header">
           <h3>Reserva tu cita</h3>
@@ -1045,25 +1052,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
 <script>
-  // Wait for Supabase SDK to load
-  const waitForSupabase = (callback: () => void, maxWait = 5000) => {
-    const start = Date.now();
-    const check = () => {
-      if (window.supabase) {
-        callback();
-      } else if (Date.now() - start < maxWait) {
-        setTimeout(check, 50);
-      } else {
-        console.error("[Auth] Supabase SDK failed to load after", maxWait, "ms");
-        callback(); // Continue anyway, client will be null
-      }
-    };
-    check();
-  };
-
-  waitForSupabase(() => {
   const form = document.querySelector(".appointment-form") as HTMLFormElement | null;
   if (!form) {
     console.warn("Appointment form not found");
@@ -1144,32 +1133,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
   };
 
-  const ensureAuth = async () => {
-    if (!supabaseClient) return null;
-    const { data } = await supabaseClient.auth.getSession();
-    return data.session || null;
-  };
-
-  const linkOrCreateCustomer = async (userId: string, email: string, name: string) => {
-    if (!supabaseClient || !websiteId) return null;
-    try {
-      const { data, error } = await supabaseClient.rpc("link_or_create_customer", {
-        p_website_id: websiteId,
-        p_auth_user_id: userId,
-        p_email: email,
-        p_name: name || email.split("@")[0],
-      });
-      if (error) {
-        console.error("Error linking customer:", error);
-        return null;
-      }
-      return data as string;
-    } catch (err) {
-      console.error("Error calling link_or_create_customer:", err);
-      return null;
-    }
-  };
-
   const showToast = (message: string, type: "error" | "success" | "warning" = "error", duration = 3500) => {
     if (!toastEl || !toastMessage) return;
 
@@ -1191,18 +1154,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   };
 
   const hasServices = form.dataset.hasServices === "true";
-  const supabaseUrl = form.dataset.supabaseUrl || "";
-  const supabaseKey = form.dataset.supabaseKey || "";
-
-  // Debug: log what's available
-  if (!supabaseUrl) console.warn("[Auth] Missing supabaseUrl");
-  if (!supabaseKey) console.warn("[Auth] Missing supabaseKey");
-  if (!window.supabase) console.warn("[Auth] Supabase SDK not loaded");
-
-  const supabaseClient =
-    supabaseUrl && supabaseKey && window.supabase
-      ? window.supabase.createClient(supabaseUrl, supabaseKey)
-      : null;
   const websiteId = form.dataset.websiteId || "";
   const businessHoursRaw = form.dataset.businessHours || "[]";
   const businessHourSlotsRaw = form.dataset.businessHourSlots || "[]";
@@ -1753,147 +1704,37 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   updateMonthNav();
   updateProfessionalAvailability();
 
-  if (supabaseClient) {
-    // Debug: check localStorage for session
-    const storageKey = `sb-${supabaseUrl.split("//")[1].split(".")[0]}-auth-token`;
-    const storedSession = localStorage.getItem(storageKey);
-    console.log("[Form] Supabase URL:", supabaseUrl);
-    console.log("[Form] Storage key:", storageKey);
-    console.log("[Form] Session in localStorage:", storedSession ? "YES" : "NO");
+  // Initialize auth state from server-side props (SSR)
+  // This is passed from the server after checking cookies
+  const currentUserData = form.dataset.currentUser;
+  if (currentUserData) {
+    try {
+      const user = JSON.parse(currentUserData) as { email: string; id: string; customerId: string | null; name?: string };
+      console.log("[Form] User authenticated (SSR):", user.email);
+      setAuthState(user.email, user.id, user.customerId);
 
-    // Try to restore session from localStorage if it exists
-    const restoreSession = async () => {
-      if (storedSession) {
-        try {
-          const parsed = JSON.parse(storedSession);
-          console.log("[Form] Parsed session, access_token exists:", !!parsed.access_token);
-
-          if (parsed.access_token) {
-            // Set the session explicitly with timeout
-            console.log("[Form] Calling setSession...");
-
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error("setSession timeout after 5s")), 5000);
-            });
-
-            let data, error;
-            try {
-              const result = await Promise.race([
-                supabaseClient.auth.setSession({
-                  access_token: parsed.access_token,
-                  refresh_token: parsed.refresh_token || "",
-                }),
-                timeoutPromise
-              ]) as { data: { session: unknown }, error: unknown };
-              data = result.data;
-              error = result.error;
-            } catch (e) {
-              console.error("[Form] setSession timed out or failed:", e);
-              // Session might be expired, clear it
-              localStorage.removeItem(storageKey);
-              setAuthState(null, null, null);
-              return;
-            }
-
-            if (error) {
-              console.error("[Form] setSession error:", error);
-              setAuthState(null, null, null);
-              return;
-            }
-
-            if (data.session?.user) {
-              console.log("[Form] Session restored:", data.session.user.email);
-              const user = data.session.user;
-              const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
-              const customerId = await linkOrCreateCustomer(
-                user.id,
-                user.email || "",
-                String(fullName)
-              );
-              setAuthState(user.email || null, user.id || null, customerId);
-              const emailInput = form.querySelector<HTMLInputElement>("#email");
-              if (emailInput && !emailInput.value && user.email) {
-                emailInput.value = user.email;
-              }
-              const nameInput = form.querySelector<HTMLInputElement>("#name");
-              if (nameInput && !nameInput.value && fullName) {
-                nameInput.value = String(fullName);
-              }
-              return;
-            }
-          }
-        } catch (e) {
-          console.error("[Form] Error parsing stored session:", e);
-        }
+      // Pre-fill form fields
+      const emailInput = form.querySelector<HTMLInputElement>("#email");
+      if (emailInput && !emailInput.value && user.email) {
+        emailInput.value = user.email;
       }
-
-      // Fallback: try getSession
-      console.log("[Form] Trying getSession...");
-      const { data, error } = await supabaseClient.auth.getSession();
-      if (error) {
-        console.error("[Form] getSession error:", error);
-        setAuthState(null, null, null);
-        return;
+      const nameInput = form.querySelector<HTMLInputElement>("#name");
+      if (nameInput && !nameInput.value && user.name) {
+        nameInput.value = user.name;
       }
-      const session = data.session;
-      console.log("[Form] getSession result:", session ? `User: ${session.user.email}` : "No session");
-      if (session?.user) {
-        const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
-        const customerId = await linkOrCreateCustomer(
-          session.user.id,
-          session.user.email || "",
-          String(fullName)
-        );
-        setAuthState(session.user.email || null, session.user.id || null, customerId);
-        const emailInput = form.querySelector<HTMLInputElement>("#email");
-        if (emailInput && !emailInput.value && session.user.email) {
-          emailInput.value = session.user.email;
-        }
-        const nameInput = form.querySelector<HTMLInputElement>("#name");
-        if (nameInput && !nameInput.value && fullName) {
-          nameInput.value = String(fullName);
-        }
-      } else {
-        setAuthState(null, null, null);
-      }
-    };
-
-    restoreSession().catch((err) => {
-      console.error("[Form] restoreSession exception:", err);
+    } catch (e) {
+      console.error("[Form] Error parsing currentUser:", e);
       setAuthState(null, null, null);
-    });
-
-    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
-        const customerId = await linkOrCreateCustomer(
-          session.user.id,
-          session.user.email || "",
-          String(fullName)
-        );
-        setAuthState(session.user.email || null, session.user.id || null, customerId);
-      } else {
-        setAuthState(null, null, null);
-      }
-    });
+    }
   } else {
+    console.log("[Form] No authenticated user");
     setAuthState(null, null, null);
   }
 
-  authButton?.addEventListener("click", async () => {
-    if (!supabaseClient) {
-      showToast("No se pudo iniciar sesion. Revisa la configuracion.", "error");
-      return;
-    }
-    // Store current page to return after auth
-    sessionStorage.setItem("auth_return_url", window.location.href);
-
-    await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/mi-cuenta/callback`,
-      },
-    });
+  // Login button - redirect to SSR OAuth flow
+  authButton?.addEventListener("click", () => {
+    const returnUrl = encodeURIComponent(window.location.href);
+    window.location.href = `/mi-cuenta/auth/google?return_url=${returnUrl}`;
   });
 
   serviceInputs.forEach((input) => {
@@ -2033,6 +1874,5 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
   });
   }
-  }); // close waitForSupabase
 </script>
 

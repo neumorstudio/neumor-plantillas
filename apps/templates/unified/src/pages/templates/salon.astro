@@ -16,10 +16,38 @@ import { FooterFull, FooterMinimal, FooterCentered } from "@salon/components/Foo
 
 // Import Supabase helpers
 import { getServiceCatalog } from "@salon/lib/supabase";
+import { createPortalClient } from "../../lib/supabase-portal";
 
 // Get tenant from middleware
 const tenant = Astro.locals.tenant as TenantData;
 const config = tenant.config as Record<string, unknown>;
+
+// Check if user is authenticated (SSR)
+let currentUser: { email: string; id: string; customerId: string | null; name?: string } | null = null;
+try {
+  const supabase = createPortalClient(Astro.cookies, Astro.request);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    // Get customer profile for this tenant
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("id, name")
+      .eq("website_id", tenant.id)
+      .eq("auth_user_id", user.id)
+      .single();
+
+    currentUser = {
+      email: user.email || "",
+      id: user.id,
+      customerId: customer?.id || null,
+      name: customer?.name || user.user_metadata?.full_name || user.user_metadata?.name || "",
+    };
+  }
+} catch (e) {
+  // Auth check failed, user not logged in
+  console.log("[Salon] Auth check error:", e);
+}
 
 // Component mapping
 const componentMap = {
@@ -102,7 +130,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
 
     <Services categories={serviceCategories} />
 
-    <AppointmentForm webhookUrl={webhookUrl} websiteId={tenant.id} />
+    <AppointmentForm webhookUrl={webhookUrl} websiteId={tenant.id} currentUser={currentUser} />
   </main>
 
   <FooterComponent
