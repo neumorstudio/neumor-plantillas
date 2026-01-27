@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 import {
   isPlainObject,
   hasUnknownKeys,
@@ -267,6 +268,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!isOrdersEnabled(website.config)) {
+      return NextResponse.json(
+        { error: "Pedidos desactivados para este sitio" },
+        { status: 403, headers: (await getFallbackCorsHeaders()) ?? undefined }
+      );
+    }
+
     if (!isAllowedOrigin(origin, website.domain)) {
       return NextResponse.json(
         { error: "Origen no permitido" },
@@ -394,7 +402,7 @@ export async function POST(request: NextRequest) {
 
     const stripeModule = await import("stripe");
     const stripe = new stripeModule.default(process.env.STRIPE_SECRET_KEY!);
-    let intent: stripeModule.Stripe.PaymentIntent;
+    let intent: Stripe.PaymentIntent;
     try {
       intent = await stripe.paymentIntents.create({
         amount: totalAmount,
@@ -451,9 +459,3 @@ export async function OPTIONS(request: NextRequest) {
     headers: corsHeaders,
   });
 }
-    if (!isOrdersEnabled(website.config)) {
-      return NextResponse.json(
-        { error: "Pedidos desactivados para este sitio" },
-        { status: 403, headers: (await getFallbackCorsHeaders()) ?? undefined }
-      );
-    }
