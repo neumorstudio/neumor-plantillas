@@ -1,0 +1,115 @@
+---
+/**
+ * Template: Salon/Peluqueria
+ * Renderiza la plantilla de salon usando datos del tenant
+ */
+import type { TenantData } from "../../middleware";
+
+// Import components from salon template
+import Layout from "@salon/layouts/Layout.astro";
+import Header from "@salon/components/Header.astro";
+import AppointmentForm from "@salon/components/AppointmentForm.astro";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@salon/components/Hero";
+import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@salon/components/Services";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@salon/components/Features";
+import { FooterFull, FooterMinimal, FooterCentered } from "@salon/components/Footer";
+
+// Import Supabase helpers
+import { getServiceCatalog } from "@salon/lib/supabase";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData;
+const config = tenant.config as Record<string, unknown>;
+
+// Component mapping
+const componentMap = {
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  services: { tabs: ServicesTabs, grid: ServicesGrid, list: ServicesList, carousel: ServicesCarousel },
+  features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
+  footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+};
+
+// Get variants from config or use defaults
+const variants = (config.variants as Record<string, string>) || {
+  hero: "classic",
+  services: "tabs",
+  features: "cards",
+  footer: "full",
+};
+
+// Select components based on variants
+const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroClassic;
+const Services = componentMap.services[variants.services as keyof typeof componentMap.services] || ServicesTabs;
+const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
+const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+
+// Get service catalog from Supabase
+const serviceCatalog = await getServiceCatalog(tenant.id);
+const scissorsIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`;
+
+const serviceCategories = serviceCatalog.length
+  ? serviceCatalog.map((category) => ({
+      name: category.name,
+      icon: scissorsIcon,
+      items: category.items.map((item) => ({
+        name: item.name,
+        description: item.notes || "Servicio profesional personalizado",
+        price: (item.price_cents / 100).toFixed(2),
+        duration: `${item.duration_minutes} min`,
+      })),
+    }))
+  : undefined;
+
+// Build page config
+const pageConfig = {
+  businessName: tenant.businessName,
+  theme: tenant.theme as "light" | "dark" | "auto",
+  siteTitle: `${tenant.businessName} | Salon`,
+  siteDescription: (config.siteDescription as string) || "Salon de belleza profesional",
+  heroTitle: (config.heroTitle as string) || "Tu Estilo, Nuestra Pasion",
+  heroSubtitle: (config.heroSubtitle as string) || "Expertos en cuidado capilar y estetica",
+  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80",
+  address: (config.address as string) || "",
+  phone: (config.phone as string) || "",
+  email: (config.email as string) || "",
+  socialLinks: (config.socialLinks as { instagram: string; facebook: string; whatsapp: string }) || {
+    instagram: "#",
+    facebook: "#",
+    whatsapp: "#",
+  },
+};
+
+const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
+  ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/citas`
+  : "";
+---
+
+<Layout
+  title={pageConfig.siteTitle}
+  description={pageConfig.siteDescription}
+  theme={pageConfig.theme}
+>
+  <Header businessName={pageConfig.businessName} />
+
+  <main>
+    <Hero
+      title={pageConfig.heroTitle}
+      subtitle={pageConfig.heroSubtitle}
+      backgroundImage={pageConfig.heroImage}
+    />
+
+    <Features />
+
+    <Services categories={serviceCategories} />
+
+    <AppointmentForm webhookUrl={webhookUrl} websiteId={tenant.id} />
+  </main>
+
+  <FooterComponent
+    businessName={pageConfig.businessName}
+    address={pageConfig.address}
+    phone={pageConfig.phone}
+    email={pageConfig.email}
+    socialLinks={pageConfig.socialLinks}
+  />
+</Layout>

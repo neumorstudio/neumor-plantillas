@@ -1,0 +1,88 @@
+---
+/**
+ * Template: Reparaciones/Reformas
+ * Renderiza la plantilla de repairs usando datos del tenant
+ */
+import type { TenantData } from "../../middleware";
+
+// Import components from repairs template
+import Layout from "@repairs/layouts/Layout.astro";
+import Header from "@repairs/components/Header.astro";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@repairs/components/Hero";
+import { ProductsTabs, ProductsGrid, ProductsList, ProductsCarousel } from "@repairs/components/Products";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@repairs/components/Features";
+import { FooterFull, FooterMinimal, FooterCentered } from "@repairs/components/Footer";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData;
+const config = tenant.config as Record<string, unknown>;
+
+// Component mapping
+const componentMap = {
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  products: { tabs: ProductsTabs, grid: ProductsGrid, list: ProductsList, carousel: ProductsCarousel },
+  features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
+  footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+};
+
+// Get variants from config or use defaults
+const variants = (config.variants as Record<string, string>) || {
+  hero: "bold",
+  products: "grid",
+  features: "cards",
+  footer: "full",
+};
+
+// Select components based on variants
+const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroBold;
+const Products = componentMap.products[variants.products as keyof typeof componentMap.products] || ProductsGrid;
+const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
+const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+
+// Build page config
+const pageConfig = {
+  businessName: tenant.businessName,
+  theme: tenant.theme as "light" | "dark" | "auto",
+  siteTitle: `${tenant.businessName} | Reparaciones`,
+  siteDescription: (config.siteDescription as string) || "Servicios de reparacion profesional",
+  heroTitle: (config.heroTitle as string) || "Reparaciones de Confianza",
+  heroSubtitle: (config.heroSubtitle as string) || "Profesionales a tu servicio",
+  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+  address: (config.address as string) || "",
+  phone: (config.phone as string) || "",
+  email: (config.email as string) || "",
+  socialLinks: (config.socialLinks as { instagram: string; facebook: string; whatsapp: string }) || {
+    instagram: "#",
+    facebook: "#",
+    whatsapp: "#",
+  },
+};
+---
+
+<Layout
+  title={pageConfig.siteTitle}
+  description={pageConfig.siteDescription}
+  theme={pageConfig.theme}
+>
+  <Header businessName={pageConfig.businessName} />
+
+  <main>
+    <Hero
+      title={pageConfig.heroTitle}
+      subtitle={pageConfig.heroSubtitle}
+      backgroundImage={pageConfig.heroImage}
+    />
+
+    <Features />
+
+    <Products />
+  </main>
+
+  <FooterComponent
+    businessName={pageConfig.businessName}
+    address={pageConfig.address}
+    phone={pageConfig.phone}
+    email={pageConfig.email}
+    socialLinks={pageConfig.socialLinks}
+  />
+</Layout>

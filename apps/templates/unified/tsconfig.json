@@ -1,0 +1,17 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@layouts/*": ["src/layouts/*"],
+      "@components/*": ["src/components/*"],
+      "@lib/*": ["src/lib/*"],
+      "@salon/*": ["../salon/src/*"],
+      "@restaurant/*": ["../restaurant/src/*"],
+      "@gym/*": ["../gym/src/*"],
+      "@clinic/*": ["../clinic/src/*"],
+      "@repairs/*": ["../repairs/src/*"],
+      "@store/*": ["../store/src/*"]
+    }
+  }
+}

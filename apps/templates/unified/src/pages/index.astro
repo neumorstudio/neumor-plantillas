@@ -1,0 +1,23 @@
+---
+/**
+ * NEUMORSTUDIO - Plantilla Unificada Multi-Tenant
+ *
+ * Esta página detecta el tipo de negocio del tenant y renderiza
+ * el template correspondiente.
+ */
+import type { TenantData } from "../middleware";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData | undefined;
+
+if (!tenant) {
+  return Astro.redirect("/404");
+}
+
+// Dynamically rewrite to the correct template based on business type
+const businessType = tenant.businessType;
+console.log("[Index] Rendering template for:", businessType);
+
+// Rewrite to the business-specific template
+return Astro.rewrite(`/templates/${businessType}`);
+---

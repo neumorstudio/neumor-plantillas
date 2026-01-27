@@ -1,0 +1,88 @@
+---
+/**
+ * Template: Clinica
+ * Renderiza la plantilla de clinica usando datos del tenant
+ */
+import type { TenantData } from "../../middleware";
+
+// Import components from clinic template
+import Layout from "@clinic/layouts/Layout.astro";
+import Header from "@clinic/components/Header.astro";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@clinic/components/Hero";
+import { TreatmentsTabs, TreatmentsGrid, TreatmentsList, TreatmentsCarousel } from "@clinic/components/Treatments";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@clinic/components/Features";
+import { FooterFull, FooterMinimal, FooterCentered } from "@clinic/components/Footer";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData;
+const config = tenant.config as Record<string, unknown>;
+
+// Component mapping
+const componentMap = {
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  treatments: { tabs: TreatmentsTabs, grid: TreatmentsGrid, list: TreatmentsList, carousel: TreatmentsCarousel },
+  features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
+  footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+};
+
+// Get variants from config or use defaults
+const variants = (config.variants as Record<string, string>) || {
+  hero: "modern",
+  treatments: "tabs",
+  features: "cards",
+  footer: "full",
+};
+
+// Select components based on variants
+const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroModern;
+const Treatments = componentMap.treatments[variants.treatments as keyof typeof componentMap.treatments] || TreatmentsTabs;
+const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
+const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+
+// Build page config
+const pageConfig = {
+  clinicName: tenant.businessName,
+  theme: tenant.theme as "light" | "dark" | "auto",
+  siteTitle: `${tenant.businessName} | Clinica`,
+  siteDescription: (config.siteDescription as string) || "Clinica profesional de confianza",
+  heroTitle: (config.heroTitle as string) || "Tu Salud, Nuestra Prioridad",
+  heroSubtitle: (config.heroSubtitle as string) || "Profesionales dedicados a tu bienestar",
+  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80",
+  address: (config.address as string) || "",
+  phone: (config.phone as string) || "",
+  email: (config.email as string) || "",
+  socialLinks: (config.socialLinks as { instagram: string; facebook: string; linkedin: string }) || {
+    instagram: "#",
+    facebook: "#",
+    linkedin: "#",
+  },
+};
+---
+
+<Layout
+  title={pageConfig.siteTitle}
+  description={pageConfig.siteDescription}
+  theme={pageConfig.theme}
+>
+  <Header clinicName={pageConfig.clinicName} />
+
+  <main>
+    <Hero
+      title={pageConfig.heroTitle}
+      subtitle={pageConfig.heroSubtitle}
+      backgroundImage={pageConfig.heroImage}
+    />
+
+    <Features />
+
+    <Treatments />
+  </main>
+
+  <FooterComponent
+    clinicName={pageConfig.clinicName}
+    address={pageConfig.address}
+    phone={pageConfig.phone}
+    email={pageConfig.email}
+    socialLinks={pageConfig.socialLinks}
+  />
+</Layout>

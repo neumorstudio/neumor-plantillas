@@ -1,0 +1,163 @@
+---
+/**
+ * Template: Restaurante
+ * Renderiza la plantilla de restaurante usando datos del tenant
+ */
+import type { TenantData } from "../../middleware";
+
+// Import components from restaurant template
+import Layout from "@restaurant/layouts/Layout.astro";
+import Header from "@restaurant/components/Header.astro";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@restaurant/components/Hero";
+import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@restaurant/components/Menu";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@restaurant/components/Features";
+import { FooterFull, FooterMinimal, FooterCentered } from "@restaurant/components/Footer";
+import { ReservationClassic } from "@restaurant/components/ReservationForm";
+
+// Import Supabase helpers
+import { getMenuItems } from "@restaurant/lib/supabase";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData;
+const config = tenant.config as Record<string, unknown>;
+
+// Component mapping
+const componentMap = {
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  menu: { tabs: MenuTabs, grid: MenuGrid, list: MenuList, carousel: MenuCarousel },
+  features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
+  footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+};
+
+// Get variants from config or use defaults
+const variants = (config.variants as Record<string, string>) || {
+  hero: "classic",
+  menu: "tabs",
+  features: "cards",
+  footer: "full",
+};
+
+// Select components based on variants
+const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroClassic;
+const Menu = componentMap.menu[variants.menu as keyof typeof componentMap.menu] || MenuTabs;
+const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
+const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+
+// Get menu items from Supabase
+const menuItems = await getMenuItems(tenant.id);
+
+const formatPrice = (priceCents: number) => {
+  return new Intl.NumberFormat("es-ES", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(priceCents / 100);
+};
+
+const getCategoryIcon = (category: string) => {
+  const key = category.toLowerCase();
+  if (key.includes("entrante")) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>`;
+  }
+  if (key.includes("principal")) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20"/></svg>`;
+  }
+  if (key.includes("postre")) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>`;
+  }
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>`;
+};
+
+// Build menu categories
+const menuCategories = menuItems?.length
+  ? (() => {
+      const categories: Array<{
+        name: string;
+        icon: string;
+        items: Array<{
+          id: string;
+          name: string;
+          description: string;
+          price: string;
+          priceCents: number;
+          tag?: string;
+          image?: string;
+        }>;
+      }> = [];
+      const categoryMap = new Map<string, typeof categories[number]>();
+
+      menuItems.forEach((item) => {
+        const categoryName = item.category || "Otros";
+        let category = categoryMap.get(categoryName);
+        if (!category) {
+          category = { name: categoryName, icon: getCategoryIcon(categoryName), items: [] };
+          categoryMap.set(categoryName, category);
+          categories.push(category);
+        }
+        category.items.push({
+          id: item.id,
+          name: item.name,
+          description: item.description || "",
+          price: formatPrice(item.price_cents),
+          priceCents: item.price_cents,
+          tag: item.tag || undefined,
+          image: item.image_url || undefined,
+        });
+      });
+
+      return categories;
+    })()
+  : undefined;
+
+// Build page config
+const pageConfig = {
+  restaurantName: tenant.businessName,
+  theme: tenant.theme as "light" | "dark" | "auto",
+  siteTitle: `${tenant.businessName} | Restaurante`,
+  siteDescription: (config.siteDescription as string) || "Restaurante con experiencia unica",
+  heroTitle: (config.heroTitle as string) || "Bienvenidos a Nuestro Restaurante",
+  heroSubtitle: (config.heroSubtitle as string) || "Una experiencia culinaria unica",
+  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+  address: (config.address as string) || "",
+  phone: (config.phone as string) || "",
+  email: (config.email as string) || "",
+  socialLinks: (config.socialLinks as { instagram: string; facebook: string; tripadvisor: string }) || {
+    instagram: "#",
+    facebook: "#",
+    tripadvisor: "#",
+  },
+};
+
+const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
+  ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/reservas`
+  : "";
+---
+
+<Layout
+  title={pageConfig.siteTitle}
+  description={pageConfig.siteDescription}
+  theme={pageConfig.theme}
+>
+  <Header restaurantName={pageConfig.restaurantName} />
+
+  <main>
+    <Hero
+      title={pageConfig.heroTitle}
+      subtitle={pageConfig.heroSubtitle}
+      backgroundImage={pageConfig.heroImage}
+    />
+
+    <Features />
+
+    <Menu categories={menuCategories} />
+
+    <ReservationClassic webhookUrl={webhookUrl} websiteId={tenant.id} />
+  </main>
+
+  <FooterComponent
+    restaurantName={pageConfig.restaurantName}
+    address={pageConfig.address}
+    phone={pageConfig.phone}
+    email={pageConfig.email}
+    socialLinks={pageConfig.socialLinks}
+  />
+</Layout>

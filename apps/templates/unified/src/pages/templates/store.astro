@@ -1,0 +1,88 @@
+---
+/**
+ * Template: Tienda
+ * Renderiza la plantilla de store usando datos del tenant
+ */
+import type { TenantData } from "../../middleware";
+
+// Import components from store template
+import Layout from "@store/layouts/Layout.astro";
+import Header from "@store/components/Header.astro";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@store/components/Hero";
+import { ProductsTabs, ProductsGrid, ProductsList, ProductsCarousel } from "@store/components/Products";
+import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@store/components/Features";
+import { FooterFull, FooterMinimal, FooterCentered } from "@store/components/Footer";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData;
+const config = tenant.config as Record<string, unknown>;
+
+// Component mapping
+const componentMap = {
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  products: { tabs: ProductsTabs, grid: ProductsGrid, list: ProductsList, carousel: ProductsCarousel },
+  features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
+  footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+};
+
+// Get variants from config or use defaults
+const variants = (config.variants as Record<string, string>) || {
+  hero: "modern",
+  products: "grid",
+  features: "icons",
+  footer: "full",
+};
+
+// Select components based on variants
+const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroModern;
+const Products = componentMap.products[variants.products as keyof typeof componentMap.products] || ProductsGrid;
+const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesIcons;
+const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+
+// Build page config
+const pageConfig = {
+  storeName: tenant.businessName,
+  theme: tenant.theme as "light" | "dark" | "auto",
+  siteTitle: `${tenant.businessName} | Tienda`,
+  siteDescription: (config.siteDescription as string) || "Tu tienda de confianza",
+  heroTitle: (config.heroTitle as string) || "Bienvenido a Nuestra Tienda",
+  heroSubtitle: (config.heroSubtitle as string) || "Los mejores productos al mejor precio",
+  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80",
+  address: (config.address as string) || "",
+  phone: (config.phone as string) || "",
+  email: (config.email as string) || "",
+  socialLinks: (config.socialLinks as { instagram: string; facebook: string; whatsapp: string }) || {
+    instagram: "#",
+    facebook: "#",
+    whatsapp: "#",
+  },
+};
+---
+
+<Layout
+  title={pageConfig.siteTitle}
+  description={pageConfig.siteDescription}
+  theme={pageConfig.theme}
+>
+  <Header storeName={pageConfig.storeName} />
+
+  <main>
+    <Hero
+      title={pageConfig.heroTitle}
+      subtitle={pageConfig.heroSubtitle}
+      backgroundImage={pageConfig.heroImage}
+    />
+
+    <Features />
+
+    <Products />
+  </main>
+
+  <FooterComponent
+    storeName={pageConfig.storeName}
+    address={pageConfig.address}
+    phone={pageConfig.phone}
+    email={pageConfig.email}
+    socialLinks={pageConfig.socialLinks}
+  />
+</Layout>
