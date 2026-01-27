@@ -24,11 +24,25 @@ async function getUserContext(): Promise<UserContext | null> {
     .eq("auth_user_id", user.id)
     .single();
 
-  if (!data || !data.websites) return null;
+  if (!data) return null;
 
   // Handle both array and single object response from Supabase
   const website = Array.isArray(data.websites) ? data.websites[0] : data.websites;
-  if (!website?.id) return null;
+  if (!website?.id) {
+    const { data: fallbackWebsite } = await supabase
+      .from("websites")
+      .select("id")
+      .eq("client_id", data.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (!fallbackWebsite?.id) return null;
+    return {
+      userId: user.id,
+      clientId: data.id,
+      websiteId: fallbackWebsite.id,
+    };
+  }
 
   return {
     userId: user.id,
