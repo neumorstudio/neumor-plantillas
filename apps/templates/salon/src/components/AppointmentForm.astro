@@ -1759,9 +1759,57 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     const storedSession = localStorage.getItem(storageKey);
     console.log("[Form] Supabase URL:", supabaseUrl);
     console.log("[Form] Storage key:", storageKey);
-    console.log("[Form] Session in localStorage:", storedSession ? "YES (" + storedSession.substring(0, 50) + "...)" : "NO");
+    console.log("[Form] Session in localStorage:", storedSession ? "YES" : "NO");
 
-    supabaseClient.auth.getSession().then(async ({ data, error }) => {
+    // Try to restore session from localStorage if it exists
+    const restoreSession = async () => {
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession);
+          console.log("[Form] Parsed session, access_token exists:", !!parsed.access_token);
+
+          if (parsed.access_token) {
+            // Set the session explicitly
+            const { data, error } = await supabaseClient.auth.setSession({
+              access_token: parsed.access_token,
+              refresh_token: parsed.refresh_token || "",
+            });
+
+            if (error) {
+              console.error("[Form] setSession error:", error);
+              setAuthState(null, null, null);
+              return;
+            }
+
+            if (data.session?.user) {
+              console.log("[Form] Session restored:", data.session.user.email);
+              const user = data.session.user;
+              const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
+              const customerId = await linkOrCreateCustomer(
+                user.id,
+                user.email || "",
+                String(fullName)
+              );
+              setAuthState(user.email || null, user.id || null, customerId);
+              const emailInput = form.querySelector<HTMLInputElement>("#email");
+              if (emailInput && !emailInput.value && user.email) {
+                emailInput.value = user.email;
+              }
+              const nameInput = form.querySelector<HTMLInputElement>("#name");
+              if (nameInput && !nameInput.value && fullName) {
+                nameInput.value = String(fullName);
+              }
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("[Form] Error parsing stored session:", e);
+        }
+      }
+
+      // Fallback: try getSession
+      console.log("[Form] Trying getSession...");
+      const { data, error } = await supabaseClient.auth.getSession();
       if (error) {
         console.error("[Form] getSession error:", error);
         setAuthState(null, null, null);
@@ -1788,8 +1836,10 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       } else {
         setAuthState(null, null, null);
       }
-    }).catch((err) => {
-      console.error("[Form] getSession exception:", err);
+    };
+
+    restoreSession().catch((err) => {
+      console.error("[Form] restoreSession exception:", err);
       setAuthState(null, null, null);
     });
 
