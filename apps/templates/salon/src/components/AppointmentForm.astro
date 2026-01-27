@@ -1124,6 +1124,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
     if (submitBtn) {
       submitBtn.disabled = !email;
+      console.log("[setAuthState] submitBtn.disabled set to:", !email);
     }
     if (authBlock) {
       authBlock.classList.toggle("is-authenticated", Boolean(email));
@@ -1765,6 +1766,11 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       renderTimeSlots();
       updateSummary();
     });
+  });
+
+  // Debug: direct click listener on submit button
+  submitBtn?.addEventListener("click", () => {
+    console.log("[Submit] Button clicked, disabled:", submitBtn?.disabled);
   });
 
   form.addEventListener("submit", async (e) => {
