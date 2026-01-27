@@ -1612,7 +1612,10 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     if (nextBtn && submitBtn) {
       nextBtn.style.display = currentStep === panels.length ? "none" : "inline-flex";
       submitBtn.style.display = currentStep === panels.length ? "inline-flex" : "none";
-      if (currentStep !== panels.length) {
+      if (currentStep === panels.length) {
+        // On last step: enable if user is authenticated
+        submitBtn.disabled = !currentUserId;
+      } else {
         submitBtn.disabled = true;
       }
     }
