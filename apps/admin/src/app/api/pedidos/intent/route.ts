@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import {
   isPlainObject,
   hasUnknownKeys,
@@ -65,8 +64,33 @@ function getSupabaseAdmin() {
   );
 }
 
-function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+type PaymentMode = "stripe" | "local";
+
+function resolvePaymentMode(websiteConfig: unknown): PaymentMode {
+  if (!websiteConfig || typeof websiteConfig !== "object") {
+    return "stripe";
+  }
+  const config = websiteConfig as Record<string, unknown>;
+  const restaurant = config.restaurant as Record<string, unknown> | undefined;
+  const orders = (restaurant?.orders as Record<string, unknown> | undefined) ?? (config.orders as Record<string, unknown> | undefined);
+  const mode = typeof orders?.paymentMode === "string" ? orders.paymentMode.toLowerCase() : "";
+  if (mode === "local" || mode === "cash" || mode === "in_person") {
+    return "local";
+  }
+  return "stripe";
+}
+
+function isOrdersEnabled(websiteConfig: unknown): boolean {
+  if (!websiteConfig || typeof websiteConfig !== "object") {
+    return true;
+  }
+  const config = websiteConfig as Record<string, unknown>;
+  const restaurant = config.restaurant as Record<string, unknown> | undefined;
+  const orders = (restaurant?.orders as Record<string, unknown> | undefined) ?? (config.orders as Record<string, unknown> | undefined);
+  if (typeof orders?.enabled === "boolean") {
+    return orders.enabled;
+  }
+  return true;
 }
 
 function normalizeItems(items: OrderItemInput[]) {
@@ -232,7 +256,7 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin();
     const { data: website } = await supabase
       .from("websites")
-      .select("id, domain, is_active")
+      .select("id, domain, is_active, config")
       .eq("id", body.website_id)
       .single();
 
@@ -357,8 +381,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const stripe = getStripe();
-    let intent: Stripe.PaymentIntent;
+    const paymentMode = resolvePaymentMode(website.config);
+    const stripeEnabled = paymentMode === "stripe" && Boolean(process.env.STRIPE_SECRET_KEY);
+
+    if (!stripeEnabled) {
+      // Modo "pago en local": no Stripe, no client_secret.
+      return NextResponse.json(
+        { order_id: order.id, status: order.status, payment_mode: "local" },
+        { headers: responseCorsHeaders }
+      );
+    }
+
+    const stripeModule = await import("stripe");
+    const stripe = new stripeModule.default(process.env.STRIPE_SECRET_KEY!);
+    let intent: stripeModule.Stripe.PaymentIntent;
     try {
       intent = await stripe.paymentIntents.create({
         amount: totalAmount,
@@ -390,7 +426,7 @@ export async function POST(request: NextRequest) {
       .eq("id", order.id);
 
     return NextResponse.json(
-      { client_secret: intent.client_secret, order_id: order.id },
+      { client_secret: intent.client_secret, order_id: order.id, payment_mode: "stripe" },
       { headers: responseCorsHeaders }
     );
   } catch (error) {
@@ -415,3 +451,9 @@ export async function OPTIONS(request: NextRequest) {
     headers: corsHeaders,
   });
 }
+    if (!isOrdersEnabled(website.config)) {
+      return NextResponse.json(
+        { error: "Pedidos desactivados para este sitio" },
+        { status: 403, headers: (await getFallbackCorsHeaders()) ?? undefined }
+      );
+    }

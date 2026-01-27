@@ -34,11 +34,19 @@ import {
   getWebsiteConfig,
   getMenuItems,
   getOrderSettings,
+  getBusinessHours,
+  getSpecialDays,
+  getBookingsInRange,
+  getRestaurantSettings,
   type Theme,
   type WebsiteVariants,
   type OpenStatusConfig,
   type WeekSchedule,
   type MenuItemRow,
+  type BusinessHourRow,
+  type SpecialDayRow,
+  type BookingRow,
+  type RestaurantRow,
 } from "@lib/supabase";
 
 // ============================================
@@ -122,7 +130,7 @@ const defaultConfig = {
     features: "cards",
     footer: "full",
     openStatus: "pulse",
-    reservation: "classic",
+    reservation: "modern",
   } as WebsiteVariants,
   siteTitle: "Mi Restaurante | Bienvenidos",
   siteDescription: "Restaurante con estilo neumórfico",
@@ -155,7 +163,6 @@ const ordersApiUrl = import.meta.env.PUBLIC_ADMIN_URL
   : (import.meta.env.PUBLIC_ORDER_INTENT_URL || "");
 
 const stripePublishableKey = import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
-const ordersEnabled = Boolean(stripePublishableKey && ordersApiUrl);
 
 const defaultOrderSettings = {
   pickupStart: "12:00",
@@ -170,6 +177,8 @@ const formatPrice = (priceCents: number) => {
 };
 
 const normalizeTimeString = (value: string) => (value ? value.slice(0, 5) : "");
+
+const toIsoDate = (date: Date) => date.toISOString().split("T")[0];
 
 const getCategoryIcon = (category: string) => {
   const key = category.toLowerCase();
@@ -294,6 +303,16 @@ if (websiteData) {
 const currentWebsiteId = websiteData?.id || websiteId || "";
 const menuItems = await getMenuItems(currentWebsiteId);
 const orderSettings = await getOrderSettings(currentWebsiteId);
+const businessHours: BusinessHourRow[] = await getBusinessHours(currentWebsiteId);
+const specialDays: SpecialDayRow[] = await getSpecialDays(currentWebsiteId);
+const restaurantSettings: RestaurantRow | null = await getRestaurantSettings(currentWebsiteId);
+
+const bookingsStart = new Date();
+const bookingsEnd = new Date();
+bookingsEnd.setDate(bookingsEnd.getDate() + 90);
+const bookings: BookingRow[] = currentWebsiteId
+  ? await getBookingsInRange(currentWebsiteId, toIsoDate(bookingsStart), toIsoDate(bookingsEnd))
+  : [];
 const menuCategories = menuItems?.length ? buildMenuCategories(menuItems) : undefined;
 
 // ============================================
@@ -334,6 +353,23 @@ const openStatusConfig = {
   ...config.openStatus,
   variant: selectedVariants.openStatus,
   position: previewStatusPosition || config.openStatus.position,
+};
+
+const restaurantConfig = (config as unknown as Record<string, unknown>).restaurant as Record<string, unknown> | undefined;
+const ordersConfig = (restaurantConfig?.orders as Record<string, unknown> | undefined)
+  ?? ((config as unknown as Record<string, unknown>).orders as Record<string, unknown> | undefined)
+  ?? {};
+
+const ordersEnabledFlag = typeof ordersConfig.enabled === "boolean" ? ordersConfig.enabled : true;
+const requestedPaymentMode = typeof ordersConfig.paymentMode === "string" ? ordersConfig.paymentMode.toLowerCase() : "local";
+const ordersPaymentMode: "local" | "stripe" = requestedPaymentMode === "stripe" && stripePublishableKey ? "stripe" : "local";
+const ordersEnabled = Boolean(ordersApiUrl) && ordersEnabledFlag;
+
+const ordersUiConfig = {
+  leadTimeMinutes: Number(ordersConfig.leadTimeMinutes ?? 30),
+  slotIntervalMinutes: Number(ordersConfig.slotIntervalMinutes ?? 15),
+  maxOrdersPerSlot: Number(ordersConfig.maxOrdersPerSlot ?? 0),
+  preparationMinutes: Number(ordersConfig.preparationMinutes ?? 20),
 };
 
 const pickupStart = normalizeTimeString(orderSettings?.pickup_start_time || defaultOrderSettings.pickupStart);
@@ -380,13 +416,24 @@ const heroCtaLink = ordersEnabled ? "#orders" : undefined;
         categories={menuCategories}
         websiteId={currentWebsiteId}
         orderApiUrl={ordersApiUrl}
-        stripePublishableKey={stripePublishableKey}
+        stripePublishableKey={ordersPaymentMode === "stripe" ? stripePublishableKey : ""}
+        paymentMode={ordersPaymentMode}
         pickupStart={pickupStart}
         pickupEnd={pickupEnd}
+        businessHours={businessHours}
+        specialDays={specialDays}
+        ordersConfig={ordersUiConfig}
       />
     )}
 
-    <ReservationForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+    <ReservationForm
+      webhookUrl={config.webhookUrl}
+      websiteId={currentWebsiteId}
+      businessHours={businessHours}
+      specialDays={specialDays}
+      bookings={bookings}
+      capacity={restaurantSettings?.capacity ?? null}
+    />
   </main>
 
   <FooterComponent

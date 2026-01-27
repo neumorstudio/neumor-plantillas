@@ -11,6 +11,10 @@ interface Props {
   phone?: string;
   zones?: string[];
   occasions?: { id: string; label: string; icon: string }[];
+  businessHours?: { day_of_week: number; is_open: boolean; open_time: string; close_time: string }[];
+  specialDays?: { date: string; is_open: boolean; open_time: string | null; close_time: string | null; note: string | null }[];
+  bookings?: { booking_date: string; booking_time: string | null; guests: number | null; status: string }[];
+  capacity?: number | null;
 }
 
 const {
@@ -26,12 +30,12 @@ const {
     { id: "anniversary", label: "Aniversario", icon: "💕" },
     { id: "business", label: "Negocios", icon: "💼" },
   ],
+  businessHours = [],
+  specialDays = [],
+  bookings = [],
+  capacity = null,
 } = Astro.props;
 
-const timeSlots = {
-  almuerzo: ["13:00", "13:30", "14:00", "14:30", "15:00", "15:30"],
-  cena: ["20:00", "20:30", "21:00", "21:30", "22:00", "22:30"]
-};
 ---
 
 <section id="reserve" class="section reservation-modern">
@@ -41,11 +45,15 @@ const timeSlots = {
       <p class="reservation-subtitle">{subtitle}</p>
     </div>
 
-    <form class="reservation-grid" data-webhook={webhookUrl} data-website-id={websiteId}>
+    <form class="reservation-grid" data-step="date" data-webhook={webhookUrl} data-website-id={websiteId}>
+      <script type="application/json" data-hours>{JSON.stringify(businessHours)}</script>
+      <script type="application/json" data-special-days>{JSON.stringify(specialDays)}</script>
+      <script type="application/json" data-bookings>{JSON.stringify(bookings)}</script>
+      <script type="application/json" data-capacity>{JSON.stringify(capacity)}</script>
       <!-- Left Column: Date & Time -->
       <div class="reservation-datetime neumor-card">
         <!-- Mini Calendar -->
-        <div class="calendar-section">
+        <div class="calendar-section step-panel step-date" data-panel="date">
           <div class="calendar-header">
             <button type="button" class="calendar-nav prev-month" aria-label="Mes anterior">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -67,16 +75,15 @@ const timeSlots = {
         </div>
 
         <!-- Time Slots -->
-        <div class="time-section">
+        <div class="time-section step-panel step-time" data-panel="time">
           <div class="time-period">
             <h4 class="period-label">
               <span class="period-icon">☀️</span>
-              Almuerzo
+              Horarios disponibles
             </h4>
-            <div class="time-grid">
-              {timeSlots.almuerzo.map((time) => (
-                <button type="button" class="time-btn" data-time={time}>{time}</button>
-              ))}
+            <p class="time-hint">Selecciona una hora para continuar</p>
+            <div class="time-grid" data-time-grid>
+              
             </div>
           </div>
           <div class="time-period">
@@ -85,17 +92,29 @@ const timeSlots = {
               Cena
             </h4>
             <div class="time-grid">
-              {timeSlots.cena.map((time, i) => (
-                <button type="button" class={`time-btn ${i === 2 ? 'active' : ''}`} data-time={time}>{time}</button>
-              ))}
+              
             </div>
           </div>
-          <input type="hidden" name="time" id="selectedTime" value="21:00" required />
+          <input type="hidden" name="time" id="selectedTime" required />
         </div>
       </div>
 
       <!-- Right Column: Details & Contact -->
-      <div class="reservation-details">
+      <div class="reservation-details step-panel step-details" data-panel="details">
+        <div class="summary-card neumor-inset" data-summary>
+          <div class="summary-row">
+            <span class="summary-label">Fecha</span>
+            <strong data-summary-date>—</strong>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Hora</span>
+            <strong data-summary-time>—</strong>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Personas</span>
+            <strong data-summary-guests>2</strong>
+          </div>
+        </div>
         <!-- Guests & Zone -->
         <div class="details-card neumor-card">
           <div class="guests-zone-row">
@@ -166,7 +185,7 @@ const timeSlots = {
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
-              <span class="btn-text">Confirmar Reserva</span>
+              <span class="btn-text">Enviar reserva</span>
             </span>
             <span class="btn-loader"></span>
           </button>
@@ -226,6 +245,35 @@ const timeSlots = {
     gap: 2rem;
     max-width: 1100px;
     margin: 0 auto;
+  }
+
+  .reservation-grid .step-panel {
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+
+  .reservation-grid[data-step="date"] .step-time,
+  .reservation-grid[data-step="date"] .step-details {
+    display: none;
+  }
+
+  .reservation-grid[data-step="time"] .step-details {
+    display: none;
+  }
+
+  .reservation-grid[data-step="time"] .step-time,
+  .reservation-grid[data-step="details"] .step-details {
+    animation: stepFadeIn 240ms ease;
+  }
+
+  @keyframes stepFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Left Column */
@@ -302,15 +350,23 @@ const timeSlots = {
     justify-content: center;
     border-radius: 50%;
     font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease, font-weight 160ms ease;
     border: none;
     background: transparent;
     color: var(--text-primary);
   }
 
-  .calendar-day:hover:not(.disabled):not(.selected) {
-    background: var(--shadow-light);
+  .calendar-day.day--active {
+    cursor: pointer;
+  }
+
+  .calendar-day.day--active:hover:not(.selected) {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent);
+    font-weight: 700;
+    box-shadow:
+      inset 0 0 0 1px rgba(99, 102, 241, 0.25),
+      0 6px 12px rgba(99, 102, 241, 0.18);
   }
 
   .calendar-day.today {
@@ -327,7 +383,11 @@ const timeSlots = {
 
   .calendar-day.disabled {
     opacity: 0.25;
-    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .calendar-day.day--disabled {
+    cursor: default;
   }
 
   .calendar-day.other-month {
@@ -351,6 +411,16 @@ const timeSlots = {
     color: var(--text-secondary);
   }
 
+  .time-hint {
+    margin: -0.25rem 0 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .time-section .time-period + .time-period {
+    display: none;
+  }
+
   .period-icon {
     font-size: 1rem;
   }
@@ -371,11 +441,18 @@ const timeSlots = {
     background: var(--neumor-bg);
     color: var(--text-primary);
     box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
-    transition: all 0.2s;
+    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease, font-weight 160ms ease;
   }
 
-  .time-btn:hover {
-    box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  .time-btn:hover:not(:disabled):not(.is-full) {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent);
+    font-weight: 700;
+    transform: translateY(-1px);
+    box-shadow:
+      4px 4px 10px var(--shadow-dark),
+      -4px -4px 10px var(--shadow-light),
+      0 8px 16px rgba(99, 102, 241, 0.18);
   }
 
   .time-btn.active {
@@ -384,11 +461,45 @@ const timeSlots = {
     box-shadow: 0 3px 10px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
   }
 
+  .time-btn.is-full,
+  .time-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+  }
+
+  .time-empty {
+    grid-column: 1 / -1;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    text-align: center;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.04);
+  }
+
   /* Right Column */
   .reservation-details {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+
+  .summary-card {
+    padding: 1rem 1.25rem;
+    display: grid;
+    gap: 0.5rem;
+    border-radius: 1rem;
+  }
+
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.95rem;
+  }
+
+  .summary-label {
+    color: var(--text-secondary);
   }
 
   .details-card,
@@ -681,6 +792,450 @@ const timeSlots = {
 </style>
 
 <script>
+  (function () {
+    const form = document.querySelector('.reservation-modern .reservation-grid');
+    const successMessage = document.querySelector('.reservation-modern .success-message');
+    const newReservationBtn = document.querySelector('.reservation-modern .new-reservation');
+    const submitBtn = document.querySelector('.reservation-modern .submit-btn');
+
+    if (!form) return;
+
+    const calendarDays = form.querySelector('.calendar-days');
+    const monthYearDisplay = form.querySelector('.calendar-month-year');
+    const prevMonthBtn = form.querySelector('.prev-month');
+    const nextMonthBtn = form.querySelector('.next-month');
+
+    const selectedDateInput = form.querySelector('#selectedDate');
+    const selectedTimeInput = form.querySelector('#selectedTime');
+    const guestsInput = form.querySelector('input[name="guests"]');
+    const guestCountEl = form.querySelector('.guest-count');
+    const timeGrid = form.querySelector('[data-time-grid]');
+
+    const summaryDate = form.querySelector('[data-summary-date]');
+    const summaryTime = form.querySelector('[data-summary-time]');
+    const summaryGuests = form.querySelector('[data-summary-guests]');
+
+    const successDate = document.getElementById('success-date');
+    const successTime = document.getElementById('success-time');
+    const successGuests = document.getElementById('success-guests');
+    const successZone = document.getElementById('success-zone');
+
+    const parseJsonScript = (selector, fallback) => {
+      const el = form.querySelector(selector);
+      if (!el) return fallback;
+      try {
+        const parsed = JSON.parse(el.textContent || 'null');
+        return parsed ?? fallback;
+      } catch (err) {
+        console.error('Error parsing reservation data:', err);
+        return fallback;
+      }
+    };
+
+    const businessHours = parseJsonScript('script[data-hours]', []);
+    const specialDays = parseJsonScript('script[data-special-days]', []);
+    const bookings = parseJsonScript('script[data-bookings]', []);
+    const capacityRaw = parseJsonScript('script[data-capacity]', null);
+    const capacityNum = Number(capacityRaw);
+    const capacity = Number.isFinite(capacityNum) && capacityNum > 0 ? capacityNum : null;
+
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    const slotIntervalMinutes = 30;
+    const maxAdvanceDays = 90;
+
+    let currentDate = new Date();
+    let selectedDate = null;
+    let selectedTime = null;
+    let guestCount = Number(guestsInput?.value || 2);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const toIsoDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const toMinutes = (value) => {
+      if (!value || typeof value !== 'string') return null;
+      const [h, m] = value.slice(0, 5).split(':').map(Number);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+      return h * 60 + m;
+    };
+    const normalizeTime = (value) => {
+      if (typeof value !== 'string') return '';
+      return value.slice(0, 5);
+    };
+    const toTimeString = (minutes) => {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
+    const clampToWindow = (openMin, closeMin) => {
+      if (!Number.isFinite(openMin) || !Number.isFinite(closeMin) || openMin >= closeMin) {
+        return null;
+      }
+      return { openMin, closeMin };
+    };
+
+    const getBusinessScheduleForDay = (date) => {
+      const dayOfWeek = date.getDay();
+      const day = businessHours.find((d) => d.day_of_week === dayOfWeek);
+      if (!day) return clampToWindow(13 * 60, 23 * 60);
+      if (!day.is_open) return null;
+      const openMin = toMinutes(day.open_time) ?? 13 * 60;
+      const closeMin = toMinutes(day.close_time) ?? 23 * 60;
+      // Si el horario está mal configurado (open >= close), caer al fallback.
+      return clampToWindow(openMin, closeMin) ?? clampToWindow(13 * 60, 23 * 60);
+    };
+
+    const getScheduleForDate = (date) => {
+      const iso = toIsoDate(date);
+      const special = specialDays.find((d) => d.date === iso);
+      if (special) {
+        if (!special.is_open) return null;
+        const specialOpen = toMinutes(special.open_time || '');
+        const specialClose = toMinutes(special.close_time || '');
+        // Si el día especial no define horas, caer al horario normal.
+        if (specialOpen === null || specialClose === null) {
+          return getBusinessScheduleForDay(date);
+        }
+        // Si el horario especial está mal, caer al horario normal.
+        return clampToWindow(specialOpen, specialClose) ?? getBusinessScheduleForDay(date);
+      }
+
+      return getBusinessScheduleForDay(date);
+    };
+
+    const getBookingsForDate = (isoDate) =>
+      bookings.filter((b) => b.booking_date === isoDate && b.status !== 'cancelled');
+
+    const getBookedGuestsForSlot = (isoDate, time) => {
+      const slotTime = normalizeTime(time);
+      return getBookingsForDate(isoDate)
+        .filter((b) => normalizeTime(b.booking_time || '') === slotTime)
+        .reduce((sum, b) => sum + (Number(b.guests) || 2), 0);
+    };
+
+    const generateSlotsForDate = (date) => {
+      const schedule = getScheduleForDate(date);
+      if (!schedule) return [];
+      const isoDate = toIsoDate(date);
+      const slots = [];
+      for (let minutes = schedule.openMin; minutes + slotIntervalMinutes <= schedule.closeMin; minutes += slotIntervalMinutes) {
+        const time = toTimeString(minutes);
+        const bookedGuests = getBookedGuestsForSlot(isoDate, time);
+        const remaining = capacity ? Math.max(0, capacity - bookedGuests) : null;
+        const isFull = capacity ? remaining <= 0 : false;
+        slots.push({ time, remaining, isFull });
+      }
+      return slots;
+    };
+
+    const hasAvailability = (date) => {
+      if (!date) return false;
+      const maxDate = new Date(today);
+      maxDate.setDate(maxDate.getDate() + maxAdvanceDays);
+      if (date < today || date > maxDate) return false;
+      const slots = generateSlotsForDate(date);
+      if (!capacity) {
+        return slots.length > 0;
+      }
+      const isoDate = toIsoDate(date);
+      // Para el calendario, basta con que exista al menos 1 hueco
+      // con capacidad restante. El ajuste por tamaño de grupo se
+      // aplica en la fase de horarios.
+      return slots.some((slot) => {
+        const bookedGuests = getBookedGuestsForSlot(isoDate, slot.time);
+        const remaining = Math.max(0, capacity - bookedGuests);
+        return remaining > 0;
+      });
+    };
+
+    const setStep = (nextStep) => {
+      form.dataset.step = nextStep;
+      if (nextStep === 'time') {
+        form.querySelector('.step-time')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      if (nextStep === 'details') {
+        form.querySelector('.step-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+
+    const updateSummary = () => {
+      if (summaryGuests) summaryGuests.textContent = String(guestCount);
+      if (selectedDate && summaryDate) {
+        summaryDate.textContent = selectedDate.toLocaleDateString('es-ES', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        });
+      }
+      if (summaryTime) summaryTime.textContent = selectedTime || '—';
+    };
+
+    const renderTimeSlots = () => {
+      if (!timeGrid || !selectedDate) return;
+      const isoDate = toIsoDate(selectedDate);
+      const slots = generateSlotsForDate(selectedDate);
+      timeGrid.innerHTML = '';
+
+      const availableSlots = slots.filter((slot) => {
+        if (!capacity) return true;
+        const bookedGuests = getBookedGuestsForSlot(isoDate, slot.time);
+        const remaining = Math.max(0, capacity - bookedGuests);
+        return remaining >= guestCount;
+      });
+
+      if (availableSlots.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'time-empty';
+        empty.textContent = 'No hay horarios disponibles para esa fecha.';
+        timeGrid.appendChild(empty);
+        return;
+      }
+
+      availableSlots.forEach((slot) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'time-btn';
+        btn.dataset.time = slot.time;
+        btn.textContent = slot.time;
+
+        btn.addEventListener('click', () => {
+          selectedTime = slot.time;
+          if (selectedTimeInput) selectedTimeInput.value = selectedTime;
+          timeGrid.querySelectorAll('.time-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          updateSummary();
+          setStep('details');
+        });
+
+        timeGrid.appendChild(btn);
+      });
+    };
+
+    const renderCalendar = () => {
+      if (!calendarDays || !monthYearDisplay) return;
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = (firstDay.getDay() + 6) % 7;
+
+      calendarDays.innerHTML = '';
+
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDay - 1; i >= 0; i--) {
+        const day = document.createElement('button');
+        day.type = 'button';
+        day.className = 'calendar-day other-month disabled day--disabled';
+        day.textContent = String(prevMonthLastDay - i);
+        calendarDays.appendChild(day);
+      }
+
+      const maxDate = new Date(today);
+      maxDate.setDate(maxDate.getDate() + maxAdvanceDays);
+
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        const dayDate = new Date(year, month, d);
+        const isoDate = toIsoDate(dayDate);
+        const day = document.createElement('button');
+        day.type = 'button';
+        day.className = 'calendar-day';
+        day.textContent = String(d);
+        day.dataset.date = isoDate;
+
+        const invalid = dayDate < today || dayDate > maxDate || !hasAvailability(dayDate);
+        if (invalid) {
+          day.classList.add('disabled', 'day--disabled');
+        } else {
+          day.classList.add('day--active');
+        }
+
+        if (dayDate.toDateString() === today.toDateString()) day.classList.add('today');
+        if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) day.classList.add('selected');
+
+        if (!invalid) {
+          day.addEventListener('click', () => {
+            selectedDate = dayDate;
+            if (selectedDateInput) selectedDateInput.value = isoDate;
+            selectedTime = null;
+            if (selectedTimeInput) selectedTimeInput.value = '';
+            renderCalendar();
+            renderTimeSlots();
+            updateSummary();
+            setStep('time');
+          });
+        }
+
+        calendarDays.appendChild(day);
+      }
+
+      const totalCells = calendarDays.children.length;
+      const remaining = 42 - totalCells;
+      for (let i = 1; i <= remaining && totalCells + i <= 42; i++) {
+        const day = document.createElement('button');
+        day.type = 'button';
+        day.className = 'calendar-day other-month disabled day--disabled';
+        day.textContent = String(i);
+        calendarDays.appendChild(day);
+      }
+    };
+
+    prevMonthBtn?.addEventListener('click', () => {
+      currentDate.setDate(1);
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+    nextMonthBtn?.addEventListener('click', () => {
+      currentDate.setDate(1);
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    const guestMinusBtn = form.querySelector('.guest-btn.minus');
+    const guestPlusBtn = form.querySelector('.guest-btn.plus');
+    guestMinusBtn?.addEventListener('click', () => {
+      if (guestCount > 1) {
+        guestCount -= 1;
+        if (guestCountEl) guestCountEl.textContent = String(guestCount);
+        if (guestsInput) guestsInput.value = String(guestCount);
+        updateSummary();
+        renderCalendar();
+        if (selectedDate) renderTimeSlots();
+      }
+    });
+    guestPlusBtn?.addEventListener('click', () => {
+      if (guestCount < 12) {
+        guestCount += 1;
+        if (guestCountEl) guestCountEl.textContent = String(guestCount);
+        if (guestsInput) guestsInput.value = String(guestCount);
+        updateSummary();
+        renderCalendar();
+        if (selectedDate) renderTimeSlots();
+      }
+    });
+
+    const zoneBtns = form.querySelectorAll('.zone-btn');
+    const zoneInput = form.querySelector('input[name="zone"]');
+    zoneBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        zoneBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (zoneInput) zoneInput.value = btn.dataset.zone || '';
+      });
+    });
+
+    const occasionPills = form.querySelectorAll('.occasion-pill');
+    const occasionInput = form.querySelector('input[name="occasion"]');
+    occasionPills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        occasionPills.forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+        if (occasionInput) occasionInput.value = pill.dataset.occasion || '';
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedDateInput?.value || !selectedTimeInput?.value) {
+        setStep('date');
+        return;
+      }
+
+      submitBtn?.classList.add('loading');
+
+      const webhookUrl = form.dataset.webhook;
+      const websiteId = form.dataset.websiteId;
+      const formData = new FormData(form);
+      const rawData = Object.fromEntries(formData);
+
+      const payload = {
+        website_id: websiteId,
+        nombre: rawData.name,
+        email: rawData.email,
+        telefono: rawData.phone,
+        fecha: rawData.date,
+        hora: rawData.time,
+        comensales: Number(rawData.guests),
+        zona: rawData.zone,
+        ocasion: rawData.occasion,
+        notas: rawData.notes,
+        status: 'pending',
+        source: 'website',
+      };
+
+      if (!webhookUrl) {
+        submitBtn?.classList.remove('loading');
+        return;
+      }
+
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          submitBtn?.classList.remove('loading');
+          alert(result.error || 'Error al enviar la reserva.');
+          return;
+        }
+
+        const dateObj = new Date(String(rawData.date));
+        if (successDate) {
+          successDate.textContent = dateObj.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          });
+        }
+        if (successTime) successTime.textContent = String(rawData.time);
+        if (successGuests) successGuests.textContent = `${rawData.guests} personas`;
+        if (successZone) successZone.textContent = String(rawData.zone || 'el restaurante');
+
+        form.dataset.step = 'success';
+        form.style.display = 'none';
+        if (successMessage) successMessage.style.display = 'block';
+      } catch (error) {
+        console.error(error);
+        submitBtn?.classList.remove('loading');
+        alert('Error al enviar la reserva. Por favor, inténtalo de nuevo.');
+      }
+    });
+
+    newReservationBtn?.addEventListener('click', () => {
+      form.style.display = 'grid';
+      if (successMessage) successMessage.style.display = 'none';
+      form.dataset.step = 'date';
+      form.reset();
+
+      guestCount = 2;
+      if (guestCountEl) guestCountEl.textContent = '2';
+      if (guestsInput) guestsInput.value = '2';
+
+      selectedDate = null;
+      selectedTime = null;
+      currentDate = new Date();
+      renderCalendar();
+      if (timeGrid) timeGrid.innerHTML = '';
+      updateSummary();
+    });
+
+    renderCalendar();
+    updateSummary();
+  })();
+
+  if (false) {
   // Calendar Logic
   const calendarDays = document.querySelector('.reservation-modern .calendar-days');
   const monthYearDisplay = document.querySelector('.reservation-modern .calendar-month-year');
@@ -919,4 +1474,5 @@ const timeSlots = {
     zoneBtns.forEach((b, i) => b.classList.toggle('active', i === 0));
     occasionPills.forEach((p, i) => p.classList.toggle('active', i === 0));
   });
+}
 </script>

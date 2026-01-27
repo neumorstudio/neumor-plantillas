@@ -1,8 +1,8 @@
-import { getWebsiteConfig } from "@/lib/data";
+import { getWebsitePersonalizationConfig } from "@/lib/data";
 import { PersonalizacionClient } from "./personalizacion-client";
 
 export default async function PersonalizacionPage() {
-  const websiteConfig = await getWebsiteConfig();
+  const websiteConfig = await getWebsitePersonalizationConfig();
 
   if (!websiteConfig) {
     return (

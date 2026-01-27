@@ -34,6 +34,7 @@ interface Props {
   websiteId: string;
   initialSettings: NotificationSettings | null;
   initialOrderSettings: OrderSettings | null;
+  initialWebsiteConfig: Record<string, unknown> | null;
 }
 
 const businessTypeLabels: Record<string, string> = {
@@ -50,8 +51,28 @@ export function ConfiguracionClient({
   websiteId,
   initialSettings,
   initialOrderSettings,
+  initialWebsiteConfig,
 }: Props) {
   const showOrders = process.env.NEXT_PUBLIC_ENABLE_ORDERS === "true";
+  const isRestaurant = client.business_type === "restaurant";
+  const showRestaurantOrders = showOrders && isRestaurant;
+
+  const baseConfig = initialWebsiteConfig || {};
+  const restaurantConfig = (baseConfig.restaurant as Record<string, unknown> | undefined) || {};
+  const existingOrders =
+    (restaurantConfig.orders as Record<string, unknown> | undefined) ||
+    (baseConfig.orders as Record<string, unknown> | undefined) ||
+    {};
+
+  const toBool = (value: unknown, fallback: boolean) =>
+    typeof value === "boolean" ? value : fallback;
+  const toNumber = (value: unknown, fallback: number) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+  const toPaymentMode = (value: unknown): "local" | "stripe" =>
+    String(value || "local").toLowerCase() === "stripe" ? "stripe" : "local";
+
   // Business data state
   const [businessData, setBusinessData] = useState({
     business_name: client.business_name,
@@ -73,6 +94,15 @@ export function ConfiguracionClient({
   const [orderSettings, setOrderSettings] = useState({
     pickup_start_time: initialOrderSettings?.pickup_start_time || "12:00",
     pickup_end_time: initialOrderSettings?.pickup_end_time || "22:00",
+  });
+
+  const [ordersConfig, setOrdersConfig] = useState({
+    enabled: toBool(existingOrders.enabled, true),
+    paymentMode: toPaymentMode(existingOrders.paymentMode),
+    leadTimeMinutes: toNumber(existingOrders.leadTimeMinutes, 30),
+    slotIntervalMinutes: toNumber(existingOrders.slotIntervalMinutes, 15),
+    preparationMinutes: toNumber(existingOrders.preparationMinutes, 20),
+    maxOrdersPerSlot: toNumber(existingOrders.maxOrdersPerSlot, 0),
   });
 
   const [saving, setSaving] = useState(false);
@@ -104,6 +134,19 @@ export function ConfiguracionClient({
 
       if (showOrders) {
         payload.orderSettings = orderSettings;
+      }
+
+      if (isRestaurant) {
+        payload.restaurantConfig = {
+          orders: {
+            ...ordersConfig,
+            paymentMode: ordersConfig.paymentMode,
+            leadTimeMinutes: Number(ordersConfig.leadTimeMinutes) || 30,
+            slotIntervalMinutes: Number(ordersConfig.slotIntervalMinutes) || 15,
+            preparationMinutes: Number(ordersConfig.preparationMinutes) || 20,
+            maxOrdersPerSlot: Number(ordersConfig.maxOrdersPerSlot) || 0,
+          },
+        };
       }
 
       const response = await fetch("/api/configuracion", {
@@ -373,6 +416,122 @@ export function ConfiguracionClient({
                   }
                   className="neumor-input w-full"
                 />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showRestaurantOrders && (
+          <div className="neumor-card p-6 space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Take Away</h2>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Controla si aceptas pedidos, como se paga y la logica de recogidas.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="font-medium">Aceptar pedidos</h3>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Si lo desactivas, la web ocultara la seccion de pedidos.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setOrdersConfig((prev) => ({ ...prev, enabled: !prev.enabled }))
+                }
+                className={`neumor-toggle ${ordersConfig.enabled ? "active" : ""}`}
+                aria-label="Toggle pedidos"
+              >
+                <span className="neumor-toggle-knob" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Modo de pago</label>
+                <select
+                  value={ordersConfig.paymentMode}
+                  onChange={(event) =>
+                    setOrdersConfig((prev) => ({
+                      ...prev,
+                      paymentMode: event.target.value === "stripe" ? "stripe" : "local",
+                    }))
+                  }
+                  className="neumor-input w-full"
+                >
+                  <option value="local">Pago en el local</option>
+                  <option value="stripe">Stripe (online)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Antelacion minima (min)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={5}
+                  value={ordersConfig.leadTimeMinutes}
+                  onChange={(event) =>
+                    setOrdersConfig((prev) => ({
+                      ...prev,
+                      leadTimeMinutes: Number(event.target.value) || 0,
+                    }))
+                  }
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Intervalo de franjas (min)</label>
+                <input
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={ordersConfig.slotIntervalMinutes}
+                  onChange={(event) =>
+                    setOrdersConfig((prev) => ({
+                      ...prev,
+                      slotIntervalMinutes: Number(event.target.value) || 15,
+                    }))
+                  }
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Tiempo de preparacion (min)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={5}
+                  value={ordersConfig.preparationMinutes}
+                  onChange={(event) =>
+                    setOrdersConfig((prev) => ({
+                      ...prev,
+                      preparationMinutes: Number(event.target.value) || 0,
+                    }))
+                  }
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Max pedidos por franja</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={ordersConfig.maxOrdersPerSlot}
+                  onChange={(event) =>
+                    setOrdersConfig((prev) => ({
+                      ...prev,
+                      maxOrdersPerSlot: Math.max(0, Math.floor(Number(event.target.value) || 0)),
+                    }))
+                  }
+                  className="neumor-input w-full"
+                />
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  0 significa sin limite (se aplica a nivel de UX).
+                </p>
               </div>
             </div>
           </div>

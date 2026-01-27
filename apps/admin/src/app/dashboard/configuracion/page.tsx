@@ -1,4 +1,4 @@
-import { getClientData, getNotificationSettings, getOrderSettings } from "@/lib/data";
+import { getClientData, getNotificationSettings, getOrderSettings, getWebsiteConfig } from "@/lib/data";
 import { ConfiguracionClient } from "./configuracion-client";
 
 export default async function ConfiguracionPage() {
@@ -17,6 +17,7 @@ export default async function ConfiguracionPage() {
 
   const settings = await getNotificationSettings();
   const orderSettings = await getOrderSettings();
+  const websiteConfig = await getWebsiteConfig();
 
   return (
     <ConfiguracionClient
@@ -24,6 +25,7 @@ export default async function ConfiguracionPage() {
       websiteId={websiteId}
       initialSettings={settings}
       initialOrderSettings={orderSettings}
+      initialWebsiteConfig={websiteConfig}
     />
   );
 }

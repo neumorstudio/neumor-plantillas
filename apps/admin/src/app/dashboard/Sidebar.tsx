@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound } from "lucide-react";
+import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound, ShoppingBag, UtensilsCrossed } from "lucide-react";
 
 interface SidebarProps {
   clientInfo: {
@@ -37,6 +37,18 @@ const navItems: NavItem[] = [
     label: "Reservas",
     slug: "reservas",
     icon: <Calendar className="w-5 h-5" />,
+  },
+  {
+    href: "/dashboard/pedidos",
+    label: "Pedidos",
+    slug: "pedidos",
+    icon: <ShoppingBag className="w-5 h-5" />,
+  },
+  {
+    href: "/dashboard/menu",
+    label: "Menu",
+    slug: "menu",
+    icon: <UtensilsCrossed className="w-5 h-5" />,
   },
   {
     href: "/dashboard/calendario",
@@ -170,7 +182,29 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   let resolvedSections = visibleSections?.length ? [...visibleSections] : null;
-  if (clientInfo?.businessType === "salon") {
+  if (clientInfo?.businessType === "restaurant") {
+    const baseSections = resolvedSections ?? navItems.map((item) => item.slug);
+    const restaurantSections = baseSections.filter(
+      (section) =>
+        ![
+          "presupuestos",
+          "trabajos",
+          "pagos",
+          "sesiones",
+          "progreso",
+          "paquetes",
+          "servicios",
+          "profesionales",
+        ].includes(section)
+    );
+    if (!restaurantSections.includes("pedidos")) {
+      restaurantSections.push("pedidos");
+    }
+    if (!restaurantSections.includes("menu")) {
+      restaurantSections.push("menu");
+    }
+    resolvedSections = restaurantSections;
+  } else if (clientInfo?.businessType === "salon") {
     const baseSections = resolvedSections ?? navItems.map((item) => item.slug);
     if (!baseSections.includes("calendario")) {
       baseSections.push("calendario");

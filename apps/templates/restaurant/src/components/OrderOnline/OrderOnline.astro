@@ -15,6 +15,28 @@ interface OrderCategory {
   items: OrderItem[];
 }
 
+interface BusinessHourRow {
+  day_of_week: number;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
+interface SpecialDayRow {
+  date: string;
+  is_open: boolean;
+  open_time: string | null;
+  close_time: string | null;
+  note: string | null;
+}
+
+interface OrdersUiConfig {
+  leadTimeMinutes: number;
+  slotIntervalMinutes: number;
+  maxOrdersPerSlot: number;
+  preparationMinutes: number;
+}
+
 interface Props {
   title?: string;
   subtitle?: string;
@@ -22,8 +44,12 @@ interface Props {
   websiteId?: string;
   orderApiUrl?: string;
   stripePublishableKey?: string;
+  paymentMode?: "local" | "stripe";
   pickupStart?: string;
   pickupEnd?: string;
+  businessHours?: BusinessHourRow[];
+  specialDays?: SpecialDayRow[];
+  ordersConfig?: OrdersUiConfig;
 }
 
 const defaultCategories: OrderCategory[] = [
@@ -56,15 +82,26 @@ const defaultCategories: OrderCategory[] = [
 ];
 
 const {
-  title = "Pedidos Online",
-  subtitle = "Prepara tu pedido y recoge cuando quieras. Pago anticipado seguro con Stripe.",
+  title = "Pedido Para Recoger",
+  subtitle = "Haz tu pedido en pocos pasos y paga directamente en el local al recogerlo.",
   categories = defaultCategories,
   websiteId = "",
   orderApiUrl = "",
   stripePublishableKey = "",
+  paymentMode = "local",
   pickupStart = "12:00",
   pickupEnd = "22:00",
+  businessHours = [],
+  specialDays = [],
+  ordersConfig = {
+    leadTimeMinutes: 30,
+    slotIntervalMinutes: 15,
+    maxOrdersPerSlot: 0,
+    preparationMinutes: 20,
+  },
 } = Astro.props;
+
+const stripeEnabled = paymentMode === "stripe" && Boolean(stripePublishableKey);
 ---
 
 <section
@@ -73,9 +110,13 @@ const {
   data-website-id={websiteId}
   data-order-api={orderApiUrl}
   data-stripe-key={stripePublishableKey}
+  data-payment-mode={stripeEnabled ? "stripe" : "local"}
   data-pickup-start={pickupStart}
   data-pickup-end={pickupEnd}
 >
+  <script type="application/json" data-business-hours>{JSON.stringify(businessHours)}</script>
+  <script type="application/json" data-special-days>{JSON.stringify(specialDays)}</script>
+  <script type="application/json" data-orders-config>{JSON.stringify(ordersConfig)}</script>
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{title}</h2>
@@ -185,27 +226,32 @@ const {
             <label for="order-notes">Notas</label>
             <textarea id="order-notes" name="notes" class="neumor-input" rows="3" placeholder="Alergias, indicaciones, etc."></textarea>
           </div>
-          <button type="button" class="neumor-btn neumor-btn-accent" data-create-intent>
-            Continuar al pago
+          <p class="payment-inline-note">
+            Pago en el local al recoger. Sin registro.
+          </p>
+          <button type="submit" class="neumor-btn neumor-btn-accent" data-submit-order>
+            Enviar pedido
           </button>
           <button type="button" class="neumor-btn" data-reset-intent>
-            Modificar pedido
+            Editar pedido
           </button>
         </form>
 
-        <div class="payment-section is-hidden" data-payment-section>
-          <div id="payment-element"></div>
-          <button type="button" class="neumor-btn neumor-btn-accent" data-confirm-payment>
-            Pagar ahora
-          </button>
-          <p class="payment-note">
-            Tu pago se procesa de forma segura con Stripe.
-          </p>
-        </div>
+        {stripeEnabled && (
+          <div class="payment-section is-hidden" data-payment-section>
+            <div id="payment-element"></div>
+            <button type="button" class="neumor-btn neumor-btn-accent" data-confirm-payment>
+              Pagar ahora
+            </button>
+            <p class="payment-note">
+              Tu pago se procesa de forma segura con Stripe.
+            </p>
+          </div>
+        )}
 
         <p class="order-error is-hidden" data-order-error role="alert"></p>
         <p class="order-success is-hidden" data-order-success>
-          Pedido confirmado. Recibiras un email con los detalles de recogida.
+          Pedido enviado. Te esperamos en tu franja de recogida.
         </p>
       </aside>
     </div>
@@ -486,6 +532,13 @@ const {
     width: 100%;
   }
 
+  .payment-inline-note {
+    margin: 0.25rem 0 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
   .order-form [data-reset-intent] {
     display: none;
   }
@@ -568,16 +621,35 @@ const {
 
     const orderApiUrl = section.getAttribute("data-order-api") || "";
     const stripeKey = section.getAttribute("data-stripe-key") || "";
+    const paymentMode = section.getAttribute("data-payment-mode") || "local";
     const websiteId = section.getAttribute("data-website-id") || "";
     const pickupStart = section.getAttribute("data-pickup-start") || "";
     const pickupEnd = section.getAttribute("data-pickup-end") || "";
+
+    const parseJsonScript = (selector) => {
+      const el = section.querySelector(selector);
+      if (!el) return null;
+      try {
+        return JSON.parse(el.textContent || "null");
+      } catch (err) {
+        console.error("Error parsing JSON config:", err);
+        return null;
+      }
+    };
+
+    const businessHours = parseJsonScript("script[data-business-hours]") || [];
+    const specialDays = parseJsonScript("script[data-special-days]") || [];
+    const ordersConfig = parseJsonScript("script[data-orders-config]") || {};
+
+    const leadTimeMinutes = Number(ordersConfig.leadTimeMinutes || 30);
+    const stripeEnabled = paymentMode === "stripe" && Boolean(stripeKey);
 
     const cartItemsEl = section.querySelector("[data-cart-items]");
     const cartEmptyEl = section.querySelector("[data-cart-empty]");
     const cartTotalEl = section.querySelector("[data-cart-total]");
     const cartCountEl = section.querySelector("[data-cart-count]");
     const orderForm = section.querySelector("[data-order-form]");
-    const createIntentBtn = section.querySelector("[data-create-intent]");
+    const submitBtn = section.querySelector("[data-submit-order]");
     const resetIntentBtn = section.querySelector("[data-reset-intent]");
     const paymentSection = section.querySelector("[data-payment-section]");
     const confirmPaymentBtn = section.querySelector("[data-confirm-payment]");
@@ -587,14 +659,106 @@ const {
     const dateInput = section.querySelector("#order-date");
     const timeInput = section.querySelector("#order-time");
 
+    const todayStr = new Date().toISOString().split("T")[0];
     if (dateInput) {
-      dateInput.min = new Date().toISOString().split("T")[0];
+      dateInput.min = todayStr;
+      if (!dateInput.value) dateInput.value = todayStr;
     }
 
-    if (timeInput && pickupStart) {
-      timeInput.min = pickupStart;
-      timeInput.max = pickupEnd || pickupStart;
-    }
+    const toMinutes = (value) => {
+      if (!value || typeof value !== "string") return null;
+      const [h, m] = value.slice(0, 5).split(":").map(Number);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+      return h * 60 + m;
+    };
+
+    const toTimeString = (minutes) => {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    };
+
+    const clampWindow = (open, close) => {
+      const start = toMinutes(pickupStart);
+      const end = toMinutes(pickupEnd);
+      if (start === null || end === null) {
+        return { isOpen: true, open: pickupStart, close: pickupEnd || pickupStart };
+      }
+      const openMin = Math.max(open, start);
+      const closeMin = Math.min(close, end);
+      if (openMin >= closeMin) {
+        return { isOpen: false, open: pickupStart, close: pickupEnd || pickupStart };
+      }
+      return { isOpen: true, open: toTimeString(openMin), close: toTimeString(closeMin) };
+    };
+
+    const getScheduleForDate = (dateStr) => {
+      const date = new Date(`${dateStr}T00:00:00`);
+      if (Number.isNaN(date.getTime())) {
+        return { isOpen: true, open: pickupStart, close: pickupEnd || pickupStart };
+      }
+
+      const special = specialDays.find((item) => item.date === dateStr);
+      if (special) {
+        if (!special.is_open) {
+          return { isOpen: false, open: pickupStart, close: pickupEnd || pickupStart };
+        }
+        const openMin = toMinutes(special.open_time || pickupStart) ?? toMinutes(pickupStart) ?? 0;
+        const closeMin = toMinutes(special.close_time || pickupEnd || pickupStart) ?? toMinutes(pickupEnd || pickupStart) ?? openMin + 60;
+        return clampWindow(openMin, closeMin);
+      }
+
+      const dayOfWeek = date.getDay();
+      const day = businessHours.find((item) => item.day_of_week === dayOfWeek);
+      if (!day) {
+        return { isOpen: true, open: pickupStart, close: pickupEnd || pickupStart };
+      }
+      if (!day.is_open) {
+        return { isOpen: false, open: pickupStart, close: pickupEnd || pickupStart };
+      }
+
+      const openMin = toMinutes(day.open_time) ?? toMinutes(pickupStart) ?? 0;
+      const closeMin = toMinutes(day.close_time) ?? toMinutes(pickupEnd || pickupStart) ?? openMin + 60;
+      return clampWindow(openMin, closeMin);
+    };
+
+    const applyTimeBounds = () => {
+      if (!timeInput || !dateInput) return;
+      const schedule = getScheduleForDate(dateInput.value || todayStr);
+
+      if (!schedule.isOpen) {
+        timeInput.value = "";
+        timeInput.setAttribute("disabled", "true");
+        showError("No hay recogidas disponibles para esa fecha.");
+        return;
+      }
+
+      timeInput.removeAttribute("disabled");
+      const minWithLead = (() => {
+        if (!dateInput.value || dateInput.value !== todayStr) return schedule.open;
+        const now = new Date();
+        const nowMinutes = now.getHours() * 60 + now.getMinutes() + leadTimeMinutes;
+        const scheduleOpenMinutes = toMinutes(schedule.open) ?? nowMinutes;
+        return nowMinutes > scheduleOpenMinutes ? toTimeString(nowMinutes) : schedule.open;
+      })();
+
+      timeInput.min = minWithLead;
+      timeInput.max = schedule.close || schedule.open;
+      const currentMinutes = toMinutes(timeInput.value || "");
+      const minMinutes = toMinutes(timeInput.min) ?? null;
+      const maxMinutes = toMinutes(timeInput.max) ?? null;
+      if (
+        currentMinutes === null ||
+        (minMinutes !== null && currentMinutes < minMinutes) ||
+        (maxMinutes !== null && currentMinutes > maxMinutes)
+      ) {
+        timeInput.value = timeInput.min;
+      }
+      clearError();
+    };
+
+    dateInput?.addEventListener("change", applyTimeBounds);
+    applyTimeBounds();
 
     const cart = new Map();
     let stripe = null;
@@ -725,33 +889,41 @@ const {
       if (action === "decrease") changeQuantity(id, -1);
     });
 
-    const showError = (message) => {
+    function showError(message) {
       if (!errorEl) return;
       errorEl.textContent = message;
       errorEl.classList.remove("is-hidden");
-    };
+    }
 
-    const clearError = () => {
+    function clearError() {
       if (!errorEl) return;
       errorEl.textContent = "";
       errorEl.classList.add("is-hidden");
+    }
+
+    const showSuccess = (pickupDate, pickupTime) => {
+      if (!successEl) return;
+      const pickupLabel = pickupDate && pickupTime ? ` Recoge el ${pickupDate} a las ${pickupTime}.` : "";
+      successEl.textContent = `Pedido enviado.${pickupLabel}`;
+      successEl.classList.remove("is-hidden");
     };
 
-    const showSuccess = () => {
+    const hideSuccess = () => {
       if (!successEl) return;
-      successEl.classList.remove("is-hidden");
+      successEl.classList.add("is-hidden");
     };
 
     const resetCheckout = () => {
       checkoutLocked = false;
       clearError();
+      hideSuccess();
       if (paymentElement) {
         paymentElement.unmount();
         paymentElement = null;
       }
       if (paymentSection) paymentSection.classList.add("is-hidden");
       if (resetIntentBtn) resetIntentBtn.style.display = "none";
-      if (createIntentBtn) createIntentBtn.removeAttribute("disabled");
+      if (submitBtn) submitBtn.removeAttribute("disabled");
     };
 
     const lockCheckout = () => {
@@ -764,10 +936,23 @@ const {
       renderCart();
     });
 
-    createIntentBtn?.addEventListener("click", async () => {
+    const ensureStripeLoaded = async () => {
+      if (!stripeEnabled || window.Stripe) return;
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://js.stripe.com/v3/";
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    };
+
+    const submitOrder = async () => {
       clearError();
-      if (!orderApiUrl || !stripeKey) {
-        showError("Configura Stripe y la URL de pedidos.");
+
+      if (!orderApiUrl) {
+        showError("El sistema de pedidos no esta configurado.");
         return;
       }
 
@@ -800,7 +985,7 @@ const {
         quantity: item.quantity,
       }));
 
-      createIntentBtn?.setAttribute("disabled", "true");
+      submitBtn?.setAttribute("disabled", "true");
 
       try {
         const response = await fetch(orderApiUrl, {
@@ -818,9 +1003,16 @@ const {
 
         const data = await response.json();
         if (!response.ok) {
-          throw new Error(data.error || "Error al crear el pago");
+          throw new Error(data.error || "Error al crear el pedido");
         }
 
+        if (!stripeEnabled || !data.client_secret) {
+          lockCheckout();
+          showSuccess(pickupDate, pickupTime);
+          return;
+        }
+
+        await ensureStripeLoaded();
         if (!window.Stripe) {
           throw new Error("Stripe no disponible");
         }
@@ -832,9 +1024,15 @@ const {
         if (paymentSection) paymentSection.classList.remove("is-hidden");
         lockCheckout();
       } catch (error) {
-        showError(error.message || "Error al iniciar el pago");
-        createIntentBtn?.removeAttribute("disabled");
+        showError(error.message || "Error al enviar el pedido");
+        submitBtn?.removeAttribute("disabled");
       }
+    };
+
+    orderForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (checkoutLocked) return;
+      submitOrder();
     });
 
     confirmPaymentBtn?.addEventListener("click", async () => {
@@ -854,7 +1052,9 @@ const {
         return;
       }
 
-      showSuccess();
+      const pickupDate = dateInput?.value || "";
+      const pickupTime = timeInput?.value || "";
+      showSuccess(pickupDate, pickupTime);
     });
 
     updateCartSummary();

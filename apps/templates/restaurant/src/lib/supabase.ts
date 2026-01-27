@@ -72,6 +72,37 @@ export interface OrderSettings {
   pickup_end_time: string;
 }
 
+export interface BusinessHourRow {
+  day_of_week: number;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
+export interface SpecialDayRow {
+  date: string;
+  is_open: boolean;
+  open_time: string | null;
+  close_time: string | null;
+  note: string | null;
+}
+
+export interface BookingRow {
+  id: string;
+  website_id: string;
+  booking_date: string;
+  booking_time: string | null;
+  guests: number | null;
+  status: string;
+}
+
+export interface RestaurantRow {
+  website_id: string;
+  capacity: number | null;
+  is_open: boolean | null;
+  takeaway_enabled: boolean | null;
+}
+
 export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
 
 export interface Website {
@@ -181,6 +212,106 @@ export async function getOrderSettings(websiteId?: string): Promise<OrderSetting
     }
 
     return data as OrderSettings;
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return null;
+  }
+}
+
+export async function getBusinessHours(websiteId?: string): Promise<BusinessHourRow[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("business_hours")
+      .select("day_of_week, is_open, open_time, close_time")
+      .eq("website_id", websiteId)
+      .order("day_of_week", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching business hours:", error.message);
+      return [];
+    }
+
+    return (data as BusinessHourRow[] | null) || [];
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return [];
+  }
+}
+
+export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("special_days")
+      .select("date, is_open, open_time, close_time, note")
+      .eq("website_id", websiteId);
+
+    if (error) {
+      console.error("Error fetching special days:", error.message);
+      return [];
+    }
+
+    return (data as SpecialDayRow[] | null) || [];
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return [];
+  }
+}
+
+export async function getBookingsInRange(
+  websiteId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<BookingRow[]> {
+  if (!supabase || !websiteId || !startDate || !endDate) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("id, website_id, booking_date, booking_time, guests, status")
+      .eq("website_id", websiteId)
+      .gte("booking_date", startDate)
+      .lte("booking_date", endDate);
+
+    if (error) {
+      console.error("Error fetching bookings in range:", error.message);
+      return [];
+    }
+
+    return (data as BookingRow[] | null) || [];
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return [];
+  }
+}
+
+export async function getRestaurantSettings(websiteId?: string): Promise<RestaurantRow | null> {
+  if (!supabase || !websiteId) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("website_id, capacity, is_open, takeaway_enabled")
+      .eq("website_id", websiteId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching restaurant settings:", error.message);
+      return null;
+    }
+
+    return (data as RestaurantRow | null) || null;
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return null;

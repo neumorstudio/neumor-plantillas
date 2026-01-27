@@ -18,7 +18,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientId, websiteId, businessData, notificationSettings, orderSettings } = body;
+    const {
+      clientId,
+      websiteId,
+      businessData,
+      notificationSettings,
+      orderSettings,
+      restaurantConfig,
+    } = body as {
+      clientId: string;
+      websiteId: string;
+      businessData: { business_name: string; phone?: string | null };
+      notificationSettings: Record<string, unknown>;
+      orderSettings?: { pickup_start_time: string; pickup_end_time: string };
+      restaurantConfig?: Record<string, unknown>;
+    };
 
     // Verify user owns this client (by auth_user_id)
     const { data: client } = await supabase
@@ -58,11 +72,36 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (website) {
-      const nextConfig = {
+      const nextConfig: Record<string, unknown> = {
         ...(website.config || {}),
         businessName: businessData.business_name,
         phone: businessData.phone || null,
       };
+
+      if (restaurantConfig && typeof restaurantConfig === "object") {
+        const incomingRestaurant = restaurantConfig as Record<string, unknown>;
+        const existingRestaurant =
+          (nextConfig.restaurant as Record<string, unknown> | undefined) || {};
+        const mergedRestaurant: Record<string, unknown> = {
+          ...existingRestaurant,
+          ...incomingRestaurant,
+        };
+
+        if (
+          incomingRestaurant.orders &&
+          typeof incomingRestaurant.orders === "object"
+        ) {
+          const existingOrders =
+            (existingRestaurant.orders as Record<string, unknown> | undefined) ||
+            {};
+          mergedRestaurant.orders = {
+            ...existingOrders,
+            ...(incomingRestaurant.orders as Record<string, unknown>),
+          };
+        }
+
+        nextConfig.restaurant = mergedRestaurant;
+      }
 
       const { error: websiteError } = await supabase
         .from("websites")

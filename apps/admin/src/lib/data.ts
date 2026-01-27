@@ -58,6 +58,26 @@ export async function getWebsiteId(): Promise<string | null> {
   return context?.websiteId || null;
 }
 
+export async function getWebsiteConfig(): Promise<Record<string, unknown> | null> {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return null;
+
+  const { data, error } = await supabase
+    .from("websites")
+    .select("config")
+    .eq("id", websiteId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching website config:", error.message);
+    return null;
+  }
+
+  return (data?.config as Record<string, unknown> | null) || null;
+}
+
 // Get the current user's business type
 export async function getBusinessType(): Promise<string> {
   const supabase = await createClient();
@@ -434,7 +454,7 @@ export interface WebsiteConfig {
 export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
 
 // Get website personalization config
-export async function getWebsiteConfig() {
+export async function getWebsitePersonalizationConfig() {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();
 
