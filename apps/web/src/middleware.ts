@@ -22,21 +22,23 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const url = request.nextUrl.clone();
 
-  // DEBUG - use console.error for visibility
-  console.error("========== MIDDLEWARE EXECUTING ==========");
-  console.error("[Middleware] URL:", request.url);
-  console.error("[Middleware] Host:", host);
-  console.error("[Middleware] DEV_SUBDOMAIN:", process.env.DEV_SUBDOMAIN);
-  console.error("[Middleware] SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-
   // 1. Parse domain to determine tenant
   const { subdomain, customDomain, isPreview, previewWebsiteId } = parseDomain(
     host,
     url
   );
 
-  // DEBUG
-  console.error("[Middleware] Parsed:", JSON.stringify({ subdomain, customDomain, isPreview, previewWebsiteId }));
+  // DEBUG - all console.error for visibility in Vercel
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  console.error("[Middleware] Host:", host, "| Subdomain:", subdomain, "| ENV_SET:", !!supabaseUrl, !!supabaseKey);
+
+  // Check if env vars are set
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("[Middleware] ERROR: Missing SUPABASE env vars!");
+    url.pathname = "/_not-found";
+    return NextResponse.rewrite(url);
+  }
 
   // 2. Handle preview mode (from admin)
   if (isPreview && previewWebsiteId) {
@@ -47,7 +49,7 @@ export async function middleware(request: NextRequest) {
   const website = await resolveWebsite(subdomain, customDomain, request);
 
   // DEBUG
-  console.log("[Middleware] Website found:", website?.id, website?.subdomain);
+  console.error("[Middleware] Website result:", website ? `found ${website.id}` : "NOT FOUND");
 
   if (!website || !website.is_active) {
     // Website not found or inactive
@@ -176,7 +178,15 @@ async function resolveWebsite(
 
   const { data: websiteData, error } = await query.single();
 
-  if (error || !websiteData) return null;
+  if (error) {
+    console.error("[resolveWebsite] Supabase error:", error.message, error.code);
+    return null;
+  }
+
+  if (!websiteData) {
+    console.error("[resolveWebsite] No website found for:", subdomain || customDomain);
+    return null;
+  }
 
   // Get client's business_type
   const { data: clientData } = await supabase
