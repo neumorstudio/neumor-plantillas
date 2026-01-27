@@ -123,20 +123,33 @@ console.log("[Callback] No code, client will handle hash fragment");
 
       // Check if there's a hash fragment with access_token (implicit flow)
       if (window.location.hash && window.location.hash.includes("access_token")) {
-        // Supabase client will automatically parse the hash
+        // Parse the hash fragment to get tokens
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const access_token = hashParams.get("access_token");
+        const refresh_token = hashParams.get("refresh_token");
+
+        if (!access_token) {
+          console.error("No access_token in hash");
+          window.location.href = "/mi-cuenta?error=no_token";
+          return;
+        }
+
+        // Create client and explicitly set the session to persist it
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Get the session from the URL hash
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token: refresh_token || "",
+        });
 
         if (error) {
-          console.error("Error getting session:", error);
+          console.error("Error setting session:", error);
           window.location.href = "/mi-cuenta?error=session_failed";
           return;
         }
 
         if (data.session) {
-          console.log("Session established:", data.session.user.email);
+          console.log("Session established and persisted:", data.session.user.email);
 
           // Check for return URL in sessionStorage
           const returnUrl = sessionStorage.getItem("auth_return_url");
