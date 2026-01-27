@@ -1517,6 +1517,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     if (!dateValue) {
       return;
     }
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const professionalId = getSelectedProfessionalId();
     if (!professionalId) {
       return;
@@ -1534,7 +1537,11 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
         const slot = minutesToTime(minutes);
         const slotEnd = minutes + duration;
-        const isBlocked = bookedSlots.some((booked) => minutes < booked.end && slotEnd > booked.start);
+        const isPastTime =
+          dateValue === todayIso && minutes <= currentMinutes;
+        const isBlocked =
+          isPastTime ||
+          bookedSlots.some((booked) => minutes < booked.end && slotEnd > booked.start);
         const button = document.createElement("button");
         button.type = "button";
         button.className = `time-slot${isBlocked ? " is-disabled" : ""}`;
