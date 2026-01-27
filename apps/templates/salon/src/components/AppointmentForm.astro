@@ -251,6 +251,18 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
               <h4>Completa tus datos</h4>
               <p>Revisamos tu reserva y la confirmamos contigo.</p>
             </div>
+            <div class="auth-block neumor-inset" data-auth-wrapper>
+              <div>
+                <h5>Inicia sesion con Google</h5>
+                <p>Es obligatorio iniciar sesion para confirmar tu cita.</p>
+              </div>
+              <div class="auth-actions">
+                <button type="button" class="neumor-btn neumor-btn-accent" data-auth-google>
+                  Continuar con Google
+                </button>
+                <span class="auth-user" data-auth-user hidden></span>
+              </div>
+            </div>
             <div class="summary-card neumor-inset">
               <div class="summary-row">
                 <span>Servicios</span>
@@ -730,6 +742,35 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     gap: 0.75rem;
   }
 
+  .auth-block {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .auth-block h5 {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .auth-block p {
+    margin: 0.35rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .auth-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .auth-user {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
   .summary-row {
     display: flex;
     justify-content: space-between;
@@ -939,7 +980,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   }
 </style>
 
-<script>
+<script type="module">
+  import { createClient } from "@supabase/supabase-js";
   const form = document.querySelector(".appointment-form") as HTMLFormElement | null;
   if (!form) {
     console.warn("Appointment form not found");
@@ -960,6 +1002,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   const prevMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-prev]");
   const nextMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-next]");
   const stepPanels = form.querySelector<HTMLElement>(".step-panels");
+  const authButton = form.querySelector<HTMLButtonElement>("[data-auth-google]");
+  const authUser = form.querySelector<HTMLElement>("[data-auth-user]");
+  const authWrapper = form.querySelector<HTMLElement>("[data-auth-wrapper]");
   const serviceInputs = Array.from(
     form.querySelectorAll<HTMLInputElement>("input[name='services']")
   );
@@ -1010,6 +1055,30 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     stepPanels.style.minHeight = `${Math.max(0, maxHeight - 12)}px`;
   };
 
+  const setAuthState = (email?: string | null) => {
+    if (authUser) {
+      if (email) {
+        authUser.textContent = `Conectado como ${email}`;
+        authUser.hidden = false;
+      } else {
+        authUser.textContent = "";
+        authUser.hidden = true;
+      }
+    }
+    if (submitBtn) {
+      submitBtn.disabled = !email;
+    }
+    if (authWrapper) {
+      authWrapper.classList.toggle("is-authenticated", Boolean(email));
+    }
+  };
+
+  const ensureAuth = async () => {
+    if (!supabaseClient) return null;
+    const { data } = await supabaseClient.auth.getSession();
+    return data.session || null;
+  };
+
   const showToast = (message: string, type: "error" | "success" | "warning" = "error", duration = 3500) => {
     if (!toastEl || !toastMessage) return;
 
@@ -1033,6 +1102,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   const hasServices = form.dataset.hasServices === "true";
   const supabaseUrl = form.dataset.supabaseUrl || "";
   const supabaseKey = form.dataset.supabaseKey || "";
+  const supabaseClient =
+    supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
   const websiteId = form.dataset.websiteId || "";
   const businessHoursRaw = form.dataset.businessHours || "[]";
   const businessHourSlotsRaw = form.dataset.businessHourSlots || "[]";
@@ -1575,6 +1646,45 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   updateMonthNav();
   updateProfessionalAvailability();
 
+  if (supabaseClient) {
+    supabaseClient.auth.getSession().then(({ data }) => {
+      const session = data.session;
+      setAuthState(session?.user?.email || null);
+      if (session?.user?.email) {
+        const emailInput = form.querySelector<HTMLInputElement>("#email");
+        if (emailInput && !emailInput.value) {
+          emailInput.value = session.user.email;
+        }
+      }
+      const nameInput = form.querySelector<HTMLInputElement>("#name");
+      if (nameInput && !nameInput.value) {
+        const fullName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name;
+        if (fullName) {
+          nameInput.value = String(fullName);
+        }
+      }
+    });
+
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setAuthState(session?.user?.email || null);
+    });
+  } else {
+    setAuthState(null);
+  }
+
+  authButton?.addEventListener("click", async () => {
+    if (!supabaseClient) {
+      showToast("No se pudo iniciar sesion. Revisa la configuracion.", "error");
+      return;
+    }
+    await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.href,
+      },
+    });
+  });
+
   serviceInputs.forEach((input) => {
     input.addEventListener("change", () => {
       updateProfessionalAvailability();
@@ -1599,6 +1709,12 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!validateStep()) {
+      return;
+    }
+
+    const session = await ensureAuth();
+    if (!session) {
+      showToast("Debes iniciar sesion con Google para confirmar.", "warning");
       return;
     }
 
