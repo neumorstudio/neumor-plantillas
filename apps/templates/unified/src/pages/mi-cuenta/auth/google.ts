@@ -12,19 +12,25 @@ export const POST: APIRoute = async ({ request, cookies, redirect, url }) => {
   // Check if there's a return_url to redirect back after auth
   const returnUrl = url.searchParams.get("return_url");
 
-  // Build callback URL with optional return_url
-  let callbackUrl = `${origin}/mi-cuenta/callback`;
+  // Store return_url in cookie if provided (don't add to callback URL to avoid Supabase issues)
   if (returnUrl) {
-    // Validate return_url is same origin for security
     try {
       const parsed = new URL(returnUrl, origin);
       if (parsed.origin === origin) {
-        callbackUrl += `?return_url=${encodeURIComponent(returnUrl)}`;
+        cookies.set("auth_return_url", returnUrl, {
+          path: "/",
+          httpOnly: true,
+          secure: !host.includes("localhost"),
+          sameSite: "lax",
+          maxAge: 60 * 10, // 10 minutes
+        });
       }
     } catch {
       // Invalid URL, ignore
     }
   }
+
+  const callbackUrl = `${origin}/mi-cuenta/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

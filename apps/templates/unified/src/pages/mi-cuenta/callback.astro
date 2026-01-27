@@ -70,9 +70,13 @@ if (code) {
 
   console.log("[Callback] Customer linked:", customerId);
 
-  // Check if there's a return URL in the query params
-  const returnUrl = Astro.url.searchParams.get("return_url");
-  if (returnUrl) {
+  // Check if there's a return URL in cookie (set by auth/google.ts)
+  const returnUrlCookie = Astro.cookies.get("auth_return_url");
+  if (returnUrlCookie?.value) {
+    const returnUrl = returnUrlCookie.value;
+    // Delete the cookie
+    Astro.cookies.delete("auth_return_url", { path: "/" });
+
     // Validate it's a same-origin URL for security
     try {
       const url = new URL(returnUrl, Astro.url.origin);
