@@ -1047,6 +1047,23 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
 <script>
+  // Wait for Supabase SDK to load
+  const waitForSupabase = (callback: () => void, maxWait = 5000) => {
+    const start = Date.now();
+    const check = () => {
+      if (window.supabase) {
+        callback();
+      } else if (Date.now() - start < maxWait) {
+        setTimeout(check, 50);
+      } else {
+        console.error("[Auth] Supabase SDK failed to load after", maxWait, "ms");
+        callback(); // Continue anyway, client will be null
+      }
+    };
+    check();
+  };
+
+  waitForSupabase(() => {
   const form = document.querySelector(".appointment-form") as HTMLFormElement | null;
   if (!form) {
     console.warn("Appointment form not found");
@@ -1927,5 +1944,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
   });
   }
+  }); // close waitForSupabase
 </script>
 
