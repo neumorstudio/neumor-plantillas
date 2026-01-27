@@ -18,60 +18,184 @@ if (error) {
   return Astro.redirect("/mi-cuenta?error=" + error);
 }
 
-if (!code) {
-  console.error("[Callback] No code in URL");
-  return Astro.redirect("/mi-cuenta?error=no_code");
-}
+// Only process server-side if we have a code (PKCE flow)
+// If no code, the client-side script will handle hash fragment (implicit flow)
+if (code) {
+  // Exchange code for session
+  const supabase = createPortalClient(Astro.cookies, Astro.request);
 
-// Exchange code for session
-const supabase = createPortalClient(Astro.cookies, Astro.request);
+  const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
 
-const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-
-if (sessionError || !data.session) {
-  console.error("[Callback] Error exchanging code:", sessionError?.message);
-  return Astro.redirect("/mi-cuenta?error=session_failed");
-}
-
-const user = data.session.user;
-
-// Link or create customer for this website
-console.log("[Callback] Linking customer:", {
-  tenantId: tenant.id,
-  userId: user.id,
-  email: user.email
-});
-
-const { data: customerId, error: linkError } = await supabase.rpc("link_or_create_customer", {
-  p_website_id: tenant.id,
-  p_auth_user_id: user.id,
-  p_email: user.email || "",
-  p_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuario",
-});
-
-if (linkError) {
-  console.error("[Callback] Error linking customer:", linkError.message);
-
-  // Fallback: try upsert directly
-  const { error: upsertError } = await supabase
-    .from("customers")
-    .upsert({
-      website_id: tenant.id,
-      auth_user_id: user.id,
-      email: user.email || "",
-      name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuario",
-    }, {
-      onConflict: "website_id,email",
-    });
-
-  if (upsertError) {
-    console.error("[Callback] Upsert error:", upsertError.message);
-    return Astro.redirect("/mi-cuenta?error=customer_failed");
+  if (sessionError || !data.session) {
+    console.error("[Callback] Error exchanging code:", sessionError?.message);
+    return Astro.redirect("/mi-cuenta?error=session_failed");
   }
+
+  const user = data.session.user;
+
+  // Link or create customer for this website
+  console.log("[Callback] Linking customer:", {
+    tenantId: tenant.id,
+    userId: user.id,
+    email: user.email
+  });
+
+  const { data: customerId, error: linkError } = await supabase.rpc("link_or_create_customer", {
+    p_website_id: tenant.id,
+    p_auth_user_id: user.id,
+    p_email: user.email || "",
+    p_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuario",
+  });
+
+  if (linkError) {
+    console.error("[Callback] Error linking customer:", linkError.message);
+
+    // Fallback: try upsert directly
+    const { error: upsertError } = await supabase
+      .from("customers")
+      .upsert({
+        website_id: tenant.id,
+        auth_user_id: user.id,
+        email: user.email || "",
+        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuario",
+      }, {
+        onConflict: "website_id,email",
+      });
+
+    if (upsertError) {
+      console.error("[Callback] Upsert error:", upsertError.message);
+      return Astro.redirect("/mi-cuenta?error=customer_failed");
+    }
+  }
+
+  console.log("[Callback] Customer linked, returned customerId:", customerId);
+
+  // Verify the customer record
+  const { data: verifyCustomer } = await supabase
+    .from("customers")
+    .select("id, auth_user_id, email")
+    .eq("website_id", tenant.id)
+    .eq("auth_user_id", user.id)
+    .single();
+  console.log("[Callback] Verified customer record:", verifyCustomer);
+
+  // Check if there's a return URL in cookie (set by auth/google.ts)
+  const returnUrlCookie = Astro.cookies.get("auth_return_url");
+  if (returnUrlCookie?.value) {
+    const returnUrl = returnUrlCookie.value;
+    // Delete the cookie
+    Astro.cookies.delete("auth_return_url", { path: "/" });
+
+    // Validate it's a same-origin URL for security
+    try {
+      const url = new URL(returnUrl, Astro.url.origin);
+      if (url.origin === Astro.url.origin) {
+        return Astro.redirect(returnUrl);
+      }
+    } catch {
+      // Invalid URL, continue to default
+    }
+  }
+
+  // Default: redirect to dashboard
+  return Astro.redirect("/mi-cuenta/inicio");
 }
 
-console.log("[Callback] Customer linked:", customerId);
-
-// Redirect to dashboard
-return Astro.redirect("/mi-cuenta/inicio");
+// No code - let client-side handle implicit flow
+console.log("[Callback] No code, client will handle hash fragment");
 ---
+
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Procesando...</title>
+</head>
+<body>
+  <p>Procesando autenticación...</p>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
+  <script>
+    // Wait for Supabase SDK to load
+    const waitForSupabase = (callback, maxWait = 5000) => {
+      const start = Date.now();
+      const check = () => {
+        if (window.supabase) {
+          callback();
+        } else if (Date.now() - start < maxWait) {
+          setTimeout(check, 50);
+        } else {
+          console.error("[Callback] Supabase SDK failed to load");
+          window.location.href = "/mi-cuenta?error=sdk_failed";
+        }
+      };
+      check();
+    };
+
+    waitForSupabase(async () => {
+      const supabaseUrl = "https://jekrqkdvgcwruhghtgkj.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impla3Jxa2R2Z2N3cnVoZ2h0Z2tqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwMDM2MjEsImV4cCI6MjA4MTU3OTYyMX0.B0oO-MgDXsWFX8t1zj736RhnUUREK3Wmyb5c5Q9ve8s";
+
+      // Check if there's a hash fragment with access_token (implicit flow)
+      if (window.location.hash && window.location.hash.includes("access_token")) {
+        // Parse the hash fragment to get tokens
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const access_token = hashParams.get("access_token");
+        const refresh_token = hashParams.get("refresh_token");
+
+        if (!access_token) {
+          console.error("No access_token in hash");
+          window.location.href = "/mi-cuenta?error=no_token";
+          return;
+        }
+
+        // Create client and explicitly set the session to persist it
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        console.log("[Callback] Calling setSession with tokens...");
+        const { data, error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token: refresh_token || "",
+        });
+
+        if (error) {
+          console.error("[Callback] Error setting session:", error);
+          window.location.href = "/mi-cuenta?error=session_failed";
+          return;
+        }
+
+        if (data.session) {
+          console.log("[Callback] Session established:", data.session.user.email);
+
+          // Verify session is in localStorage
+          const storageKey = `sb-${supabaseUrl.split("//")[1].split(".")[0]}-auth-token`;
+          const stored = localStorage.getItem(storageKey);
+          console.log("[Callback] LocalStorage key:", storageKey);
+          console.log("[Callback] Session in localStorage:", stored ? "YES" : "NO");
+
+          // Check for return URL in sessionStorage
+          const returnUrl = sessionStorage.getItem("auth_return_url");
+          console.log("[Callback] Return URL:", returnUrl);
+          if (returnUrl) {
+            sessionStorage.removeItem("auth_return_url");
+            window.location.href = returnUrl;
+          } else {
+            window.location.href = "/mi-cuenta/inicio";
+          }
+          return;
+        } else {
+          console.error("[Callback] No session in response");
+        }
+      }
+
+      // No hash fragment, check sessionStorage and redirect
+      const returnUrl = sessionStorage.getItem("auth_return_url");
+      if (returnUrl) {
+        sessionStorage.removeItem("auth_return_url");
+        window.location.href = returnUrl;
+      } else {
+        // No token and no return URL, go to login page
+        window.location.href = "/mi-cuenta";
+      }
+    }); // close waitForSupabase
+  </script>
+</body>
+</html>
