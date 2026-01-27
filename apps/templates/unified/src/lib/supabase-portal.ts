@@ -118,12 +118,19 @@ export async function getCustomerBookings(
 ): Promise<CustomerBooking[]> {
   const supabase = createPortalClient(cookies, request);
 
+  console.log("[getCustomerBookings] Querying bookings for customer_id:", customerId);
+
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, booking_date, booking_time, status, services, total_price, notes")
+    .select("id, booking_date, booking_time, status, services, total_price, notes, customer_id")
     .eq("customer_id", customerId)
     .order("booking_date", { ascending: false })
     .limit(50);
+
+  console.log("[getCustomerBookings] Result:", data?.length, "bookings, error:", error?.message);
+  if (data && data.length > 0) {
+    console.log("[getCustomerBookings] First booking customer_id:", data[0].customer_id);
+  }
 
   if (error || !data) return [];
 

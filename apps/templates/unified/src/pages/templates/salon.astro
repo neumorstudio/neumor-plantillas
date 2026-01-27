@@ -29,13 +29,18 @@ try {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
+    console.log("[Salon] User authenticated:", user.email, "auth_user_id:", user.id);
+
     // Get customer profile for this tenant
-    const { data: customer } = await supabase
+    const { data: customer, error: customerError } = await supabase
       .from("customers")
       .select("id, name")
       .eq("website_id", tenant.id)
       .eq("auth_user_id", user.id)
       .single();
+
+    console.log("[Salon] Customer lookup for website_id:", tenant.id);
+    console.log("[Salon] Customer result:", customer, "error:", customerError?.message);
 
     currentUser = {
       email: user.email || "",
@@ -43,6 +48,8 @@ try {
       customerId: customer?.id || null,
       name: customer?.name || user.user_metadata?.full_name || user.user_metadata?.name || "",
     };
+
+    console.log("[Salon] currentUser.customerId:", currentUser.customerId);
   }
 } catch (e) {
   // Auth check failed, user not logged in

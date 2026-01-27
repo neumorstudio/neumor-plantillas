@@ -68,7 +68,16 @@ if (code) {
     }
   }
 
-  console.log("[Callback] Customer linked:", customerId);
+  console.log("[Callback] Customer linked, returned customerId:", customerId);
+
+  // Verify the customer record
+  const { data: verifyCustomer } = await supabase
+    .from("customers")
+    .select("id, auth_user_id, email")
+    .eq("website_id", tenant.id)
+    .eq("auth_user_id", user.id)
+    .single();
+  console.log("[Callback] Verified customer record:", verifyCustomer);
 
   // Check if there's a return URL in cookie (set by auth/google.ts)
   const returnUrlCookie = Astro.cookies.get("auth_return_url");
