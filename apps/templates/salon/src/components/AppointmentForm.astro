@@ -1176,6 +1176,12 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   const hasServices = form.dataset.hasServices === "true";
   const supabaseUrl = form.dataset.supabaseUrl || "";
   const supabaseKey = form.dataset.supabaseKey || "";
+
+  // Debug: log what's available
+  if (!supabaseUrl) console.warn("[Auth] Missing supabaseUrl");
+  if (!supabaseKey) console.warn("[Auth] Missing supabaseKey");
+  if (!window.supabase) console.warn("[Auth] Supabase SDK not loaded");
+
   const supabaseClient =
     supabaseUrl && supabaseKey && window.supabase
       ? window.supabase.createClient(supabaseUrl, supabaseKey)
