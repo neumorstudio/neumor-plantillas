@@ -1,0 +1,108 @@
+---
+import "@salon/styles/neuglass.css";
+import "../../styles/portal.css";
+import type { TenantData } from "../../middleware";
+import type { CustomerProfile } from "../../lib/supabase-portal";
+
+interface Props {
+  title: string;
+  tenant: TenantData;
+  customer: CustomerProfile;
+  currentPage?: string;
+}
+
+const { title, tenant, customer, currentPage = "inicio" } = Astro.props;
+
+// Get initials for avatar
+const initials = customer.name
+  .split(" ")
+  .map((n) => n[0])
+  .join("")
+  .slice(0, 2)
+  .toUpperCase();
+
+// Navigation items based on business type
+const getNavItems = (businessType: string) => {
+  const common = [
+    { id: "inicio", label: "Inicio", href: "/mi-cuenta/inicio", icon: "home" },
+    { id: "reservas", label: "Reservas", href: "/mi-cuenta/reservas", icon: "calendar" },
+    { id: "perfil", label: "Perfil", href: "/mi-cuenta/perfil", icon: "user" },
+  ];
+
+  if (businessType === "gym") {
+    return [
+      common[0],
+      common[1],
+      { id: "progreso", label: "Progreso", href: "/mi-cuenta/progreso", icon: "chart" },
+      { id: "paquetes", label: "Paquetes", href: "/mi-cuenta/paquetes", icon: "package" },
+      common[2],
+    ];
+  }
+
+  return common;
+};
+
+const navItems = getNavItems(tenant.businessType);
+
+// Icon SVGs
+const icons: Record<string, string> = {
+  home: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  calendar: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  user: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  chart: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  package: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  logout: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+};
+
+// Theme class based on business type
+const themeClass = `${tenant.businessType}-theme`;
+---
+
+<!doctype html>
+<html lang="es" class="theme-neuglass">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={`${title} - ${tenant.businessName}`} />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>{title} | {tenant.businessName}</title>
+  </head>
+  <body class={`portal-body ${themeClass}`}>
+    <!-- Header -->
+    <header class="portal-header">
+      <a href="/" class="portal-header-logo">
+        <span>{tenant.businessName}</span>
+      </a>
+      <div class="portal-header-avatar">
+        <div class="portal-avatar">{initials}</div>
+        <form action="/mi-cuenta/auth/logout" method="POST" style="margin: 0;">
+          <button type="submit" class="portal-logout-btn" title="Cerrar sesion">
+            <Fragment set:html={icons.logout} />
+          </button>
+        </form>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+      <slot />
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="portal-bottom-nav">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class={`portal-nav-item ${currentPage === item.id ? "active" : ""}`}
+        >
+          <Fragment set:html={icons[item.icon]} />
+          <span>{item.label}</span>
+        </a>
+      ))}
+    </nav>
+  </body>
+</html>

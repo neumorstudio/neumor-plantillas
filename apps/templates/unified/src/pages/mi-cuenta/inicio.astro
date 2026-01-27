@@ -1,0 +1,160 @@
+---
+import PortalLayout from "../../components/portal/PortalLayout.astro";
+import SalonDashboard from "../../components/portal/SalonDashboard.astro";
+import GymDashboard from "../../components/portal/GymDashboard.astro";
+import RestaurantDashboard from "../../components/portal/RestaurantDashboard.astro";
+import ClinicDashboard from "../../components/portal/ClinicDashboard.astro";
+import RepairsDashboard from "../../components/portal/RepairsDashboard.astro";
+import StoreDashboard from "../../components/portal/StoreDashboard.astro";
+import { createPortalClient, getCustomerProfile, getCustomerBookings } from "../../lib/supabase-portal";
+import type { TenantData } from "../../middleware";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData | undefined;
+
+if (!tenant) {
+  return Astro.redirect("/");
+}
+
+// Get customer profile
+const customer = await getCustomerProfile(Astro.cookies, tenant.id, Astro.request);
+
+if (!customer) {
+  return Astro.redirect("/mi-cuenta");
+}
+
+// Get bookings
+const bookings = await getCustomerBookings(Astro.cookies, customer.id, Astro.request);
+
+// Get additional data for gym
+let gymData = null;
+if (tenant.businessType === "gym") {
+  const supabase = createPortalClient(Astro.cookies, Astro.request);
+
+  const { data: packages } = await supabase
+    .from("customer_packages")
+    .select("id, package_name, sessions_remaining, status, expires_at")
+    .eq("customer_id", customer.id)
+    .order("created_at", { ascending: false });
+
+  const { data: progress } = await supabase
+    .from("customer_progress")
+    .select("id, date, weight, body_fat, muscle_mass, notes")
+    .eq("customer_id", customer.id)
+    .order("date", { ascending: false })
+    .limit(10);
+
+  gymData = {
+    packages: packages || [],
+    progress: progress || [],
+  };
+}
+
+// Get restaurant loyalty points
+let loyaltyPoints = 0;
+if (tenant.businessType === "restaurant" || tenant.businessType === "store") {
+  const supabase = createPortalClient(Astro.cookies, Astro.request);
+  const { data } = await supabase
+    .from("customers")
+    .select("loyalty_points")
+    .eq("id", customer.id)
+    .single();
+  loyaltyPoints = data?.loyalty_points || 0;
+}
+
+// Get work orders for repairs business
+let workOrders: Array<{
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  created_at: string;
+  estimated_completion?: string;
+  price?: number;
+}> = [];
+if (tenant.businessType === "repairs") {
+  const supabase = createPortalClient(Astro.cookies, Astro.request);
+  const { data } = await supabase
+    .from("work_orders")
+    .select("id, title, description, status, created_at, estimated_completion, price")
+    .eq("customer_id", customer.id)
+    .order("created_at", { ascending: false });
+  workOrders = data || [];
+}
+
+// Get orders for store business
+let orders: Array<{
+  id: string;
+  order_number: string;
+  status: string;
+  total: number;
+  created_at: string;
+  items_count: number;
+  tracking_number?: string;
+}> = [];
+if (tenant.businessType === "store") {
+  const supabase = createPortalClient(Astro.cookies, Astro.request);
+  const { data } = await supabase
+    .from("orders")
+    .select("id, order_number, status, total, created_at, items_count, tracking_number")
+    .eq("customer_id", customer.id)
+    .order("created_at", { ascending: false });
+  orders = data || [];
+}
+
+// Transform bookings to appointments for clinic
+const appointments = bookings.map(b => ({
+  id: b.id,
+  date: b.date,
+  time: b.time,
+  treatment: b.service_name || "Consulta",
+  doctor: b.professional_name,
+  status: b.status,
+  notes: b.notes
+}));
+---
+
+<PortalLayout title="Inicio" tenant={tenant} customer={customer} currentPage="inicio">
+  {tenant.businessType === "salon" && (
+    <SalonDashboard customer={customer} bookings={bookings} />
+  )}
+
+  {tenant.businessType === "gym" && gymData && (
+    <GymDashboard
+      customer={customer}
+      bookings={bookings}
+      packages={gymData.packages}
+      progress={gymData.progress}
+    />
+  )}
+
+  {tenant.businessType === "restaurant" && (
+    <RestaurantDashboard
+      customer={customer}
+      bookings={bookings}
+      loyaltyPoints={loyaltyPoints}
+    />
+  )}
+
+  {tenant.businessType === "clinic" && (
+    <ClinicDashboard
+      customer={customer}
+      appointments={appointments}
+    />
+  )}
+
+  {tenant.businessType === "repairs" && (
+    <RepairsDashboard
+      customer={customer}
+      workOrders={workOrders}
+    />
+  )}
+
+  {tenant.businessType === "store" && (
+    <StoreDashboard
+      customer={customer}
+      orders={orders}
+      loyaltyPoints={loyaltyPoints}
+    />
+  )}
+</PortalLayout>

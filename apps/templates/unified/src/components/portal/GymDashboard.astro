@@ -1,0 +1,175 @@
+---
+import type { CustomerProfile, CustomerBooking } from "../../lib/supabase-portal";
+
+interface Package {
+  id: string;
+  package_name: string;
+  sessions_remaining: number;
+  status: string;
+  expires_at: string | null;
+}
+
+interface Progress {
+  id: string;
+  date: string;
+  weight: number | null;
+  body_fat: number | null;
+  muscle_mass: number | null;
+}
+
+interface Props {
+  customer: CustomerProfile;
+  bookings: CustomerBooking[];
+  packages: Package[];
+  progress: Progress[];
+}
+
+const { customer, bookings, packages, progress } = Astro.props;
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+};
+
+const now = new Date();
+
+// Stats
+const upcomingSessions = bookings.filter(
+  (b) => new Date(b.booking_date) >= now && b.status !== "cancelled"
+).length;
+
+const completedSessions = bookings.filter((b) => b.status === "completed").length;
+
+const activePackages = packages.filter((p) => p.status === "active");
+const totalSessionsRemaining = activePackages.reduce(
+  (sum, p) => sum + (p.sessions_remaining || 0),
+  0
+);
+
+const latestProgress = progress[0];
+
+// Next sessions
+const nextSessions = bookings
+  .filter((b) => new Date(b.booking_date) >= now && b.status !== "cancelled")
+  .slice(0, 3);
+---
+
+<div class="gym-theme">
+  <h1 class="portal-page-title">Hola, {customer.name.split(" ")[0]}</h1>
+
+  <!-- Stats -->
+  <div class="portal-stats-grid">
+    <div class="portal-stat-card">
+      <div class="portal-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <div class="portal-stat-value">{upcomingSessions}</div>
+      <div class="portal-stat-label">Proximas sesiones</div>
+    </div>
+
+    <div class="portal-stat-card">
+      <div class="portal-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="portal-stat-value">{completedSessions}</div>
+      <div class="portal-stat-label">Completadas</div>
+    </div>
+
+    <div class="portal-stat-card">
+      <div class="portal-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        </svg>
+      </div>
+      <div class="portal-stat-value">{totalSessionsRemaining}</div>
+      <div class="portal-stat-label">Sesiones disponibles</div>
+    </div>
+  </div>
+
+  <!-- Next sessions -->
+  <div class="portal-section-header">
+    <h2 class="portal-section-title">Proximas sesiones</h2>
+    <a href="/mi-cuenta/reservas" class="portal-section-link">Ver todas</a>
+  </div>
+
+  {nextSessions.length > 0 ? (
+    <div class="portal-list">
+      {nextSessions.map((session) => (
+        <div class="portal-list-item">
+          <div class="portal-list-item-header">
+            <span class="portal-list-item-title">
+              {session.services?.[0] || "Sesion"}
+            </span>
+            <span class="portal-badge portal-badge-confirmed">Programada</span>
+          </div>
+          <div class="portal-list-item-meta">
+            {formatDate(session.booking_date)} a las {session.booking_time}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div class="portal-empty">
+      <svg class="portal-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <p class="portal-empty-title">Sin sesiones programadas</p>
+      <p class="portal-empty-text">Contacta con nosotros para programar tu proxima sesion.</p>
+    </div>
+  )}
+
+  <!-- Progress -->
+  {latestProgress && (
+    <div style="margin-top: 2rem;">
+      <div class="portal-section-header">
+        <h2 class="portal-section-title">Tu progreso</h2>
+        <a href="/mi-cuenta/progreso" class="portal-section-link">Ver historial</a>
+      </div>
+
+      <div class="portal-card">
+        <div class="portal-card-header">
+          <span class="portal-card-title">Ultima medicion</span>
+          <span style="font-size: 0.75rem; color: var(--ng-text-secondary);">
+            {formatDate(latestProgress.date)}
+          </span>
+        </div>
+
+        <div class="gym-progress-grid">
+          {latestProgress.weight && (
+            <div>
+              <div class="gym-progress-value">{latestProgress.weight} kg</div>
+              <div class="gym-progress-label">Peso</div>
+            </div>
+          )}
+          {latestProgress.body_fat && (
+            <div>
+              <div class="gym-progress-value">{latestProgress.body_fat}%</div>
+              <div class="gym-progress-label">Grasa</div>
+            </div>
+          )}
+          {latestProgress.muscle_mass && (
+            <div>
+              <div class="gym-progress-value">{latestProgress.muscle_mass} kg</div>
+              <div class="gym-progress-label">Musculo</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
+</div>

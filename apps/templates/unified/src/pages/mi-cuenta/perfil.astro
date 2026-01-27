@@ -1,0 +1,54 @@
+---
+import PortalLayout from "../../components/portal/PortalLayout.astro";
+import { getCustomerProfile } from "../../lib/supabase-portal";
+import type { TenantData } from "../../middleware";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData | undefined;
+
+if (!tenant) {
+  return Astro.redirect("/");
+}
+
+// Get customer profile
+const customer = await getCustomerProfile(Astro.cookies, tenant.id, Astro.request);
+
+if (!customer) {
+  return Astro.redirect("/mi-cuenta");
+}
+---
+
+<PortalLayout title="Mi Perfil" tenant={tenant} customer={customer} currentPage="perfil">
+  <h1 class="portal-page-title">Mi Perfil</h1>
+
+  <div class="portal-card">
+    <div class="portal-form-group">
+      <label class="portal-form-label">Nombre</label>
+      <div class="portal-form-input" style="background: var(--ng-surface-raised);">
+        {customer.name}
+      </div>
+    </div>
+
+    <div class="portal-form-group">
+      <label class="portal-form-label">Email</label>
+      <div class="portal-form-input" style="background: var(--ng-surface-raised);">
+        {customer.email}
+      </div>
+    </div>
+
+    <div class="portal-form-group">
+      <label class="portal-form-label">Telefono</label>
+      <div class="portal-form-input" style="background: var(--ng-surface-raised);">
+        {customer.phone || "No especificado"}
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 2rem;">
+    <form action="/mi-cuenta/auth/logout" method="POST">
+      <button type="submit" class="portal-form-submit" style="background: #ef4444;">
+        Cerrar sesion
+      </button>
+    </form>
+  </div>
+</PortalLayout>

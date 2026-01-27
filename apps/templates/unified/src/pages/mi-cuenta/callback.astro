@@ -1,0 +1,77 @@
+---
+import { createPortalClient } from "../../lib/supabase-portal";
+import type { TenantData } from "../../middleware";
+
+// Get tenant from middleware
+const tenant = Astro.locals.tenant as TenantData | undefined;
+
+if (!tenant) {
+  return Astro.redirect("/mi-cuenta?error=no_tenant");
+}
+
+// Get the code from URL
+const code = Astro.url.searchParams.get("code");
+const error = Astro.url.searchParams.get("error");
+
+if (error) {
+  console.error("[Callback] OAuth error:", error);
+  return Astro.redirect("/mi-cuenta?error=" + error);
+}
+
+if (!code) {
+  console.error("[Callback] No code in URL");
+  return Astro.redirect("/mi-cuenta?error=no_code");
+}
+
+// Exchange code for session
+const supabase = createPortalClient(Astro.cookies, Astro.request);
+
+const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+
+if (sessionError || !data.session) {
+  console.error("[Callback] Error exchanging code:", sessionError?.message);
+  return Astro.redirect("/mi-cuenta?error=session_failed");
+}
+
+const user = data.session.user;
+
+// Link or create customer for this website
+console.log("[Callback] Linking customer:", {
+  tenantId: tenant.id,
+  userId: user.id,
+  email: user.email
+});
+
+const { data: customerId, error: linkError } = await supabase.rpc("link_or_create_customer", {
+  p_website_id: tenant.id,
+  p_auth_user_id: user.id,
+  p_email: user.email || "",
+  p_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuario",
+});
+
+if (linkError) {
+  console.error("[Callback] Error linking customer:", linkError.message);
+
+  // Fallback: try upsert directly
+  const { error: upsertError } = await supabase
+    .from("customers")
+    .upsert({
+      website_id: tenant.id,
+      auth_user_id: user.id,
+      email: user.email || "",
+      name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuario",
+    }, {
+      onConflict: "website_id,email",
+    });
+
+  if (upsertError) {
+    console.error("[Callback] Upsert error:", upsertError.message);
+    return Astro.redirect("/mi-cuenta?error=customer_failed");
+  }
+}
+
+console.log("[Callback] Customer linked:", customerId);
+
+// Redirect to dashboard
+return Astro.redirect("/mi-cuenta/inicio");
+---

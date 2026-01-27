@@ -1,0 +1,150 @@
+---
+interface Props {
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  appointments: Array<{
+    id: string;
+    date: string;
+    time: string;
+    treatment: string;
+    doctor?: string;
+    status: string;
+    notes?: string;
+  }>;
+}
+
+const { customer, appointments } = Astro.props;
+
+const now = new Date();
+
+const upcomingAppointments = appointments.filter(
+  (a) => new Date(a.date) >= now && a.status !== "cancelled"
+);
+
+const completedCount = appointments.filter((a) => a.status === "completed").length;
+
+// Tratamientos unicos
+const uniqueTreatments = [...new Set(appointments.map((a) => a.treatment))];
+
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function getStatusBadge(status: string) {
+  const statusMap: Record<string, { class: string; label: string }> = {
+    pending: { class: "portal-badge-pending", label: "Pendiente" },
+    confirmed: { class: "portal-badge-confirmed", label: "Confirmada" },
+    completed: { class: "portal-badge-completed", label: "Completada" },
+    cancelled: { class: "portal-badge-cancelled", label: "Cancelada" },
+  };
+  return statusMap[status] || { class: "portal-badge-pending", label: status };
+}
+---
+
+<div class="clinic-theme">
+  <h1 class="portal-page-title">Hola, {customer.name.split(" ")[0]}</h1>
+
+  <!-- Stats -->
+  <div class="portal-stats-grid">
+    <div class="portal-stat-card">
+      <div class="portal-stat-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div class="portal-stat-value">{upcomingAppointments.length}</div>
+      <div class="portal-stat-label">Proximas citas</div>
+    </div>
+
+    <div class="portal-stat-card">
+      <div class="portal-stat-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </div>
+      <div class="portal-stat-value">{completedCount}</div>
+      <div class="portal-stat-label">Sesiones realizadas</div>
+    </div>
+  </div>
+
+  <!-- Proximas citas -->
+  <div class="portal-section-header">
+    <h2 class="portal-section-title">Proximas citas</h2>
+    <a href="/mi-cuenta/reservas" class="portal-section-link">Ver todas</a>
+  </div>
+
+  {upcomingAppointments.length > 0 ? (
+    <div class="portal-list">
+      {upcomingAppointments.slice(0, 3).map((apt) => {
+        const badge = getStatusBadge(apt.status);
+        return (
+          <div class="portal-list-item">
+            <div class="portal-list-item-header">
+              <span class="portal-list-item-title">{apt.treatment}</span>
+              <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
+            </div>
+            <div class="portal-list-item-meta">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 0.25rem; vertical-align: middle;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              {formatDate(apt.date)} a las {apt.time}
+            </div>
+            {apt.doctor && (
+              <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--ng-text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Dr/a. {apt.doctor}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  ) : (
+    <div class="portal-empty">
+      <svg class="portal-empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <p class="portal-empty-title">Sin citas programadas</p>
+      <p class="portal-empty-text">Contacta con nosotros para programar tu proxima cita.</p>
+    </div>
+  )}
+
+  <!-- Tratamientos -->
+  {uniqueTreatments.length > 0 && (
+    <div style="margin-top: 2rem;">
+      <div class="portal-section-header">
+        <h2 class="portal-section-title">Tus tratamientos</h2>
+      </div>
+
+      <div class="portal-card">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          {uniqueTreatments.slice(0, 5).map((treatment) => (
+            <span style="padding: 0.5rem 1rem; border-radius: 9999px; background: linear-gradient(135deg, #cffafe, #a5f3fc); color: #0e7490; font-size: 0.875rem; font-weight: 500;">
+              {treatment}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+</div>

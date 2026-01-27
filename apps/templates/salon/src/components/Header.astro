@@ -19,6 +19,7 @@ const { businessName, logo } = Astro.props;
         <li><a href="#services">Servicios</a></li>
         <li><a href="#appointment">Reservar cita</a></li>
         <li><a href="#contact">Contacto</a></li>
+        <li><a href="/mi-cuenta" class="nav-account">Mi cuenta</a></li>
       </ul>
 
       <a href="#appointment" class="neumor-btn neumor-btn-accent nav-cta">
@@ -49,6 +50,7 @@ const { businessName, logo } = Astro.props;
         <li><a href="#services">Servicios</a></li>
         <li><a href="#appointment">Reservar cita</a></li>
         <li><a href="#contact">Contacto</a></li>
+        <li><a href="/mi-cuenta">Mi cuenta</a></li>
       </ul>
       <a href="#appointment" class="neumor-btn neumor-btn-accent mobile-cta">
         Reservar Cita
@@ -114,6 +116,22 @@ const { businessName, logo } = Astro.props;
 
   .nav-links a:hover {
     color: var(--accent);
+  }
+
+  .nav-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .nav-account::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.7;
   }
 
   .nav-cta {

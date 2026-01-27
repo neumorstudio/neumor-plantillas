@@ -304,6 +304,9 @@ importers:
 
   apps/templates/unified:
     dependencies:
+      '@supabase/ssr':
+        specifier: ^0.5.2
+        version: 0.5.2(@supabase/supabase-js@2.88.0)
       '@supabase/supabase-js':
         specifier: ^2.49.1
         version: 2.88.0
