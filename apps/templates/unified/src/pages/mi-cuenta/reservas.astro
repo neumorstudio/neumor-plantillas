@@ -78,9 +78,9 @@ const getLabel = () => {
             <div class="portal-list-item-meta" style="margin-top: 0.5rem;">
               {formatDate(booking.booking_date)} a las {booking.booking_time}
             </div>
-            {booking.total_price && booking.total_price > 0 && (
+            {booking.total_price_cents && booking.total_price_cents > 0 && (
               <div style="margin-top: 0.5rem; font-weight: 600; color: var(--ng-text-primary);">
-                {(booking.total_price / 100).toFixed(2)} EUR
+                {(booking.total_price_cents / 100).toFixed(2)} EUR
               </div>
             )}
             {booking.notes && (

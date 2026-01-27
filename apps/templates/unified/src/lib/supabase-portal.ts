@@ -77,7 +77,7 @@ export interface CustomerBooking {
   booking_time: string;
   status: string;
   services: string[];
-  total_price: number | null;
+  total_price_cents: number | null;
   notes: string | null;
 }
 
@@ -122,7 +122,7 @@ export async function getCustomerBookings(
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, booking_date, booking_time, status, services, total_price, notes, customer_id")
+    .select("id, booking_date, booking_time, status, services, total_price_cents, notes, customer_id")
     .eq("customer_id", customerId)
     .order("booking_date", { ascending: false })
     .limit(50);
