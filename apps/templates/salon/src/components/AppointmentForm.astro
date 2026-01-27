@@ -1799,10 +1799,13 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       showToast("No se pudo iniciar sesion. Revisa la configuracion.", "error");
       return;
     }
+    // Store current page to return after auth
+    sessionStorage.setItem("auth_return_url", window.location.href);
+
     await supabaseClient.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.href,
+        redirectTo: `${window.location.origin}/mi-cuenta/callback`,
       },
     });
   });

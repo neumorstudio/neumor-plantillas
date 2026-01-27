@@ -72,6 +72,29 @@ if (linkError) {
 
 console.log("[Callback] Customer linked:", customerId);
 
-// Redirect to dashboard
+// Check if there's a return URL in the query params
+const returnUrl = Astro.url.searchParams.get("return_url");
+if (returnUrl) {
+  // Validate it's a same-origin URL for security
+  try {
+    const url = new URL(returnUrl, Astro.url.origin);
+    if (url.origin === Astro.url.origin) {
+      return Astro.redirect(returnUrl);
+    }
+  } catch {
+    // Invalid URL, continue to default
+  }
+}
+
+// Default: redirect to dashboard
 return Astro.redirect("/mi-cuenta/inicio");
 ---
+
+<script>
+  // Check for return URL in sessionStorage (set before OAuth redirect)
+  const returnUrl = sessionStorage.getItem("auth_return_url");
+  if (returnUrl) {
+    sessionStorage.removeItem("auth_return_url");
+    window.location.href = returnUrl;
+  }
+</script>
