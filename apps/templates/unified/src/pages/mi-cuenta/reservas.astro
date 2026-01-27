@@ -53,6 +53,15 @@ const getLabel = () => {
       return "Mis Citas";
   }
 };
+
+// Helper to extract service name (handles both string and object formats)
+const getServiceName = (service: unknown): string => {
+  if (typeof service === "string") return service;
+  if (service && typeof service === "object" && "name" in service) {
+    return (service as { name: string }).name;
+  }
+  return "Servicio";
+};
 ---
 
 <PortalLayout title={getLabel()} tenant={tenant} customer={customer} currentPage="reservas">
@@ -67,7 +76,7 @@ const getLabel = () => {
             <div class="portal-list-item-header">
               <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 {(booking.services || []).map((service) => (
-                  <span class="salon-service-badge">{service}</span>
+                  <span class="salon-service-badge">{getServiceName(service)}</span>
                 ))}
                 {booking.services?.length === 0 && (
                   <span class="portal-list-item-title">Reserva</span>

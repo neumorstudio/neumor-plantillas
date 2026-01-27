@@ -30,6 +30,16 @@ const getStatusBadge = (status: string) => {
 };
 
 const now = new Date();
+now.setHours(0, 0, 0, 0); // Compare dates only, not time
+
+// Helper to extract service name (handles both string and object formats)
+const getServiceName = (service: unknown): string => {
+  if (typeof service === "string") return service;
+  if (service && typeof service === "object" && "name" in service) {
+    return (service as { name: string }).name;
+  }
+  return "Servicio";
+};
 
 // Upcoming appointments
 const upcomingAppointments = bookings.filter(
@@ -39,8 +49,8 @@ const upcomingAppointments = bookings.filter(
 // Completed count
 const completedCount = bookings.filter((b) => b.status === "completed").length;
 
-// Top services
-const allServices = bookings.flatMap((b) => b.services || []);
+// Top services - extract names from service objects
+const allServices = bookings.flatMap((b) => (b.services || []).map(getServiceName));
 const serviceCount = allServices.reduce((acc, service) => {
   acc[service] = (acc[service] || 0) + 1;
   return acc;
@@ -95,7 +105,7 @@ const topServices = Object.entries(serviceCount)
             <div class="portal-list-item-header">
               <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 {(apt.services || []).map((service) => (
-                  <span class="salon-service-badge">{service}</span>
+                  <span class="salon-service-badge">{getServiceName(service)}</span>
                 ))}
               </div>
               <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
