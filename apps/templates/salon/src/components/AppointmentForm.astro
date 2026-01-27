@@ -34,6 +34,10 @@ const specialDaySlots = await getSpecialDaySlots(websiteId);
 const professionals = await getProfessionals(websiteId);
 const professionalCategories = await getProfessionalCategories(websiteId);
 
+// Supabase config for booking API calls (not auth)
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
+
 const fallbackCategories = [
   {
     id: "cortes",
@@ -130,6 +134,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         data-webhook={webhookUrl}
         data-website-id={websiteId}
         data-has-services={categories.length > 0 ? "true" : "false"}
+        data-supabase-url={supabaseUrl}
+        data-supabase-key={supabaseAnonKey}
         data-business-hours={hoursPayload}
         data-business-hour-slots={slotsPayload}
         data-special-days={specialDaysPayload}
@@ -1155,6 +1161,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
   const hasServices = form.dataset.hasServices === "true";
   const websiteId = form.dataset.websiteId || "";
+  const supabaseUrl = form.dataset.supabaseUrl || "";
+  const supabaseKey = form.dataset.supabaseKey || "";
   const businessHoursRaw = form.dataset.businessHours || "[]";
   const businessHourSlotsRaw = form.dataset.businessHourSlots || "[]";
   const specialDaysRaw = form.dataset.specialDays || "[]";
