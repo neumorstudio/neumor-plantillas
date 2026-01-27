@@ -139,20 +139,32 @@ async function resolveWebsite(
   customDomain: string | null,
   request: NextRequest
 ): Promise<Website | null> {
-  if (!subdomain && !customDomain) return null;
+  console.error("[resolveWebsite] START - subdomain:", subdomain, "customDomain:", customDomain);
+
+  if (!subdomain && !customDomain) {
+    console.error("[resolveWebsite] No subdomain or customDomain, returning null");
+    return null;
+  }
 
   const cacheKey = subdomain || customDomain || "";
 
   // Check cache
   const cached = websiteCache.get(cacheKey);
   if (cached && cached.expires > Date.now()) {
+    console.error("[resolveWebsite] Returning from cache");
     return cached.data;
   }
 
   // Query Supabase
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  // Debug: show first/last chars of key to verify it's correct
+  console.error("[resolveWebsite] URL:", supabaseUrl?.substring(0, 40), "KEY starts:", supabaseKey?.substring(0, 10), "KEY ends:", supabaseKey?.substring(supabaseKey?.length - 5));
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -176,10 +188,12 @@ async function resolveWebsite(
     query = query.eq("custom_domain", customDomain);
   }
 
+  console.error("[resolveWebsite] Executing query for:", subdomain || customDomain);
   const { data: websiteData, error } = await query.single();
+  console.error("[resolveWebsite] Query result - data:", !!websiteData, "error:", error?.message);
 
   if (error) {
-    console.error("[resolveWebsite] Supabase error:", error.message, error.code);
+    console.error("[resolveWebsite] Supabase ERROR:", error.message, error.code, error.details);
     return null;
   }
 
@@ -187,6 +201,8 @@ async function resolveWebsite(
     console.error("[resolveWebsite] No website found for:", subdomain || customDomain);
     return null;
   }
+
+  console.error("[resolveWebsite] Found website:", websiteData.id);
 
   // Get client's business_type
   const { data: clientData } = await supabase
