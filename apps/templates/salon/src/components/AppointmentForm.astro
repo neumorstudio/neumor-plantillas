@@ -1023,9 +1023,12 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       stepPanels.style.minHeight = "";
       return;
     }
+    stepPanels.style.minHeight = "";
     const activePanel = stepPanels.querySelector<HTMLElement>(".step-panel.is-active");
     if (!activePanel) return;
-    stepPanels.style.minHeight = `${Math.max(0, activePanel.offsetHeight)}px`;
+    requestAnimationFrame(() => {
+      stepPanels.style.minHeight = `${Math.max(0, activePanel.offsetHeight)}px`;
+    });
   };
 
   const setAuthState = (email?: string | null) => {
