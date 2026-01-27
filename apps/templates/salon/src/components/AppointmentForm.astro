@@ -1769,11 +1769,31 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
           console.log("[Form] Parsed session, access_token exists:", !!parsed.access_token);
 
           if (parsed.access_token) {
-            // Set the session explicitly
-            const { data, error } = await supabaseClient.auth.setSession({
-              access_token: parsed.access_token,
-              refresh_token: parsed.refresh_token || "",
+            // Set the session explicitly with timeout
+            console.log("[Form] Calling setSession...");
+
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error("setSession timeout after 5s")), 5000);
             });
+
+            let data, error;
+            try {
+              const result = await Promise.race([
+                supabaseClient.auth.setSession({
+                  access_token: parsed.access_token,
+                  refresh_token: parsed.refresh_token || "",
+                }),
+                timeoutPromise
+              ]) as { data: { session: unknown }, error: unknown };
+              data = result.data;
+              error = result.error;
+            } catch (e) {
+              console.error("[Form] setSession timed out or failed:", e);
+              // Session might be expired, clear it
+              localStorage.removeItem(storageKey);
+              setAuthState(null, null, null);
+              return;
+            }
 
             if (error) {
               console.error("[Form] setSession error:", error);
