@@ -101,7 +101,23 @@ console.log("[Callback] No code, client will handle hash fragment");
   <p>Procesando autenticación...</p>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
   <script>
-    (async () => {
+    // Wait for Supabase SDK to load
+    const waitForSupabase = (callback, maxWait = 5000) => {
+      const start = Date.now();
+      const check = () => {
+        if (window.supabase) {
+          callback();
+        } else if (Date.now() - start < maxWait) {
+          setTimeout(check, 50);
+        } else {
+          console.error("[Callback] Supabase SDK failed to load");
+          window.location.href = "/mi-cuenta?error=sdk_failed";
+        }
+      };
+      check();
+    };
+
+    waitForSupabase(async () => {
       const supabaseUrl = "https://jekrqkdvgcwruhghtgkj.supabase.co";
       const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impla3Jxa2R2Z2N3cnVoZ2h0Z2tqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwMDM2MjEsImV4cCI6MjA4MTU3OTYyMX0.B0oO-MgDXsWFX8t1zj736RhnUUREK3Wmyb5c5Q9ve8s";
 
@@ -143,7 +159,7 @@ console.log("[Callback] No code, client will handle hash fragment");
         // No token and no return URL, go to login page
         window.location.href = "/mi-cuenta";
       }
-    })();
+    }); // close waitForSupabase
   </script>
 </body>
 </html>
