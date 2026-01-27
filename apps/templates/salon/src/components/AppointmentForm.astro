@@ -1761,7 +1761,12 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     console.log("[Form] Storage key:", storageKey);
     console.log("[Form] Session in localStorage:", storedSession ? "YES (" + storedSession.substring(0, 50) + "...)" : "NO");
 
-    supabaseClient.auth.getSession().then(async ({ data }) => {
+    supabaseClient.auth.getSession().then(async ({ data, error }) => {
+      if (error) {
+        console.error("[Form] getSession error:", error);
+        setAuthState(null, null, null);
+        return;
+      }
       const session = data.session;
       console.log("[Form] getSession result:", session ? `User: ${session.user.email}` : "No session");
       if (session?.user) {
@@ -1783,6 +1788,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       } else {
         setAuthState(null, null, null);
       }
+    }).catch((err) => {
+      console.error("[Form] getSession exception:", err);
+      setAuthState(null, null, null);
     });
 
     supabaseClient.auth.onAuthStateChange(async (_event, session) => {
