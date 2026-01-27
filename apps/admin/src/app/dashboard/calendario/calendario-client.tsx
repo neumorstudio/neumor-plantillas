@@ -1730,7 +1730,7 @@ export default function CalendarioClient({
                 }}
                 disabled={savingBooking}
               >
-                Eliminar
+                Cancelar cita
               </button>
               <button
                 className="neumor-btn px-5"
@@ -1739,7 +1739,7 @@ export default function CalendarioClient({
                   setBookingError(null);
                 }}
               >
-                Cancelar
+                Cerrar
               </button>
 
               <button
