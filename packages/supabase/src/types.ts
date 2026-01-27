@@ -247,3 +247,213 @@ export type PaymentInsert = Omit<Payment, "id" | "created_at" | "updated_at"> & 
   status?: PaymentStatus;
 };
 export type PaymentUpdate = Partial<PaymentInsert>;
+
+// ============================================
+// WEBSITE CONFIG (para templates públicos)
+// ============================================
+
+/** Variantes de componentes para restaurant template */
+export interface RestaurantVariants {
+  hero: "classic" | "modern" | "bold" | "minimal";
+  menu: "tabs" | "grid" | "list" | "carousel";
+  features: "cards" | "icons" | "banner";
+  reviews: "grid" | "carousel" | "minimal";
+  footer: "full" | "minimal" | "centered";
+  openStatus?: "pulse" | "morph" | "liquid" | "time";
+  reservation?: "classic" | "wizard" | "modal" | "modern";
+}
+
+/** Variantes de componentes para salon template */
+export interface SalonVariants {
+  hero: "classic" | "modern" | "bold" | "minimal";
+  services: "tabs" | "grid" | "list" | "carousel";
+  features: "cards" | "icons" | "banner";
+  reviews: "grid" | "carousel" | "minimal";
+  footer: "full" | "minimal" | "centered";
+}
+
+/** Variantes de componentes para gym template */
+export interface GymVariants {
+  hero: "classic" | "modern" | "bold" | "minimal";
+  classes: "tabs" | "grid" | "list" | "carousel";
+  features: "cards" | "icons" | "banner";
+  reviews: "grid" | "carousel" | "minimal";
+  footer: "full" | "minimal" | "centered";
+}
+
+/** Variantes de componentes para store template */
+export interface StoreVariants {
+  hero: "classic" | "modern" | "bold" | "minimal";
+  products: "tabs" | "grid" | "list" | "carousel";
+  features: "cards" | "icons" | "banner";
+  reviews: "grid" | "carousel" | "minimal";
+  footer: "full" | "minimal" | "centered";
+}
+
+/** Variantes genéricas de componentes */
+export type WebsiteVariants = RestaurantVariants | SalonVariants | GymVariants | StoreVariants;
+
+/** Horario de un día específico */
+export interface DaySchedule {
+  open: string;
+  close: string;
+  closed?: boolean;
+}
+
+/** Horario semanal completo */
+export type WeekSchedule = Record<string, DaySchedule>;
+
+/** Configuración del componente OpenStatus */
+export interface OpenStatusConfig {
+  enabled: boolean;
+  variant: "pulse" | "morph" | "liquid" | "time";
+  position: "floating" | "inline" | "header";
+  schedule: WeekSchedule;
+  forceStatus?: "open" | "closed" | null;
+  showScheduleInfo?: boolean;
+  language?: "es" | "en";
+}
+
+/** Configuración base del website */
+export interface WebsiteConfig {
+  businessName?: string;
+  businessType?: string;
+  variants?: WebsiteVariants;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    tripadvisor?: string;
+    whatsapp?: string;
+  };
+  googleRating?: number;
+  totalReviews?: number;
+  openStatus?: OpenStatusConfig;
+}
+
+/** Website con config tipada para uso en templates */
+export interface WebsiteWithConfig {
+  id: string;
+  client_id: string;
+  domain: string;
+  theme: Theme;
+  config: WebsiteConfig;
+  is_active: boolean;
+  clients?: {
+    business_name?: string | null;
+  } | null;
+}
+
+// ============================================
+// MENU ITEMS (para restaurant template)
+// ============================================
+export interface MenuItemRow {
+  id: string;
+  website_id: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  category: string;
+  tag?: string | null;
+  image_url?: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
+
+// ============================================
+// SERVICE ITEMS (para salon/clinic templates)
+// ============================================
+export interface ServiceCategory {
+  id: string;
+  website_id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  items: ServiceItem[];
+}
+
+export interface ServiceItem {
+  id: string;
+  category_id: string;
+  website_id: string;
+  name: string;
+  price_cents: number;
+  duration_minutes: number;
+  notes: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+// ============================================
+// PROFESSIONALS (para salon template)
+// ============================================
+export interface Professional {
+  id: string;
+  website_id: string;
+  name: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface ProfessionalCategory {
+  id?: string;
+  website_id: string;
+  professional_id: string;
+  category_id: string;
+}
+
+// ============================================
+// BUSINESS HOURS
+// ============================================
+export interface BusinessHour {
+  id?: string;
+  website_id: string;
+  day_of_week: number;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
+export interface BusinessHourSlot {
+  id?: string;
+  website_id: string;
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+// ============================================
+// SPECIAL DAYS
+// ============================================
+export interface SpecialDay {
+  id?: string;
+  website_id: string;
+  date: string;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+  note: string | null;
+}
+
+export interface SpecialDaySlot {
+  id?: string;
+  special_day_id: string;
+  open_time: string;
+  close_time: string;
+  sort_order: number;
+}
+
+// ============================================
+// ORDER SETTINGS
+// ============================================
+export interface OrderSettings {
+  pickup_start_time: string;
+  pickup_end_time: string;
+}

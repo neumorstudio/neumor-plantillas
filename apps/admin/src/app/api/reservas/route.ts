@@ -5,6 +5,25 @@ import {
   getCustomerConfirmationEmail,
   getRestaurantNotificationEmail,
 } from "@/lib/email-templates";
+import {
+  isPlainObject,
+  hasUnknownKeys,
+  isValidUuid,
+  isValidDate,
+  isValidTime,
+  sanitizeString,
+} from "@neumorstudio/api-utils/validation";
+import {
+  isAllowedOrigin,
+  buildCorsHeaders,
+  getCorsHeadersForOrigin,
+} from "@neumorstudio/api-utils/cors";
+import {
+  checkRateLimit,
+  getClientIp,
+  getRateLimitKey,
+  rateLimitPresets,
+} from "@neumorstudio/api-utils/rate-limit";
 
 // Cliente Supabase con service role para bypass RLS (lazy init)
 function getSupabaseAdmin() {
@@ -28,9 +47,6 @@ interface ReservationData {
   notas?: string;
 }
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 20;
-const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
 const allowedReservationKeys = new Set([
   "website_id",
   "nombre",
@@ -44,117 +60,13 @@ const allowedReservationKeys = new Set([
   "notas",
 ]);
 
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
-
-function isValidUuid(value: string) {
-  return uuidRegex.test(value);
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function getUnknownKeys(value: Record<string, unknown>, allowed: Set<string>) {
-  return Object.keys(value).filter((key) => !allowed.has(key));
-}
-
-function normalizeDomain(value: string) {
-  return value.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-}
-
-function stripPort(value: string) {
-  return value.split(":")[0];
-}
-
-function getOriginHost(origin: string) {
-  try {
-    return new URL(origin).hostname.toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
-function isDevHost(host: string) {
-  return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-}
-
-function isAllowedOrigin(origin: string | null, websiteDomain: string) {
-  if (!origin) return false;
-  const host = getOriginHost(origin);
-  if (!host) return false;
-  const domain = stripPort(normalizeDomain(websiteDomain));
-  const hostNoPort = stripPort(host);
-
-  if (hostNoPort === domain || hostNoPort === `www.${domain}`) return true;
-  if (domain === `www.${hostNoPort}`) return true;
-  if (process.env.NODE_ENV !== "production" && isDevHost(hostNoPort)) return true;
-  return false;
-}
-
-async function getCorsHeadersForOrigin(origin: string | null) {
-  if (!origin) return null;
-  const host = getOriginHost(origin);
-  if (!host) return null;
-  const hostNoPort = stripPort(host);
-
-  if (process.env.NODE_ENV !== "production" && isDevHost(hostNoPort)) {
-    return buildCorsHeaders(origin);
-  }
-
-  const candidates = hostNoPort.startsWith("www.")
-    ? [hostNoPort, hostNoPort.replace(/^www\./, "")]
-    : [hostNoPort, `www.${hostNoPort}`];
-
-  const { data } = await getSupabaseAdmin()
-    .from("websites")
-    .select("id")
-    .in("domain", candidates)
-    .eq("is_active", true)
-    .limit(1);
-
-  if (!data || data.length === 0) {
-    return null;
-  }
-
-  return buildCorsHeaders(origin);
-}
-
-function buildCorsHeaders(origin: string) {
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    Vary: "Origin",
-  };
-}
-
-function getClientIp(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || "unknown";
-  }
-  return request.headers.get("x-real-ip") || "unknown";
-}
-
-function checkRateLimit(key: string) {
-  const now = Date.now();
-  const entry = rateLimitBuckets.get(key);
-
-  if (!entry || entry.resetAt <= now) {
-    const resetAt = now + RATE_LIMIT_WINDOW_MS;
-    rateLimitBuckets.set(key, { count: 1, resetAt });
-    return { allowed: true, resetAt };
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, resetAt: entry.resetAt };
-  }
-
-  entry.count += 1;
-  return { allowed: true, resetAt: entry.resetAt };
+// Helper CORS configurado
+async function getCorsHeaders(origin: string | null) {
+  return getCorsHeadersForOrigin(
+    origin,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 }
 
 // POST - Crear nueva reserva
@@ -165,10 +77,11 @@ export async function POST(request: NextRequest) {
     let fallbackCorsHeaders: Record<string, string> | null = null;
     const getFallbackCorsHeaders = async () => {
       if (fallbackCorsHeaders === null) {
-        fallbackCorsHeaders = await getCorsHeadersForOrigin(origin);
+        fallbackCorsHeaders = await getCorsHeaders(origin);
       }
       return fallbackCorsHeaders;
     };
+
     const rawBody = await request.json();
     if (!isPlainObject(rawBody)) {
       return NextResponse.json(
@@ -177,7 +90,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (getUnknownKeys(rawBody, allowedReservationKeys).length > 0) {
+    if (hasUnknownKeys(rawBody, allowedReservationKeys)) {
       return NextResponse.json(
         { error: "Datos invalidos" },
         { status: 400, headers: (await getFallbackCorsHeaders()) ?? undefined }
@@ -220,8 +133,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const nombre = body.nombre.trim().slice(0, 200);
-    const telefono = body.telefono.trim().slice(0, 50);
+    const nombre = sanitizeString(body.nombre, 200);
+    const telefono = sanitizeString(body.telefono, 50);
     const guests = Number.isFinite(Number(body.personas))
       ? Math.max(1, Math.floor(Number(body.personas)))
       : 1;
@@ -233,7 +146,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!dateRegex.test(body.fecha) || !timeRegex.test(body.hora)) {
+    if (!isValidDate(body.fecha) || !isValidTime(body.hora)) {
       return NextResponse.json(
         { error: "Fecha u hora no valida" },
         { status: 400, headers: (await getFallbackCorsHeaders()) ?? undefined }
@@ -248,7 +161,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (websiteError || !website || !website.is_active) {
-      console.error("Website no encontrado:", websiteError);
       return NextResponse.json(
         { error: "Website no encontrado" },
         { status: 404, headers: (await getFallbackCorsHeaders()) ?? undefined }
@@ -263,8 +175,11 @@ export async function POST(request: NextRequest) {
     }
 
     responseCorsHeaders = buildCorsHeaders(origin!);
-    const rateKey = `${getClientIp(request)}:${body.website_id}`;
-    const rateStatus = checkRateLimit(rateKey);
+
+    // Rate limiting
+    const ip = getClientIp(request.headers);
+    const rateKey = getRateLimitKey(ip, body.website_id);
+    const rateStatus = checkRateLimit(rateKey, rateLimitPresets.standard);
 
     if (!rateStatus.allowed) {
       return NextResponse.json(
@@ -306,7 +221,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (bookingError) {
-      console.error("Error creando reserva:", bookingError);
       return NextResponse.json(
         { error: "Error al guardar la reserva" },
         { status: 500, headers: responseCorsHeaders }
@@ -353,9 +267,6 @@ export async function POST(request: NextRequest) {
         replyTo: restaurantEmail || undefined,
       });
       emailResults.customerEmail = result.success;
-      if (!result.success) {
-        console.error("Error enviando email al cliente:", result.error);
-      }
     }
 
     // Enviar notificacion al RESTAURANTE
@@ -368,9 +279,6 @@ export async function POST(request: NextRequest) {
         from: fromAddress,
       });
       emailResults.restaurantEmail = result.success;
-      if (!result.success) {
-        console.error("Error enviando email al restaurante:", result.error);
-      }
     }
 
     // Registrar en activity_log
@@ -394,7 +302,7 @@ export async function POST(request: NextRequest) {
       emails: emailResults,
     }, { headers: responseCorsHeaders });
   } catch (error) {
-    console.error("Error en API de reservas:", error);
+    console.error("[reservas] Error interno:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500, headers: responseCorsHeaders }
@@ -420,7 +328,7 @@ function formatDate(dateStr: string): string {
 // CORS preflight
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get("origin");
-  const corsHeaders = await getCorsHeadersForOrigin(origin);
+  const corsHeaders = await getCorsHeaders(origin);
 
   if (!corsHeaders) {
     return new NextResponse(null, { status: 403 });

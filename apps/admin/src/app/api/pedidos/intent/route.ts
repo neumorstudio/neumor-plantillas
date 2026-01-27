@@ -1,6 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import {
+  isPlainObject,
+  hasUnknownKeys,
+  isValidUuid,
+} from "@neumorstudio/api-utils/validation";
+import {
+  isAllowedOrigin,
+  buildCorsHeaders,
+  getCorsHeadersForOrigin,
+} from "@neumorstudio/api-utils/cors";
+import {
+  checkRateLimit,
+  getClientIp,
+  getRateLimitKey,
+  rateLimitPresets,
+} from "@neumorstudio/api-utils/rate-limit";
 
 interface OrderItemInput {
   id: string;
@@ -20,11 +36,6 @@ interface OrderIntentPayload {
   notes?: string;
 }
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 15;
-const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
-
-// Campos permitidos para validación estricta
 const allowedPayloadKeys = new Set([
   "website_id",
   "items",
@@ -36,117 +47,15 @@ const allowedPayloadKeys = new Set([
 const allowedCustomerKeys = new Set(["name", "email", "phone"]);
 const allowedItemKeys = new Set(["id", "quantity"]);
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function getUnknownKeys(value: Record<string, unknown>, allowed: Set<string>) {
-  return Object.keys(value).filter((key) => !allowed.has(key));
-}
-
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
 
-function isValidUuid(value: string) {
-  return uuidRegex.test(value);
-}
-
-function normalizeDomain(value: string) {
-  return value.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-}
-
-function stripPort(value: string) {
-  return value.split(":")[0];
-}
-
-function getOriginHost(origin: string) {
-  try {
-    return new URL(origin).hostname.toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
-function isDevHost(host: string) {
-  return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-}
-
-function isAllowedOrigin(origin: string | null, websiteDomain: string) {
-  if (!origin) return false;
-  const host = getOriginHost(origin);
-  if (!host) return false;
-  const domain = stripPort(normalizeDomain(websiteDomain));
-  const hostNoPort = stripPort(host);
-
-  if (hostNoPort === domain || hostNoPort === `www.${domain}`) return true;
-  if (domain === `www.${hostNoPort}`) return true;
-  if (process.env.NODE_ENV !== "production" && isDevHost(hostNoPort)) return true;
-  return false;
-}
-
-async function getCorsHeadersForOrigin(origin: string | null) {
-  if (!origin) return null;
-  const host = getOriginHost(origin);
-  if (!host) return null;
-  const hostNoPort = stripPort(host);
-
-  if (process.env.NODE_ENV !== "production" && isDevHost(hostNoPort)) {
-    return buildCorsHeaders(origin);
-  }
-
-  const candidates = hostNoPort.startsWith("www.")
-    ? [hostNoPort, hostNoPort.replace(/^www\./, "")]
-    : [hostNoPort, `www.${hostNoPort}`];
-
-  const { data } = await getSupabaseAdmin()
-    .from("websites")
-    .select("id")
-    .in("domain", candidates)
-    .eq("is_active", true)
-    .limit(1);
-
-  if (!data || data.length === 0) {
-    return null;
-  }
-
-  return buildCorsHeaders(origin);
-}
-
-function buildCorsHeaders(origin: string) {
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    Vary: "Origin",
-  };
-}
-
-function getClientIp(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || "unknown";
-  }
-  return request.headers.get("x-real-ip") || "unknown";
-}
-
-function checkRateLimit(key: string) {
-  const now = Date.now();
-  const entry = rateLimitBuckets.get(key);
-
-  if (!entry || entry.resetAt <= now) {
-    const resetAt = now + RATE_LIMIT_WINDOW_MS;
-    rateLimitBuckets.set(key, { count: 1, resetAt });
-    return { allowed: true, resetAt };
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, resetAt: entry.resetAt };
-  }
-
-  entry.count += 1;
-  return { allowed: true, resetAt: entry.resetAt };
+async function getCorsHeaders(origin: string | null) {
+  return getCorsHeadersForOrigin(
+    origin,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 }
 
 function getSupabaseAdmin() {
@@ -192,7 +101,7 @@ export async function POST(request: NextRequest) {
     let fallbackCorsHeaders: Record<string, string> | null = null;
     const getFallbackCorsHeaders = async () => {
       if (fallbackCorsHeaders === null) {
-        fallbackCorsHeaders = await getCorsHeadersForOrigin(origin);
+        fallbackCorsHeaders = await getCorsHeaders(origin);
       }
       return fallbackCorsHeaders;
     };
@@ -207,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rechazar campos inesperados en el body principal
-    if (getUnknownKeys(rawBody, allowedPayloadKeys).length > 0) {
+    if (hasUnknownKeys(rawBody, allowedPayloadKeys)) {
       return NextResponse.json(
         { error: "Datos invalidos" },
         { status: 400, headers: (await getFallbackCorsHeaders()) ?? undefined }
@@ -222,7 +131,7 @@ export async function POST(request: NextRequest) {
           { status: 400, headers: (await getFallbackCorsHeaders()) ?? undefined }
         );
       }
-      if (getUnknownKeys(rawBody.customer as Record<string, unknown>, allowedCustomerKeys).length > 0) {
+      if (hasUnknownKeys(rawBody.customer as Record<string, unknown>, allowedCustomerKeys)) {
         return NextResponse.json(
           { error: "Datos de cliente invalidos" },
           { status: 400, headers: (await getFallbackCorsHeaders()) ?? undefined }
@@ -239,7 +148,7 @@ export async function POST(request: NextRequest) {
         );
       }
       for (const item of rawBody.items) {
-        if (!isPlainObject(item) || getUnknownKeys(item, allowedItemKeys).length > 0) {
+        if (!isPlainObject(item) || hasUnknownKeys(item, allowedItemKeys)) {
           return NextResponse.json(
             { error: "Items invalidos" },
             { status: 400, headers: (await getFallbackCorsHeaders()) ?? undefined }
@@ -342,8 +251,9 @@ export async function POST(request: NextRequest) {
     }
 
     responseCorsHeaders = buildCorsHeaders(origin!);
-    const rateKey = `${getClientIp(request)}:${body.website_id}`;
-    const rateStatus = checkRateLimit(rateKey);
+    const ip = getClientIp(request.headers);
+    const rateKey = getRateLimitKey(ip, body.website_id);
+    const rateStatus = checkRateLimit(rateKey, rateLimitPresets.payments);
 
     if (!rateStatus.allowed) {
       return NextResponse.json(
@@ -494,7 +404,7 @@ export async function POST(request: NextRequest) {
 
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get("origin");
-  const corsHeaders = await getCorsHeadersForOrigin(origin);
+  const corsHeaders = await getCorsHeaders(origin);
 
   if (!corsHeaders) {
     return new NextResponse(null, { status: 403 });

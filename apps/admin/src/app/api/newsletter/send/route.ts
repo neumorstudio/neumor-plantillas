@@ -127,9 +127,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Enviar emails con Resend
-    console.log(`Enviando ${emails.length} emails via Resend...`);
     const result = await sendBatchEmails(emails);
-    console.log(`Resultado: ${result.success} enviados, ${result.failed} fallidos`);
 
     // Actualizar campana
     const finalStatus = result.failed === 0 ? "sent" : result.success === 0 ? "failed" : "sent";

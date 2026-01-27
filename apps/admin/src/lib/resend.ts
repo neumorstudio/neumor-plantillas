@@ -2,9 +2,11 @@ import { Resend } from "resend";
 
 // Inicializar cliente Resend
 const resendApiKey = process.env.RESEND_API_KEY;
+const isProduction = process.env.NODE_ENV === "production";
 
-if (!resendApiKey) {
-  console.warn("RESEND_API_KEY no configurada");
+// Solo advertir una vez al cargar el módulo en desarrollo
+if (!resendApiKey && !isProduction) {
+  console.warn("[resend] RESEND_API_KEY no configurada - emails deshabilitados en desarrollo");
 }
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -43,7 +45,6 @@ export interface SendEmailResult {
 // Funcion para enviar email
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   if (!resend) {
-    console.error("Resend no configurado - RESEND_API_KEY requerida");
     return { success: false, error: "Servicio de email no configurado" };
   }
 

@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@neumorstudio/api-utils": "workspace:*",
     "@neumorstudio/config-tailwind": "workspace:*",
     "@neumorstudio/supabase": "workspace:*",
     "@supabase/ssr": "^0.5.2",
