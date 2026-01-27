@@ -1,6 +1,0 @@
-# Docusaurus cache
-.docusaurus/
-build/
-
-# Dependencies
-node_modules/
