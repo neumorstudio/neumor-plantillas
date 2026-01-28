@@ -22,6 +22,18 @@ import { createPortalClient } from "../../lib/supabase-portal";
 const tenant = Astro.locals.tenant as TenantData;
 const config = tenant.config as Record<string, unknown>;
 
+// Preview mode: permite probar variantes via URL params
+// Ejemplo: ?preview=1&v_hero=modern&v_services=grid&theme=dark
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+const previewTheme = url.searchParams.get("theme");
+const previewVariants = {
+  hero: url.searchParams.get("v_hero"),
+  services: url.searchParams.get("v_services"),
+  features: url.searchParams.get("v_features"),
+  footer: url.searchParams.get("v_footer"),
+};
+
 // Check if user is authenticated (SSR)
 let currentUser: { email: string; id: string; customerId: string | null; name?: string } | null = null;
 try {
@@ -65,12 +77,20 @@ const componentMap = {
 };
 
 // Get variants from config or use defaults
-const variants = (config.variants as Record<string, string>) || {
+const configVariants = (config.variants as Record<string, string>) || {
   hero: "classic",
   services: "tabs",
   features: "cards",
   footer: "full",
 };
+
+// Apply preview overrides if in preview mode
+const variants = isPreview ? {
+  hero: previewVariants.hero || configVariants.hero,
+  services: previewVariants.services || configVariants.services,
+  features: previewVariants.features || configVariants.features,
+  footer: previewVariants.footer || configVariants.footer,
+} : configVariants;
 
 // Select components based on variants
 const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroClassic;
@@ -95,10 +115,11 @@ const serviceCategories = serviceCatalog.length
     }))
   : undefined;
 
-// Build page config
+// Build page config (preview theme overrides tenant theme)
+const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const pageConfig = {
   businessName: tenant.businessName,
-  theme: tenant.theme as "light" | "dark" | "auto",
+  theme: activeTheme as "light" | "dark" | "auto",
   siteTitle: `${tenant.businessName} | Salon`,
   siteDescription: (config.siteDescription as string) || "Salon de belleza profesional",
   heroTitle: (config.heroTitle as string) || "Tu Estilo, Nuestra Pasion",
