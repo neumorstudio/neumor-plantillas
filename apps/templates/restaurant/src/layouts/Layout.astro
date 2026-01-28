@@ -198,6 +198,34 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
             const sizeMap = { sm: '2rem', md: '3rem', lg: '4rem' };
             root.style.setProperty('--logo-size', sizeMap[branding.logoSize] || '3rem');
           }
+
+          // Aplicar contenido de texto
+          const { content } = event.data.payload;
+          if (content) {
+            if (content.heroTitle) {
+              const el = document.querySelector('.hero-title');
+              if (el) el.textContent = content.heroTitle;
+            }
+            if (content.heroSubtitle) {
+              const el = document.querySelector('.hero-subtitle');
+              if (el) el.textContent = content.heroSubtitle;
+            }
+            if (content.address) {
+              document.querySelectorAll('[data-content="address"], .footer-address, .contact-address').forEach(function(el) {
+                el.textContent = content.address;
+              });
+            }
+            if (content.phone) {
+              document.querySelectorAll('[data-content="phone"], .footer-phone, .contact-phone').forEach(function(el) {
+                el.textContent = content.phone;
+              });
+            }
+            if (content.email) {
+              document.querySelectorAll('[data-content="email"], .footer-email, .contact-email').forEach(function(el) {
+                el.textContent = content.email;
+              });
+            }
+          }
         });
       })();
     </script>

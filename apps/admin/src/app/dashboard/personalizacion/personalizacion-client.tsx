@@ -385,8 +385,15 @@ export function PersonalizacionClient({
       branding: {
         logoSize: branding.logoSize,
       },
+      content: {
+        heroTitle: content.heroTitle,
+        heroSubtitle: content.heroSubtitle,
+        address: content.address,
+        phone: content.phone,
+        email: content.email,
+      },
     });
-  }, [colors, typography, effects, branding.logoSize, sendPreviewMessage]);
+  }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, sendPreviewMessage]);
 
   // Build preview URL
   const previewUrl = useMemo(() => {
