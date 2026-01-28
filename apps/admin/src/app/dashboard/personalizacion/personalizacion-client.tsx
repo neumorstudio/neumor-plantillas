@@ -395,56 +395,46 @@ export function PersonalizacionClient({
     });
   }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, sendPreviewMessage]);
 
-  // Build preview URL
+  // Build preview URL - static to avoid iframe reloads
+  // All changes are sent via postMessage for real-time updates
   const previewUrl = useMemo(() => {
-    const baseUrl = `https://${domain}`;
-    const params = new URLSearchParams();
-    params.set("preview", "1");
-    params.set("theme", theme);
+    return `https://${domain}?preview=1`;
+  }, [domain]);
 
-    Object.entries(variants).forEach(([key, value]) => {
-      params.set(`v_${key}`, value);
-    });
-
-    if (colors.primary) params.set("c_primary", colors.primary);
-    if (colors.secondary) params.set("c_secondary", colors.secondary);
-    if (colors.accent) params.set("c_accent", colors.accent);
-
-    if (typography.headingFont && typography.headingFont !== "system") {
-      params.set("t_heading", typography.headingFont);
-    }
-    if (typography.bodyFont && typography.bodyFont !== "system") {
-      params.set("t_body", typography.bodyFont);
-    }
-    if (typography.baseFontSize) {
-      params.set("t_size", String(typography.baseFontSize));
-    }
-
-    if (effects.shadowIntensity !== undefined) {
-      params.set("e_shadow", String(effects.shadowIntensity));
-    }
-    if (effects.borderRadius) {
-      params.set("e_radius", effects.borderRadius);
-    }
-    if (effects.glassmorphism) {
-      params.set("e_glass", "1");
-      if (effects.blurIntensity) {
-        params.set("e_blur", String(effects.blurIntensity));
-      }
-    }
-
-    if (content.heroTitle) params.set("heroTitle", content.heroTitle);
-    if (content.heroSubtitle) params.set("heroSubtitle", content.heroSubtitle);
-    if (content.heroImage) params.set("heroImage", content.heroImage);
-    if (content.address) params.set("address", content.address);
-    if (content.phone) params.set("phone", content.phone);
-    if (content.email) params.set("email", content.email);
-
-    if (branding.logo) params.set("logo", branding.logo);
-    if (branding.logoSize) params.set("b_logoSize", branding.logoSize);
-
-    return `${baseUrl}?${params.toString()}`;
-  }, [domain, theme, variants, colors, typography, effects, content, branding]);
+  // Send initial state when iframe loads
+  const handleIframeLoad = useCallback(() => {
+    // Small delay to ensure iframe is ready to receive messages
+    setTimeout(() => {
+      sendPreviewMessage("update-styles", {
+        colors: {
+          primary: colors.primary,
+          secondary: colors.secondary,
+          accent: colors.accent,
+        },
+        typography: {
+          headingFont: typography.headingFont,
+          bodyFont: typography.bodyFont,
+          baseFontSize: typography.baseFontSize,
+        },
+        effects: {
+          shadowIntensity: effects.shadowIntensity,
+          borderRadius: effects.borderRadius,
+          glassmorphism: effects.glassmorphism,
+          blurIntensity: effects.blurIntensity,
+        },
+        branding: {
+          logoSize: branding.logoSize,
+        },
+        content: {
+          heroTitle: content.heroTitle,
+          heroSubtitle: content.heroSubtitle,
+          address: content.address,
+          phone: content.phone,
+          email: content.email,
+        },
+      });
+    }, 100);
+  }, [colors, typography, effects, branding, content, sendPreviewMessage]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {
@@ -1487,6 +1477,7 @@ export function PersonalizacionClient({
             src={previewUrl}
             className="w-full h-full border-0"
             title="Vista previa"
+            onLoad={handleIframeLoad}
           />
 
           {/* Preview Controls */}
@@ -1698,6 +1689,7 @@ export function PersonalizacionClient({
                 src={previewUrl}
                 className="w-full h-full border-0"
                 title="Vista previa del sitio"
+                onLoad={handleIframeLoad}
               />
             </div>
           </div>
