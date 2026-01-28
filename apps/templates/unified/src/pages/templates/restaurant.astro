@@ -149,7 +149,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header restaurantName={pageConfig.restaurantName} />
+  <Header restaurantName={pageConfig.restaurantName} logo={customization.branding?.logo as string || customization.logo} />
 
   <main>
     <Hero

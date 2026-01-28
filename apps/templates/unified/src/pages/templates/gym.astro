@@ -76,7 +76,7 @@ const pageConfig = {
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header gymName={pageConfig.gymName} />
+  <Header businessName={pageConfig.gymName} logo={customization.branding?.logo as string || customization.logo} />
 
   <main>
     <Hero

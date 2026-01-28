@@ -244,6 +244,7 @@ export function PersonalizacionClient({
   });
 
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
 
@@ -320,6 +321,41 @@ export function PersonalizacionClient({
 
   const handleBrandingChange = useCallback((key: keyof BrandingConfig, value: string) => {
     setBranding(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "logo");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        setBranding(prev => ({ ...prev, logo: data.url }));
+        setMessage({ type: "success", text: "Logo subido correctamente" });
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({ type: "error", text: data.error || "Error al subir el logo" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Error de conexion al subir el logo" });
+    } finally {
+      setUploading(false);
+      // Reset input
+      e.target.value = "";
+    }
   }, []);
 
   const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"]) => {
@@ -521,11 +557,33 @@ export function PersonalizacionClient({
             <p className="text-sm text-[var(--text-secondary)]">
               Configura el logo y elementos de marca de tu negocio.
             </p>
+
+            {/* Upload Logo */}
             <div>
-              <label className="block text-sm font-medium mb-2">URL del Logo</label>
+              <label className="block text-sm font-medium mb-2">Subir Logo</label>
               <p className="text-xs text-[var(--text-secondary)] mb-2">
-                Introduce la URL de tu logo (recomendado: PNG o SVG transparente)
+                Sube tu logo desde tu dispositivo (PNG, JPG, SVG - max 2MB)
               </p>
+              <label className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--shadow-dark)] rounded-xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+                <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-sm text-[var(--text-secondary)]">
+                  {uploading ? "Subiendo..." : "Haz clic para seleccionar archivo"}
+                </span>
+              </label>
+            </div>
+
+            {/* Logo URL (alternative) */}
+            <div>
+              <label className="block text-sm font-medium mb-2">O introduce URL del Logo</label>
               <input
                 type="url"
                 value={branding.logo || ""}
@@ -533,8 +591,13 @@ export function PersonalizacionClient({
                 placeholder="https://ejemplo.com/logo.png"
                 className="neumor-input w-full"
               />
-              {branding.logo && (
-                <div className="mt-3 p-4 neumor-inset rounded-lg flex items-center justify-center">
+            </div>
+
+            {/* Logo Preview */}
+            {branding.logo && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Vista previa</label>
+                <div className="p-4 neumor-inset rounded-lg flex items-center justify-center min-h-[80px]">
                   <img
                     src={branding.logo}
                     alt="Logo preview"
@@ -544,8 +607,16 @@ export function PersonalizacionClient({
                     }}
                   />
                 </div>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => handleBrandingChange("logo", "")}
+                  className="text-xs text-red-500 hover:text-red-700"
+                >
+                  Eliminar logo
+                </button>
+              </div>
+            )}
+
             <OptionSelector
               label="Tamano del Logo"
               value={branding.logoSize || "md"}

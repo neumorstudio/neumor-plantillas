@@ -76,7 +76,7 @@ const pageConfig = {
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header clinicName={pageConfig.clinicName} />
+  <Header businessName={pageConfig.clinicName} logo={customization.branding?.logo as string || customization.logo} />
 
   <main>
     <Hero
