@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { ColorPicker, FontSelector, SliderControl, OptionSelector } from "@/components/customization";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
@@ -351,6 +351,42 @@ export function PersonalizacionClient({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [previewExpanded, setPreviewExpanded] = useState(false);
+
+  // Refs para iframes de preview (desktop y mobile)
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeMobileRef = useRef<HTMLIFrameElement>(null);
+
+  // Enviar mensaje postMessage a los iframes de preview
+  const sendPreviewMessage = useCallback((type: string, payload: Record<string, unknown>) => {
+    const message = { type, payload, source: "neumorstudio-admin" };
+    iframeRef.current?.contentWindow?.postMessage(message, "*");
+    iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
+  }, []);
+
+  // Enviar cambios CSS en tiempo real via postMessage
+  useEffect(() => {
+    sendPreviewMessage("update-styles", {
+      colors: {
+        primary: colors.primary,
+        secondary: colors.secondary,
+        accent: colors.accent,
+      },
+      typography: {
+        headingFont: typography.headingFont,
+        bodyFont: typography.bodyFont,
+        baseFontSize: typography.baseFontSize,
+      },
+      effects: {
+        shadowIntensity: effects.shadowIntensity,
+        borderRadius: effects.borderRadius,
+        glassmorphism: effects.glassmorphism,
+        blurIntensity: effects.blurIntensity,
+      },
+      branding: {
+        logoSize: branding.logoSize,
+      },
+    });
+  }, [colors, typography, effects, branding.logoSize, sendPreviewMessage]);
 
   // Build preview URL
   const previewUrl = useMemo(() => {
@@ -1440,6 +1476,7 @@ export function PersonalizacionClient({
           previewExpanded ? 'h-[60vh]' : 'h-[30vh]'
         }`}>
           <iframe
+            ref={iframeMobileRef}
             src={previewUrl}
             className="w-full h-full border-0"
             title="Vista previa"
@@ -1650,6 +1687,7 @@ export function PersonalizacionClient({
               }}
             >
               <iframe
+                ref={iframeRef}
                 src={previewUrl}
                 className="w-full h-full border-0"
                 title="Vista previa del sitio"

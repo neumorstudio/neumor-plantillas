@@ -97,5 +97,109 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
   </head>
   <body>
     <slot />
+
+    <!-- Live Preview Script - Escucha cambios del admin via postMessage -->
+    <script is:inline>
+      (function() {
+        // Solo activar en modo preview
+        if (!window.location.search.includes('preview=1')) return;
+
+        // Mapa de border-radius
+        const RADIUS_MAP = {
+          sharp: '0.25rem',
+          soft: '0.5rem',
+          rounded: '1rem',
+          pill: '2rem'
+        };
+
+        // Ajustar luminosidad de color hex
+        function adjustLuminosity(hex, percent) {
+          const num = parseInt(hex.replace('#', ''), 16);
+          const r = Math.min(255, Math.max(0, (num >> 16) + Math.round(2.55 * percent)));
+          const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + Math.round(2.55 * percent)));
+          const b = Math.min(255, Math.max(0, (num & 0x0000FF) + Math.round(2.55 * percent)));
+          return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+        }
+
+        // Convertir hex a rgba
+        function hexToRgba(hex, alpha) {
+          const num = parseInt(hex.replace('#', ''), 16);
+          const r = (num >> 16) & 255;
+          const g = (num >> 8) & 255;
+          const b = num & 255;
+          return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+        }
+
+        window.addEventListener('message', function(event) {
+          // Verificar origen del mensaje
+          if (!event.data || event.data.source !== 'neumorstudio-admin') return;
+          if (event.data.type !== 'update-styles') return;
+
+          const { colors, typography, effects, branding } = event.data.payload;
+          const root = document.documentElement;
+
+          // Aplicar colores
+          if (colors) {
+            if (colors.primary) {
+              root.style.setProperty('--color-primary', colors.primary);
+            }
+            if (colors.secondary) {
+              root.style.setProperty('--color-secondary', colors.secondary);
+            }
+            if (colors.accent) {
+              root.style.setProperty('--color-accent', colors.accent);
+              root.style.setProperty('--accent-hover', adjustLuminosity(colors.accent, -10));
+              root.style.setProperty('--accent-light', hexToRgba(colors.accent, 0.1));
+              root.style.setProperty('--accent-glow', hexToRgba(colors.accent, 0.4));
+            }
+          }
+
+          // Aplicar tipografia
+          if (typography) {
+            if (typography.headingFont && typography.headingFont !== 'system') {
+              // Cargar fuente si no esta cargada
+              const fontName = typography.headingFont;
+              if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
+                const link = document.createElement('link');
+                link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+              }
+              root.style.setProperty('--font-heading', "'" + fontName + "', serif");
+            }
+            if (typography.bodyFont && typography.bodyFont !== 'system') {
+              const fontName = typography.bodyFont;
+              if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
+                const link = document.createElement('link');
+                link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+              }
+              root.style.setProperty('--font-body', "'" + fontName + "', system-ui, sans-serif");
+            }
+            if (typography.baseFontSize) {
+              root.style.setProperty('--font-size-base', typography.baseFontSize + 'px');
+            }
+          }
+
+          // Aplicar efectos
+          if (effects) {
+            if (effects.borderRadius && RADIUS_MAP[effects.borderRadius]) {
+              root.style.setProperty('--radius-base', RADIUS_MAP[effects.borderRadius]);
+            }
+            if (effects.shadowIntensity !== undefined) {
+              const intensity = effects.shadowIntensity / 100;
+              root.style.setProperty('--shadow-intensity', intensity.toString());
+            }
+          }
+
+          // Aplicar branding
+          if (branding && branding.logoSize) {
+            const sizeMap = { sm: '2rem', md: '3rem', lg: '4rem' };
+            root.style.setProperty('--logo-size', sizeMap[branding.logoSize] || '3rem');
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
