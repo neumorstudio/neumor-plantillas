@@ -1,6 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Verifica si el email del usuario esta en la lista de superadmins.
+ * Lista configurada via SUPERADMIN_EMAILS (comma-separated).
+ */
+function isSuperAdminEmail(email: string | undefined): boolean {
+  if (!email) return false;
+  const envEmails = process.env.SUPERADMIN_EMAILS || "";
+  const superAdminEmails = envEmails
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e.length > 0);
+  return superAdminEmails.includes(email.toLowerCase());
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -54,6 +68,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // SUPERADMIN routes - requires authentication + superadmin email
+  if (request.nextUrl.pathname.startsWith("/super")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    if (!isSuperAdminEmail(user.email)) {
+      // Usuario autenticado pero NO es superadmin -> 403 Forbidden
+      return new NextResponse("Forbidden: SuperAdmin access required", {
+        status: 403,
+      });
+    }
+  }
+
   // Force password change on first login
   if (user?.user_metadata?.must_change_password) {
     // Allow access to change-password page
@@ -63,6 +92,7 @@ export async function middleware(request: NextRequest) {
     // Redirect any other page to change-password
     if (
       request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname.startsWith("/super") ||
       request.nextUrl.pathname === "/login"
     ) {
       const url = request.nextUrl.clone();
@@ -71,10 +101,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect to dashboard if already logged in and trying to access login
+  // Redirect after login based on role
   if (user && request.nextUrl.pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    // SuperAdmin va directo a /super, usuarios normales a /dashboard
+    url.pathname = isSuperAdminEmail(user.email) ? "/super" : "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // SuperAdmin no deberia acceder al dashboard normal
+  if (user && request.nextUrl.pathname.startsWith("/dashboard") && isSuperAdminEmail(user.email)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/super";
     return NextResponse.redirect(url);
   }
 
