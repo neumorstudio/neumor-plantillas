@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Verify user owns this client (by auth_user_id)
     const { data: client } = await supabase
       .from("clients")
-      .select("id, auth_user_id")
+      .select("id, auth_user_id, email")
       .eq("id", clientId)
       .single();
 
@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
         businessName: businessData.business_name,
         phone: businessData.phone || null,
         address: businessData.address || null,
+        email: client.email || null,
       };
 
       if (restaurantConfig && typeof restaurantConfig === "object") {
