@@ -18,6 +18,10 @@ if (!tenant) {
 const businessType = tenant.businessType;
 console.log("[Index] Rendering template for:", businessType);
 
-// Rewrite to the business-specific template
-return Astro.rewrite(`/templates/${businessType}`);
+// Preserve query string for preview mode support
+const url = new URL(Astro.request.url);
+const queryString = url.search; // includes the "?" if present
+
+// Rewrite to the business-specific template (preserving query params)
+return Astro.rewrite(`/templates/${businessType}${queryString}`);
 ---
