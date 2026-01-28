@@ -31,7 +31,22 @@ interface Props {
   initialConfig: WebsiteConfig;
 }
 
-type TabId = "temas" | "colores" | "tipografia" | "secciones" | "branding" | "efectos";
+type TabId = "temas" | "colores" | "tipografia" | "secciones" | "branding" | "efectos" | "contenido";
+
+interface ContentConfig {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    whatsapp?: string;
+    tripadvisor?: string;
+  };
+}
 
 // ============================================
 // THEME DATA
@@ -155,6 +170,9 @@ function TabletIcon() {
 function MobileIcon() {
   return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
 }
+function TextIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>;
+}
 
 function getThemeIcon(icon: string) {
   switch (icon) {
@@ -180,6 +198,7 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "secciones", label: "Secciones", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg> },
   { id: "branding", label: "Marca", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
   { id: "efectos", label: "Efectos", icon: <SparklesIcon /> },
+  { id: "contenido", label: "Contenido", icon: <TextIcon /> },
 ];
 
 // ============================================
@@ -213,6 +232,15 @@ export function PersonalizacionClient({
   const [branding, setBranding] = useState<BrandingConfig>({
     logo: initialConfig.branding?.logo || initialConfig.logo,
     ...initialConfig.branding,
+  });
+  const [content, setContent] = useState<ContentConfig>({
+    heroTitle: initialConfig.heroTitle || "",
+    heroSubtitle: initialConfig.heroSubtitle || "",
+    heroImage: initialConfig.heroImage || "",
+    address: initialConfig.address || "",
+    phone: initialConfig.phone || "",
+    email: initialConfig.email || "",
+    socialLinks: initialConfig.socialLinks || {},
   });
 
   const [saving, setSaving] = useState(false);
@@ -294,6 +322,10 @@ export function PersonalizacionClient({
     setBranding(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"]) => {
+    setContent(prev => ({ ...prev, [key]: value }));
+  }, []);
+
   const handleReset = useCallback(() => {
     if (confirm("Esto restaurara todos los valores por defecto. ¿Continuar?")) {
       setTheme("light");
@@ -302,6 +334,7 @@ export function PersonalizacionClient({
       setTypography(defaultTypography);
       setEffects(defaultEffects);
       setBranding({});
+      setContent({});
     }
   }, []);
 
@@ -316,6 +349,7 @@ export function PersonalizacionClient({
         typography,
         effects,
         branding,
+        ...content,
       };
 
       const response = await fetch("/api/personalizacion", {
@@ -583,6 +617,139 @@ export function PersonalizacionClient({
                 )}
               </>
             )}
+          </div>
+        );
+
+      case "contenido":
+        return (
+          <div className="space-y-6">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Personaliza los textos y contenido de tu web.
+            </p>
+
+            {/* Hero Section */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Seccion Principal</h3>
+              <div>
+                <label className="block text-sm font-medium mb-2">Titulo Principal</label>
+                <input
+                  type="text"
+                  value={content.heroTitle || ""}
+                  onChange={(e) => handleContentChange("heroTitle", e.target.value)}
+                  placeholder="Tu titulo aqui..."
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Subtitulo</label>
+                <textarea
+                  value={content.heroSubtitle || ""}
+                  onChange={(e) => handleContentChange("heroSubtitle", e.target.value)}
+                  placeholder="Descripcion breve de tu negocio..."
+                  className="neumor-input w-full resize-none"
+                  rows={2}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
+                <input
+                  type="url"
+                  value={content.heroImage || ""}
+                  onChange={(e) => handleContentChange("heroImage", e.target.value)}
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  className="neumor-input w-full"
+                />
+                {content.heroImage && (
+                  <div className="mt-2 rounded-lg overflow-hidden h-24">
+                    <img
+                      src={content.heroImage}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Informacion de Contacto</h3>
+              <div>
+                <label className="block text-sm font-medium mb-2">Direccion</label>
+                <input
+                  type="text"
+                  value={content.address || ""}
+                  onChange={(e) => handleContentChange("address", e.target.value)}
+                  placeholder="Calle, numero, ciudad..."
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Telefono</label>
+                <input
+                  type="tel"
+                  value={content.phone || ""}
+                  onChange={(e) => handleContentChange("phone", e.target.value)}
+                  placeholder="+34 600 000 000"
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={content.email || ""}
+                  onChange={(e) => handleContentChange("email", e.target.value)}
+                  placeholder="contacto@tunegocio.com"
+                  className="neumor-input w-full"
+                />
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Redes Sociales</h3>
+              <div>
+                <label className="block text-sm font-medium mb-2">Instagram</label>
+                <input
+                  type="url"
+                  value={content.socialLinks?.instagram || ""}
+                  onChange={(e) => handleContentChange("socialLinks", {
+                    ...content.socialLinks,
+                    instagram: e.target.value
+                  })}
+                  placeholder="https://instagram.com/tunegocio"
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Facebook</label>
+                <input
+                  type="url"
+                  value={content.socialLinks?.facebook || ""}
+                  onChange={(e) => handleContentChange("socialLinks", {
+                    ...content.socialLinks,
+                    facebook: e.target.value
+                  })}
+                  placeholder="https://facebook.com/tunegocio"
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">WhatsApp</label>
+                <input
+                  type="url"
+                  value={content.socialLinks?.whatsapp || ""}
+                  onChange={(e) => handleContentChange("socialLinks", {
+                    ...content.socialLinks,
+                    whatsapp: e.target.value
+                  })}
+                  placeholder="https://wa.me/34600000000"
+                  className="neumor-input w-full"
+                />
+              </div>
+            </div>
           </div>
         );
 
