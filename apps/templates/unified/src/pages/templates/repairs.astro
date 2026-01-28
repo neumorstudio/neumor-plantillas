@@ -17,6 +17,20 @@ import { FooterFull, FooterMinimal, FooterCentered } from "@repairs/components/F
 const tenant = Astro.locals.tenant as TenantData;
 const config = tenant.config as Record<string, unknown>;
 
+// Preview mode params
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+const previewTheme = url.searchParams.get("theme");
+const previewContent = isPreview ? {
+  heroTitle: url.searchParams.get("heroTitle"),
+  heroSubtitle: url.searchParams.get("heroSubtitle"),
+  heroImage: url.searchParams.get("heroImage"),
+  address: url.searchParams.get("address"),
+  phone: url.searchParams.get("phone"),
+  email: url.searchParams.get("email"),
+  logo: url.searchParams.get("logo"),
+} : null;
+
 // Component mapping
 const componentMap = {
   hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
@@ -50,18 +64,20 @@ const customization = {
   logo: config.logo as string | undefined,
 };
 
-// Build page config
+// Build page config (preview overrides config values)
+const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const pageConfig = {
   businessName: tenant.businessName,
-  theme: tenant.theme as "light" | "dark" | "auto",
+  theme: activeTheme as "light" | "dark" | "auto",
   siteTitle: `${tenant.businessName} | Reparaciones`,
   siteDescription: (config.siteDescription as string) || "Servicios de reparacion profesional",
-  heroTitle: (config.heroTitle as string) || "Reparaciones de Confianza",
-  heroSubtitle: (config.heroSubtitle as string) || "Profesionales a tu servicio",
-  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
-  address: (config.address as string) || "",
-  phone: (config.phone as string) || "",
-  email: (config.email as string) || "",
+  heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Reparaciones de Confianza",
+  heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Profesionales a tu servicio",
+  heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+  address: previewContent?.address || (config.address as string) || "",
+  phone: previewContent?.phone || (config.phone as string) || "",
+  email: previewContent?.email || (config.email as string) || "",
+  logo: previewContent?.logo || (customization.branding?.logo as string) || customization.logo || "",
   socialLinks: (config.socialLinks as { instagram: string; facebook: string; whatsapp: string }) || {
     instagram: "#",
     facebook: "#",
@@ -76,7 +92,7 @@ const pageConfig = {
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header businessName={pageConfig.businessName} logo={customization.branding?.logo as string || customization.logo} />
+  <Header businessName={pageConfig.businessName} logo={pageConfig.logo} />
 
   <main>
     <Hero

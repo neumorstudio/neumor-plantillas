@@ -17,6 +17,20 @@ import { FooterFull, FooterMinimal, FooterCentered } from "@store/components/Foo
 const tenant = Astro.locals.tenant as TenantData;
 const config = tenant.config as Record<string, unknown>;
 
+// Preview mode params
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+const previewTheme = url.searchParams.get("theme");
+const previewContent = isPreview ? {
+  heroTitle: url.searchParams.get("heroTitle"),
+  heroSubtitle: url.searchParams.get("heroSubtitle"),
+  heroImage: url.searchParams.get("heroImage"),
+  address: url.searchParams.get("address"),
+  phone: url.searchParams.get("phone"),
+  email: url.searchParams.get("email"),
+  logo: url.searchParams.get("logo"),
+} : null;
+
 // Component mapping
 const componentMap = {
   hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
@@ -50,18 +64,20 @@ const customization = {
   logo: config.logo as string | undefined,
 };
 
-// Build page config
+// Build page config (preview overrides config values)
+const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const pageConfig = {
   storeName: tenant.businessName,
-  theme: tenant.theme as "light" | "dark" | "auto",
+  theme: activeTheme as "light" | "dark" | "auto",
   siteTitle: `${tenant.businessName} | Tienda`,
   siteDescription: (config.siteDescription as string) || "Tu tienda de confianza",
-  heroTitle: (config.heroTitle as string) || "Bienvenido a Nuestra Tienda",
-  heroSubtitle: (config.heroSubtitle as string) || "Los mejores productos al mejor precio",
-  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80",
-  address: (config.address as string) || "",
-  phone: (config.phone as string) || "",
-  email: (config.email as string) || "",
+  heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Bienvenido a Nuestra Tienda",
+  heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Los mejores productos al mejor precio",
+  heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80",
+  address: previewContent?.address || (config.address as string) || "",
+  phone: previewContent?.phone || (config.phone as string) || "",
+  email: previewContent?.email || (config.email as string) || "",
+  logo: previewContent?.logo || (customization.branding?.logo as string) || customization.logo || "",
   socialLinks: (config.socialLinks as { instagram: string; facebook: string; whatsapp: string }) || {
     instagram: "#",
     facebook: "#",
@@ -76,7 +92,7 @@ const pageConfig = {
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header businessName={pageConfig.storeName} logo={customization.branding?.logo as string || customization.logo} />
+  <Header businessName={pageConfig.storeName} logo={pageConfig.logo} />
 
   <main>
     <Hero

@@ -290,8 +290,19 @@ export function PersonalizacionClient({
       }
     }
 
+    // Add content
+    if (content.heroTitle) params.set("heroTitle", content.heroTitle);
+    if (content.heroSubtitle) params.set("heroSubtitle", content.heroSubtitle);
+    if (content.heroImage) params.set("heroImage", content.heroImage);
+    if (content.address) params.set("address", content.address);
+    if (content.phone) params.set("phone", content.phone);
+    if (content.email) params.set("email", content.email);
+
+    // Add branding
+    if (branding.logo) params.set("logo", branding.logo);
+
     return `${baseUrl}?${params.toString()}`;
-  }, [domain, theme, variants, colors, typography, effects]);
+  }, [domain, theme, variants, colors, typography, effects, content, branding]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {

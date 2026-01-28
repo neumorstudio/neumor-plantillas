@@ -17,6 +17,20 @@ import { FooterFull, FooterMinimal, FooterCentered } from "@gym/components/Foote
 const tenant = Astro.locals.tenant as TenantData;
 const config = tenant.config as Record<string, unknown>;
 
+// Preview mode params
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+const previewTheme = url.searchParams.get("theme");
+const previewContent = isPreview ? {
+  heroTitle: url.searchParams.get("heroTitle"),
+  heroSubtitle: url.searchParams.get("heroSubtitle"),
+  heroImage: url.searchParams.get("heroImage"),
+  address: url.searchParams.get("address"),
+  phone: url.searchParams.get("phone"),
+  email: url.searchParams.get("email"),
+  logo: url.searchParams.get("logo"),
+} : null;
+
 // Component mapping
 const componentMap = {
   hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
@@ -50,18 +64,20 @@ const customization = {
   logo: config.logo as string | undefined,
 };
 
-// Build page config
+// Build page config (preview overrides config values)
+const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const pageConfig = {
   gymName: tenant.businessName,
-  theme: tenant.theme as "light" | "dark" | "auto",
+  theme: activeTheme as "light" | "dark" | "auto",
   siteTitle: `${tenant.businessName} | Gimnasio`,
   siteDescription: (config.siteDescription as string) || "Tu gimnasio de confianza",
-  heroTitle: (config.heroTitle as string) || "Transforma Tu Cuerpo",
-  heroSubtitle: (config.heroSubtitle as string) || "Entrena con los mejores profesionales",
-  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
-  address: (config.address as string) || "",
-  phone: (config.phone as string) || "",
-  email: (config.email as string) || "",
+  heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Transforma Tu Cuerpo",
+  heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Entrena con los mejores profesionales",
+  heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
+  address: previewContent?.address || (config.address as string) || "",
+  phone: previewContent?.phone || (config.phone as string) || "",
+  email: previewContent?.email || (config.email as string) || "",
+  logo: previewContent?.logo || (customization.branding?.logo as string) || customization.logo || "",
   socialLinks: (config.socialLinks as { instagram: string; facebook: string; youtube: string }) || {
     instagram: "#",
     facebook: "#",
@@ -76,7 +92,7 @@ const pageConfig = {
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header businessName={pageConfig.gymName} logo={customization.branding?.logo as string || customization.logo} />
+  <Header businessName={pageConfig.gymName} logo={pageConfig.logo} />
 
   <main>
     <Hero

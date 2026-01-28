@@ -21,6 +21,20 @@ import { getMenuItems } from "@restaurant/lib/supabase";
 const tenant = Astro.locals.tenant as TenantData;
 const config = tenant.config as Record<string, unknown>;
 
+// Preview mode params
+const url = new URL(Astro.request.url);
+const isPreview = url.searchParams.get("preview") === "1";
+const previewTheme = url.searchParams.get("theme");
+const previewContent = isPreview ? {
+  heroTitle: url.searchParams.get("heroTitle"),
+  heroSubtitle: url.searchParams.get("heroSubtitle"),
+  heroImage: url.searchParams.get("heroImage"),
+  address: url.searchParams.get("address"),
+  phone: url.searchParams.get("phone"),
+  email: url.searchParams.get("email"),
+  logo: url.searchParams.get("logo"),
+} : null;
+
 // Component mapping
 const componentMap = {
   hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
@@ -119,18 +133,20 @@ const customization = {
   logo: config.logo as string | undefined,
 };
 
-// Build page config
+// Build page config (preview overrides config values)
+const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const pageConfig = {
   restaurantName: tenant.businessName,
-  theme: tenant.theme as "light" | "dark" | "auto",
+  theme: activeTheme as "light" | "dark" | "auto",
   siteTitle: `${tenant.businessName} | Restaurante`,
   siteDescription: (config.siteDescription as string) || "Restaurante con experiencia unica",
-  heroTitle: (config.heroTitle as string) || "Bienvenidos a Nuestro Restaurante",
-  heroSubtitle: (config.heroSubtitle as string) || "Una experiencia culinaria unica",
-  heroImage: (config.heroImage as string) || "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
-  address: (config.address as string) || "",
-  phone: (config.phone as string) || "",
-  email: (config.email as string) || "",
+  heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Bienvenidos a Nuestro Restaurante",
+  heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Una experiencia culinaria unica",
+  heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+  address: previewContent?.address || (config.address as string) || "",
+  phone: previewContent?.phone || (config.phone as string) || "",
+  email: previewContent?.email || (config.email as string) || "",
+  logo: previewContent?.logo || (customization.branding?.logo as string) || customization.logo || "",
   socialLinks: (config.socialLinks as { instagram: string; facebook: string; tripadvisor: string }) || {
     instagram: "#",
     facebook: "#",
@@ -149,7 +165,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header restaurantName={pageConfig.restaurantName} logo={customization.branding?.logo as string || customization.logo} />
+  <Header restaurantName={pageConfig.restaurantName} logo={pageConfig.logo} />
 
   <main>
     <Hero
