@@ -1403,6 +1403,13 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   const getSelectedProfessionalId = () =>
     professionalInputs.find((input) => input.checked)?.value || "";
 
+  const getSelectedProfessionalName = () => {
+    const checkedInput = professionalInputs.find((input) => input.checked);
+    if (!checkedInput) return "";
+    const label = checkedInput.closest("label");
+    return label?.querySelector("span")?.textContent || "";
+  };
+
   const getCacheKey = (dateValue: string, professionalId: string) =>
     `${dateValue}:${professionalId}`;
 
@@ -1880,11 +1887,23 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
 
     if (webhookUrl) {
+      // Datos con formato esperado por la API /api/citas
+      const webhookData = {
+        website_id: websiteId,
+        nombre: rawData.name,
+        email: rawData.email || undefined,
+        telefono: rawData.phone,
+        servicio: selectedServices.map(s => s.name).join(", "),
+        profesional: getSelectedProfessionalName() || undefined,
+        fecha: rawData.date,
+        hora: rawData.time,
+        notas: rawData.notes || undefined,
+      };
       try {
         const response = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify(webhookData),
         });
         if (response.ok) {
           bookingSuccess = true;
