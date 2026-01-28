@@ -301,6 +301,7 @@ export function PersonalizacionClient({
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [previewExpanded, setPreviewExpanded] = useState(false);
@@ -416,6 +417,40 @@ export function PersonalizacionClient({
       setMessage({ type: "error", text: "Error de conexion al subir el logo" });
     } finally {
       setUploading(false);
+      e.target.value = "";
+    }
+  }, []);
+
+  const handleHeroImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingHero(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "hero");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        setContent(prev => ({ ...prev, heroImage: data.url }));
+        setMessage({ type: "success", text: "Imagen subida correctamente" });
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({ type: "error", text: data.error || "Error al subir la imagen" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Error de conexion al subir la imagen" });
+    } finally {
+      setUploadingHero(false);
       e.target.value = "";
     }
   }, []);
@@ -826,13 +861,34 @@ export function PersonalizacionClient({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
-                  <input
-                    type="url"
-                    value={content.heroImage || ""}
-                    onChange={(e) => handleContentChange("heroImage", e.target.value)}
-                    placeholder="https://..."
-                    className="neumor-input w-full h-12"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={content.heroImage || ""}
+                      onChange={(e) => handleContentChange("heroImage", e.target.value)}
+                      placeholder="https://..."
+                      className="neumor-input flex-1 h-12"
+                    />
+                    <label className={`neumor-btn h-12 px-3 flex items-center justify-center cursor-pointer ${uploadingHero ? "opacity-50" : ""}`}>
+                      {uploadingHero ? (
+                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHeroImageUpload}
+                        disabled={uploadingHero}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 </div>
               </CollapsibleSection>
             ) : (
@@ -860,13 +916,34 @@ export function PersonalizacionClient({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
-                  <input
-                    type="url"
-                    value={content.heroImage || ""}
-                    onChange={(e) => handleContentChange("heroImage", e.target.value)}
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    className="neumor-input w-full"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={content.heroImage || ""}
+                      onChange={(e) => handleContentChange("heroImage", e.target.value)}
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      className="neumor-input flex-1"
+                    />
+                    <label className={`neumor-btn px-3 flex items-center justify-center cursor-pointer ${uploadingHero ? "opacity-50" : ""}`}>
+                      {uploadingHero ? (
+                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHeroImageUpload}
+                        disabled={uploadingHero}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
