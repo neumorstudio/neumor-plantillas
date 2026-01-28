@@ -300,6 +300,17 @@ if (websiteData) {
   console.log("⚠️ Usando configuración por defecto (Supabase no disponible)");
 }
 
+// Extraer configuración de personalización visual
+const customization = websiteData?.config ? {
+  colors: websiteData.config.colors,
+  primaryColor: websiteData.config.primaryColor,
+  secondaryColor: websiteData.config.secondaryColor,
+  typography: websiteData.config.typography,
+  effects: websiteData.config.effects,
+  branding: websiteData.config.branding,
+  logo: websiteData.config.logo,
+} : {};
+
 const currentWebsiteId = websiteData?.id || websiteId || "";
 const menuItems = await getMenuItems(currentWebsiteId);
 const orderSettings = await getOrderSettings(currentWebsiteId);
@@ -382,6 +393,7 @@ const heroCtaLink = ordersEnabled ? "#orders" : undefined;
   title={config.siteTitle}
   description={config.siteDescription}
   theme={activeTheme}
+  customization={customization}
 >
   <Header restaurantName={config.restaurantName} showOrders={ordersEnabled} />
 

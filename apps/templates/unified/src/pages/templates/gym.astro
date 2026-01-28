@@ -39,6 +39,17 @@ const Classes = componentMap.classes[variants.classes as keyof typeof componentM
 const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
 const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
 
+// Extraer configuración de personalización visual
+const customization = {
+  colors: config.colors as Record<string, unknown> | undefined,
+  primaryColor: config.primaryColor as string | undefined,
+  secondaryColor: config.secondaryColor as string | undefined,
+  typography: config.typography as Record<string, unknown> | undefined,
+  effects: config.effects as Record<string, unknown> | undefined,
+  branding: config.branding as Record<string, unknown> | undefined,
+  logo: config.logo as string | undefined,
+};
+
 // Build page config
 const pageConfig = {
   gymName: tenant.businessName,
@@ -63,6 +74,7 @@ const pageConfig = {
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
   theme={pageConfig.theme}
+  customization={customization}
 >
   <Header gymName={pageConfig.gymName} />
 

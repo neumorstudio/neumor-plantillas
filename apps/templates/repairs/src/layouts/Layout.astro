@@ -1,20 +1,36 @@
 ---
 import "../styles/global.css";
 import "../styles/neuglass.css";
+import { compileCustomization, applyPreviewParams, type WebsiteCustomization } from "@lib/tokens";
 
 interface Props {
   title: string;
   description?: string;
   theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
+  customization?: WebsiteCustomization;
 }
 
 const {
   title,
   description = "Reformas y reparaciones con estilo neumorfico",
   theme = "light",
+  customization = {},
 } = Astro.props;
 
+// Aplicar parámetros de preview si existen
+const url = new URL(Astro.request.url);
+const finalCustomization = applyPreviewParams(customization, url);
+
+// Compilar tokens a CSS
+const { cssVariables, fontImports, favicon } = compileCustomization(finalCustomization);
+
+// Determinar clase de tema
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
+
+// Fuentes por defecto si no hay personalización
+const defaultFonts = !fontImports
+  ? "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+  : fontImports;
 ---
 
 <!doctype html>
@@ -26,20 +42,28 @@ const themeClass = theme === "light" ? "" : `theme-${theme}`;
     <meta name="generator" content={Astro.generator} />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {favicon ? (
+      <link rel="icon" type="image/png" href={favicon} />
+    ) : (
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    )}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href={defaultFonts} rel="stylesheet" />
+    {fontImports && fontImports !== defaultFonts && (
+      <link href={fontImports} rel="stylesheet" />
+    )}
 
     <title>{title}</title>
 
+    <!-- Custom CSS Variables from personalization -->
+    {cssVariables && (
+      <style set:html={cssVariables}></style>
+    )}
+
     <style is:global>
-      /* Fuentes del negocio */
       :root {
         --font-heading: "Playfair Display", serif;
         --font-body: "Inter", system-ui, sans-serif;
@@ -49,10 +73,12 @@ const themeClass = theme === "light" ? "" : `theme-${theme}`;
         font-family: var(--font-body);
       }
 
-      h1,
-      h2,
-      h3 {
+      h1, h2, h3 {
         font-family: var(--font-heading);
+      }
+
+      .neumor-card, .neumor-btn, .neumor-input {
+        border-radius: var(--radius-base, 1rem);
       }
     </style>
   </head>

@@ -39,6 +39,17 @@ const Products = componentMap.products[variants.products as keyof typeof compone
 const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesIcons;
 const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
 
+// Extraer configuración de personalización visual
+const customization = {
+  colors: config.colors as Record<string, unknown> | undefined,
+  primaryColor: config.primaryColor as string | undefined,
+  secondaryColor: config.secondaryColor as string | undefined,
+  typography: config.typography as Record<string, unknown> | undefined,
+  effects: config.effects as Record<string, unknown> | undefined,
+  branding: config.branding as Record<string, unknown> | undefined,
+  logo: config.logo as string | undefined,
+};
+
 // Build page config
 const pageConfig = {
   storeName: tenant.businessName,
@@ -63,6 +74,7 @@ const pageConfig = {
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
   theme={pageConfig.theme}
+  customization={customization}
 >
   <Header storeName={pageConfig.storeName} />
 

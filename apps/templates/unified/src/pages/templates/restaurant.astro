@@ -108,6 +108,17 @@ const menuCategories = menuItems?.length
     })()
   : undefined;
 
+// Extraer configuración de personalización visual
+const customization = {
+  colors: config.colors as Record<string, unknown> | undefined,
+  primaryColor: config.primaryColor as string | undefined,
+  secondaryColor: config.secondaryColor as string | undefined,
+  typography: config.typography as Record<string, unknown> | undefined,
+  effects: config.effects as Record<string, unknown> | undefined,
+  branding: config.branding as Record<string, unknown> | undefined,
+  logo: config.logo as string | undefined,
+};
+
 // Build page config
 const pageConfig = {
   restaurantName: tenant.businessName,
@@ -136,6 +147,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
   theme={pageConfig.theme}
+  customization={customization}
 >
   <Header restaurantName={pageConfig.restaurantName} />
 

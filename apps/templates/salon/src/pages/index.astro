@@ -152,6 +152,17 @@ if (websiteData) {
   console.log("Usando configuracion por defecto (Supabase no disponible)");
 }
 
+// Extraer configuración de personalización visual
+const customization = websiteData?.config ? {
+  colors: websiteData.config.colors,
+  primaryColor: websiteData.config.primaryColor,
+  secondaryColor: websiteData.config.secondaryColor,
+  typography: websiteData.config.typography,
+  effects: websiteData.config.effects,
+  branding: websiteData.config.branding,
+  logo: websiteData.config.logo,
+} : {};
+
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
 // ============================================
@@ -203,6 +214,7 @@ const serviceCategories = serviceCatalog.length
   title={config.siteTitle}
   description={config.siteDescription}
   theme={activeTheme}
+  customization={customization}
 >
   <Header businessName={config.businessName} />
 

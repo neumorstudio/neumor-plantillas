@@ -1,36 +1,36 @@
 import { createClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
+import type {
+  WebsiteConfig,
+  ColorsConfig,
+  TypographyConfig,
+  EffectsConfig,
+  BrandingConfig,
+  Theme,
+} from "@neumorstudio/supabase";
 
-// Types for personalization config
-interface WebsiteConfig {
-  businessName?: string;
-  businessType?: string;
-  variants?: {
-    hero: "classic" | "modern" | "bold" | "minimal";
-    menu: "tabs" | "grid" | "list" | "carousel";
-    features: "cards" | "icons" | "banner";
-    reviews: "grid" | "carousel" | "minimal";
-    footer: "full" | "minimal" | "centered";
-  };
-}
+// Temas válidos
+const VALID_THEMES: Theme[] = [
+  "light",
+  "dark",
+  "colorful",
+  "rustic",
+  "elegant",
+  "neuglass",
+  "neuglass-dark",
+];
 
-type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
-
-// GET: Obtener configuracion actual del tema
-export async function GET(request: NextRequest) {
+// GET: Obtener configuración actual del tema y personalización
+export async function GET() {
   try {
     const supabase = await createClient();
 
-    // Verify user is authenticated
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "No autenticado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
     // Get client by auth_user_id
@@ -61,11 +61,54 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const config = (website.config || {}) as WebsiteConfig;
+
     return NextResponse.json({
       websiteId: website.id,
       domain: website.domain,
       theme: website.theme as Theme,
-      config: website.config as WebsiteConfig,
+      config: {
+        // Info del negocio
+        businessName: config.businessName,
+        businessType: config.businessType,
+        phone: config.phone,
+        email: config.email,
+        address: config.address,
+
+        // Variantes
+        variants: config.variants,
+
+        // Hero
+        heroTitle: config.heroTitle,
+        heroSubtitle: config.heroSubtitle,
+        heroImage: config.heroImage,
+
+        // Colores (nueva estructura + legacy)
+        colors: config.colors || {
+          primary: config.primaryColor,
+          secondary: config.secondaryColor,
+        },
+        primaryColor: config.primaryColor,
+        secondaryColor: config.secondaryColor,
+
+        // Branding
+        branding: config.branding || {
+          logo: config.logo,
+        },
+        logo: config.logo,
+
+        // Tipografía
+        typography: config.typography,
+
+        // Efectos
+        effects: config.effects,
+
+        // Redes sociales
+        socialLinks: config.socialLinks,
+
+        // Estado abierto/cerrado
+        openStatus: config.openStatus,
+      },
     });
   } catch (error) {
     console.error("Personalization GET error:", error);
@@ -76,31 +119,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Guardar configuracion de tema
+// POST: Guardar configuración de tema y personalización
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Verify user is authenticated
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "No autenticado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { websiteId, theme, config } = body as {
+    const {
+      websiteId,
+      theme,
+      config,
+    } = body as {
       websiteId: string;
-      theme: Theme;
-      config: WebsiteConfig;
+      theme?: Theme;
+      config?: Partial<WebsiteConfig>;
     };
 
-    // Validate required fields
     if (!websiteId) {
       return NextResponse.json(
         { error: "websiteId es requerido" },
@@ -109,12 +151,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate theme value
-    const validThemes: Theme[] = ["light", "dark", "colorful", "rustic", "elegant", "neuglass", "neuglass-dark"];
-    if (theme && !validThemes.includes(theme)) {
-      return NextResponse.json(
-        { error: "Tema no valido" },
-        { status: 400 }
-      );
+    if (theme && !VALID_THEMES.includes(theme)) {
+      return NextResponse.json({ error: "Tema no valido" }, { status: 400 });
     }
 
     // Verify user owns this website
@@ -133,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     const { data: website } = await supabase
       .from("websites")
-      .select("id, client_id")
+      .select("id, client_id, config")
       .eq("id", websiteId)
       .single();
 
@@ -145,7 +183,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Build update object
-    const updateData: { theme?: Theme; config?: WebsiteConfig; updated_at: string } = {
+    const updateData: {
+      theme?: Theme;
+      config?: WebsiteConfig;
+      updated_at: string;
+    } = {
       updated_at: new Date().toISOString(),
     };
 
@@ -154,17 +196,56 @@ export async function POST(request: NextRequest) {
     }
 
     if (config) {
-      // Get existing config to merge with new values
-      const { data: currentWebsite } = await supabase
-        .from("websites")
-        .select("config")
-        .eq("id", websiteId)
-        .single();
+      const existingConfig = (website.config as WebsiteConfig) || {};
 
-      const existingConfig = (currentWebsite?.config as WebsiteConfig) || {};
+      // Merge deep para colores
+      const mergedColors: ColorsConfig = {
+        ...existingConfig.colors,
+        ...config.colors,
+      };
+
+      // Merge deep para branding
+      const mergedBranding: BrandingConfig = {
+        ...existingConfig.branding,
+        ...config.branding,
+      };
+
+      // Merge deep para tipografía
+      const mergedTypography: TypographyConfig = {
+        ...existingConfig.typography,
+        ...config.typography,
+      };
+
+      // Merge deep para efectos
+      const mergedEffects: EffectsConfig = {
+        ...existingConfig.effects,
+        ...config.effects,
+      };
+
+      // Merge deep para variantes (solo si hay variantes)
+      const hasVariants = existingConfig.variants || config.variants;
+      const mergedVariants = hasVariants
+        ? { ...existingConfig.variants, ...config.variants } as WebsiteConfig["variants"]
+        : undefined;
+
+      // Merge deep para socialLinks
+      const mergedSocialLinks = (existingConfig.socialLinks || config.socialLinks)
+        ? { ...existingConfig.socialLinks, ...config.socialLinks }
+        : undefined;
+
       updateData.config = {
         ...existingConfig,
         ...config,
+        colors: Object.keys(mergedColors).length > 0 ? mergedColors : undefined,
+        branding: Object.keys(mergedBranding).length > 0 ? mergedBranding : undefined,
+        typography: Object.keys(mergedTypography).length > 0 ? mergedTypography : undefined,
+        effects: Object.keys(mergedEffects).length > 0 ? mergedEffects : undefined,
+        variants: mergedVariants,
+        socialLinks: mergedSocialLinks,
+        // Mantener compatibilidad con campos legacy
+        primaryColor: config.colors?.primary || config.primaryColor || existingConfig.primaryColor,
+        secondaryColor: config.colors?.secondary || config.secondaryColor || existingConfig.secondaryColor,
+        logo: config.branding?.logo || config.logo || existingConfig.logo,
       };
     }
 

@@ -314,26 +314,117 @@ export interface OpenStatusConfig {
   language?: "es" | "en";
 }
 
+/** Configuración de tipografía */
+export interface TypographyConfig {
+  headingFont?: string;   // Google Font name o "system"
+  bodyFont?: string;      // Google Font name o "system"
+  baseFontSize?: number;  // 14-18, default 16
+  scale?: number;         // 1.125-1.333, default 1.25
+}
+
+/** Configuración de efectos visuales */
+export interface EffectsConfig {
+  shadowIntensity?: number;  // 0-100, default 60
+  borderRadius?: 'sharp' | 'soft' | 'rounded' | 'pill';  // default 'rounded'
+  glassmorphism?: boolean;   // default false (solo para neuglass themes)
+  blurIntensity?: number;    // 8-24, default 16
+}
+
+/** Configuración de branding */
+export interface BrandingConfig {
+  logo?: string;           // URL del logo principal
+  logoDark?: string;       // URL del logo para modo oscuro
+  favicon?: string;        // URL del favicon
+  logoSize?: 'sm' | 'md' | 'lg';  // Tamaño del logo, default 'md'
+}
+
+/** Configuración de colores personalizados */
+export interface ColorsConfig {
+  primary?: string;        // Color principal de marca
+  secondary?: string;      // Color secundario
+  accent?: string;         // Color de acento/CTA
+  background?: string;     // Color de fondo (override del tema)
+  text?: string;           // Color de texto principal (override)
+}
+
+/** Fuentes de Google Fonts recomendadas */
+export const RECOMMENDED_FONTS = [
+  { value: 'system', label: 'Sistema (Por defecto)' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Poppins', label: 'Poppins' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Lato', label: 'Lato' },
+  { value: 'Playfair Display', label: 'Playfair Display' },
+  { value: 'Merriweather', label: 'Merriweather' },
+  { value: 'Raleway', label: 'Raleway' },
+  { value: 'Nunito', label: 'Nunito' },
+  { value: 'Work Sans', label: 'Work Sans' },
+] as const;
+
+/** Opciones de border radius */
+export const BORDER_RADIUS_OPTIONS = [
+  { value: 'sharp', label: 'Angular', css: '0.25rem' },
+  { value: 'soft', label: 'Suave', css: '0.5rem' },
+  { value: 'rounded', label: 'Redondeado', css: '1rem' },
+  { value: 'pill', label: 'Pastilla', css: '9999px' },
+] as const;
+
 /** Configuración base del website */
 export interface WebsiteConfig {
+  // === INFORMACIÓN DEL NEGOCIO ===
   businessName?: string;
   businessType?: string;
-  variants?: WebsiteVariants;
-  heroTitle?: string;
-  heroSubtitle?: string;
-  heroImage?: string;
   address?: string;
   phone?: string;
   email?: string;
+
+  // === CONTENIDO HERO ===
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImage?: string;
+
+  // === VARIANTES DE COMPONENTES ===
+  variants?: WebsiteVariants;
+
+  // === REDES SOCIALES ===
   socialLinks?: {
     instagram?: string;
     facebook?: string;
     tripadvisor?: string;
     whatsapp?: string;
+    tiktok?: string;
+    twitter?: string;
   };
+
+  // === GOOGLE BUSINESS ===
   googleRating?: number;
   totalReviews?: number;
+
+  // === ESTADO ABIERTO/CERRADO ===
   openStatus?: OpenStatusConfig;
+
+  // === PERSONALIZACIÓN VISUAL (NUEVO) ===
+
+  /** Colores personalizados */
+  colors?: ColorsConfig;
+
+  /** Colores legacy (compatibilidad) */
+  primaryColor?: string;
+  secondaryColor?: string;
+
+  /** Configuración de branding */
+  branding?: BrandingConfig;
+
+  /** Logo legacy (compatibilidad) */
+  logo?: string;
+
+  /** Configuración de tipografía */
+  typography?: TypographyConfig;
+
+  /** Efectos visuales */
+  effects?: EffectsConfig;
 }
 
 /** Website con config tipada para uso en templates */
