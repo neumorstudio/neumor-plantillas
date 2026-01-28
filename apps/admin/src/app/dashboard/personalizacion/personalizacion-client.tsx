@@ -236,8 +236,33 @@ export function PersonalizacionClient({
     if (colors.secondary) params.set("c_secondary", colors.secondary);
     if (colors.accent) params.set("c_accent", colors.accent);
 
+    // Add typography
+    if (typography.headingFont && typography.headingFont !== "system") {
+      params.set("t_heading", typography.headingFont);
+    }
+    if (typography.bodyFont && typography.bodyFont !== "system") {
+      params.set("t_body", typography.bodyFont);
+    }
+    if (typography.baseFontSize) {
+      params.set("t_size", String(typography.baseFontSize));
+    }
+
+    // Add effects
+    if (effects.shadowIntensity !== undefined) {
+      params.set("e_shadow", String(effects.shadowIntensity));
+    }
+    if (effects.borderRadius) {
+      params.set("e_radius", effects.borderRadius);
+    }
+    if (effects.glassmorphism) {
+      params.set("e_glass", "1");
+      if (effects.blurIntensity) {
+        params.set("e_blur", String(effects.blurIntensity));
+      }
+    }
+
     return `${baseUrl}?${params.toString()}`;
-  }, [domain, theme, variants, colors]);
+  }, [domain, theme, variants, colors, typography, effects]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {
@@ -611,12 +636,12 @@ export function PersonalizacionClient({
       {/* Main Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-[calc(100vh-180px)]">
         {/* Left Panel - Tabs */}
-        <div className="xl:col-span-1 flex xl:flex-col gap-1 overflow-x-auto xl:overflow-x-visible pb-2 xl:pb-0">
+        <div className="xl:col-span-1 flex xl:flex-col gap-2 overflow-x-auto xl:overflow-x-visible pb-2 xl:pb-0">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center xl:flex-col gap-2 xl:gap-1 p-3 rounded-xl transition-all whitespace-nowrap ${
+              className={`flex items-center xl:flex-col gap-2 xl:gap-1 p-3 xl:py-4 rounded-xl transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? "bg-[var(--accent)] text-white shadow-lg"
                   : "neumor-btn hover:bg-[var(--shadow-light)]"

@@ -239,5 +239,35 @@ export function applyPreviewParams(
     };
   }
 
+  // Tipografía desde preview
+  const headingPreview = url.searchParams.get('t_heading');
+  const bodyPreview = url.searchParams.get('t_body');
+  const sizePreview = url.searchParams.get('t_size');
+
+  if (headingPreview || bodyPreview || sizePreview) {
+    result.typography = {
+      ...result.typography,
+      ...(headingPreview && { headingFont: headingPreview }),
+      ...(bodyPreview && { bodyFont: bodyPreview }),
+      ...(sizePreview && { baseFontSize: parseInt(sizePreview, 10) }),
+    };
+  }
+
+  // Efectos desde preview
+  const shadowPreview = url.searchParams.get('e_shadow');
+  const radiusPreview = url.searchParams.get('e_radius');
+  const glassPreview = url.searchParams.get('e_glass');
+  const blurPreview = url.searchParams.get('e_blur');
+
+  if (shadowPreview || radiusPreview || glassPreview) {
+    result.effects = {
+      ...result.effects,
+      ...(shadowPreview && { shadowIntensity: parseInt(shadowPreview, 10) }),
+      ...(radiusPreview && { borderRadius: radiusPreview as EffectsConfig['borderRadius'] }),
+      ...(glassPreview === '1' && { glassmorphism: true }),
+      ...(blurPreview && { blurIntensity: parseInt(blurPreview, 10) }),
+    };
+  }
+
   return result;
 }
