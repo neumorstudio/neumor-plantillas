@@ -204,10 +204,11 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
     : '';
 
   // Generar imports de fuentes
+  // Nota: Google Fonts API espera espacios como '+', no como '%20'
   let fontImports = '';
   if (fonts.length > 0) {
     const fontParams = fonts
-      .map(font => `family=${encodeURIComponent(font)}:wght@400;500;600;700`)
+      .map(font => `family=${font.replace(/ /g, '+')}:wght@400;500;600;700`)
       .join('&');
     fontImports = `https://fonts.googleapis.com/css2?${fontParams}&display=swap`;
   }
