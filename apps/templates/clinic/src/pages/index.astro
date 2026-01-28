@@ -123,18 +123,24 @@ if (websiteData) {
     whatsapp: dbConfig.socialLinks?.whatsapp || defaultConfig.socialLinks.whatsapp,
   };
 
+  const resolvedBusinessName =
+    dbConfig.businessName ||
+    dbConfig.business_name ||
+    websiteData.clients?.business_name ||
+    defaultConfig.businessName;
+
   config = {
-    businessName: dbConfig.businessName || defaultConfig.businessName,
+    businessName: resolvedBusinessName,
     theme: websiteData.theme || defaultConfig.theme,
     variants: dbConfig.variants || defaultConfig.variants,
-    siteTitle: `${dbConfig.businessName || defaultConfig.businessName} | Clinica`,
+    siteTitle: `${resolvedBusinessName} | Clinica`,
     siteDescription: defaultConfig.siteDescription,
     heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
     heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,
     heroImage: dbConfig.heroImage || defaultConfig.heroImage,
     webhookUrl: defaultConfig.webhookUrl,
-    address: dbConfig.address || defaultConfig.address,
-    phone: dbConfig.phone || defaultConfig.phone,
+    address: dbConfig.address || websiteData.clients?.address || defaultConfig.address,
+    phone: dbConfig.phone || websiteData.clients?.phone || defaultConfig.phone,
     email: dbConfig.email || defaultConfig.email,
     socialLinks: mergedSocialLinks,
   };
@@ -197,7 +203,12 @@ const currentWebsiteId = websiteData?.id || websiteId || "";
 
     <Treatments />
 
-    <AppointmentForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+    <AppointmentForm
+      webhookUrl={config.webhookUrl}
+      websiteId={currentWebsiteId}
+      address={config.address}
+      phone={config.phone}
+    />
   </main>
 
   <FooterComponent

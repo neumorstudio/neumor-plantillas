@@ -38,6 +38,11 @@ export interface Website {
   theme: Theme;
   config: WebsiteConfig;
   is_active: boolean;
+  clients?: {
+    business_name?: string | null;
+    address?: string | null;
+    phone?: string | null;
+  } | null;
 }
 
 // Cliente Supabase (solo lectura para el template)
@@ -68,7 +73,7 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
   try {
     let query = supabase
       .from("websites")
-      .select("id, client_id, domain, theme, config, is_active");
+      .select("id, client_id, domain, theme, config, is_active, clients ( business_name, address, phone )");
 
     // Buscar por ID si esta disponible
     if (websiteId) {

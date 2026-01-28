@@ -158,7 +158,13 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
 
     <Services categories={serviceCategories} />
 
-    <AppointmentForm webhookUrl={webhookUrl} websiteId={tenant.id} currentUser={currentUser} />
+    <AppointmentForm
+      webhookUrl={webhookUrl}
+      websiteId={tenant.id}
+      currentUser={currentUser}
+      address={pageConfig.address}
+      phone={pageConfig.phone}
+    />
   </main>
 
   <FooterComponent
