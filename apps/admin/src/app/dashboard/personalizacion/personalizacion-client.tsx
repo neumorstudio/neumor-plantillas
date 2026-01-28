@@ -341,6 +341,7 @@ export function PersonalizacionClient({
     if (content.email) params.set("email", content.email);
 
     if (branding.logo) params.set("logo", branding.logo);
+    if (branding.logoSize) params.set("b_logoSize", branding.logoSize);
 
     return `${baseUrl}?${params.toString()}`;
   }, [domain, theme, variants, colors, typography, effects, content, branding]);

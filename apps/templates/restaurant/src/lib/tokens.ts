@@ -188,6 +188,16 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
     vars.push(`--glass-blur: ${blur}px;`);
   }
 
+  // === BRANDING ===
+  if (config.branding?.logoSize) {
+    const logoSizeMap: Record<string, string> = {
+      sm: '32px',
+      md: '40px',
+      lg: '56px',
+    };
+    vars.push(`--logo-height: ${logoSizeMap[config.branding.logoSize] || '40px'};`);
+  }
+
   // Generar CSS
   const cssVariables = vars.length > 0
     ? `:root {\n  ${vars.join('\n  ')}\n}`
@@ -266,6 +276,15 @@ export function applyPreviewParams(
       ...(radiusPreview && { borderRadius: radiusPreview as EffectsConfig['borderRadius'] }),
       ...(glassPreview === '1' && { glassmorphism: true }),
       ...(blurPreview && { blurIntensity: parseInt(blurPreview, 10) }),
+    };
+  }
+
+  // Branding desde preview
+  const logoSizePreview = url.searchParams.get('b_logoSize');
+  if (logoSizePreview) {
+    result.branding = {
+      ...result.branding,
+      logoSize: logoSizePreview as BrandingConfig['logoSize'],
     };
   }
 
