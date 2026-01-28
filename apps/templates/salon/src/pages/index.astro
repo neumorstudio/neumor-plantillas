@@ -139,8 +139,8 @@ if (websiteData) {
     heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,
     heroImage: dbConfig.heroImage || defaultConfig.heroImage,
     webhookUrl: defaultConfig.webhookUrl,
-    address: dbConfig.address || defaultConfig.address,
-    phone: dbConfig.phone || defaultConfig.phone,
+    address: dbConfig.address || websiteData.clients?.address || defaultConfig.address,
+    phone: dbConfig.phone || websiteData.clients?.phone || defaultConfig.phone,
     email: dbConfig.email || defaultConfig.email,
     socialLinks: mergedSocialLinks,
   };
