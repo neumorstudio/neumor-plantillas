@@ -217,7 +217,12 @@ const serviceCategories = serviceCatalog.length
 
     <Services categories={serviceCategories} />
 
-    <AppointmentForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+    <AppointmentForm
+      webhookUrl={config.webhookUrl}
+      websiteId={currentWebsiteId}
+      address={config.address}
+      phone={config.phone}
+    />
   </main>
 
   <FooterComponent

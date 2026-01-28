@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     } = body as {
       clientId: string;
       websiteId: string;
-      businessData: { business_name: string; phone?: string | null };
+      businessData: { business_name: string; phone?: string | null; address?: string | null };
       notificationSettings: Record<string, unknown>;
       orderSettings?: { pickup_start_time: string; pickup_end_time: string };
       restaurantConfig?: Record<string, unknown>;
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       .update({
         business_name: businessData.business_name,
         phone: businessData.phone || null,
+        address: businessData.address || null,
       })
       .eq("id", clientId);
 
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
         ...(website.config || {}),
         businessName: businessData.business_name,
         phone: businessData.phone || null,
+        address: businessData.address || null,
       };
 
       if (restaurantConfig && typeof restaurantConfig === "object") {

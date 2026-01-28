@@ -8,6 +8,7 @@ interface ClientData {
   business_name: string;
   business_type: string;
   phone: string | null;
+  address: string | null;
 }
 
 interface NotificationSettings {
@@ -74,9 +75,13 @@ export function ConfiguracionClient({
     String(value || "local").toLowerCase() === "stripe" ? "stripe" : "local";
 
   // Business data state
+  const initialAddress =
+    typeof baseConfig.address === "string" ? baseConfig.address : "";
+
   const [businessData, setBusinessData] = useState({
     business_name: client.business_name,
     phone: client.phone || "",
+    address: client.address || initialAddress,
   });
 
   // Notification settings state
@@ -249,6 +254,24 @@ export function ConfiguracionClient({
                   }))
                 }
                 placeholder="+34 600 000 000"
+                className="neumor-input w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Direccion
+              </label>
+              <input
+                type="text"
+                value={businessData.address}
+                onChange={(e) =>
+                  setBusinessData((prev) => ({
+                    ...prev,
+                    address: e.target.value,
+                  }))
+                }
+                placeholder="Calle Principal 123, Ciudad"
                 className="neumor-input w-full"
               />
             </div>
