@@ -1,9 +1,9 @@
 # NeumorStudio - Documentacion de Base de Datos
 
-> **Ultima actualizacion:** 27 Enero 2026
+> **Ultima actualizacion:** 28 Enero 2026
 > **Motor:** PostgreSQL (Supabase)
 > **Proyecto Supabase:** neumor-plantillas (jekrqkdvgcwruhghtgkj)
-> **Migraciones:** 50 archivos en `packages/supabase/migrations/`
+> **Migraciones:** 55 archivos en `packages/supabase/migrations/`
 > **Tablas:** 37 tablas en schema public
 
 ## Tabla de Contenidos
@@ -228,10 +228,11 @@ Almacena los clientes de NeumorStudio (duenos de negocios).
 | `business_name` | TEXT | NOT NULL | Nombre del negocio |
 | `business_type` | TEXT | NOT NULL, CHECK | Tipo de negocio (ver enum) |
 | `phone` | TEXT | - | Telefono de contacto |
+| `address` | TEXT | - | Direccion del negocio |
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
 | `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
 
-**business_type CHECK:** `restaurant`, `clinic`, `salon`, `shop`, `fitness`, `realestate`, `repairs`
+**business_type CHECK:** `restaurant`, `clinic`, `salon`, `shop`, `fitness`, `realestate`, `repairs`, `gym`, `store`
 
 ---
 
@@ -1197,6 +1198,8 @@ Marca paquetes expirados automaticamente (para ejecutar periodicamente).
 CREATE INDEX idx_clients_auth_user_id ON clients(auth_user_id);
 CREATE INDEX idx_websites_domain ON websites(domain);
 CREATE INDEX idx_websites_client_id ON websites(client_id);
+CREATE INDEX idx_websites_subdomain ON websites(subdomain) WHERE subdomain IS NOT NULL;
+CREATE INDEX idx_websites_custom_domain ON websites(custom_domain) WHERE custom_domain IS NOT NULL;
 ```
 
 ### Bookings
@@ -1334,6 +1337,11 @@ CREATE INDEX idx_reviews_location ON google_reviews_cache(location_id);
 | 0048 | `salon_services.sql` | Categorias y servicios de salon |
 | 0049 | `fix_fitness_sections.sql` | Fix secciones visibles para fitness |
 | 0050 | `add_calendario_fitness.sql` | Anadir calendario a fitness |
+| 0051 | `public_read_service_catalog.sql` | RLS lectura publica de service_categories y service_items |
+| 0052 | `add_gym_store_business_types.sql` | Anadir tipos de negocio 'gym' y 'store' al CHECK constraint |
+| 0053 | `public_clients_business_type.sql` | RLS lectura publica de business_type en clients |
+| 0054 | `website_domains_indexes.sql` | Indices para subdomain y custom_domain en websites |
+| 0055 | `clients_address.sql` | Columna address en tabla clients |
 
 ---
 
