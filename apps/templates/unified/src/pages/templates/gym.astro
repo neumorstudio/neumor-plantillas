@@ -83,6 +83,7 @@ const pageConfig = {
     facebook: "#",
     youtube: "#",
   },
+  schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
 };
 ---
 
@@ -107,10 +108,11 @@ const pageConfig = {
   </main>
 
   <FooterComponent
-    gymName={pageConfig.gymName}
+    businessName={pageConfig.gymName}
     address={pageConfig.address}
     phone={pageConfig.phone}
     email={pageConfig.email}
     socialLinks={pageConfig.socialLinks}
+    schedule={pageConfig.schedule}
   />
 </Layout>

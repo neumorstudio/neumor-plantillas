@@ -9,6 +9,11 @@ interface Props {
     facebook?: string;
     whatsapp?: string;
   };
+  schedule?: {
+    weekdays?: string;
+    saturday?: string;
+    sunday?: string;
+  };
 }
 
 const {
@@ -17,6 +22,11 @@ const {
   phone = "+34 912 345 678",
   email = "info@restaurante.com",
   socialLinks = {},
+  schedule = {
+    weekdays: "Lunes - Viernes: 07:00 - 22:00",
+    saturday: "Sabado: 08:00 - 20:00",
+    sunday: "Domingo: 09:00 - 14:00",
+  },
 } = Astro.props;
 
 const currentYear = new Date().getFullYear();
@@ -44,9 +54,9 @@ const currentYear = new Date().getFullYear();
       <div class="footer-hours">
         <h4>Horario</h4>
         <ul>
-          <li>Lunes - Viernes: 10:00 - 20:00</li>
-          <li>Sabado: 10:00 - 14:00</li>
-          <li>Domingo: Cerrado</li>
+          {schedule.weekdays && <li>{schedule.weekdays}</li>}
+          {schedule.saturday && <li>{schedule.saturday}</li>}
+          {schedule.sunday && <li>{schedule.sunday}</li>}
         </ul>
       </div>
 

@@ -398,6 +398,13 @@ export interface WebsiteConfig {
     twitter?: string;
   };
 
+  // === HORARIO ===
+  schedule?: {
+    weekdays?: string;
+    saturday?: string;
+    sunday?: string;
+  };
+
   // === GOOGLE BUSINESS ===
   googleRating?: number;
   totalReviews?: number;

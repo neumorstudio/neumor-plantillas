@@ -156,6 +156,7 @@ const pageConfig = {
     facebook: "#",
     whatsapp: "#",
   },
+  schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
 };
 
 const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
@@ -197,6 +198,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
     address={pageConfig.address}
     phone={pageConfig.phone}
     email={pageConfig.email}
+    schedule={pageConfig.schedule}
     socialLinks={pageConfig.socialLinks}
   />
 </Layout>

@@ -83,6 +83,7 @@ const pageConfig = {
     facebook: "#",
     whatsapp: "#",
   },
+  schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
 };
 ---
 
@@ -112,5 +113,6 @@ const pageConfig = {
     phone={pageConfig.phone}
     email={pageConfig.email}
     socialLinks={pageConfig.socialLinks}
+    schedule={pageConfig.schedule}
   />
 </Layout>

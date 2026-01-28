@@ -47,6 +47,11 @@ interface ContentConfig {
     whatsapp?: string;
     tripadvisor?: string;
   };
+  schedule?: {
+    weekdays?: string;
+    saturday?: string;
+    sunday?: string;
+  };
 }
 
 // ============================================
@@ -287,6 +292,11 @@ export function PersonalizacionClient({
     phone: initialConfig.phone || "",
     email: initialConfig.email || "",
     socialLinks: initialConfig.socialLinks || {},
+    schedule: initialConfig.schedule || {
+      weekdays: "Lunes - Viernes: 10:00 - 20:00",
+      saturday: "Sabado: 10:00 - 14:00",
+      sunday: "Domingo: Cerrado",
+    },
   });
 
   const [saving, setSaving] = useState(false);
@@ -410,7 +420,7 @@ export function PersonalizacionClient({
     }
   }, []);
 
-  const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"]) => {
+  const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => {
     setContent(prev => ({ ...prev, [key]: value }));
   }, []);
 
@@ -1013,6 +1023,94 @@ export function PersonalizacionClient({
                       whatsapp: e.target.value
                     })}
                     placeholder="https://wa.me/34600000000"
+                    className="neumor-input w-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Schedule - Collapsible on mobile */}
+            {isMobile ? (
+              <CollapsibleSection title="Horario">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Lunes - Viernes</label>
+                  <input
+                    type="text"
+                    value={content.schedule?.weekdays || ""}
+                    onChange={(e) => handleContentChange("schedule", {
+                      ...content.schedule,
+                      weekdays: e.target.value
+                    })}
+                    placeholder="10:00 - 20:00"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Sabado</label>
+                  <input
+                    type="text"
+                    value={content.schedule?.saturday || ""}
+                    onChange={(e) => handleContentChange("schedule", {
+                      ...content.schedule,
+                      saturday: e.target.value
+                    })}
+                    placeholder="10:00 - 14:00"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Domingo</label>
+                  <input
+                    type="text"
+                    value={content.schedule?.sunday || ""}
+                    onChange={(e) => handleContentChange("schedule", {
+                      ...content.schedule,
+                      sunday: e.target.value
+                    })}
+                    placeholder="Cerrado"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+              </CollapsibleSection>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Horario</h3>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Lunes - Viernes</label>
+                  <input
+                    type="text"
+                    value={content.schedule?.weekdays || ""}
+                    onChange={(e) => handleContentChange("schedule", {
+                      ...content.schedule,
+                      weekdays: e.target.value
+                    })}
+                    placeholder="10:00 - 20:00"
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Sabado</label>
+                  <input
+                    type="text"
+                    value={content.schedule?.saturday || ""}
+                    onChange={(e) => handleContentChange("schedule", {
+                      ...content.schedule,
+                      saturday: e.target.value
+                    })}
+                    placeholder="10:00 - 14:00"
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Domingo</label>
+                  <input
+                    type="text"
+                    value={content.schedule?.sunday || ""}
+                    onChange={(e) => handleContentChange("schedule", {
+                      ...content.schedule,
+                      sunday: e.target.value
+                    })}
+                    placeholder="Cerrado"
                     className="neumor-input w-full"
                   />
                 </div>
