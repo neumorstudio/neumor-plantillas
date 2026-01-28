@@ -41,6 +41,7 @@ interface AppointmentData {
   telefono: string;
   servicio: string;
   profesional?: string;
+  professional_id?: string;
   fecha: string;
   hora: string;
   notas?: string;
@@ -53,6 +54,7 @@ const allowedAppointmentKeys = new Set([
   "telefono",
   "servicio",
   "profesional",
+  "professional_id",
   "fecha",
   "hora",
   "notas",
@@ -118,6 +120,8 @@ export async function POST(request: NextRequest) {
       typeof body.hora !== "string" ||
       (body.email && typeof body.email !== "string") ||
       (body.profesional && typeof body.profesional !== "string") ||
+      (body.professional_id && typeof body.professional_id !== "string") ||
+      (body.professional_id && !isValidUuid(body.professional_id)) ||
       (body.notas && typeof body.notas !== "string")
     ) {
       return NextResponse.json(
@@ -211,6 +215,7 @@ export async function POST(request: NextRequest) {
         notes: noteParts.join(" | ").slice(0, 1000) || null,
         status: "pending",
         source: "website",
+        professional_id: body.professional_id || null,
       })
       .select()
       .single();

@@ -1863,29 +1863,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     let bookingSuccess = false;
     let lastError = "";
 
-    if (supabaseUrl && supabaseKey && websiteId) {
-      try {
-        const response = await fetch(`${supabaseUrl}/rest/v1/bookings`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify(data),
-        });
-        if (response.ok) {
-          bookingSuccess = true;
-        } else {
-          const errorText = await response.text();
-          lastError = errorText || `Supabase error ${response.status}`;
-        }
-      } catch {
-        lastError = "Error de red al guardar en Supabase.";
-      }
-    }
-
     if (webhookUrl) {
       // Datos con formato esperado por la API /api/citas
       const webhookData = {
@@ -1895,6 +1872,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         telefono: rawData.phone,
         servicio: selectedServices.map(s => s.name).join(", "),
         profesional: getSelectedProfessionalName() || undefined,
+        professional_id: selectedProfessionalId || undefined,
         fecha: rawData.date,
         hora: rawData.time,
         notas: rawData.notes || undefined,
@@ -1907,15 +1885,15 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         });
         if (response.ok) {
           bookingSuccess = true;
-        } else if (!lastError) {
+        } else {
           const errorText = await response.text();
-          lastError = errorText || `Webhook error ${response.status}`;
+          lastError = errorText || `Error ${response.status}`;
         }
       } catch {
-        if (!lastError) {
-          lastError = "Error de red al enviar webhook.";
-        }
+        lastError = "Error de red al enviar la solicitud.";
       }
+    } else {
+      lastError = "No hay endpoint configurado para enviar la cita.";
     }
 
     if (bookingSuccess) {
