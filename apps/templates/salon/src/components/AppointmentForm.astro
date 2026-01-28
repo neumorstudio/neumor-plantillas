@@ -17,6 +17,7 @@ interface Props {
   currentUser?: AuthUser | null;
   address?: string;
   phone?: string;
+  email?: string;
 }
 
 const {
@@ -27,6 +28,7 @@ const {
   currentUser = null,
   address = "Calle Principal 123",
   phone = "+34 912 345 678",
+  email = "contacto@tusalon.com",
 } = Astro.props;
 
 const serviceCatalog = await getServiceCatalog(websiteId);
@@ -109,6 +111,16 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
               </svg>
             </div>
             <span>{phone}</span>
+          </div>
+
+          <div class="contact-item">
+            <div class="contact-icon neumor-inset">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16v16H4z"></path>
+                <path d="m22 6-10 7L2 6"></path>
+              </svg>
+            </div>
+            <span>{email}</span>
           </div>
 
           <div class="contact-item">

@@ -42,6 +42,7 @@ export interface Website {
     business_name?: string | null;
     address?: string | null;
     phone?: string | null;
+    email?: string | null;
   } | null;
 }
 
@@ -73,7 +74,7 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
   try {
     let query = supabase
       .from("websites")
-      .select("id, client_id, domain, theme, config, is_active, clients ( business_name, address, phone )");
+      .select("id, client_id, domain, theme, config, is_active, clients ( business_name, address, phone, email )");
 
     // Buscar por ID si esta disponible
     if (websiteId) {

@@ -141,7 +141,7 @@ if (websiteData) {
     webhookUrl: defaultConfig.webhookUrl,
     address: dbConfig.address || websiteData.clients?.address || defaultConfig.address,
     phone: dbConfig.phone || websiteData.clients?.phone || defaultConfig.phone,
-    email: dbConfig.email || defaultConfig.email,
+    email: dbConfig.email || websiteData.clients?.email || defaultConfig.email,
     socialLinks: mergedSocialLinks,
   };
 
@@ -222,6 +222,7 @@ const serviceCategories = serviceCatalog.length
       websiteId={currentWebsiteId}
       address={config.address}
       phone={config.phone}
+      email={config.email}
     />
   </main>
 
