@@ -153,6 +153,7 @@ const pageConfig = {
     tripadvisor: "#",
   },
   schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
+  features: config.features as { title?: string; subtitle?: string; items?: { icon: string; title: string; description: string }[] } | undefined,
 };
 
 const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
@@ -175,7 +176,11 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
       backgroundImage={pageConfig.heroImage}
     />
 
-    <Features />
+    <Features
+      title={pageConfig.features?.title}
+      subtitle={pageConfig.features?.subtitle}
+      features={pageConfig.features?.items}
+    />
 
     <Menu categories={menuCategories} />
 

@@ -84,6 +84,7 @@ const pageConfig = {
     whatsapp: "#",
   },
   schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
+  features: config.features as { title?: string; subtitle?: string; items?: { icon: string; title: string; description: string }[] } | undefined,
 };
 ---
 
@@ -102,7 +103,11 @@ const pageConfig = {
       backgroundImage={pageConfig.heroImage}
     />
 
-    <Features />
+    <Features
+      title={pageConfig.features?.title}
+      subtitle={pageConfig.features?.subtitle}
+      features={pageConfig.features?.items}
+    />
 
     <Products />
   </main>

@@ -32,7 +32,7 @@ interface Props {
   initialConfig: WebsiteConfig;
 }
 
-type TabId = "temas" | "colores" | "tipografia" | "secciones" | "branding" | "efectos" | "contenido";
+type TabId = "temas" | "colores" | "tipografia" | "secciones" | "branding" | "efectos" | "contenido" | "features";
 
 interface ContentConfig {
   heroTitle?: string;
@@ -53,6 +53,39 @@ interface ContentConfig {
     sunday?: string;
   };
 }
+
+interface FeatureItemConfig {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+}
+
+interface FeaturesConfig {
+  title: string;
+  subtitle: string;
+  items: FeatureItemConfig[];
+}
+
+// Iconos predefinidos para features
+const FEATURE_ICONS = [
+  { id: "scissors", label: "Tijeras", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>` },
+  { id: "sparkles", label: "Estrellas", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l1.2 3.2L9 7l-2.8 1.2L5 12l-1.2-3.8L1 7l2.8-.8L5 3z"/><path d="M16 5l1.8 4.6L22 11l-4.2 1.4L16 17l-1.8-4.6L10 11l4.2-1.4L16 5z"/></svg>` },
+  { id: "calendar", label: "Calendario", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 15l2.5 2.5L16 12"/></svg>` },
+  { id: "heart", label: "Corazon", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` },
+  { id: "star", label: "Estrella", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` },
+  { id: "clock", label: "Reloj", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>` },
+  { id: "check", label: "Check", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` },
+  { id: "shield", label: "Escudo", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>` },
+  { id: "award", label: "Premio", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>` },
+  { id: "users", label: "Usuarios", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
+  { id: "home", label: "Casa", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
+  { id: "tool", label: "Herramienta", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>` },
+  { id: "truck", label: "Envio", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>` },
+  { id: "coffee", label: "Cafe", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>` },
+  { id: "gift", label: "Regalo", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>` },
+  { id: "phone", label: "Telefono", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>` },
+];
 
 // ============================================
 // THEME DATA
@@ -214,6 +247,7 @@ const tabs: { id: TabId; label: string; shortLabel: string; icon: React.ReactNod
   { id: "branding", label: "Marca", shortLabel: "Logo", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
   { id: "efectos", label: "Efectos", shortLabel: "FX", icon: <SparklesIcon /> },
   { id: "contenido", label: "Contenido", shortLabel: "Info", icon: <TextIcon /> },
+  { id: "features", label: "Caracteristicas", shortLabel: "Features", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
 ];
 
 // ============================================
@@ -297,6 +331,18 @@ export function PersonalizacionClient({
       saturday: "Sabado: 10:00 - 14:00",
       sunday: "Domingo: Cerrado",
     },
+  });
+
+  const defaultFeatureItems: FeatureItemConfig[] = [
+    { id: "1", icon: "scissors", title: "Servicio 1", description: "Descripcion del primer servicio." },
+    { id: "2", icon: "sparkles", title: "Servicio 2", description: "Descripcion del segundo servicio." },
+    { id: "3", icon: "calendar", title: "Servicio 3", description: "Descripcion del tercer servicio." },
+  ];
+
+  const [features, setFeatures] = useState<FeaturesConfig>({
+    title: initialConfig.features?.title || "Nuestros Servicios",
+    subtitle: initialConfig.features?.subtitle || "Lo mejor para ti",
+    items: (initialConfig.features?.items as FeatureItemConfig[]) || defaultFeatureItems,
   });
 
   const [saving, setSaving] = useState(false);
@@ -459,6 +505,32 @@ export function PersonalizacionClient({
     setContent(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  const handleFeaturesTitleChange = useCallback((key: "title" | "subtitle", value: string) => {
+    setFeatures(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleFeatureItemChange = useCallback((id: string, key: keyof FeatureItemConfig, value: string) => {
+    setFeatures(prev => ({
+      ...prev,
+      items: prev.items.map(item => item.id === id ? { ...item, [key]: value } : item)
+    }));
+  }, []);
+
+  const handleAddFeatureItem = useCallback(() => {
+    const newId = String(Date.now());
+    setFeatures(prev => ({
+      ...prev,
+      items: [...prev.items, { id: newId, icon: "star", title: "Nuevo servicio", description: "Descripcion del servicio" }]
+    }));
+  }, []);
+
+  const handleRemoveFeatureItem = useCallback((id: string) => {
+    setFeatures(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== id)
+    }));
+  }, []);
+
   const handleReset = useCallback(() => {
     if (confirm("Esto restaurara todos los valores por defecto. ¿Continuar?")) {
       setTheme("light");
@@ -482,6 +554,16 @@ export function PersonalizacionClient({
         typography,
         effects,
         branding,
+        features: {
+          title: features.title,
+          subtitle: features.subtitle,
+          items: features.items.map(item => ({
+            id: item.id,
+            icon: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || item.icon,
+            title: item.title,
+            description: item.description,
+          })),
+        },
         ...content,
       };
 
@@ -1193,6 +1275,125 @@ export function PersonalizacionClient({
                 </div>
               </div>
             )}
+          </div>
+        );
+
+      case "features":
+        return (
+          <div className="space-y-6">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Personaliza la seccion de caracteristicas/servicios.
+            </p>
+
+            {/* Section Title & Subtitle */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Titulo de la Seccion</label>
+                <input
+                  type="text"
+                  value={features.title}
+                  onChange={(e) => handleFeaturesTitleChange("title", e.target.value)}
+                  placeholder="Nuestros Servicios"
+                  className="neumor-input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Subtitulo</label>
+                <input
+                  type="text"
+                  value={features.subtitle}
+                  onChange={(e) => handleFeaturesTitleChange("subtitle", e.target.value)}
+                  placeholder="Lo mejor para ti"
+                  className="neumor-input w-full"
+                />
+              </div>
+            </div>
+
+            {/* Feature Items */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-sm">Items ({features.items.length})</h3>
+                <button
+                  type="button"
+                  onClick={handleAddFeatureItem}
+                  className="neumor-btn px-3 py-2 text-sm flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Anadir
+                </button>
+              </div>
+
+              {features.items.map((item, index) => (
+                <div key={item.id} className="neumor-inset p-4 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[var(--text-secondary)]">Item {index + 1}</span>
+                    {features.items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFeatureItem(item.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        title="Eliminar"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Icon Selector */}
+                  <div>
+                    <label className="block text-xs font-medium mb-2 text-[var(--text-secondary)]">Icono</label>
+                    <div className="grid grid-cols-8 gap-1">
+                      {FEATURE_ICONS.map((icon) => (
+                        <button
+                          key={icon.id}
+                          type="button"
+                          onClick={() => handleFeatureItemChange(item.id, "icon", icon.id)}
+                          className={`p-2 rounded-lg transition-all ${
+                            item.icon === icon.id
+                              ? "neumor-inset bg-[var(--accent)] text-white"
+                              : "neumor-raised hover:scale-105"
+                          }`}
+                          title={icon.label}
+                        >
+                          <div
+                            className="w-5 h-5 [&>svg]:w-full [&>svg]:h-full"
+                            dangerouslySetInnerHTML={{ __html: icon.svg }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-[var(--text-secondary)]">Titulo</label>
+                    <input
+                      type="text"
+                      value={item.title}
+                      onChange={(e) => handleFeatureItemChange(item.id, "title", e.target.value)}
+                      placeholder="Nombre del servicio"
+                      className="neumor-input w-full text-sm"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-[var(--text-secondary)]">Descripcion</label>
+                    <textarea
+                      value={item.description}
+                      onChange={(e) => handleFeatureItemChange(item.id, "description", e.target.value)}
+                      placeholder="Breve descripcion..."
+                      className="neumor-input w-full text-sm resize-none"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         );
 

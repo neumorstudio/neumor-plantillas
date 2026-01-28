@@ -371,6 +371,15 @@ export const BORDER_RADIUS_OPTIONS = [
   { value: 'pill', label: 'Pastilla', css: '9999px' },
 ] as const;
 
+/** Item de feature/característica */
+export interface FeatureItem {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  link?: string;
+}
+
 /** Configuración base del website */
 export interface WebsiteConfig {
   // === INFORMACIÓN DEL NEGOCIO ===
@@ -403,6 +412,13 @@ export interface WebsiteConfig {
     weekdays?: string;
     saturday?: string;
     sunday?: string;
+  };
+
+  // === FEATURES/CARACTERÍSTICAS ===
+  features?: {
+    title?: string;
+    subtitle?: string;
+    items?: FeatureItem[];
   };
 
   // === GOOGLE BUSINESS ===
