@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { ColorPicker, FontSelector, SliderControl, OptionSelector } from "@/components/customization";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
   Theme,
   WebsiteConfig,
@@ -173,6 +174,15 @@ function MobileIcon() {
 function TextIcon() {
   return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>;
 }
+function ChevronDownIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
+}
+function ChevronUpIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
+}
+function SaveIcon() {
+  return <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>;
+}
 
 function getThemeIcon(icon: string) {
   switch (icon) {
@@ -191,15 +201,49 @@ function getThemeIcon(icon: string) {
 // TABS
 // ============================================
 
-const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: "temas", label: "Temas", icon: <PaletteIcon /> },
-  { id: "colores", label: "Colores", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /></svg> },
-  { id: "tipografia", label: "Tipografia", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" /></svg> },
-  { id: "secciones", label: "Secciones", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg> },
-  { id: "branding", label: "Marca", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
-  { id: "efectos", label: "Efectos", icon: <SparklesIcon /> },
-  { id: "contenido", label: "Contenido", icon: <TextIcon /> },
+const tabs: { id: TabId; label: string; shortLabel: string; icon: React.ReactNode }[] = [
+  { id: "temas", label: "Temas", shortLabel: "Tema", icon: <PaletteIcon /> },
+  { id: "colores", label: "Colores", shortLabel: "Color", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /></svg> },
+  { id: "tipografia", label: "Tipografia", shortLabel: "Texto", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" /></svg> },
+  { id: "secciones", label: "Secciones", shortLabel: "Layout", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg> },
+  { id: "branding", label: "Marca", shortLabel: "Logo", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> },
+  { id: "efectos", label: "Efectos", shortLabel: "FX", icon: <SparklesIcon /> },
+  { id: "contenido", label: "Contenido", shortLabel: "Info", icon: <TextIcon /> },
 ];
+
+// ============================================
+// COLLAPSIBLE SECTION COMPONENT
+// ============================================
+
+function CollapsibleSection({
+  title,
+  children,
+  defaultOpen = false
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border border-[var(--shadow-dark)] rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 bg-[var(--shadow-light)] hover:bg-[var(--shadow-dark)] transition-colors"
+      >
+        <span className="font-medium text-sm">{title}</span>
+        {isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+      </button>
+      {isOpen && (
+        <div className="p-4 space-y-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ============================================
 // MAIN COMPONENT
@@ -211,6 +255,8 @@ export function PersonalizacionClient({
   initialTheme,
   initialConfig,
 }: Props) {
+  const isMobile = useIsMobile();
+
   // State
   const [activeTab, setActiveTab] = useState<TabId>("temas");
   const [theme, setTheme] = useState<Theme>(initialTheme);
@@ -247,6 +293,7 @@ export function PersonalizacionClient({
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [previewExpanded, setPreviewExpanded] = useState(false);
 
   // Build preview URL
   const previewUrl = useMemo(() => {
@@ -255,17 +302,14 @@ export function PersonalizacionClient({
     params.set("preview", "1");
     params.set("theme", theme);
 
-    // Add variants
     Object.entries(variants).forEach(([key, value]) => {
       params.set(`v_${key}`, value);
     });
 
-    // Add custom colors
     if (colors.primary) params.set("c_primary", colors.primary);
     if (colors.secondary) params.set("c_secondary", colors.secondary);
     if (colors.accent) params.set("c_accent", colors.accent);
 
-    // Add typography
     if (typography.headingFont && typography.headingFont !== "system") {
       params.set("t_heading", typography.headingFont);
     }
@@ -276,7 +320,6 @@ export function PersonalizacionClient({
       params.set("t_size", String(typography.baseFontSize));
     }
 
-    // Add effects
     if (effects.shadowIntensity !== undefined) {
       params.set("e_shadow", String(effects.shadowIntensity));
     }
@@ -290,7 +333,6 @@ export function PersonalizacionClient({
       }
     }
 
-    // Add content
     if (content.heroTitle) params.set("heroTitle", content.heroTitle);
     if (content.heroSubtitle) params.set("heroSubtitle", content.heroSubtitle);
     if (content.heroImage) params.set("heroImage", content.heroImage);
@@ -298,7 +340,6 @@ export function PersonalizacionClient({
     if (content.phone) params.set("phone", content.phone);
     if (content.email) params.set("email", content.email);
 
-    // Add branding
     if (branding.logo) params.set("logo", branding.logo);
 
     return `${baseUrl}?${params.toString()}`;
@@ -364,7 +405,6 @@ export function PersonalizacionClient({
       setMessage({ type: "error", text: "Error de conexion al subir el logo" });
     } finally {
       setUploading(false);
-      // Reset input
       e.target.value = "";
     }
   }, []);
@@ -412,7 +452,7 @@ export function PersonalizacionClient({
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Personalizacion guardada correctamente" });
+        setMessage({ type: "success", text: "Guardado correctamente" });
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: "error", text: data.error || "Error al guardar" });
@@ -431,14 +471,14 @@ export function PersonalizacionClient({
         return (
           <div className="space-y-4">
             <p className="text-sm text-[var(--text-secondary)]">
-              Selecciona un tema base para tu web. Podras personalizarlo mas en las otras pestanas.
+              Selecciona un tema base para tu web.
             </p>
             <div className="grid grid-cols-2 gap-3">
               {themes.map((t) => (
                 <button
                   key={t.value}
                   onClick={() => setTheme(t.value)}
-                  className={`relative p-3 rounded-xl text-left transition-all ${
+                  className={`relative p-3 md:p-4 rounded-xl text-left transition-all min-h-[80px] ${
                     theme === t.value
                       ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
                       : "hover:shadow-md hover:scale-[1.01]"
@@ -477,23 +517,23 @@ export function PersonalizacionClient({
         return (
           <div className="space-y-6">
             <p className="text-sm text-[var(--text-secondary)]">
-              Personaliza los colores de tu marca. Estos colores se aplicaran sobre el tema seleccionado.
+              Personaliza los colores de tu marca.
             </p>
             <ColorPicker
               label="Color Principal"
-              description="El color principal de tu marca, usado en elementos destacados"
+              description="Color principal de tu marca"
               value={colors.primary || defaultColors.primary!}
               onChange={(v) => handleColorChange("primary", v)}
             />
             <ColorPicker
               label="Color Secundario"
-              description="Usado para acentos y elementos complementarios"
+              description="Para acentos y elementos complementarios"
               value={colors.secondary || defaultColors.secondary!}
               onChange={(v) => handleColorChange("secondary", v)}
             />
             <ColorPicker
               label="Color de Acento"
-              description="Para botones de accion y llamadas a la accion"
+              description="Para botones y llamadas a la accion"
               value={colors.accent || defaultColors.accent!}
               onChange={(v) => handleColorChange("accent", v)}
             />
@@ -504,38 +544,60 @@ export function PersonalizacionClient({
         return (
           <div className="space-y-6">
             <p className="text-sm text-[var(--text-secondary)]">
-              Elige las fuentes y tamanos de texto para tu web.
+              Elige las fuentes para tu web.
             </p>
             <FontSelector
               label="Fuente de Titulos"
-              description="Se usa en titulos y encabezados"
+              description="Para titulos y encabezados"
               value={typography.headingFont || "system"}
               onChange={(v) => handleTypographyChange("headingFont", v)}
             />
             <FontSelector
               label="Fuente de Texto"
-              description="Se usa en parrafos y texto general"
+              description="Para parrafos y texto general"
               value={typography.bodyFont || "system"}
               onChange={(v) => handleTypographyChange("bodyFont", v)}
             />
-            <SliderControl
-              label="Tamano Base"
-              description="Tamano del texto base en pixels"
-              value={typography.baseFontSize || 16}
-              onChange={(v) => handleTypographyChange("baseFontSize", v)}
-              min={14}
-              max={20}
-              step={1}
-              unit="px"
-            />
+            <div className="space-y-2">
+              <SliderControl
+                label="Tamano Base"
+                description="Tamano del texto base"
+                value={typography.baseFontSize || 16}
+                onChange={(v) => handleTypographyChange("baseFontSize", v)}
+                min={14}
+                max={20}
+                step={1}
+                unit="px"
+              />
+              {/* Botones +/- para ajuste fino en movil */}
+              <div className="flex items-center justify-center gap-4 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => handleTypographyChange("baseFontSize", Math.max(14, (typography.baseFontSize || 16) - 1))}
+                  className="neumor-btn w-12 h-12 flex items-center justify-center text-xl font-bold"
+                >
+                  −
+                </button>
+                <span className="text-lg font-medium w-16 text-center">
+                  {typography.baseFontSize || 16}px
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleTypographyChange("baseFontSize", Math.min(20, (typography.baseFontSize || 16) + 1))}
+                  className="neumor-btn w-12 h-12 flex items-center justify-center text-xl font-bold"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
         );
 
       case "secciones":
         return (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <p className="text-sm text-[var(--text-secondary)]">
-              Elige como se muestran las diferentes secciones de tu web.
+              Elige como se muestran las secciones.
             </p>
             {(Object.keys(variantOptions) as (keyof Variants)[]).map((key) => (
               <div key={key}>
@@ -549,7 +611,7 @@ export function PersonalizacionClient({
                 <select
                   value={variants[key]}
                   onChange={(e) => handleVariantChange(key, e.target.value)}
-                  className="neumor-input w-full"
+                  className="neumor-input w-full h-12 text-base"
                 >
                   {variantOptions[key].map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -566,16 +628,13 @@ export function PersonalizacionClient({
         return (
           <div className="space-y-6">
             <p className="text-sm text-[var(--text-secondary)]">
-              Configura el logo y elementos de marca de tu negocio.
+              Configura el logo de tu negocio.
             </p>
 
             {/* Upload Logo */}
             <div>
               <label className="block text-sm font-medium mb-2">Subir Logo</label>
-              <p className="text-xs text-[var(--text-secondary)] mb-2">
-                Sube tu logo desde tu dispositivo (PNG, JPG, SVG - max 2MB)
-              </p>
-              <label className={`flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--shadow-dark)] rounded-xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              <label className={`flex items-center justify-center gap-3 p-6 border-2 border-dashed border-[var(--shadow-dark)] rounded-xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all min-h-[80px] ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
@@ -583,24 +642,24 @@ export function PersonalizacionClient({
                   className="hidden"
                   disabled={uploading}
                 />
-                <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span className="text-sm text-[var(--text-secondary)]">
-                  {uploading ? "Subiendo..." : "Haz clic para seleccionar archivo"}
+                  {uploading ? "Subiendo..." : "Toca para subir"}
                 </span>
               </label>
             </div>
 
             {/* Logo URL (alternative) */}
             <div>
-              <label className="block text-sm font-medium mb-2">O introduce URL del Logo</label>
+              <label className="block text-sm font-medium mb-2">O introduce URL</label>
               <input
                 type="url"
                 value={branding.logo || ""}
                 onChange={(e) => handleBrandingChange("logo", e.target.value)}
                 placeholder="https://ejemplo.com/logo.png"
-                className="neumor-input w-full"
+                className="neumor-input w-full h-12"
               />
             </div>
 
@@ -608,11 +667,11 @@ export function PersonalizacionClient({
             {branding.logo && (
               <div className="space-y-2">
                 <label className="block text-sm font-medium">Vista previa</label>
-                <div className="p-4 neumor-inset rounded-lg flex items-center justify-center min-h-[80px]">
+                <div className="p-4 neumor-inset rounded-lg flex items-center justify-center min-h-[100px]">
                   <img
                     src={branding.logo}
                     alt="Logo preview"
-                    className="max-h-16 max-w-full object-contain"
+                    className="max-h-20 max-w-full object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
@@ -621,7 +680,7 @@ export function PersonalizacionClient({
                 <button
                   type="button"
                   onClick={() => handleBrandingChange("logo", "")}
-                  className="text-xs text-red-500 hover:text-red-700"
+                  className="text-sm text-red-500 hover:text-red-700 p-2"
                 >
                   Eliminar logo
                 </button>
@@ -646,18 +705,40 @@ export function PersonalizacionClient({
         return (
           <div className="space-y-6">
             <p className="text-sm text-[var(--text-secondary)]">
-              Ajusta los efectos visuales de tu web.
+              Ajusta los efectos visuales.
             </p>
-            <SliderControl
-              label="Intensidad de Sombras"
-              description="Controla la fuerza del efecto neumorfico"
-              value={effects.shadowIntensity || 60}
-              onChange={(v) => handleEffectsChange("shadowIntensity", v)}
-              min={0}
-              max={100}
-              step={5}
-              unit="%"
-            />
+            <div className="space-y-2">
+              <SliderControl
+                label="Intensidad de Sombras"
+                description="Fuerza del efecto neumorfico"
+                value={effects.shadowIntensity || 60}
+                onChange={(v) => handleEffectsChange("shadowIntensity", v)}
+                min={0}
+                max={100}
+                step={5}
+                unit="%"
+              />
+              {/* Botones +/- para movil */}
+              <div className="flex items-center justify-center gap-4 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => handleEffectsChange("shadowIntensity", Math.max(0, (effects.shadowIntensity || 60) - 5))}
+                  className="neumor-btn w-12 h-12 flex items-center justify-center text-xl font-bold"
+                >
+                  −
+                </button>
+                <span className="text-lg font-medium w-16 text-center">
+                  {effects.shadowIntensity || 60}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleEffectsChange("shadowIntensity", Math.min(100, (effects.shadowIntensity || 60) + 5))}
+                  className="neumor-btn w-12 h-12 flex items-center justify-center text-xl font-bold"
+                >
+                  +
+                </button>
+              </div>
+            </div>
             <OptionSelector
               label="Bordes Redondeados"
               value={effects.borderRadius || "rounded"}
@@ -665,17 +746,17 @@ export function PersonalizacionClient({
               options={[
                 { value: "sharp", label: "Angular", preview: <div className="w-8 h-8 bg-[var(--accent)] rounded-sm" /> },
                 { value: "soft", label: "Suave", preview: <div className="w-8 h-8 bg-[var(--accent)] rounded-md" /> },
-                { value: "rounded", label: "Redondeado", preview: <div className="w-8 h-8 bg-[var(--accent)] rounded-xl" /> },
-                { value: "pill", label: "Pastilla", preview: <div className="w-8 h-8 bg-[var(--accent)] rounded-full" /> },
+                { value: "rounded", label: "Redondo", preview: <div className="w-8 h-8 bg-[var(--accent)] rounded-xl" /> },
+                { value: "pill", label: "Pill", preview: <div className="w-8 h-8 bg-[var(--accent)] rounded-full" /> },
               ]}
-              columns={4}
+              columns={isMobile ? 2 : 4}
             />
             {(theme === "neuglass" || theme === "neuglass-dark") && (
               <>
-                <div className="flex items-center justify-between p-4 neumor-inset rounded-lg">
+                <div className="flex items-center justify-between p-4 neumor-inset rounded-lg min-h-[64px]">
                   <div>
-                    <p className="font-medium">Efecto Glassmorphism</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Fondo difuminado tipo cristal</p>
+                    <p className="font-medium">Glassmorphism</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Efecto cristal</p>
                   </div>
                   <button
                     type="button"
@@ -704,134 +785,238 @@ export function PersonalizacionClient({
 
       case "contenido":
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <p className="text-sm text-[var(--text-secondary)]">
-              Personaliza los textos y contenido de tu web.
+              Personaliza los textos de tu web.
             </p>
 
-            {/* Hero Section */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Seccion Principal</h3>
-              <div>
-                <label className="block text-sm font-medium mb-2">Titulo Principal</label>
-                <input
-                  type="text"
-                  value={content.heroTitle || ""}
-                  onChange={(e) => handleContentChange("heroTitle", e.target.value)}
-                  placeholder="Tu titulo aqui..."
-                  className="neumor-input w-full"
-                />
+            {/* Hero Section - Collapsible on mobile */}
+            {isMobile ? (
+              <CollapsibleSection title="Seccion Principal" defaultOpen={true}>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Titulo Principal</label>
+                  <input
+                    type="text"
+                    value={content.heroTitle || ""}
+                    onChange={(e) => handleContentChange("heroTitle", e.target.value)}
+                    placeholder="Tu titulo aqui..."
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Subtitulo</label>
+                  <textarea
+                    value={content.heroSubtitle || ""}
+                    onChange={(e) => handleContentChange("heroSubtitle", e.target.value)}
+                    placeholder="Descripcion breve..."
+                    className="neumor-input w-full resize-none"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
+                  <input
+                    type="url"
+                    value={content.heroImage || ""}
+                    onChange={(e) => handleContentChange("heroImage", e.target.value)}
+                    placeholder="https://..."
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+              </CollapsibleSection>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Seccion Principal</h3>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Titulo Principal</label>
+                  <input
+                    type="text"
+                    value={content.heroTitle || ""}
+                    onChange={(e) => handleContentChange("heroTitle", e.target.value)}
+                    placeholder="Tu titulo aqui..."
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Subtitulo</label>
+                  <textarea
+                    value={content.heroSubtitle || ""}
+                    onChange={(e) => handleContentChange("heroSubtitle", e.target.value)}
+                    placeholder="Descripcion breve..."
+                    className="neumor-input w-full resize-none"
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
+                  <input
+                    type="url"
+                    value={content.heroImage || ""}
+                    onChange={(e) => handleContentChange("heroImage", e.target.value)}
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    className="neumor-input w-full"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Subtitulo</label>
-                <textarea
-                  value={content.heroSubtitle || ""}
-                  onChange={(e) => handleContentChange("heroSubtitle", e.target.value)}
-                  placeholder="Descripcion breve de tu negocio..."
-                  className="neumor-input w-full resize-none"
-                  rows={2}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
-                <input
-                  type="url"
-                  value={content.heroImage || ""}
-                  onChange={(e) => handleContentChange("heroImage", e.target.value)}
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  className="neumor-input w-full"
-                />
-                {content.heroImage && (
-                  <div className="mt-2 rounded-lg overflow-hidden h-24">
-                    <img
-                      src={content.heroImage}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
 
-            {/* Contact Info */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Informacion de Contacto</h3>
-              <div>
-                <label className="block text-sm font-medium mb-2">Direccion</label>
-                <input
-                  type="text"
-                  value={content.address || ""}
-                  onChange={(e) => handleContentChange("address", e.target.value)}
-                  placeholder="Calle, numero, ciudad..."
-                  className="neumor-input w-full"
-                />
+            {/* Contact Info - Collapsible on mobile */}
+            {isMobile ? (
+              <CollapsibleSection title="Informacion de Contacto">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Direccion</label>
+                  <input
+                    type="text"
+                    value={content.address || ""}
+                    onChange={(e) => handleContentChange("address", e.target.value)}
+                    placeholder="Calle, numero, ciudad..."
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Telefono</label>
+                  <input
+                    type="tel"
+                    value={content.phone || ""}
+                    onChange={(e) => handleContentChange("phone", e.target.value)}
+                    placeholder="+34 600 000 000"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={content.email || ""}
+                    onChange={(e) => handleContentChange("email", e.target.value)}
+                    placeholder="contacto@tunegocio.com"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+              </CollapsibleSection>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Informacion de Contacto</h3>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Direccion</label>
+                  <input
+                    type="text"
+                    value={content.address || ""}
+                    onChange={(e) => handleContentChange("address", e.target.value)}
+                    placeholder="Calle, numero, ciudad..."
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Telefono</label>
+                  <input
+                    type="tel"
+                    value={content.phone || ""}
+                    onChange={(e) => handleContentChange("phone", e.target.value)}
+                    placeholder="+34 600 000 000"
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={content.email || ""}
+                    onChange={(e) => handleContentChange("email", e.target.value)}
+                    placeholder="contacto@tunegocio.com"
+                    className="neumor-input w-full"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Telefono</label>
-                <input
-                  type="tel"
-                  value={content.phone || ""}
-                  onChange={(e) => handleContentChange("phone", e.target.value)}
-                  placeholder="+34 600 000 000"
-                  className="neumor-input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={content.email || ""}
-                  onChange={(e) => handleContentChange("email", e.target.value)}
-                  placeholder="contacto@tunegocio.com"
-                  className="neumor-input w-full"
-                />
-              </div>
-            </div>
+            )}
 
-            {/* Social Links */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Redes Sociales</h3>
-              <div>
-                <label className="block text-sm font-medium mb-2">Instagram</label>
-                <input
-                  type="url"
-                  value={content.socialLinks?.instagram || ""}
-                  onChange={(e) => handleContentChange("socialLinks", {
-                    ...content.socialLinks,
-                    instagram: e.target.value
-                  })}
-                  placeholder="https://instagram.com/tunegocio"
-                  className="neumor-input w-full"
-                />
+            {/* Social Links - Collapsible on mobile */}
+            {isMobile ? (
+              <CollapsibleSection title="Redes Sociales">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Instagram</label>
+                  <input
+                    type="url"
+                    value={content.socialLinks?.instagram || ""}
+                    onChange={(e) => handleContentChange("socialLinks", {
+                      ...content.socialLinks,
+                      instagram: e.target.value
+                    })}
+                    placeholder="https://instagram.com/..."
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Facebook</label>
+                  <input
+                    type="url"
+                    value={content.socialLinks?.facebook || ""}
+                    onChange={(e) => handleContentChange("socialLinks", {
+                      ...content.socialLinks,
+                      facebook: e.target.value
+                    })}
+                    placeholder="https://facebook.com/..."
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">WhatsApp</label>
+                  <input
+                    type="url"
+                    value={content.socialLinks?.whatsapp || ""}
+                    onChange={(e) => handleContentChange("socialLinks", {
+                      ...content.socialLinks,
+                      whatsapp: e.target.value
+                    })}
+                    placeholder="https://wa.me/..."
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+              </CollapsibleSection>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm border-b border-[var(--shadow-dark)] pb-2">Redes Sociales</h3>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Instagram</label>
+                  <input
+                    type="url"
+                    value={content.socialLinks?.instagram || ""}
+                    onChange={(e) => handleContentChange("socialLinks", {
+                      ...content.socialLinks,
+                      instagram: e.target.value
+                    })}
+                    placeholder="https://instagram.com/tunegocio"
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Facebook</label>
+                  <input
+                    type="url"
+                    value={content.socialLinks?.facebook || ""}
+                    onChange={(e) => handleContentChange("socialLinks", {
+                      ...content.socialLinks,
+                      facebook: e.target.value
+                    })}
+                    placeholder="https://facebook.com/tunegocio"
+                    className="neumor-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">WhatsApp</label>
+                  <input
+                    type="url"
+                    value={content.socialLinks?.whatsapp || ""}
+                    onChange={(e) => handleContentChange("socialLinks", {
+                      ...content.socialLinks,
+                      whatsapp: e.target.value
+                    })}
+                    placeholder="https://wa.me/34600000000"
+                    className="neumor-input w-full"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Facebook</label>
-                <input
-                  type="url"
-                  value={content.socialLinks?.facebook || ""}
-                  onChange={(e) => handleContentChange("socialLinks", {
-                    ...content.socialLinks,
-                    facebook: e.target.value
-                  })}
-                  placeholder="https://facebook.com/tunegocio"
-                  className="neumor-input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">WhatsApp</label>
-                <input
-                  type="url"
-                  value={content.socialLinks?.whatsapp || ""}
-                  onChange={(e) => handleContentChange("socialLinks", {
-                    ...content.socialLinks,
-                    whatsapp: e.target.value
-                  })}
-                  placeholder="https://wa.me/34600000000"
-                  className="neumor-input w-full"
-                />
-              </div>
-            </div>
+            )}
           </div>
         );
 
@@ -840,6 +1025,127 @@ export function PersonalizacionClient({
     }
   };
 
+  // ============================================
+  // MOBILE LAYOUT
+  // ============================================
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex flex-col pb-20">
+        {/* Mobile Header */}
+        <div className="sticky top-0 z-40 bg-[var(--neumor-bg)] px-4 py-3 border-b border-[var(--shadow-dark)]">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-bold">Personalizar</h1>
+            <button
+              onClick={handleReset}
+              className="neumor-btn p-2"
+              title="Reset"
+            >
+              <ResetIcon />
+            </button>
+          </div>
+        </div>
+
+        {/* Toast Message */}
+        {message && (
+          <div
+            className={`fixed top-16 left-4 right-4 z-50 p-3 rounded-lg text-sm shadow-lg ${
+              message.type === "success"
+                ? "bg-green-500 text-white"
+                : "bg-red-500 text-white"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+
+        {/* Collapsible Preview */}
+        <div className={`relative transition-all duration-300 bg-[var(--shadow-dark)] ${
+          previewExpanded ? 'h-[60vh]' : 'h-[30vh]'
+        }`}>
+          <iframe
+            src={previewUrl}
+            className="w-full h-full border-0"
+            title="Vista previa"
+          />
+
+          {/* Preview Controls */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2 bg-gradient-to-t from-black/50 to-transparent">
+            <button
+              onClick={() => setPreviewExpanded(!previewExpanded)}
+              className="flex items-center gap-1 text-white text-xs bg-black/30 px-3 py-2 rounded-lg"
+            >
+              {previewExpanded ? <ChevronDownIcon /> : <ChevronUpIcon />}
+              {previewExpanded ? 'Colapsar' : 'Expandir'}
+            </button>
+            <a
+              href={previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-white text-xs bg-black/30 px-3 py-2 rounded-lg"
+            >
+              <ExternalLinkIcon />
+              Abrir
+            </a>
+          </div>
+        </div>
+
+        {/* Tab Title */}
+        <div className="px-4 py-3 border-b border-[var(--shadow-dark)]">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            {tabs.find(t => t.id === activeTab)?.icon}
+            {tabs.find(t => t.id === activeTab)?.label}
+          </h2>
+        </div>
+
+        {/* Controls Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {renderTabContent()}
+        </div>
+
+        {/* Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--neumor-bg)] border-t border-[var(--shadow-dark)] safe-area-pb">
+          <div className="flex justify-around py-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex flex-col items-center p-2 min-w-[48px] transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-[var(--accent)]'
+                    : 'text-[var(--text-secondary)]'
+                }`}
+              >
+                {tab.icon}
+                <span className="text-[10px] mt-0.5 font-medium">{tab.shortLabel}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        {/* FAB Save Button */}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className={`fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+            saving
+              ? 'bg-gray-400'
+              : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:scale-95'
+          }`}
+          style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}
+        >
+          {saving ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <SaveIcon />
+          )}
+        </button>
+      </div>
+    );
+  }
+
+  // ============================================
+  // DESKTOP LAYOUT (original)
+  // ============================================
   return (
     <div className="h-full">
       {/* Header */}
@@ -917,7 +1223,6 @@ export function PersonalizacionClient({
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Vista Previa</h2>
             <div className="flex items-center gap-2">
-              {/* Preview mode buttons */}
               <div className="flex neumor-inset rounded-lg p-1">
                 <button
                   onClick={() => setPreviewMode("desktop")}
