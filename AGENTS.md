@@ -8,6 +8,7 @@ Este archivo contiene reglas para cualquier agente de IA (Codex, Claude, etc.) q
 neumor-plantillas/
 ├── apps/
 │   ├── admin/          # Panel de administracion (Next.js 15)
+│   │   └── src/app/api/  # APIs del backend (USAR ESTAS, no Supabase directo)
 │   └── templates/      # Plantillas de sitios web (Astro)
 │       ├── restaurant/
 │       ├── repairs/
@@ -18,36 +19,105 @@ neumor-plantillas/
 ├── packages/
 │   ├── supabase/       # Migraciones y tipos de BD
 │   │   └── migrations/ # Migraciones SQL (0001-0027)
-│   └── ui/             # Componentes compartidos
+│   ├── ui/             # Componentes compartidos
+│   └── api-utils/      # Utilidades compartidas (CORS, rate-limit, validation)
 └── docs/               # Documentacion
     └── DATABASE.md     # Schema completo de la BD
 ```
 
-## Reglas Criticas
+## ⚠️ Reglas CRITICAS de Arquitectura
 
-### Base de Datos
+### NO duplicar funcionalidad
+**ANTES de añadir codigo que guarde datos, VERIFICA:**
+1. ¿Ya existe un endpoint API que hace esto? (`apps/admin/src/app/api/`)
+2. ¿El formulario ya envia datos a algun sitio?
+3. Si añades un nuevo metodo de guardado, ¿estas quitando el anterior?
+
+**EJEMPLO DE ERROR GRAVE (no repetir):**
+```javascript
+// ❌ MAL: Añadir insert directo cuando ya existe webhook
+if (supabaseUrl && supabaseKey) {
+  await fetch(`${supabaseUrl}/rest/v1/bookings`, { method: "POST" }); // DUPLICADO!
+}
+if (webhookUrl) {
+  await fetch(webhookUrl, { method: "POST" }); // Ya existia
+}
+
+// ✅ BIEN: Usar SOLO el endpoint API existente
+if (webhookUrl) {
+  await fetch(webhookUrl, { method: "POST", body: JSON.stringify(data) });
+}
+```
+
+### Usar APIs del backend, NO Supabase directo desde frontend
+| Accion | Endpoint correcto | NO hacer |
+|--------|------------------|----------|
+| Crear cita (salon/clinic) | `POST /api/citas` | `fetch(supabaseUrl/rest/v1/bookings)` |
+| Crear reserva (restaurant) | `POST /api/reservas` | Insert directo |
+| Crear presupuesto | `POST /api/presupuestos` | Insert directo |
+| Subir imagen | `POST /api/upload` | Upload directo a storage |
+
+**¿Por que?**
+- El backend tiene validacion, rate-limiting, CORS
+- Envia emails de confirmacion
+- Registra en activity_log
+- Usa service_role_key (seguro)
+- Un solo punto de entrada = sin duplicados
+
+### Antes de modificar formularios que envian datos
+1. Buscar en el codigo `fetch(` o `webhookUrl` para ver a donde envia
+2. Leer el endpoint API para entender que hace
+3. Si necesitas añadir un campo, añadirlo al webhook data Y al endpoint API
+4. NUNCA añadir un segundo metodo de guardado
+
+## Reglas de Base de Datos
+
 - **NO crear migraciones** sin autorizacion explicita
 - **NO modificar tablas existentes** a menos que sea el objetivo
 - Consultar `docs/DATABASE.md` antes de asumir estructura de tablas
 - Si necesitas info de la BD, usar Supabase CLI: `npx supabase db dump`
 
-### Codigo
+## Reglas de Codigo
+
 - **Respetar patrones existentes** - Mirar archivos similares antes de crear nuevos
 - **NO crear archivos nuevos** si puedes modificar uno existente
 - **NO instalar dependencias** sin justificacion
 - Mantener cambios **minimos y acotados** al objetivo
+- **NO duplicar logica** - buscar si ya existe antes de crear
 
-### Plantillas (apps/templates/*)
+## Plantillas (apps/templates/*)
+
 - Cada plantilla tiene la misma estructura de componentes
 - Los componentes tienen variantes: `Hero/HeroClassic.astro`, `Hero/HeroModern.astro`, etc.
 - La configuracion viene de Supabase via `@lib/supabase.ts`
 - **NO hardcodear datos** - todo debe venir de config o Supabase
+- Los formularios envian a webhooks/APIs, **NO directamente a Supabase**
 
-### Admin (apps/admin)
+### Componentes que envian datos (CUIDADO)
+| Componente | Plantilla | Envia a |
+|------------|-----------|---------|
+| `AppointmentForm.astro` | salon, clinic | `/api/citas` via `webhookUrl` |
+| `ReservationForm.astro` | restaurant | `/api/reservas` via `webhookUrl` |
+| `QuoteForm.astro` | repairs | `/api/presupuestos` via `webhookUrl` |
+| `ContactForm.astro` | todas | `/api/contacto` via `webhookUrl` |
+
+## Admin (apps/admin)
+
 - Next.js 15 con App Router
 - Server Components por defecto, Client Components solo cuando sea necesario
 - El sidebar se configura dinamicamente segun `business_type_config`
 - Acciones del servidor en `src/lib/actions.ts`
+- **APIs en `src/app/api/`** - SIEMPRE usar estas para operaciones de datos
+
+### APIs disponibles (usar estas desde templates)
+```
+/api/citas          - Crear citas (salon, clinic)
+/api/reservas       - Crear reservas (restaurant)
+/api/presupuestos   - Crear presupuestos (repairs)
+/api/contacto       - Formularios de contacto
+/api/newsletter     - Suscripciones newsletter
+/api/upload         - Subir archivos
+```
 
 ## Patrones a Seguir
 
@@ -82,17 +152,20 @@ export function Card({ title, children }: CardProps) {
 
 1. **Leer archivos relacionados** para entender el patron actual
 2. **Verificar que no existe** algo similar que puedas reutilizar
-3. **Preguntar si hay dudas** sobre el enfoque correcto
-4. **Probar localmente** antes de confirmar que funciona
+3. **Buscar si hay un endpoint API** para la operacion
+4. **Preguntar si hay dudas** sobre el enfoque correcto
+5. **Probar localmente** antes de confirmar que funciona
 
 ## Archivos Clave de Referencia
 
 | Archivo | Descripcion |
 |---------|-------------|
 | `docs/DATABASE.md` | Schema completo de la BD |
+| `apps/admin/src/app/api/citas/route.ts` | API para crear citas |
+| `apps/admin/src/app/api/reservas/route.ts` | API para crear reservas |
 | `apps/admin/src/app/dashboard/layout.tsx` | Layout del admin con config dinamica |
 | `apps/admin/src/app/dashboard/Sidebar.tsx` | Navegacion segun tipo de negocio |
-| `apps/templates/restaurant/src/pages/index.astro` | Ejemplo de plantilla completa |
+| `apps/templates/salon/src/components/AppointmentForm.astro` | Ejemplo de formulario que usa API |
 | `packages/supabase/migrations/` | Todas las migraciones de BD |
 
 ## Tipos de Negocio Soportados
@@ -102,7 +175,7 @@ export function Card({ title, children }: CardProps) {
 | `restaurant` | restaurant | reservas, newsletter, clientes |
 | `repairs` | repairs | presupuestos, trabajos, pagos, clientes |
 | `fitness` | gym | sesiones, progreso, paquetes, servicios, pagos |
-| `salon` | salon | reservas, newsletter, clientes |
+| `salon` | salon | reservas, profesionales, servicios, clientes |
 | `clinic` | clinic | reservas, newsletter, clientes |
 | `shop` | store | newsletter, clientes |
 
@@ -123,14 +196,27 @@ npx supabase db diff        # Ver cambios pendientes
 npx supabase db push        # Aplicar migraciones
 ```
 
-## Errores Comunes a Evitar
+## ❌ Errores Comunes a Evitar
 
+### Arquitectura
+- **NO añadir inserts directos a Supabase desde frontend** - usar APIs
+- **NO duplicar metodos de guardado** - verificar que no existe ya
+- **NO crear endpoints nuevos** si ya existe uno que hace lo mismo
+
+### Codigo
 - No usar `"use client"` en componentes que no lo necesitan
 - No olvidar `revalidatePath()` despues de mutaciones
 - No asumir que las columnas existen sin verificar el schema
 - No crear componentes duplicados - buscar primero en `packages/ui`
 - No hardcodear URLs - usar variables de entorno
 
+### Formularios
+- **NO añadir `fetch()` adicionales** sin verificar los existentes
+- Si un formulario ya tiene `webhookUrl`, USAR ESE
+- Si necesitas añadir un campo, añadirlo al data que se envia al webhook
+
 ---
 
 > **Ante la duda, preguntar.** Es mejor confirmar el enfoque que romper algo existente.
+
+> **Si vas a tocar un formulario que envia datos: LEE PRIMERO todo el handler de submit.**
