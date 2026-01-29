@@ -712,52 +712,70 @@ export function PersonalizacionClient({
     iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
   }, []);
 
-  // Enviar cambios CSS en tiempo real via postMessage
+  // Ref para debounce del preview message
+  const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Enviar cambios CSS en tiempo real via postMessage (con debounce para evitar flicker al aplicar presets)
   useEffect(() => {
-    sendPreviewMessage("update-styles", {
-      theme,
-      skin,
-      colors: {
-        primary: colors.primary,
-        secondary: colors.secondary,
-        accent: colors.accent,
-      },
-      typography: {
-        headingFont: typography.headingFont,
-        bodyFont: typography.bodyFont,
-        baseFontSize: typography.baseFontSize,
-      },
-      effects: {
-        shadowIntensity: effects.shadowIntensity,
-        borderRadius: effects.borderRadius,
-        glassmorphism: effects.glassmorphism,
-        blurIntensity: effects.blurIntensity,
-      },
-      branding: {
-        logo: branding.logo,
-        logoSize: branding.logoSize,
-        logoDisplay: branding.logoDisplay,
-      },
-      content: {
-        heroTitle: content.heroTitle,
-        heroSubtitle: content.heroSubtitle,
-        heroImage: content.heroImage,
-        address: content.address,
-        phone: content.phone,
-        email: content.email,
-      },
-      features: {
-        title: features.title,
-        subtitle: features.subtitle,
-        items: features.items.map(item => ({
-          ...item,
-          iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
-        })),
-      },
-      // Configuración de secciones para preview
-      sectionsConfig: sectionsConfig,
-      variants: variants,
-    });
+    // Limpiar timeout anterior
+    if (previewDebounceRef.current) {
+      clearTimeout(previewDebounceRef.current);
+    }
+
+    // Debounce de 50ms para agrupar múltiples cambios de estado (ej: al aplicar un preset)
+    previewDebounceRef.current = setTimeout(() => {
+      sendPreviewMessage("update-styles", {
+        theme,
+        skin,
+        colors: {
+          primary: colors.primary,
+          secondary: colors.secondary,
+          accent: colors.accent,
+        },
+        typography: {
+          headingFont: typography.headingFont,
+          bodyFont: typography.bodyFont,
+          baseFontSize: typography.baseFontSize,
+        },
+        effects: {
+          shadowIntensity: effects.shadowIntensity,
+          borderRadius: effects.borderRadius,
+          glassmorphism: effects.glassmorphism,
+          blurIntensity: effects.blurIntensity,
+        },
+        branding: {
+          logo: branding.logo,
+          logoSize: branding.logoSize,
+          logoDisplay: branding.logoDisplay,
+        },
+        content: {
+          heroTitle: content.heroTitle,
+          heroSubtitle: content.heroSubtitle,
+          heroImage: content.heroImage,
+          address: content.address,
+          phone: content.phone,
+          email: content.email,
+        },
+        features: {
+          title: features.title,
+          subtitle: features.subtitle,
+          items: features.items.map(item => ({
+            ...item,
+            iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
+          })),
+        },
+        // Configuración de secciones para preview
+        sectionsConfig: sectionsConfig,
+        variants: variants,
+      });
+    }, 50);
+
+    // Cleanup: limpiar timeout al desmontar o antes de re-ejecutar
+    return () => {
+      if (previewDebounceRef.current) {
+        clearTimeout(previewDebounceRef.current);
+      }
+    };
   }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sectionsConfig, variants, sendPreviewMessage]);
 
   // Build preview URL - includes variants for component selection
