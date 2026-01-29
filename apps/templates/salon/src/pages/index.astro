@@ -265,31 +265,19 @@ const ICON_MAP: Record<string, string> = {
 
 const defaultIcon = ICON_MAP.star;
 
-// Extraer features personalizados de la configuración
-interface FeatureItem {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-}
-
-interface FeaturesData {
-  title?: string;
-  subtitle?: string;
-  items?: FeatureItem[];
-}
-
-const featuresData = websiteData?.config?.features as FeaturesData | undefined;
-
-// Mapear los iconos de ID a SVG para features
-const customFeatures = featuresData?.items?.length
+// Features se generan automáticamente desde las categorías de servicios (Admin → Servicios)
+// Esto evita duplicación y confusión - solo hay UNA fuente de verdad para los servicios
+const serviceFeatures = serviceCatalog.length
   ? {
-      title: featuresData.title,
-      subtitle: featuresData.subtitle,
-      features: featuresData.items.map((item) => ({
-        icon: ICON_MAP[item.icon] || ICON_MAP.star || defaultIcon,
-        title: item.title,
-        description: item.description,
+      title: "Nuestros Servicios",
+      subtitle: "Descubre todo lo que podemos hacer por ti",
+      features: serviceCatalog.slice(0, 4).map((category) => ({
+        icon: category.icon ? (ICON_MAP[category.icon] || defaultIcon) : defaultIcon,
+        title: category.name,
+        description: category.items.length > 0
+          ? `${category.items.length} servicios disponibles`
+          : "Servicios profesionales",
+        link: "#services",
       })),
     }
   : undefined;
@@ -340,9 +328,9 @@ const serviceCategories = serviceCatalog.length
           case "features":
             return (
               <Features
-                title={customFeatures?.title}
-                subtitle={customFeatures?.subtitle}
-                features={customFeatures?.features}
+                title={serviceFeatures?.title}
+                subtitle={serviceFeatures?.subtitle}
+                features={serviceFeatures?.features}
               />
             );
           case "services":

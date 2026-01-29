@@ -1582,92 +1582,114 @@ export function PersonalizacionClient({
               </div>
             </CollapsibleSection>
 
-            {/* Features */}
-            <CollapsibleSection title="Caracteristicas" defaultOpen={!isMobile}>
-              <div>
-                <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
-                <input
-                  type="text"
-                  value={features.title}
-                  onChange={(e) => handleFeaturesTitleChange("title", e.target.value)}
-                  placeholder="Nuestros Servicios"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Subtitulo</label>
-                <input
-                  type="text"
-                  value={features.subtitle}
-                  onChange={(e) => handleFeaturesTitleChange("subtitle", e.target.value)}
-                  placeholder="Lo mejor para ti"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Items ({features.items.length})</span>
-                  <button
-                    type="button"
-                    onClick={handleAddFeatureItem}
-                    className="neumor-btn px-3 py-1.5 text-xs flex items-center gap-1"
+            {/* Features - Para salon/clinic se generan desde Servicios */}
+            {businessType === "salon" || businessType === "clinic" ? (
+              <CollapsibleSection title="Caracteristicas" defaultOpen={false}>
+                <div className="neumor-inset p-4 rounded-xl text-center">
+                  <svg className="w-8 h-8 mx-auto mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-[var(--text-secondary)] mb-2">
+                    Las caracteristicas se generan automaticamente desde tus <strong>categorias de servicios</strong>.
+                  </p>
+                  <a
+                    href="/dashboard/servicios"
+                    className="neumor-btn px-4 py-2 text-sm inline-flex items-center gap-2"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    Anadir
-                  </button>
+                    Ir a Servicios
+                  </a>
                 </div>
-                {features.items.map((item, index) => (
-                  <div key={item.id} className="neumor-inset p-3 rounded-xl space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[var(--text-secondary)]">Item {index + 1}</span>
-                      {features.items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFeatureItem(item.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-8 gap-1">
-                      {FEATURE_ICONS.slice(0, 8).map((icon) => (
-                        <button
-                          key={icon.id}
-                          type="button"
-                          onClick={() => handleFeatureItemChange(item.id, "icon", icon.id)}
-                          className={`p-1.5 rounded-lg transition-all ${
-                            item.icon === icon.id
-                              ? "neumor-inset bg-[var(--accent)] text-white"
-                              : "neumor-raised hover:scale-105"
-                          }`}
-                        >
-                          <div className="w-4 h-4 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: icon.svg }} />
-                        </button>
-                      ))}
-                    </div>
-                    <input
-                      type="text"
-                      value={item.title}
-                      onChange={(e) => handleFeatureItemChange(item.id, "title", e.target.value)}
-                      placeholder="Titulo"
-                      className="neumor-input w-full text-sm h-10"
-                    />
-                    <textarea
-                      value={item.description}
-                      onChange={(e) => handleFeatureItemChange(item.id, "description", e.target.value)}
-                      placeholder="Descripcion..."
-                      className="neumor-input w-full text-sm resize-none"
-                      rows={2}
-                    />
+              </CollapsibleSection>
+            ) : (
+              <CollapsibleSection title="Caracteristicas" defaultOpen={!isMobile}>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+                  <input
+                    type="text"
+                    value={features.title}
+                    onChange={(e) => handleFeaturesTitleChange("title", e.target.value)}
+                    placeholder="Nuestros Servicios"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Subtitulo</label>
+                  <input
+                    type="text"
+                    value={features.subtitle}
+                    onChange={(e) => handleFeaturesTitleChange("subtitle", e.target.value)}
+                    placeholder="Lo mejor para ti"
+                    className="neumor-input w-full h-12"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Items ({features.items.length})</span>
+                    <button
+                      type="button"
+                      onClick={handleAddFeatureItem}
+                      className="neumor-btn px-3 py-1.5 text-xs flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Anadir
+                    </button>
                   </div>
-                ))}
-              </div>
-            </CollapsibleSection>
+                  {features.items.map((item, index) => (
+                    <div key={item.id} className="neumor-inset p-3 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-[var(--text-secondary)]">Item {index + 1}</span>
+                        {features.items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFeatureItem(item.id)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-8 gap-1">
+                        {FEATURE_ICONS.slice(0, 8).map((icon) => (
+                          <button
+                            key={icon.id}
+                            type="button"
+                            onClick={() => handleFeatureItemChange(item.id, "icon", icon.id)}
+                            className={`p-1.5 rounded-lg transition-all ${
+                              item.icon === icon.id
+                                ? "neumor-inset bg-[var(--accent)] text-white"
+                                : "neumor-raised hover:scale-105"
+                            }`}
+                          >
+                            <div className="w-4 h-4 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: icon.svg }} />
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="text"
+                        value={item.title}
+                        onChange={(e) => handleFeatureItemChange(item.id, "title", e.target.value)}
+                        placeholder="Titulo"
+                        className="neumor-input w-full text-sm h-10"
+                      />
+                      <textarea
+                        value={item.description}
+                        onChange={(e) => handleFeatureItemChange(item.id, "description", e.target.value)}
+                        placeholder="Descripcion..."
+                        className="neumor-input w-full text-sm resize-none"
+                        rows={2}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            )}
           </div>
         );
 

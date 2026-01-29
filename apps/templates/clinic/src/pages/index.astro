@@ -222,34 +222,9 @@ const ICON_MAP: Record<string, string> = {
 
 const defaultIcon = ICON_MAP.star;
 
-// Extraer features personalizados de la configuración
-interface FeatureItem {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-}
-
-interface FeaturesData {
-  title?: string;
-  subtitle?: string;
-  items?: FeatureItem[];
-}
-
-const featuresData = websiteData?.config?.features as FeaturesData | undefined;
-
-// Mapear los iconos de ID a SVG para features
-const customFeatures = featuresData?.items?.length
-  ? {
-      title: featuresData.title,
-      subtitle: featuresData.subtitle,
-      features: featuresData.items.map((item) => ({
-        icon: ICON_MAP[item.icon] || ICON_MAP.star || defaultIcon,
-        title: item.title,
-        description: item.description,
-      })),
-    }
-  : undefined;
+// Para clinic, los features usan los valores por defecto del componente
+// (que tienen los SVGs correctos incorporados)
+// En el futuro, se pueden conectar al catálogo de servicios como en salon
 ---
 
 <Layout
@@ -274,11 +249,7 @@ const customFeatures = featuresData?.items?.length
       phone={config.phone}
     />
 
-    <Features
-      title={customFeatures?.title}
-      subtitle={customFeatures?.subtitle}
-      features={customFeatures?.features}
-    />
+    <Features />
 
     <Treatments />
 
