@@ -181,10 +181,19 @@ const sectionsConfig: SectionsConfig = websiteData?.config?.sectionsConfig || {
   sections: defaultSections,
 };
 
+// DEBUG: Log para diagnosticar problemas con sectionsConfig
+console.log("=== SECTIONS DEBUG ===");
+console.log("Has sectionsConfig from DB:", !!websiteData?.config?.sectionsConfig);
+console.log("Total sections:", sectionsConfig.sections?.length || 0);
+console.log("Sections raw:", JSON.stringify(sectionsConfig.sections?.map(s => ({ id: s.id, enabled: s.enabled, order: s.order }))));
+
 // Filtrar secciones habilitadas y ordenar por order
 const enabledSections = sectionsConfig.sections
   .filter((s) => s.enabled)
   .sort((a, b) => a.order - b.order);
+
+console.log("Enabled sections:", enabledSections.map(s => s.id).join(", "));
+console.log("=== END SECTIONS DEBUG ===");
 
 // Crear un mapa para acceso rapido a la configuracion de cada seccion
 const sectionConfigMap = new Map(enabledSections.map((s) => [s.id, s]));
