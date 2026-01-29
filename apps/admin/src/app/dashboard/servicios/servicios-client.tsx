@@ -137,7 +137,20 @@ export function ServiciosClient({ initialCategories }: Props) {
       if (!response.ok) {
         throw new Error(data.error || "Error al guardar");
       }
-      setCategories(data.categories || []);
+      const newCategories = data.categories || [];
+      setCategories(newCategories);
+      // Sincronizar selectedIcons con los datos de la BD
+      setSelectedIcons((prev) => {
+        const updated = { ...prev };
+        newCategories.forEach((cat: ServiceCategory) => {
+          if (cat.icon) {
+            updated[cat.id] = cat.icon;
+          } else {
+            delete updated[cat.id];
+          }
+        });
+        return updated;
+      });
       setMessage({ type: "success", text: successText });
     } catch (error) {
       const errorText = error instanceof Error ? error.message : "Error de conexion";
