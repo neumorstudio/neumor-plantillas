@@ -212,6 +212,18 @@ const defaultFonts = !fontImports
                   img.src = branding.logo;
                 }
               });
+              // Marcar que hay logo disponible
+              const logoContainers = document.querySelectorAll('.logo, [data-logo-display]');
+              logoContainers.forEach(function(el) {
+                el.setAttribute('data-has-logo', 'true');
+              });
+            }
+            // Actualizar modo de visualizacion (logo vs nombre)
+            if (branding.logoDisplay) {
+              const logoContainers = document.querySelectorAll('.logo, [data-logo-display]');
+              logoContainers.forEach(function(el) {
+                el.setAttribute('data-logo-display', branding.logoDisplay);
+              });
             }
           }
 
@@ -225,6 +237,18 @@ const defaultFonts = !fontImports
             if (content.heroSubtitle) {
               const el = document.querySelector('.hero-subtitle');
               if (el) el.textContent = content.heroSubtitle;
+            }
+            if (content.heroImage) {
+              // Actualizar imagen de fondo del hero
+              const heroSection = document.querySelector('.hero-section, .hero, [data-hero]');
+              if (heroSection) {
+                heroSection.style.backgroundImage = 'url(' + content.heroImage + ')';
+              }
+              // También actualizar si es una etiqueta img
+              const heroImg = document.querySelector('.hero-bg, .hero-image, [data-hero-image]');
+              if (heroImg && heroImg.tagName === 'IMG') {
+                heroImg.src = content.heroImage;
+              }
             }
             if (content.address) {
               document.querySelectorAll('[data-content="address"], .footer-address, .contact-address').forEach(function(el) {

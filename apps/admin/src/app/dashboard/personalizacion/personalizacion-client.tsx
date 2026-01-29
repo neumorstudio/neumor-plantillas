@@ -391,6 +391,7 @@ export function PersonalizacionClient({
       content: {
         heroTitle: content.heroTitle,
         heroSubtitle: content.heroSubtitle,
+        heroImage: content.heroImage,
         address: content.address,
         phone: content.phone,
         email: content.email,
@@ -404,7 +405,7 @@ export function PersonalizacionClient({
         })),
       },
     });
-  }, [theme, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
+  }, [theme, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sendPreviewMessage]);
 
   // Build preview URL - static to avoid iframe reloads
   // All changes are sent via postMessage for real-time updates
@@ -449,6 +450,7 @@ export function PersonalizacionClient({
         content: {
           heroTitle: content.heroTitle,
           heroSubtitle: content.heroSubtitle,
+          heroImage: content.heroImage,
           address: content.address,
           phone: content.phone,
           email: content.email,
