@@ -1330,24 +1330,48 @@ export function PersonalizacionClient({
 
             {/* Colores */}
             <CollapsibleSection title="Colores" defaultOpen={false}>
-              <ColorPicker
-                label="Principal"
-                description="Color principal de tu marca"
-                value={colors.primary || defaultColors.primary!}
-                onChange={(v) => handleColorChange("primary", v)}
-              />
-              <ColorPicker
-                label="Secundario"
-                description="Elementos complementarios"
-                value={colors.secondary || defaultColors.secondary!}
-                onChange={(v) => handleColorChange("secondary", v)}
-              />
-              <ColorPicker
-                label="Acento"
-                description="Botones y llamadas a la accion"
-                value={colors.accent || defaultColors.accent!}
-                onChange={(v) => handleColorChange("accent", v)}
-              />
+              {/* Color de Acento - El más importante */}
+              <div className="space-y-3">
+                <ColorPicker
+                  label="Color de Botones"
+                  description="Botones de reservar, enlaces y elementos interactivos"
+                  value={colors.accent || defaultColors.accent!}
+                  onChange={(v) => handleColorChange("accent", v)}
+                />
+                {/* Preview del botón */}
+                <div className="flex items-center gap-2 p-3 neumor-inset rounded-lg">
+                  <span className="text-xs text-[var(--text-secondary)]">Vista previa:</span>
+                  <button
+                    type="button"
+                    className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                    style={{ backgroundColor: colors.accent || defaultColors.accent }}
+                  >
+                    Reservar Cita
+                  </button>
+                </div>
+              </div>
+
+              {/* Separador */}
+              <div className="border-t border-[var(--shadow-dark)] my-4" />
+
+              {/* Colores de marca (uso limitado actualmente) */}
+              <div className="space-y-2">
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Colores de marca (para futuras personalizaciones):
+                </p>
+                <ColorPicker
+                  label="Principal"
+                  description="Color principal de tu marca"
+                  value={colors.primary || defaultColors.primary!}
+                  onChange={(v) => handleColorChange("primary", v)}
+                />
+                <ColorPicker
+                  label="Secundario"
+                  description="Color secundario complementario"
+                  value={colors.secondary || defaultColors.secondary!}
+                  onChange={(v) => handleColorChange("secondary", v)}
+                />
+              </div>
             </CollapsibleSection>
 
             {/* Efectos */}
