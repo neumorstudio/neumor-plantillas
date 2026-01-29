@@ -202,9 +202,6 @@ const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_
   return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
 };
 const scheduleLabel = buildScheduleLabel(businessHours);
-<<<<<<< HEAD
-const scissorsIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`;
-=======
 
 // Mapa de iconos disponibles (sincronizado con servicios-client.tsx)
 const ICON_MAP: Record<string, string> = {
@@ -224,11 +221,10 @@ const ICON_MAP: Record<string, string> = {
 
 const defaultIcon = ICON_MAP.scissors;
 
->>>>>>> d6eec7815fd712bb11460621642f4b37b2506e68
 const serviceCategories = serviceCatalog.length
   ? serviceCatalog.map((category) => ({
       name: category.name,
-      icon: scissorsIcon,
+      icon: category.icon ? (ICON_MAP[category.icon] || defaultIcon) : defaultIcon,
       items: category.items.map((item) => ({
         name: item.name,
         description: item.notes || "Servicio profesional personalizado",
