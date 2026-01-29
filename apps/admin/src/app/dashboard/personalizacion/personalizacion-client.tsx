@@ -407,18 +407,22 @@ export function PersonalizacionClient({
     });
   }, [theme, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sendPreviewMessage]);
 
-  // Build preview URL - static to avoid iframe reloads
-  // All changes are sent via postMessage for real-time updates
+  // Build preview URL - includes variants for component selection
+  // CSS/theme changes are sent via postMessage, but variants require reload (different components)
   // In development, use NEXT_PUBLIC_PREVIEW_URL env var if set (e.g., http://localhost:4321)
   const previewUrl = useMemo(() => {
     const localPreview = process.env.NEXT_PUBLIC_PREVIEW_URL;
-    console.log("[Admin] NEXT_PUBLIC_PREVIEW_URL:", localPreview, "domain:", domain);
-    if (localPreview) {
-      console.log("[Admin] Using local preview URL:", localPreview);
-      return `${localPreview}?preview=1`;
-    }
-    return `https://${domain}?preview=1`;
-  }, [domain]);
+    const baseUrl = localPreview || `https://${domain}`;
+    const params = new URLSearchParams({
+      preview: "1",
+      v_hero: variants.hero,
+      v_services: variants.menu,
+      v_features: variants.features,
+      v_footer: variants.footer,
+    });
+    console.log("[Admin] Preview URL:", `${baseUrl}?${params.toString()}`);
+    return `${baseUrl}?${params.toString()}`;
+  }, [domain, variants]);
 
   // Send initial state when iframe loads
   const handleIframeLoad = useCallback(() => {
@@ -1236,6 +1240,7 @@ export function PersonalizacionClient({
           previewExpanded ? 'h-[60vh]' : 'h-[30vh]'
         }`}>
           <iframe
+            key={previewUrl}
             ref={iframeMobileRef}
             src={previewUrl}
             className="w-full h-full border-0"
@@ -1448,6 +1453,7 @@ export function PersonalizacionClient({
               }}
             >
               <iframe
+                key={previewUrl}
                 ref={iframeRef}
                 src={previewUrl}
                 className="w-full h-full border-0"
