@@ -6,6 +6,7 @@ type ServiceCategory = {
   id: string;
   website_id: string;
   name: string;
+  icon: string | null;
   sort_order: number;
   is_active: boolean;
 };
@@ -27,7 +28,7 @@ async function getInitialServices(websiteId: string) {
 
   const { data: categories } = await supabase
     .from("service_categories")
-    .select("id, website_id, name, sort_order, is_active")
+    .select("id, website_id, name, icon, sort_order, is_active")
     .eq("website_id", websiteId)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
