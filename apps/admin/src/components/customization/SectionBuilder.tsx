@@ -24,7 +24,7 @@ import type {
   BusinessType,
   SectionId,
 } from "@neumorstudio/supabase";
-import { SECTIONS_CATALOG } from "@neumorstudio/supabase";
+import { SECTIONS_CATALOG, getDefaultSectionsConfig } from "@neumorstudio/supabase";
 
 // ============================================
 // ICONOS
@@ -68,6 +68,16 @@ function LockIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function RefreshIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M23 4v6h-6" />
+      <path d="M1 20v-6h6" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
     </svg>
   );
 }
@@ -270,18 +280,49 @@ export function SectionBuilder({
     [sections, onChange]
   );
 
-  // Separar secciones habilitadas y deshabilitadas
-  const enabledSections = sections
-    .filter((s) => s.enabled)
-    .sort((a, b) => a.order - b.order);
-  const disabledSections = sections.filter((s) => !s.enabled);
-
   // Filtrar solo secciones que existen en el catalogo para este tipo de negocio
   const getDefinition = (sectionId: SectionId): SectionDefinition | undefined => {
     const def = SECTIONS_CATALOG[sectionId];
     if (!def || !def.businessTypes.includes(businessType)) return undefined;
     return def;
   };
+
+  // Separar secciones habilitadas y deshabilitadas
+  // Solo incluir secciones que tienen definición válida para el tipo de negocio
+  const enabledSections = sections
+    .filter((s) => s.enabled && getDefinition(s.id))
+    .sort((a, b) => a.order - b.order);
+  const disabledSections = sections.filter((s) => !s.enabled && getDefinition(s.id));
+
+  // Verificar si hay secciones válidas
+  const hasValidSections = enabledSections.length > 0 || disabledSections.length > 0;
+
+  // Handler para regenerar secciones por defecto
+  const handleRegenerateSections = useCallback(() => {
+    const defaultConfig = getDefaultSectionsConfig(businessType);
+    onChange(defaultConfig.sections);
+  }, [businessType, onChange]);
+
+  // Si no hay secciones válidas, mostrar mensaje para regenerar
+  if (!hasValidSections) {
+    return (
+      <div className="space-y-4">
+        <div className="neumor-card p-6 text-center">
+          <p className="text-[var(--text-secondary)] mb-4">
+            No hay secciones configuradas para este tipo de negocio.
+          </p>
+          <button
+            type="button"
+            onClick={handleRegenerateSections}
+            className="neumor-btn neumor-btn-accent px-4 py-2 flex items-center gap-2 mx-auto"
+          >
+            <RefreshIcon className="w-4 h-4" />
+            Generar secciones por defecto
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -342,12 +383,22 @@ export function SectionBuilder({
         </div>
       )}
 
-      {/* Mensaje de ayuda */}
-      <p className="text-xs text-[var(--text-secondary)] text-center pt-2 border-t border-[var(--shadow-dark)]">
-        Arrastra las secciones para cambiar su orden en la web.
-        <br />
-        Las secciones marcadas con candado tienen posicion fija.
-      </p>
+      {/* Mensaje de ayuda y botón de regenerar */}
+      <div className="pt-2 border-t border-[var(--shadow-dark)]">
+        <p className="text-xs text-[var(--text-secondary)] text-center mb-3">
+          Arrastra las secciones para cambiar su orden en la web.
+          <br />
+          Las secciones marcadas con candado tienen posicion fija.
+        </p>
+        <button
+          type="button"
+          onClick={handleRegenerateSections}
+          className="w-full text-xs text-[var(--text-secondary)] hover:text-[var(--accent)] py-2 flex items-center justify-center gap-1 transition-colors"
+        >
+          <RefreshIcon className="w-3 h-3" />
+          Restaurar secciones por defecto
+        </button>
+      </div>
     </div>
   );
 }

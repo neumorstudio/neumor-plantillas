@@ -665,8 +665,15 @@ export function PersonalizacionClient({
   const [skin, setSkin] = useState<string>(initialConfig.skin || "neumorphic");
 
   // Estado para secciones del builder
+  // Verificar que sectionsConfig tenga secciones válidas, sino usar las por defecto
   const [sectionsConfig, setSectionsConfig] = useState<SectionsConfig>(() => {
-    return initialConfig.sectionsConfig || getDefaultSectionsConfig(businessType);
+    const existingConfig = initialConfig.sectionsConfig;
+    // Si hay configuración existente con secciones válidas, usarla
+    if (existingConfig?.sections && existingConfig.sections.length > 0) {
+      return existingConfig;
+    }
+    // Si no, generar configuración por defecto para el tipo de negocio
+    return getDefaultSectionsConfig(businessType);
   });
 
   // Handler para cambios en secciones
@@ -1041,7 +1048,13 @@ export function PersonalizacionClient({
         subtitle: initialConfig.features?.subtitle || "Lo mejor para ti",
         items: normalizeFeatureItems(initialConfig.features?.items as FeatureItemConfig[] | undefined),
       });
-      setSectionsConfig(initialConfig.sectionsConfig || getDefaultSectionsConfig(businessType));
+      // Restaurar secciones - validar que existan secciones válidas
+      const existingSections = initialConfig.sectionsConfig;
+      if (existingSections?.sections && existingSections.sections.length > 0) {
+        setSectionsConfig(existingSections);
+      } else {
+        setSectionsConfig(getDefaultSectionsConfig(businessType));
+      }
       setActivePreset(null);
       setMessage({ type: "success", text: "Configuracion restaurada" });
       setTimeout(() => setMessage(null), 3000);
