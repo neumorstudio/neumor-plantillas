@@ -311,8 +311,11 @@ export function PersonalizacionClient({
     ...initialConfig.effects,
   });
   const [branding, setBranding] = useState<BrandingConfig>({
-    logo: initialConfig.branding?.logo || initialConfig.logo,
     ...initialConfig.branding,
+    logo: initialConfig.branding?.logo || initialConfig.logo,
+    logoDisplay:
+      initialConfig.branding?.logoDisplay ||
+      (initialConfig.branding?.logo || initialConfig.logo ? "logo" : "name"),
   });
   const [content, setContent] = useState<ContentConfig>({
     heroTitle: initialConfig.heroTitle || "",
@@ -380,6 +383,7 @@ export function PersonalizacionClient({
       },
       branding: {
         logoSize: branding.logoSize,
+        logoDisplay: branding.logoDisplay,
       },
       content: {
         heroTitle: content.heroTitle,
@@ -397,7 +401,7 @@ export function PersonalizacionClient({
         })),
       },
     });
-  }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
+  }, [colors, typography, effects, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
 
   // Build preview URL - static to avoid iframe reloads
   // All changes are sent via postMessage for real-time updates
@@ -428,6 +432,7 @@ export function PersonalizacionClient({
         },
         branding: {
           logoSize: branding.logoSize,
+          logoDisplay: branding.logoDisplay,
         },
         content: {
           heroTitle: content.heroTitle,
@@ -739,6 +744,16 @@ export function PersonalizacionClient({
                   { value: "lg", label: "L" },
                 ]}
                 columns={3}
+              />
+              <OptionSelector
+                label="Mostrar"
+                value={branding.logoDisplay || "name"}
+                onChange={(v) => handleBrandingChange("logoDisplay", v)}
+                options={[
+                  { value: "name", label: "Nombre" },
+                  { value: "logo", label: "Logo" },
+                ]}
+                columns={2}
               />
             </CollapsibleSection>
 

@@ -395,7 +395,12 @@ const heroCtaLink = ordersEnabled ? "#orders" : undefined;
   theme={activeTheme}
   customization={customization}
 >
-  <Header restaurantName={config.restaurantName} showOrders={ordersEnabled} />
+  <Header
+    restaurantName={config.restaurantName}
+    logo={customization.branding?.logo || customization.logo}
+    logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+    showOrders={ordersEnabled}
+  />
 
   {/* Indicador de Estado - Posición Header (barra debajo del header) */}
   {openStatusConfig.enabled && openStatusConfig.position === "header" && (

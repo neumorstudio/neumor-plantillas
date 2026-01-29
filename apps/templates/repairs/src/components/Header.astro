@@ -2,15 +2,17 @@
 interface Props {
   businessName: string;
   logo?: string;
+  logoDisplay?: "logo" | "name";
 }
 
-const { businessName, logo } = Astro.props;
+const { businessName, logo, logoDisplay = "name" } = Astro.props;
+const hasLogo = Boolean(logo);
 ---
 
 <header class="header">
   <div class="container">
     <nav class="nav">
-      <a href="/" class="logo">
+      <a href="/" class="logo" data-logo-display={logoDisplay} data-has-logo={hasLogo ? "true" : "false"}>
         {logo ? <img src={logo} alt={businessName} class="logo-img" /> : null}
         <span class="logo-text">{businessName}</span>
       </a>
@@ -86,6 +88,14 @@ const { businessName, logo } = Astro.props;
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
+  }
+
+  .logo[data-logo-display="logo"][data-has-logo="true"] .logo-text {
+    display: none;
+  }
+
+  .logo[data-logo-display="name"] .logo-img {
+    display: none;
   }
 
   .nav-links {

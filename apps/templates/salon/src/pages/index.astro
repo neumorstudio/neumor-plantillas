@@ -216,7 +216,11 @@ const serviceCategories = serviceCatalog.length
   theme={activeTheme}
   customization={customization}
 >
-  <Header businessName={config.businessName} />
+  <Header
+    businessName={config.businessName}
+    logo={customization.branding?.logo || customization.logo}
+    logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+  />
 
   <main>
     <Hero

@@ -336,6 +336,7 @@ export interface BrandingConfig {
   logoDark?: string;       // URL del logo para modo oscuro
   favicon?: string;        // URL del favicon
   logoSize?: 'sm' | 'md' | 'lg';  // Tamaño del logo, default 'md'
+  logoDisplay?: 'logo' | 'name';  // Mostrar logo o nombre, default 'name'
 }
 
 /** Configuración de colores personalizados */
