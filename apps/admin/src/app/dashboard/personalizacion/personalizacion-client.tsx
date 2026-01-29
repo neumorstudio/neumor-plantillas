@@ -249,7 +249,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "flat",
     colors: { primary: "#3b82f6", secondary: "#64748b", accent: "#3b82f6" },
     typography: { headingFont: "Inter", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 40, borderRadius: "soft", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 40, borderRadius: "soft", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "modern", menu: "grid", features: "icons", reviews: "minimal", footer: "minimal", reservation: "modern" },
   },
   {
@@ -261,7 +261,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "soft",
     colors: { primary: "#8b6914", secondary: "#d4a574", accent: "#c9a96e" },
     typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.333 },
-    effects: { shadowIntensity: 50, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 50, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "modern", menu: "list", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
   },
   {
@@ -273,7 +273,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "3d",
     colors: { primary: "#f59e0b", secondary: "#10b981", accent: "#f59e0b" },
     typography: { headingFont: "Poppins", bodyFont: "Poppins", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 70, borderRadius: "pill", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 70, borderRadius: "pill", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "grid", footer: "full", reservation: "modal" },
   },
   {
@@ -285,7 +285,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "outline",
     colors: { primary: "#171717", secondary: "#525252", accent: "#171717" },
     typography: { headingFont: "system", bodyFont: "system", baseFontSize: 15, scale: 1.2 },
-    effects: { shadowIntensity: 20, borderRadius: "sharp", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 20, borderRadius: "sharp", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "minimal", menu: "list", features: "icons", reviews: "minimal", footer: "minimal", reservation: "classic" },
   },
   {
@@ -297,7 +297,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "neumorphic",
     colors: { primary: "#78350f", secondary: "#a16207", accent: "#b45309" },
     typography: { headingFont: "Merriweather", bodyFont: "Source Sans Pro", baseFontSize: 17, scale: 1.25 },
-    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "classic" },
   },
   {
@@ -321,7 +321,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "material",
     colors: { primary: "#818cf8", secondary: "#a78bfa", accent: "#818cf8" },
     typography: { headingFont: "Space Grotesk", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 45, borderRadius: "soft", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 45, borderRadius: "soft", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "bold", menu: "grid", features: "icons", reviews: "carousel", footer: "minimal", reservation: "modern" },
   },
   {
@@ -333,7 +333,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "soft",
     colors: { primary: "#059669", secondary: "#34d399", accent: "#10b981" },
     typography: { headingFont: "Quicksand", bodyFont: "Nunito", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 45, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 45, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "classic", menu: "carousel", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
   },
   {
@@ -345,7 +345,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "3d",
     colors: { primary: "#0891b2", secondary: "#f97316", accent: "#f97316" },
     typography: { headingFont: "Pacifico", bodyFont: "Open Sans", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 50, borderRadius: "pill", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 50, borderRadius: "pill", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "carousel", footer: "centered", reservation: "modal" },
   },
   {
@@ -357,7 +357,7 @@ const templatePresets: TemplatePreset[] = [
     skin: "neumorphic",
     colors: { primary: "#dc2626", secondary: "#16a34a", accent: "#dc2626" },
     typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.25 },
-    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
     variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
   },
 ];
