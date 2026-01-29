@@ -23,41 +23,13 @@ interface Props {
   categories?: MenuCategory[];
 }
 
-const defaultCategories: MenuCategory[] = [
-  {
-    name: "Burgers",
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`,
-    items: [
-      { name: "Classic Burger", description: "Carne 100% ternera, queso cheddar, lechuga, tomate", price: "12", tag: "popular", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80" },
-      { name: "BBQ Bacon", description: "Bacon crujiente, cebolla caramelizada, salsa BBQ", price: "14", image: "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400&q=80" },
-      { name: "Veggie Deluxe", description: "Hamburguesa vegetal con guacamole y chips", price: "13", tag: "vegano", image: "https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&q=80" },
-      { name: "Double Smash", description: "Doble carne smash con queso americano", price: "16", tag: "nuevo", image: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=400&q=80" },
-    ],
-  },
-  {
-    name: "Sides",
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/></svg>`,
-    items: [
-      { name: "Loaded Fries", description: "Patatas con queso, bacon y salsa ranch", price: "8", tag: "popular", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&q=80" },
-      { name: "Onion Rings", description: "Aros de cebolla crujientes con salsa especial", price: "6", image: "https://images.unsplash.com/photo-1639024471283-03518883512d?w=400&q=80" },
-      { name: "Nuggets x10", description: "Nuggets de pollo con 3 salsas a elegir", price: "9", image: "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&q=80" },
-    ],
-  },
-  {
-    name: "Drinks",
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/></svg>`,
-    items: [
-      { name: "Milkshake", description: "Vainilla, chocolate o fresa", price: "5", image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&q=80" },
-      { name: "Fresh Lemonade", description: "Limonada natural con hierbabuena", price: "4", tag: "nuevo", image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&q=80" },
-    ],
-  },
-];
-
 const {
-  title = "Nuestro Menu",
+  title = "Nuestros Servicios",
   subtitle = "Desliza para ver todas las opciones",
-  categories = defaultCategories,
+  categories = [],
 } = Astro.props;
+
+const hasServices = categories && categories.length > 0;
 ---
 
 <section id="services" class="menu-carousel-section">
@@ -68,43 +40,56 @@ const {
     </div>
   </div>
 
-  {categories.map((category) => (
-    <div class="menu-category">
-      <div class="container">
-        <div class="category-header">
-          <span class="category-icon" set:html={category.icon} />
-          <h3 class="category-name">{category.name}</h3>
+  {hasServices ? (
+    categories.map((category) => (
+      <div class="menu-category">
+        <div class="container">
+          <div class="category-header">
+            <span class="category-icon" set:html={category.icon} />
+            <h3 class="category-name">{category.name}</h3>
+          </div>
+        </div>
+
+        <div class="carousel-wrapper">
+          <div class="carousel-track">
+            {category.items.map((item) => (
+              <article class="menu-card neumor-card">
+                {item.image && (
+                  <div class="card-image">
+                    <img src={item.image} alt={item.name} loading="lazy" />
+                    {item.tag && <span class={`card-tag tag-${item.tag}`}>{item.tag}</span>}
+                  </div>
+                )}
+                <div class="card-content">
+                  <h4 class="card-title">{item.name}</h4>
+                  <p class="card-description">{item.description}</p>
+                  <div class="card-footer">
+                    <span class="card-price">€{item.price}</span>
+                    <button class="card-btn">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
-
-      <div class="carousel-wrapper">
-        <div class="carousel-track">
-          {category.items.map((item) => (
-            <article class="menu-card neumor-card">
-              {item.image && (
-                <div class="card-image">
-                  <img src={item.image} alt={item.name} loading="lazy" />
-                  {item.tag && <span class={`card-tag tag-${item.tag}`}>{item.tag}</span>}
-                </div>
-              )}
-              <div class="card-content">
-                <h4 class="card-title">{item.name}</h4>
-                <p class="card-description">{item.description}</p>
-                <div class="card-footer">
-                  <span class="card-price">€{item.price}</span>
-                  <button class="card-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+    ))
+  ) : (
+    <div class="container">
+      <div class="empty-state neumor-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+          <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+          <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+          <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+        </svg>
+        <p class="empty-text">Los servicios se configuraran proximamente</p>
       </div>
     </div>
-  ))}
+  )}
 </section>
 
 <style>
@@ -116,6 +101,31 @@ const {
   .section-header {
     text-align: center;
     margin-bottom: 3rem;
+  }
+
+  /* Empty State */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    border-radius: 1.5rem;
+  }
+
+  .empty-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+  }
+
+  .empty-text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
   }
 
   .section-title {
