@@ -67,17 +67,10 @@ interface FeaturesConfig {
   items: FeatureItemConfig[];
 }
 
-// Configuracion de categorias de servicios (para salon)
-interface ServiceCategoryConfig {
-  id: string;
-  name: string;
-  icon: string; // ID del icono
-}
-
+// Configuracion de la seccion de servicios (para salon)
 interface ServicesConfig {
   title: string;
   subtitle: string;
-  categories: ServiceCategoryConfig[];
 }
 
 // Iconos predefinidos para features
@@ -98,18 +91,6 @@ const FEATURE_ICONS = [
   { id: "coffee", label: "Cafe", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>` },
   { id: "gift", label: "Regalo", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>` },
   { id: "phone", label: "Telefono", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>` },
-];
-
-// Iconos predefinidos para categorias de servicios (salon)
-const SERVICE_CATEGORY_ICONS = [
-  { id: "scissors", label: "Tijeras/Cortes", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>` },
-  { id: "palette", label: "Color/Tinte", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/><path d="m9 15 3-3 3 3"/><circle cx="12" cy="10" r="2"/></svg>` },
-  { id: "treatment", label: "Tratamientos", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>` },
-  { id: "styling", label: "Peinados", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>` },
-  { id: "spa", label: "Spa/Relax", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c-4 4-6 7-6 10a6 6 0 0 0 12 0c0-3-2-6-6-10z"/></svg>` },
-  { id: "nails", label: "Unas/Manicura", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18"/></svg>` },
-  { id: "makeup", label: "Maquillaje", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2z"/></svg>` },
-  { id: "facial", label: "Facial", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>` },
 ];
 
 // ============================================
@@ -366,20 +347,11 @@ export function PersonalizacionClient({
     items: (initialConfig.features?.items as FeatureItemConfig[]) || defaultFeatureItems,
   });
 
-  // Categorias de servicios por defecto (para plantilla salon)
-  const defaultServiceCategories: ServiceCategoryConfig[] = [
-    { id: "cortes", name: "Cortes", icon: "scissors" },
-    { id: "color", name: "Color", icon: "palette" },
-    { id: "tratamientos", name: "Tratamientos", icon: "treatment" },
-    { id: "peinados", name: "Peinados", icon: "styling" },
-  ];
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const servicesFromConfig = (initialConfig as any).services as ServicesConfig | undefined;
   const [services, setServices] = useState<ServicesConfig>({
     title: servicesFromConfig?.title || "Nuestros Servicios",
     subtitle: servicesFromConfig?.subtitle || "Cuidamos tu imagen con profesionalidad y estilo",
-    categories: servicesFromConfig?.categories || defaultServiceCategories,
   });
 
   const [saving, setSaving] = useState(false);
@@ -440,10 +412,6 @@ export function PersonalizacionClient({
       services: {
         title: services.title,
         subtitle: services.subtitle,
-        categories: services.categories.map(cat => ({
-          ...cat,
-          iconSvg: SERVICE_CATEGORY_ICONS.find(i => i.id === cat.icon)?.svg || '',
-        })),
       },
     });
   }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, services, sendPreviewMessage]);
@@ -496,10 +464,6 @@ export function PersonalizacionClient({
         services: {
           title: services.title,
           subtitle: services.subtitle,
-          categories: services.categories.map(cat => ({
-            ...cat,
-            iconSvg: SERVICE_CATEGORY_ICONS.find(i => i.id === cat.icon)?.svg || '',
-          })),
         },
       });
     }, 100);
@@ -633,31 +597,9 @@ export function PersonalizacionClient({
     }));
   }, []);
 
-  // Handlers para servicios (categorias)
+  // Handler para servicios (titulo/subtitulo)
   const handleServicesTitleChange = useCallback((key: "title" | "subtitle", value: string) => {
     setServices(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleServiceCategoryChange = useCallback((id: string, key: keyof ServiceCategoryConfig, value: string) => {
-    setServices(prev => ({
-      ...prev,
-      categories: prev.categories.map(cat => cat.id === id ? { ...cat, [key]: value } : cat)
-    }));
-  }, []);
-
-  const handleAddServiceCategory = useCallback(() => {
-    const newId = `cat-${Date.now()}`;
-    setServices(prev => ({
-      ...prev,
-      categories: [...prev.categories, { id: newId, name: "Nueva categoria", icon: "scissors" }]
-    }));
-  }, []);
-
-  const handleRemoveServiceCategory = useCallback((id: string) => {
-    setServices(prev => ({
-      ...prev,
-      categories: prev.categories.filter(cat => cat.id !== id)
-    }));
   }, []);
 
   const handleReset = useCallback(() => {
@@ -697,11 +639,6 @@ export function PersonalizacionClient({
         services: {
           title: services.title,
           subtitle: services.subtitle,
-          categories: services.categories.map(cat => ({
-            id: cat.id,
-            name: cat.name,
-            icon: SERVICE_CATEGORY_ICONS.find(i => i.id === cat.icon)?.svg || cat.icon,
-          })),
         },
         ...content,
       };
@@ -1063,10 +1000,11 @@ export function PersonalizacionClient({
               </div>
             </CollapsibleSection>
 
-            {/* Categorias de Servicios (para salon) */}
-            <CollapsibleSection title="Categorias de Servicios" defaultOpen={false}>
+            {/* Seccion de Servicios (para salon) */}
+            <CollapsibleSection title="Seccion de Servicios" defaultOpen={false}>
               <p className="text-xs text-[var(--text-secondary)] mb-3">
-                Personaliza las categorias que aparecen en la seccion de servicios de tu web.
+                Personaliza los textos de la seccion de servicios. Las categorias y servicios se gestionan en{" "}
+                <a href="/dashboard/servicios" className="text-[var(--accent)] hover:underline">Servicios</a>.
               </p>
               <div>
                 <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
@@ -1087,66 +1025,6 @@ export function PersonalizacionClient({
                   placeholder="Cuidamos tu imagen..."
                   className="neumor-input w-full h-12"
                 />
-              </div>
-              <div className="space-y-3 mt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Categorias ({services.categories.length})</span>
-                  <button
-                    type="button"
-                    onClick={handleAddServiceCategory}
-                    className="neumor-btn px-3 py-1.5 text-xs flex items-center gap-1"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Anadir
-                  </button>
-                </div>
-                {services.categories.map((category, index) => (
-                  <div key={category.id} className="neumor-inset p-3 rounded-xl space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[var(--text-secondary)]">Categoria {index + 1}</span>
-                      {services.categories.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveServiceCategory(category.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      value={category.name}
-                      onChange={(e) => handleServiceCategoryChange(category.id, "name", e.target.value)}
-                      placeholder="Nombre de categoria"
-                      className="neumor-input w-full text-sm h-10"
-                    />
-                    <div>
-                      <label className="block text-xs text-[var(--text-secondary)] mb-1">Icono</label>
-                      <div className="grid grid-cols-8 gap-1">
-                        {SERVICE_CATEGORY_ICONS.map((icon) => (
-                          <button
-                            key={icon.id}
-                            type="button"
-                            onClick={() => handleServiceCategoryChange(category.id, "icon", icon.id)}
-                            className={`p-1.5 rounded-lg transition-all ${
-                              category.icon === icon.id
-                                ? "neumor-inset bg-[var(--accent)] text-white"
-                                : "neumor-raised hover:scale-105"
-                            }`}
-                            title={icon.label}
-                          >
-                            <div className="w-4 h-4 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: icon.svg }} />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             </CollapsibleSection>
           </div>

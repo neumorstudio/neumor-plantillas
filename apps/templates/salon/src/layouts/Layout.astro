@@ -241,6 +241,19 @@ const defaultFonts = !fontImports
               });
             }
           }
+
+          // Aplicar servicios (titulo y subtitulo de la seccion)
+          const { services } = event.data.payload;
+          if (services) {
+            if (services.title) {
+              const el = document.querySelector('#services .section-title, .services-section h2');
+              if (el) el.textContent = services.title;
+            }
+            if (services.subtitle) {
+              const el = document.querySelector('#services .section-subtitle, .services-section .section-subtitle');
+              if (el) el.textContent = services.subtitle;
+            }
+          }
         });
       })();
     </script>

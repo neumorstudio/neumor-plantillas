@@ -208,6 +208,11 @@ const serviceCategories = serviceCatalog.length
       })),
     }))
   : undefined;
+
+// Configuracion de la seccion de servicios (titulo/subtitulo personalizables)
+const servicesConfig = websiteData?.config?.services as { title?: string; subtitle?: string } | undefined;
+const servicesTitle = servicesConfig?.title || "Nuestros Servicios";
+const servicesSubtitle = servicesConfig?.subtitle || "Cuidamos tu imagen con profesionalidad y estilo";
 ---
 
 <Layout
@@ -227,7 +232,11 @@ const serviceCategories = serviceCatalog.length
 
     <Features />
 
-    <Services categories={serviceCategories} />
+    <Services
+      title={servicesTitle}
+      subtitle={servicesSubtitle}
+      categories={serviceCategories}
+    />
 
     <AppointmentForm
       webhookUrl={config.webhookUrl}
