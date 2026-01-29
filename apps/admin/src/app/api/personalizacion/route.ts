@@ -134,6 +134,9 @@ export async function GET() {
 
         // Secciones configuradas
         sectionsConfig: config.sectionsConfig,
+
+        // Features personalizados
+        features: config.features,
       },
     });
   } catch (error) {
@@ -308,6 +311,14 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    // Debug: Log what we're saving
+    console.log("[Personalization POST] Saving config for websiteId:", websiteId);
+    console.log("[Personalization POST] Theme:", updateData.theme);
+    console.log("[Personalization POST] Config keys:", Object.keys(updateData.config || {}));
+    console.log("[Personalization POST] Colors:", updateData.config?.colors);
+    console.log("[Personalization POST] Features:", updateData.config?.features);
+    console.log("[Personalization POST] SectionsConfig:", updateData.config?.sectionsConfig ? "present" : "missing");
+
     // Update website
     const { error: updateError } = await supabase
       .from("websites")
@@ -322,6 +333,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("[Personalization POST] Successfully saved!");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Personalization POST error:", error);
