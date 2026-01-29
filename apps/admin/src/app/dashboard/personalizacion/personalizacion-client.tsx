@@ -155,6 +155,142 @@ const themeCategories: ThemeCategory[] = [
 // Flatten themes for easy lookup
 const themes = themeCategories.flatMap(cat => cat.themes);
 
+// ============================================
+// TEMPLATE PRESETS - Combinaciones completas
+// ============================================
+
+interface TemplatePreset {
+  id: string;
+  name: string;
+  description: string;
+  preview: string; // URL o gradient para preview
+  theme: Theme;
+  colors: ColorsConfig;
+  typography: TypographyConfig;
+  effects: EffectsConfig;
+  variants: {
+    hero: "classic" | "modern" | "bold" | "minimal";
+    menu: "tabs" | "grid" | "list" | "carousel";
+    features: "cards" | "icons" | "banner";
+    reviews: "grid" | "carousel" | "minimal";
+    footer: "full" | "minimal" | "centered";
+    reservation: "classic" | "wizard" | "modal" | "modern";
+  };
+}
+
+const templatePresets: TemplatePreset[] = [
+  {
+    id: "moderno",
+    name: "Moderno",
+    description: "Limpio y contemporáneo",
+    preview: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #3b82f6 100%)",
+    theme: "minimal",
+    colors: { primary: "#3b82f6", secondary: "#64748b", accent: "#3b82f6" },
+    typography: { headingFont: "Inter", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
+    effects: { shadowIntensity: 40, borderRadius: "soft", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "modern", menu: "grid", features: "icons", reviews: "minimal", footer: "minimal", reservation: "modern" },
+  },
+  {
+    id: "elegante",
+    name: "Elegante",
+    description: "Sofisticado y lujoso",
+    preview: "linear-gradient(135deg, #faf5f0 0%, #d4a574 50%, #8b6914 100%)",
+    theme: "elegant",
+    colors: { primary: "#8b6914", secondary: "#d4a574", accent: "#c9a96e" },
+    typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.333 },
+    effects: { shadowIntensity: 50, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "modern", menu: "list", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
+  },
+  {
+    id: "llamativo",
+    name: "Llamativo",
+    description: "Vibrante y atrevido",
+    preview: "linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #10b981 100%)",
+    theme: "colorful",
+    colors: { primary: "#f59e0b", secondary: "#10b981", accent: "#f59e0b" },
+    typography: { headingFont: "Poppins", bodyFont: "Poppins", baseFontSize: 16, scale: 1.25 },
+    effects: { shadowIntensity: 70, borderRadius: "pill", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "grid", footer: "full", reservation: "modal" },
+  },
+  {
+    id: "minimalista",
+    name: "Minimalista",
+    description: "Ultra limpio y simple",
+    preview: "linear-gradient(135deg, #ffffff 0%, #f1f1f1 50%, #333333 100%)",
+    theme: "minimal",
+    colors: { primary: "#171717", secondary: "#525252", accent: "#171717" },
+    typography: { headingFont: "system", bodyFont: "system", baseFontSize: 15, scale: 1.2 },
+    effects: { shadowIntensity: 20, borderRadius: "sharp", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "minimal", menu: "list", features: "icons", reviews: "minimal", footer: "minimal", reservation: "classic" },
+  },
+  {
+    id: "acogedor",
+    name: "Acogedor",
+    description: "Cálido y familiar",
+    preview: "linear-gradient(135deg, #fef3c7 0%, #d4a574 50%, #78350f 100%)",
+    theme: "rustic",
+    colors: { primary: "#78350f", secondary: "#a16207", accent: "#b45309" },
+    typography: { headingFont: "Merriweather", bodyFont: "Source Sans Pro", baseFontSize: 17, scale: 1.25 },
+    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "classic" },
+  },
+  {
+    id: "premium",
+    name: "Premium Glass",
+    description: "Glassmorfismo elegante",
+    preview: "linear-gradient(135deg, #e8ecf1 0%, #6366f1 50%, #4f46e5 100%)",
+    theme: "neuglass",
+    colors: { primary: "#6366f1", secondary: "#8b5cf6", accent: "#6366f1" },
+    typography: { headingFont: "DM Sans", bodyFont: "DM Sans", baseFontSize: 16, scale: 1.25 },
+    effects: { shadowIntensity: 60, borderRadius: "rounded", glassmorphism: true, blurIntensity: 16 },
+    variants: { hero: "modern", menu: "grid", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
+  },
+  {
+    id: "nocturno",
+    name: "Nocturno",
+    description: "Elegancia oscura",
+    preview: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #6366f1 100%)",
+    theme: "midnight",
+    colors: { primary: "#818cf8", secondary: "#a78bfa", accent: "#818cf8" },
+    typography: { headingFont: "Space Grotesk", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
+    effects: { shadowIntensity: 45, borderRadius: "soft", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "bold", menu: "grid", features: "icons", reviews: "carousel", footer: "minimal", reservation: "modern" },
+  },
+  {
+    id: "fresco",
+    name: "Fresco",
+    description: "Ligero y natural",
+    preview: "linear-gradient(135deg, #ecfdf5 0%, #6ee7b7 50%, #059669 100%)",
+    theme: "spring",
+    colors: { primary: "#059669", secondary: "#34d399", accent: "#10b981" },
+    typography: { headingFont: "Quicksand", bodyFont: "Nunito", baseFontSize: 16, scale: 1.25 },
+    effects: { shadowIntensity: 45, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "classic", menu: "carousel", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
+  },
+  {
+    id: "verano",
+    name: "Verano",
+    description: "Playa y sol",
+    preview: "linear-gradient(135deg, #fef3c7 0%, #38bdf8 50%, #f97316 100%)",
+    theme: "summer",
+    colors: { primary: "#0891b2", secondary: "#f97316", accent: "#f97316" },
+    typography: { headingFont: "Pacifico", bodyFont: "Open Sans", baseFontSize: 16, scale: 1.25 },
+    effects: { shadowIntensity: 50, borderRadius: "pill", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "carousel", footer: "centered", reservation: "modal" },
+  },
+  {
+    id: "navidad",
+    name: "Navidad",
+    description: "Festivo y acogedor",
+    preview: "linear-gradient(135deg, #fef2f2 0%, #dc2626 50%, #16a34a 100%)",
+    theme: "christmas",
+    colors: { primary: "#dc2626", secondary: "#16a34a", accent: "#dc2626" },
+    typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.25 },
+    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
+    variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
+  },
+];
+
 const variantOptions = {
   hero: [
     { value: "classic", label: "Clasico" },
@@ -461,6 +597,19 @@ export function PersonalizacionClient({
     items: (initialConfig.features?.items as FeatureItemConfig[]) || defaultFeatureItems,
   });
 
+  // Estado para preset activo (null si personalización manual)
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  // Función para aplicar un preset completo
+  const applyPreset = useCallback((preset: TemplatePreset) => {
+    setTheme(preset.theme);
+    setColors(preset.colors);
+    setTypography(preset.typography);
+    setEffects(preset.effects);
+    setVariants(preset.variants);
+    setActivePreset(preset.id);
+  }, []);
+
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
@@ -598,21 +747,25 @@ export function PersonalizacionClient({
     }
   }, [previewMode]);
 
-  // Handlers
+  // Handlers - limpian el preset activo al hacer cambios manuales
   const handleVariantChange = useCallback((key: keyof Variants, value: string) => {
     setVariants(prev => ({ ...prev, [key]: value }));
+    setActivePreset(null);
   }, []);
 
   const handleColorChange = useCallback((key: keyof ColorsConfig, value: string) => {
     setColors(prev => ({ ...prev, [key]: value }));
+    setActivePreset(null);
   }, []);
 
   const handleTypographyChange = useCallback((key: keyof TypographyConfig, value: string | number) => {
     setTypography(prev => ({ ...prev, [key]: value }));
+    setActivePreset(null);
   }, []);
 
   const handleEffectsChange = useCallback((key: keyof EffectsConfig, value: number | string | boolean) => {
     setEffects(prev => ({ ...prev, [key]: value }));
+    setActivePreset(null);
   }, []);
 
   const handleBrandingChange = useCallback((key: keyof BrandingConfig, value: string) => {
@@ -828,10 +981,65 @@ export function PersonalizacionClient({
       case "diseno":
         return (
           <div className="space-y-6">
+            {/* Plantillas Prediseñadas - Lo primero y más visible */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Plantillas Prediseñadas</h3>
+                {activePreset && (
+                  <button
+                    onClick={() => setActivePreset(null)}
+                    className="text-xs text-[var(--accent)] hover:underline"
+                  >
+                    Personalizar manualmente
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Elige una plantilla completa o personaliza cada detalle abajo.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {templatePresets.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => applyPreset(preset)}
+                    className={`relative p-3 rounded-xl text-left transition-all overflow-hidden ${
+                      activePreset === preset.id
+                        ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
+                        : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
+                    }`}
+                    style={{ background: preset.preview }}
+                  >
+                    <div className="relative z-10">
+                      <span className="text-xs font-bold text-white drop-shadow-md">
+                        {preset.name}
+                      </span>
+                      <p className="text-[9px] text-white/80 drop-shadow-sm mt-0.5">
+                        {preset.description}
+                      </p>
+                    </div>
+                    {activePreset === preset.id && (
+                      <div className="absolute top-2 right-2 bg-[var(--accent)] text-white rounded-full p-0.5">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Separador visual */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-[var(--shadow-dark)]"></div>
+              <span className="text-xs text-[var(--text-secondary)]">o personaliza</span>
+              <div className="flex-1 h-px bg-[var(--shadow-dark)]"></div>
+            </div>
+
             {/* Tema - Organizado por categorías */}
-            <div className="space-y-4">
-              <p className="text-sm text-[var(--text-secondary)]">
-                Selecciona un tema base para tu web. Tenemos {themes.length} temas disponibles.
+            <CollapsibleSection title="Tema de Colores" defaultOpen={!activePreset}>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">
+                {themes.length} temas disponibles
               </p>
               {themeCategories.map((category) => (
                 <div key={category.label} className="space-y-2">
@@ -842,7 +1050,7 @@ export function PersonalizacionClient({
                     {category.themes.map((t) => (
                       <button
                         key={t.value}
-                        onClick={() => setTheme(t.value)}
+                        onClick={() => { setTheme(t.value); setActivePreset(null); }}
                         className={`relative p-2 rounded-lg text-left transition-all ${
                           theme === t.value
                             ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
@@ -881,7 +1089,7 @@ export function PersonalizacionClient({
                   </div>
                 </div>
               ))}
-            </div>
+            </CollapsibleSection>
 
             {/* Logo */}
             <CollapsibleSection title="Logo" defaultOpen={!isMobile}>
