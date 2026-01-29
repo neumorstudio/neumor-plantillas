@@ -1075,3 +1075,116 @@ input[type="time"].no-native-time::-webkit-clear-button {
     display: none;
   }
 }
+
+/* ================================================
+   ACCESSIBILITY FOR SENIORS (70+)
+   ================================================ */
+
+/* Larger touch targets for time inputs */
+input[type="time"].neumor-input {
+  min-height: 48px;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+/* Larger touch targets for date inputs */
+input[type="date"].neumor-input {
+  min-height: 48px;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+/* Improved focus states for better visibility */
+.neumor-input:focus,
+.neumor-btn:focus {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Higher contrast for status badges */
+.bg-green-100 {
+  background-color: #dcfce7 !important;
+}
+
+.text-green-700 {
+  color: #15803d !important;
+}
+
+.bg-red-100 {
+  background-color: #fee2e2 !important;
+}
+
+.text-red-600 {
+  color: #dc2626 !important;
+}
+
+/* Improved border visibility for cards */
+.border-l-green-500 {
+  border-left-color: #22c55e !important;
+  border-left-width: 5px !important;
+}
+
+.border-l-red-400 {
+  border-left-color: #f87171 !important;
+  border-left-width: 5px !important;
+}
+
+.border-l-gray-300 {
+  border-left-color: #d1d5db !important;
+  border-left-width: 5px !important;
+}
+
+/* Hover states with better visual feedback */
+.neumor-card-sm:hover {
+  transform: translateY(-1px);
+  transition: transform 0.15s ease;
+}
+
+/* Better spacing for schedule grid on larger screens */
+@media (min-width: 1280px) {
+  .grid.xl\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Ensure minimum text size for readability */
+.neumor-card-sm p,
+.neumor-card-sm span,
+.neumor-card-sm label {
+  font-size: 0.9375rem; /* 15px minimum */
+  line-height: 1.5;
+}
+
+/* Improved button contrast */
+.neumor-btn-accent {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Better visual hierarchy for section titles */
+.neumor-card > h3:first-of-type {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* Time picker buttons - larger touch target */
+.time-field button {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+/* Improved empty state visibility */
+.neumor-inset.text-center svg {
+  opacity: 0.6;
+}
+
+/* Animation for state changes */
+@keyframes highlightChange {
+  0% { background-color: rgba(var(--accent-rgb), 0.2); }
+  100% { background-color: transparent; }
+}
+
+.highlight-change {
+  animation: highlightChange 0.5s ease-out;
+}

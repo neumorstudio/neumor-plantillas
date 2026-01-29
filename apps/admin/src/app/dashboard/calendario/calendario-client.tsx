@@ -852,44 +852,50 @@ export default function CalendarioClient({
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-[2fr,1fr] gap-6">
-        <div className="neumor-card p-6">
-          <div className="flex items-center justify-between mb-4">
+      {/* Layout principal reorganizado - Mobile First */}
+      <div className="space-y-4 md:space-y-6">
+        {/* Fila superior: Calendario + Citas del día */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
+          {/* Calendario - full width en móvil, fijo en desktop */}
+          <div className="neumor-card p-4 md:p-5 w-full lg:w-[420px] xl:w-[480px] lg:shrink-0">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="neumor-btn text-sm"
+              className="neumor-btn text-base w-10 h-10 md:w-auto md:h-auto md:px-3 md:py-2 flex items-center justify-center"
               disabled={loadingBookings}
+              aria-label="Mes anterior"
             >
               ←
             </button>
-            <h2 className="text-xl font-semibold capitalize">{monthLabel}</h2>
+            <h2 className="text-lg md:text-xl font-semibold capitalize">{monthLabel}</h2>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="neumor-btn text-sm"
+              className="neumor-btn text-base w-10 h-10 md:w-auto md:h-auto md:px-3 md:py-2 flex items-center justify-center"
               disabled={loadingBookings}
+              aria-label="Mes siguiente"
             >
               →
             </button>
           </div>
 
-          <div className="grid grid-cols-7 text-xs text-[var(--text-secondary)] mb-2">
+          <div className="grid grid-cols-7 text-xs md:text-sm text-[var(--text-secondary)] mb-2">
             {dayLabels.map((label) => (
-              <span key={label} className="text-center">
+              <span key={label} className="text-center font-medium">
                 {label}
               </span>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 md:gap-2">
             {calendarDays.map((date, index) => (
               <button
                 key={`${date || "empty"}-${index}`}
                 type="button"
                 disabled={!date}
                 onClick={() => date && setSelectedDate(date)}
-                className={`neumor-btn h-10 text-sm ${
+                className={`neumor-btn h-11 md:h-10 text-sm md:text-base font-medium ${
                   date === selectedDate ? "day-selected" : ""
                 } ${!date ? "opacity-30 cursor-not-allowed" : ""}`}
               >
@@ -897,20 +903,28 @@ export default function CalendarioClient({
               </button>
             ))}
           </div>
-        </div>
+          </div>
 
-        <div className="space-y-6">
-          <div className="neumor-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Citas del dia</h3>
-              {selectedDate && (
-                <span className="text-sm text-[var(--text-secondary)]">{selectedDate}</span>
-              )}
-            </div>
-            <div className="mb-4 flex flex-wrap gap-3">
+          {/* Citas del día - altura controlada con scroll */}
+          <div className="neumor-card p-4 md:p-5 w-full lg:flex-1 lg:max-w-[400px] flex flex-col max-h-[400px] md:max-h-[500px]">
+            {/* Cabecera compacta - siempre visible */}
+            <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base md:text-lg font-bold text-[var(--text-primary)]">Citas</h3>
+                {selectedDate && (
+                  <span className="text-xs md:text-sm font-medium text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded-lg">
+                    {new Date(selectedDate + "T00:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                  </span>
+                )}
+                {filteredBookingsForDay.length > 0 && (
+                  <span className="text-xs font-bold text-white bg-[var(--accent)] px-2 py-0.5 rounded-full">
+                    {filteredBookingsForDay.length}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                className="neumor-btn text-xs px-3 py-1"
+                className="neumor-btn neumor-btn-accent text-sm font-semibold px-3 py-2 shrink-0"
                 onClick={() => {
                   setCreateForm((prev) => ({
                     ...prev,
@@ -920,44 +934,49 @@ export default function CalendarioClient({
                   setCreateError(null);
                 }}
               >
-                Nueva cita
+                + Nueva
               </button>
             </div>
-            <div className="mb-4">
-              <label className="text-xs text-[var(--text-secondary)] block mb-2">
-                Profesional
-              </label>
-              <select
-                className="neumor-input w-full"
-                value={selectedProfessionalId}
-                onChange={(event) => setSelectedProfessionalId(event.target.value)}
-              >
-                <option value="all">Todos los profesionales</option>
-                {professionals.map((professional) => (
-                  <option key={professional.id} value={professional.id}>
-                    {professional.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+            {/* Filtro de profesional - siempre visible */}
+            {professionals.length > 1 && (
+              <div className="flex items-center gap-2 mb-3 shrink-0">
+                <label className="text-xs md:text-sm font-medium text-[var(--text-secondary)] whitespace-nowrap">
+                  Filtrar:
+                </label>
+                <select
+                  className="neumor-input text-sm py-2 flex-1"
+                  value={selectedProfessionalId}
+                  onChange={(event) => setSelectedProfessionalId(event.target.value)}
+                >
+                  <option value="all">Todos</option>
+                  {professionals.map((professional) => (
+                    <option key={professional.id} value={professional.id}>
+                      {professional.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Lista de citas - con scroll */}
             {selectedDate ? (
-              <div className="space-y-3">
+              <div className="flex-1 overflow-y-auto scroll-hidden min-h-0 -mx-1 px-1">
                 {filteredBookingsForDay.length ? (
-                  <div className="space-y-5">
+                  <div className="space-y-3">
                     {(["Manana", "Tarde", "Noche", "Sin hora"] as const).map((bucket) => {
                       const bucketBookings = bookingsByBucket[bucket] || [];
-                      if (!bucketBookings.length) {
-                        return null;
-                      }
+                      if (!bucketBookings.length) return null;
                       return (
-                        <div key={bucket} className="space-y-3">
-                          <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold neumor-inset">
+                        <div key={bucket}>
+                          <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold neumor-inset mb-2">
                             {bucket}
                           </span>
-                          {bucketBookings.map((booking, index) => (
-                            <div key={booking.id} className="space-y-3">
+                          <div className="space-y-2">
+                            {bucketBookings.map((booking) => (
                               <div
-                                className="neumor-card-sm p-3 cursor-pointer rounded-2xl transition focus:outline-none hover:ring-2 hover:ring-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] active:ring-2 active:ring-[var(--accent)]"
+                                key={booking.id}
+                                className="neumor-inset p-3 md:p-3 cursor-pointer rounded-xl transition active:scale-[0.98] hover:ring-2 hover:ring-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => {
@@ -966,10 +985,7 @@ export default function CalendarioClient({
                                     booking.services?.map((service) => service.name).join(", ") ||
                                     legacy.servicesFromNotes ||
                                     "";
-                                  setBookingEdit({
-                                    ...booking,
-                                    notes: legacy.cleanNotes,
-                                  });
+                                  setBookingEdit({ ...booking, notes: legacy.cleanNotes });
                                   setServicesText(servicesFromBooking);
                                   setPriceText(getBookingPriceText(booking));
                                 }}
@@ -981,99 +997,112 @@ export default function CalendarioClient({
                                       booking.services?.map((service) => service.name).join(", ") ||
                                       legacy.servicesFromNotes ||
                                       "";
-                                    setBookingEdit({
-                                      ...booking,
-                                      notes: legacy.cleanNotes,
-                                    });
+                                    setBookingEdit({ ...booking, notes: legacy.cleanNotes });
                                     setServicesText(servicesFromBooking);
                                     setPriceText(getBookingPriceText(booking));
                                   }
                                 }}
                               >
-                                <div className="flex items-center justify-between">
-                                  <span className="flex items-center gap-2 font-medium">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="flex items-center gap-2 font-medium text-[var(--text-primary)] text-sm md:text-base truncate">
+                                    <svg className="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                       <path d="M19 21a7 7 0 0 0-14 0" />
                                       <circle cx="12" cy="7" r="4" />
                                     </svg>
-                                    {booking.customer_name}
+                                    <span className="truncate">{booking.customer_name}</span>
                                   </span>
-                                  <span className="text-lg font-semibold text-[var(--text-primary)]">
-                                    {booking.booking_time || "-"}
+                                  <span className="text-base font-bold text-[var(--accent)] shrink-0">
+                                    {booking.booking_time?.slice(0, 5) || "-"}
                                   </span>
                                 </div>
                               </div>
-                              {index < bucketBookings.length - 1 && (
-                                <div className="h-px bg-[var(--shadow-dark)] opacity-40" />
-                              )}
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    No hay reservas para este dia.
-                  </p>
+                  <div className="neumor-inset p-4 rounded-xl text-center">
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Sin citas este día
+                    </p>
+                  </div>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-[var(--text-secondary)]">
-                Selecciona un dia para ver las reservas.
-              </p>
+              <div className="neumor-inset p-4 rounded-xl text-center flex-1 flex items-center justify-center min-h-[80px]">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Selecciona un día en el calendario
+                </p>
+              </div>
             )}
           </div>
+        </div>
 
-          <div className="neumor-card p-6">
-            <h3 className="text-lg font-semibold mb-4">Horarios del local</h3>
-            <div className="space-y-3">
+        {/* Fila inferior: Horarios del local */}
+        <div className="neumor-card p-4 md:p-5">
+          <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-5 text-[var(--text-primary)]">Horarios del local</h3>
+
+          {/* Grid de días - responsive: 1 columna en móvil, flex en desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 md:gap-4">
               {dayLabels.map((label, index) => {
                 const daySlots = getSlotsForDay(index);
                 const isOpen = daySlots.length > 0;
+                const isWeekend = index >= 5;
+                const fullDayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
                 return (
-                  <div key={label} className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <span className="w-10 text-sm font-medium">{label}</span>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={isOpen}
-                          onChange={(event) => handleToggleDay(index, event.target.checked)}
-                        />
-                        Abierto
-                      </label>
+                  <div
+                    key={label}
+                    className={`neumor-card-sm p-3 md:p-4 rounded-2xl transition-all w-full lg:w-[280px] lg:shrink-0 ${
+                      isOpen
+                        ? "border-l-4 border-l-green-500"
+                        : "border-l-4 border-l-gray-300 opacity-75"
+                    } ${isWeekend ? "bg-[var(--shadow-light)]/30" : ""}`}
+                  >
+                    {/* Cabecera del día */}
+                    <div className="flex items-center justify-between mb-2 md:mb-3">
+                      <span className="text-base md:text-lg font-bold text-[var(--text-primary)]">
+                        {fullDayNames[index]}
+                      </span>
                       <button
                         type="button"
-                        className="neumor-btn text-xs px-3 py-1"
-                        onClick={() => handleAddSlot(index)}
-                        disabled={!isOpen}
+                        onClick={() => handleToggleDay(index, !isOpen)}
+                        className={`px-3 py-2 md:py-1.5 rounded-full text-sm font-semibold transition-all active:scale-95 ${
+                          isOpen
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        }`}
+                        aria-label={isOpen ? "Marcar como cerrado" : "Marcar como abierto"}
                       >
-                        Agregar tramo
+                        {isOpen ? "Abierto" : "Cerrado"}
                       </button>
                     </div>
 
+                    {/* Tramos horarios */}
                     {isOpen ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 md:space-y-3">
                         {daySlots.map((slot, slotIndex) => {
                           const slotKey = slot.id || slot.temp_id || `${index}-${slotIndex}`;
                           return (
-                            <div key={slotKey} className="flex items-center gap-3">
-                              <span className="text-xs text-[var(--text-secondary)] w-14">
-                                Tramo {slotIndex + 1}
-                              </span>
-                              <div className="flex items-center gap-2 time-field">
+                            <div key={slotKey} className="neumor-inset p-2 md:p-3 rounded-xl">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                                  Tramo {slotIndex + 1}
+                                </span>
+                                {daySlots.length > 1 && (
+                                  <button
+                                    type="button"
+                                    className="text-red-500 hover:text-red-700 text-xs md:text-sm font-medium py-1 px-2 active:scale-95"
+                                    onClick={() => handleRemoveSlot(index, slotKey)}
+                                    aria-label="Eliminar tramo"
+                                  >
+                                    Eliminar
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 md:gap-2 flex-wrap justify-center">
                                 <input
                                   type="time"
                                   value={normalizeTime(slot.open_time)}
@@ -1084,42 +1113,10 @@ export default function CalendarioClient({
                                       normalizeTime(event.target.value)
                                     )
                                   }
-                                  className="neumor-input w-28 no-native-time"
+                                  className="neumor-input text-sm md:text-base font-semibold w-[6.5rem] md:w-[7.5rem] text-center py-2"
+                                  aria-label="Hora de apertura"
                                 />
-                                <button
-                                  type="button"
-                                  className="neumor-inset w-8 h-8 flex items-center justify-center"
-                                  onClick={(event) => {
-                                    const input = event.currentTarget
-                                      .closest(".time-field")
-                                      ?.querySelector("input") as HTMLInputElement | null;
-                                    if (!input) return;
-                                    if (typeof input.showPicker === "function") {
-                                      input.showPicker();
-                                    } else {
-                                      input.focus();
-                                    }
-                                  }}
-                                  aria-label="Seleccionar hora de apertura"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                  </svg>
-                                </button>
-                              </div>
-                              <span className="text-xs text-[var(--text-secondary)]">a</span>
-                              <div className="flex items-center gap-2 time-field">
+                                <span className="text-sm md:text-base font-medium text-[var(--text-secondary)]">→</span>
                                 <input
                                   type="time"
                                   value={normalizeTime(slot.close_time)}
@@ -1130,57 +1127,34 @@ export default function CalendarioClient({
                                       normalizeTime(event.target.value)
                                     )
                                   }
-                                  className="neumor-input w-28 no-native-time"
+                                  className="neumor-input text-sm md:text-base font-semibold w-[6.5rem] md:w-[7.5rem] text-center py-2"
+                                  aria-label="Hora de cierre"
                                 />
-                                <button
-                                  type="button"
-                                  className="neumor-inset w-8 h-8 flex items-center justify-center"
-                                  onClick={(event) => {
-                                    const input = event.currentTarget
-                                      .closest(".time-field")
-                                      ?.querySelector("input") as HTMLInputElement | null;
-                                    if (!input) return;
-                                    if (typeof input.showPicker === "function") {
-                                      input.showPicker();
-                                    } else {
-                                      input.focus();
-                                    }
-                                  }}
-                                  aria-label="Seleccionar hora de cierre"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                  </svg>
-                                </button>
                               </div>
-                              {daySlots.length > 1 && (
-                                <button
-                                  type="button"
-                                  className="neumor-btn text-xs px-3 py-1"
-                                  onClick={() => handleRemoveSlot(index, slotKey)}
-                                >
-                                  Quitar
-                                </button>
-                              )}
                             </div>
                           );
                         })}
+                        <button
+                          type="button"
+                          className="w-full py-2.5 md:py-2 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors active:scale-[0.98]"
+                          onClick={() => handleAddSlot(index)}
+                        >
+                          + Agregar tramo
+                        </button>
                       </div>
                     ) : (
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        Cerrado.
-                      </p>
+                      <div className="text-center py-3 md:py-4">
+                        <p className="text-sm md:text-base text-[var(--text-secondary)]">
+                          Sin horario
+                        </p>
+                        <button
+                          type="button"
+                          className="mt-2 text-sm text-[var(--accent)] hover:underline py-1 active:scale-95"
+                          onClick={() => handleToggleDay(index, true)}
+                        >
+                          Configurar horario
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -1190,227 +1164,221 @@ export default function CalendarioClient({
             <button
               type="button"
               onClick={handleSave}
-              className="neumor-btn neumor-btn-accent mt-4"
+              className="neumor-btn neumor-btn-accent mt-4 md:mt-6 text-sm md:text-base font-semibold w-full sm:w-auto px-6 md:px-8 py-3 active:scale-[0.98]"
               disabled={saving}
             >
               {saving ? "Guardando..." : "Guardar horarios"}
             </button>
           </div>
 
-          <div className="neumor-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Fechas especiales</h3>
+          <div className="neumor-card p-4 md:p-5 max-w-4xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-5">
+              <div>
+                <h3 className="text-lg md:text-xl font-bold text-[var(--text-primary)]">Fechas especiales</h3>
+                <p className="text-xs md:text-sm text-[var(--text-secondary)] mt-1">Festivos, vacaciones o días con horario diferente</p>
+              </div>
               <button
                 type="button"
-                className="neumor-btn text-sm px-3"
+                className="neumor-btn neumor-btn-accent text-sm md:text-base font-semibold w-full sm:w-auto px-5 py-2.5 active:scale-[0.98]"
                 onClick={handleAddSpecialDay}
               >
-                Agregar
+                + Agregar fecha
               </button>
             </div>
 
             {specialDaysMessage && (
-              <div className="mb-3 p-2 rounded-lg bg-[var(--shadow-light)] text-xs">
+              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-base">
                 {specialDaysMessage}
               </div>
             )}
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:flex md:flex-wrap gap-3 md:gap-4">
               {specialDays.length ? (
-                specialDays.map((item, index) => (
-                  <div key={`${item.date}-${index}`} className="neumor-card-sm p-3 space-y-2">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <input
-                        type="date"
-                        value={item.date}
-                        onChange={(event) =>
-                          handleSpecialDayChange(index, "date", event.target.value)
-                        }
-                        className="neumor-input"
-                      />
-                      <label className="flex items-center gap-2 text-sm">
+                specialDays.map((item, index) => {
+                  const dateObj = new Date(item.date + "T00:00:00");
+                  const formattedDate = dateObj.toLocaleDateString("es-ES", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  });
+
+                  return (
+                    <div
+                      key={`${item.date}-${index}`}
+                      className={`neumor-card-sm p-3 md:p-4 rounded-2xl border-l-4 w-full md:w-[380px] md:shrink-0 ${
+                        item.is_open ? "border-l-green-500" : "border-l-red-400"
+                      }`}
+                    >
+                      {/* Cabecera: Fecha + Estado + Eliminar */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 md:gap-4 mb-3 md:mb-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 md:gap-3 mb-2">
+                            <input
+                              type="date"
+                              value={item.date}
+                              onChange={(event) =>
+                                handleSpecialDayChange(index, "date", event.target.value)
+                              }
+                              className="neumor-input text-sm md:text-base font-semibold w-full sm:w-auto py-2"
+                              aria-label="Fecha especial"
+                            />
+                          </div>
+                          <p className="text-sm md:text-base text-[var(--text-secondary)] capitalize truncate">
+                            {formattedDate}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSpecialDayChange(index, "is_open", !item.is_open)}
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-full text-sm md:text-base font-semibold transition-all active:scale-95 ${
+                              item.is_open
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : "bg-red-100 text-red-600 hover:bg-red-200"
+                            }`}
+                          >
+                            {item.is_open ? "Abierto" : "Cerrado"}
+                          </button>
+                          <button
+                            type="button"
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors active:scale-95 shrink-0"
+                            onClick={() => handleDeleteSpecialDay(index)}
+                            aria-label="Eliminar fecha especial"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18"></path>
+                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Tramos horarios (si está abierto) */}
+                      {item.is_open && (
+                        <div className="mb-3 md:mb-4">
+                          <p className="text-xs md:text-sm font-medium text-[var(--text-secondary)] mb-2 md:mb-3">Horarios del día:</p>
+                          {item.slots?.length ? (
+                            <div className="space-y-2 md:space-y-3">
+                              {item.slots.map((slot, slotIndex) => {
+                                const slotKey = slot.id || slot.temp_id || `${item.date}-${slotIndex}`;
+                                return (
+                                  <div key={slotKey} className="neumor-inset p-2 md:p-3 rounded-xl">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-xs md:text-sm font-medium text-[var(--text-secondary)]">
+                                        Tramo {slotIndex + 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        className="text-red-500 hover:text-red-700 text-xs md:text-sm font-medium py-1 px-2 active:scale-95"
+                                        onClick={() => handleRemoveSpecialSlot(index, slotKey)}
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </div>
+                                    <div className="flex items-center gap-1 md:gap-2 flex-wrap justify-center">
+                                      <input
+                                        type="time"
+                                        value={normalizeTime(slot.open_time)}
+                                        onChange={(event) =>
+                                          handleSpecialSlotChange(
+                                            index,
+                                            slotKey,
+                                            "open_time",
+                                            normalizeTime(event.target.value)
+                                          )
+                                        }
+                                        className="neumor-input text-sm md:text-base font-semibold w-[6.5rem] md:w-[7.5rem] text-center py-2"
+                                        aria-label="Hora de apertura"
+                                      />
+                                      <span className="text-sm md:text-base font-medium text-[var(--text-secondary)]">→</span>
+                                      <input
+                                        type="time"
+                                        value={normalizeTime(slot.close_time)}
+                                        onChange={(event) =>
+                                          handleSpecialSlotChange(
+                                            index,
+                                            slotKey,
+                                            "close_time",
+                                            normalizeTime(event.target.value)
+                                          )
+                                        }
+                                        className="neumor-input text-sm md:text-base font-semibold w-[6.5rem] md:w-[7.5rem] text-center py-2"
+                                        aria-label="Hora de cierre"
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-sm md:text-base text-[var(--text-secondary)] neumor-inset p-3 rounded-xl text-center">
+                              Sin tramos. Agrega uno para definir el horario.
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            className="mt-2 md:mt-3 w-full sm:w-auto text-sm md:text-base font-medium text-[var(--accent)] hover:underline py-2 active:scale-95"
+                            onClick={() => handleAddSpecialSlot(index)}
+                          >
+                            + Agregar tramo horario
+                          </button>
+                        </div>
+                      )}
+
+                      {!item.is_open && (
+                        <div className="mb-3 md:mb-4 neumor-inset p-3 md:p-4 rounded-xl text-center">
+                          <p className="text-sm md:text-base text-red-600 font-medium">
+                            Este día permanecerá cerrado
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Motivo */}
+                      <div>
+                        <label className="block text-xs md:text-sm font-medium text-[var(--text-secondary)] mb-1.5 md:mb-2">
+                          Motivo o descripción:
+                        </label>
                         <input
-                          type="checkbox"
-                          checked={item.is_open}
+                          className="neumor-input w-full text-sm md:text-base py-2.5"
+                          placeholder="Ej: Navidad, Vacaciones..."
+                          value={item.note ?? ""}
                           onChange={(event) =>
-                            handleSpecialDayChange(index, "is_open", event.target.checked)
+                            handleSpecialDayChange(index, "note", event.target.value)
                           }
                         />
-                        Abierto
-                      </label>
-                      <button
-                        type="button"
-                        className="neumor-btn text-xs px-3 py-1"
-                        onClick={() => handleAddSpecialSlot(index)}
-                        disabled={!item.is_open}
-                      >
-                        Agregar tramo
-                      </button>
-                      <button
-                        type="button"
-                        className="neumor-btn text-xs px-3"
-                        onClick={() => handleDeleteSpecialDay(index)}
-                      >
-                        Quitar
-                      </button>
+                      </div>
                     </div>
-                    {item.is_open ? (
-                      item.slots?.length ? (
-                        <div className="space-y-2">
-                          {item.slots.map((slot, slotIndex) => {
-                            const slotKey = slot.id || slot.temp_id || `${item.date}-${slotIndex}`;
-                            return (
-                              <div key={slotKey} className="flex items-center gap-3">
-                                <span className="text-xs text-[var(--text-secondary)] w-14">
-                                  Tramo {slotIndex + 1}
-                                </span>
-                                <div className="flex items-center gap-2 time-field">
-                                  <input
-                                    type="time"
-                                    value={normalizeTime(slot.open_time)}
-                                    onChange={(event) =>
-                                      handleSpecialSlotChange(
-                                        index,
-                                        slotKey,
-                                        "open_time",
-                                        normalizeTime(event.target.value)
-                                      )
-                                    }
-                                    className="neumor-input w-24 no-native-time"
-                                  />
-                                  <button
-                                    type="button"
-                                    className="neumor-inset w-8 h-8 flex items-center justify-center"
-                                    onClick={(event) => {
-                                      const input = event.currentTarget
-                                        .closest(".time-field")
-                                        ?.querySelector("input") as HTMLInputElement | null;
-                                      if (!input) return;
-                                      if (typeof input.showPicker === "function") {
-                                        input.showPicker();
-                                      } else {
-                                        input.focus();
-                                      }
-                                    }}
-                                    aria-label="Seleccionar hora de apertura"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="12" cy="12" r="10"></circle>
-                                      <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                  </button>
-                                </div>
-                                <span className="text-xs text-[var(--text-secondary)]">a</span>
-                                <div className="flex items-center gap-2 time-field">
-                                  <input
-                                    type="time"
-                                    value={normalizeTime(slot.close_time)}
-                                    onChange={(event) =>
-                                      handleSpecialSlotChange(
-                                        index,
-                                        slotKey,
-                                        "close_time",
-                                        normalizeTime(event.target.value)
-                                      )
-                                    }
-                                    className="neumor-input w-24 no-native-time"
-                                  />
-                                  <button
-                                    type="button"
-                                    className="neumor-inset w-8 h-8 flex items-center justify-center"
-                                    onClick={(event) => {
-                                      const input = event.currentTarget
-                                        .closest(".time-field")
-                                        ?.querySelector("input") as HTMLInputElement | null;
-                                      if (!input) return;
-                                      if (typeof input.showPicker === "function") {
-                                        input.showPicker();
-                                      } else {
-                                        input.focus();
-                                      }
-                                    }}
-                                    aria-label="Seleccionar hora de cierre"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="14"
-                                      height="14"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <circle cx="12" cy="12" r="10"></circle>
-                                      <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                  </button>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="neumor-btn text-xs px-3 py-1"
-                                  onClick={() => handleRemoveSpecialSlot(index, slotKey)}
-                                >
-                                  Quitar
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-[var(--text-secondary)]">
-                          Sin tramos. Agrega uno para abrir este dia.
-                        </p>
-                      )
-                    ) : (
-                      <p className="text-xs text-[var(--text-secondary)]">
-                        Cerrado.
-                      </p>
-                    )}
-                    <input
-                      className="neumor-input w-full"
-                      placeholder="Motivo (opcional)"
-                      value={item.note ?? ""}
-                      onChange={(event) =>
-                        handleSpecialDayChange(index, "note", event.target.value)
-                      }
-                    />
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <p className="text-sm text-[var(--text-secondary)]">
-                  No hay fechas especiales configuradas.
-                </p>
+                <div className="neumor-inset p-4 rounded-xl text-center">
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    Sin fechas especiales configuradas
+                  </p>
+                </div>
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleSaveSpecialDays}
-              className="neumor-btn neumor-btn-accent mt-4"
-              disabled={savingSpecialDays}
-            >
-              {savingSpecialDays ? "Guardando..." : "Guardar fechas"}
-            </button>
+            {specialDays.length > 0 && (
+              <button
+                type="button"
+                onClick={handleSaveSpecialDays}
+                className="neumor-btn neumor-btn-accent mt-4 md:mt-6 text-sm md:text-base font-semibold w-full sm:w-auto px-6 md:px-8 py-3 active:scale-[0.98]"
+                disabled={savingSpecialDays}
+              >
+                {savingSpecialDays ? "Guardando..." : "Guardar fechas especiales"}
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
       {createOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="neumor-card p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto scroll-hidden">
-            <h2 className="text-xl font-heading font-semibold mb-4 text-[var(--text-primary)]">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="neumor-card p-4 sm:p-6 w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto scroll-hidden rounded-t-3xl sm:rounded-2xl">
+            <h2 className="text-lg sm:text-xl font-heading font-semibold mb-4 text-[var(--text-primary)]">
               Nueva cita interna
             </h2>
 
@@ -1420,14 +1388,14 @@ export default function CalendarioClient({
               </div>
             )}
 
-            <div className="space-y-5">
-              <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Nombre
                   </label>
                   <input
-                    className="neumor-input w-full"
+                    className="neumor-input w-full text-base py-2.5"
                     value={createForm.customer_name}
                     onChange={(event) =>
                       setCreateForm((prev) => ({ ...prev, customer_name: event.target.value }))
@@ -1435,11 +1403,12 @@ export default function CalendarioClient({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Telefono
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Teléfono
                   </label>
                   <input
-                    className="neumor-input w-full"
+                    className="neumor-input w-full text-base py-2.5"
+                    type="tel"
                     value={createForm.customer_phone}
                     onChange={(event) =>
                       setCreateForm((prev) => ({ ...prev, customer_phone: event.target.value }))
@@ -1449,11 +1418,12 @@ export default function CalendarioClient({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Email (opcional)
                 </label>
                 <input
-                  className="neumor-input w-full"
+                  className="neumor-input w-full text-base py-2.5"
+                  type="email"
                   value={createForm.customer_email}
                   onChange={(event) =>
                     setCreateForm((prev) => ({ ...prev, customer_email: event.target.value }))
@@ -1462,24 +1432,25 @@ export default function CalendarioClient({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Servicios
                 </label>
-                <div className="space-y-3 max-h-64 overflow-y-auto scroll-hidden">
+                <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto scroll-hidden">
                   {serviceCatalog.length ? (
                     serviceCatalog.map((category) => (
-                      <div key={category.id} className="neumor-card-sm p-3">
-                        <p className="text-sm font-semibold mb-2">{category.name}</p>
-                        <div className="flex flex-wrap gap-2">
+                      <div key={category.id} className="neumor-card-sm p-2 sm:p-3">
+                        <p className="text-xs sm:text-sm font-semibold mb-2">{category.name}</p>
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {category.items.map((item) => {
                             const selected = createForm.service_ids.includes(item.id);
                             return (
                               <label
                                 key={item.id}
-                                className="neumor-inset px-3 py-1 rounded-full text-xs flex items-center gap-2"
+                                className={`neumor-inset px-2 sm:px-3 py-1.5 sm:py-1 rounded-full text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer active:scale-95 transition ${selected ? "ring-2 ring-[var(--accent)]" : ""}`}
                               >
                                 <input
                                   type="checkbox"
+                                  className="w-4 h-4"
                                   checked={selected}
                                   onChange={(event) => {
                                     const checked = event.target.checked;
@@ -1512,9 +1483,9 @@ export default function CalendarioClient({
                                     });
                                   }}
                                 />
-                                <span>
-                                  {item.name} · {(item.price_cents / 100).toFixed(2)} EUR ·{" "}
-                                  {item.duration_minutes} min
+                                <span className="leading-tight">
+                                  {item.name} · {(item.price_cents / 100).toFixed(2)}€ ·{" "}
+                                  {item.duration_minutes}min
                                 </span>
                               </label>
                             );
@@ -1530,13 +1501,13 @@ export default function CalendarioClient({
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Profesional
                   </label>
                   <select
-                    className="neumor-input w-full"
+                    className="neumor-input w-full text-base py-2.5"
                     value={createForm.professional_id}
                     onChange={(event) =>
                       setCreateForm((prev) => ({
@@ -1560,12 +1531,12 @@ export default function CalendarioClient({
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Fecha
                   </label>
                   <input
                     type="date"
-                    className="neumor-input w-full"
+                    className="neumor-input w-full text-base py-2.5"
                     value={createForm.booking_date}
                     onChange={(event) =>
                       setCreateForm((prev) => ({
@@ -1579,17 +1550,17 @@ export default function CalendarioClient({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Hora
                 </label>
-                <div className="neumor-inset p-3 max-h-52 overflow-y-auto scroll-hidden">
+                <div className="neumor-inset p-2 sm:p-3 max-h-40 sm:max-h-52 overflow-y-auto scroll-hidden">
                   {availableTimes.length ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {availableTimes.map((time) => (
                         <button
                           key={time}
                           type="button"
-                          className={`w-full rounded-full py-2 text-sm neumor-inset ${
+                          className={`rounded-full py-2.5 text-sm font-medium neumor-inset active:scale-95 transition ${
                             createForm.booking_time === time ? "day-selected" : ""
                           }`}
                           onClick={() =>
@@ -1601,47 +1572,46 @@ export default function CalendarioClient({
                       ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-xs text-[var(--text-secondary)] block text-center py-2">
                       Selecciona servicios, profesional y fecha para ver horas.
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Precio total
                   </label>
-                  <div className="neumor-input w-full">
+                  <div className="neumor-input w-full text-sm sm:text-base py-2.5 font-semibold text-[var(--accent)]">
                     {(
                       getSelectedServiceItems().reduce(
                         (sum, service) => sum + (service.price_cents || 0),
                         0
                       ) / 100
-                    ).toFixed(2)}{" "}
-                    EUR
+                    ).toFixed(2)}€
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Categorias
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Categorías
                   </label>
-                  <div className="neumor-input w-full">
+                  <div className="neumor-input w-full text-sm sm:text-base py-2.5 truncate">
                     {getSelectedCategoryNames().length
                       ? getSelectedCategoryNames().join(", ")
-                      : "Sin categorias"}
+                      : "Sin categorías"}
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Notas (opcional)
                 </label>
                 <textarea
-                  className="neumor-input w-full"
-                  rows={3}
+                  className="neumor-input w-full text-base py-2.5"
+                  rows={2}
                   value={createForm.notes}
                   onChange={(event) =>
                     setCreateForm((prev) => ({ ...prev, notes: event.target.value }))
@@ -1650,10 +1620,10 @@ export default function CalendarioClient({
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap justify-end gap-3">
+            <div className="mt-4 sm:mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
               <button
                 type="button"
-                className="neumor-btn"
+                className="neumor-btn w-full sm:w-auto py-3 sm:py-2 active:scale-[0.98]"
                 onClick={() => setCreateOpen(false)}
                 disabled={savingCreate}
               >
@@ -1661,7 +1631,7 @@ export default function CalendarioClient({
               </button>
               <button
                 type="button"
-                className="neumor-btn neumor-btn-accent"
+                className="neumor-btn neumor-btn-accent w-full sm:w-auto py-3 sm:py-2 active:scale-[0.98]"
                 onClick={handleCreateBooking}
                 disabled={savingCreate}
               >
@@ -1673,9 +1643,9 @@ export default function CalendarioClient({
       )}
 
       {bookingEdit && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="neumor-card p-6 w-full max-w-md mx-4">
-            <h2 className="text-xl font-heading font-semibold mb-6 text-[var(--text-primary)]">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="neumor-card p-4 sm:p-6 w-full sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto scroll-hidden rounded-t-3xl sm:rounded-2xl">
+            <h2 className="text-lg sm:text-xl font-heading font-semibold mb-4 sm:mb-6 text-[var(--text-primary)]">
               Editar cita
             </h2>
 
@@ -1685,13 +1655,13 @@ export default function CalendarioClient({
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Nombre del cliente
                 </label>
                 <input
-                  className="neumor-input w-full"
+                  className="neumor-input w-full text-base py-2.5"
                   value={bookingEdit.customer_name}
                   onChange={(event) =>
                     setBookingEdit({ ...bookingEdit, customer_name: event.target.value })
@@ -1699,39 +1669,42 @@ export default function CalendarioClient({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                  Telefono
-                </label>
-                <input
-                  className="neumor-input w-full"
-                  value={bookingEdit.customer_phone ?? ""}
-                  onChange={(event) =>
-                    setBookingEdit({ ...bookingEdit, customer_phone: event.target.value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Teléfono
+                  </label>
+                  <input
+                    className="neumor-input w-full text-base py-2.5"
+                    type="tel"
+                    value={bookingEdit.customer_phone ?? ""}
+                    onChange={(event) =>
+                      setBookingEdit({ ...bookingEdit, customer_phone: event.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Hora
+                  </label>
+                  <input
+                    type="time"
+                    className="neumor-input w-full text-base py-2.5"
+                    value={bookingEdit.booking_time ?? ""}
+                    onChange={(event) =>
+                      setBookingEdit({ ...bookingEdit, booking_time: event.target.value })
+                    }
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                  Hora
-                </label>
-                <input
-                  type="time"
-                  className="neumor-input w-full"
-                  value={bookingEdit.booking_time ?? ""}
-                  onChange={(event) =>
-                    setBookingEdit({ ...bookingEdit, booking_time: event.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Servicios
                 </label>
                 <input
-                  className="neumor-input w-full"
+                  className="neumor-input w-full text-base py-2.5"
                   value={servicesText}
                   onChange={(event) => setServicesText(event.target.value)}
                   placeholder="Corte, Color, Peinado"
@@ -1739,11 +1712,12 @@ export default function CalendarioClient({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Precio total (EUR)
                 </label>
                 <input
-                  className="neumor-input w-full"
+                  className="neumor-input w-full text-base py-2.5"
+                  inputMode="decimal"
                   value={priceText}
                   onChange={(event) => setPriceText(event.target.value)}
                   placeholder="25.00"
@@ -1751,11 +1725,11 @@ export default function CalendarioClient({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Notas
                 </label>
                 <textarea
-                  className="neumor-input w-full min-h-[80px] resize-none"
+                  className="neumor-input w-full min-h-[60px] sm:min-h-[80px] resize-none text-base py-2.5"
                   value={bookingEdit.notes ?? ""}
                   onChange={(event) =>
                     setBookingEdit({ ...bookingEdit, notes: event.target.value })
@@ -1764,9 +1738,9 @@ export default function CalendarioClient({
               </div>
             </div>
 
-            <div className="flex flex-wrap justify-end gap-3 mt-6">
+            <div className="flex flex-col-reverse sm:flex-row sm:flex-wrap sm:justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
-                className="neumor-btn px-5 text-red-600"
+                className="neumor-btn w-full sm:w-auto px-5 py-3 sm:py-2 text-red-600 active:scale-[0.98]"
                 onClick={async () => {
                   if (!bookingEdit) return;
                   setDeleteConfirm(bookingEdit);
@@ -1776,7 +1750,7 @@ export default function CalendarioClient({
                 Cancelar cita
               </button>
               <button
-                className="neumor-btn px-5"
+                className="neumor-btn w-full sm:w-auto px-5 py-3 sm:py-2 active:scale-[0.98]"
                 onClick={() => {
                   setBookingEdit(null);
                   setBookingError(null);
@@ -1786,7 +1760,7 @@ export default function CalendarioClient({
               </button>
 
               <button
-                className="neumor-btn neumor-btn-accent px-5"
+                className="neumor-btn neumor-btn-accent w-full sm:w-auto px-5 py-3 sm:py-2 active:scale-[0.98]"
                 onClick={handleBookingSave}
                 disabled={savingBooking}
               >
@@ -1798,28 +1772,28 @@ export default function CalendarioClient({
       )}
 
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="neumor-card p-6 w-full max-w-md mx-4">
-            <h2 className="text-xl font-heading font-semibold mb-3 text-[var(--text-primary)]">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="neumor-card p-4 sm:p-6 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl">
+            <h2 className="text-lg sm:text-xl font-heading font-semibold mb-3 text-[var(--text-primary)]">
               Eliminar cita
             </h2>
             <p className="text-sm text-[var(--text-secondary)]">
-              Esta accion es permanente. Se eliminara la cita de{" "}
+              Esta acción es permanente. Se eliminará la cita de{" "}
               <span className="font-semibold text-[var(--text-primary)]">
                 {deleteConfirm.customer_name}
               </span>{" "}
-              y se liberara la hora para nuevas citas.
+              y se liberará la hora para nuevas citas.
             </p>
 
-            <div className="flex flex-wrap justify-end gap-3 mt-6">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
-                className="neumor-btn px-5"
+                className="neumor-btn w-full sm:w-auto px-5 py-3 sm:py-2 active:scale-[0.98]"
                 onClick={() => setDeleteConfirm(null)}
               >
-                  Cerrar
+                Cerrar
               </button>
               <button
-                className="neumor-btn px-5 text-red-600"
+                className="neumor-btn w-full sm:w-auto px-5 py-3 sm:py-2 text-red-600 active:scale-[0.98]"
                 onClick={async () => {
                   const removed = await handleBookingDelete(deleteConfirm.id);
                   if (removed) {
