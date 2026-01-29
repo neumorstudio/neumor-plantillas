@@ -294,7 +294,33 @@ export async function updateBusiness(clientId: string, formData: FormData) {
     return { error: websiteError.message || "Error al actualizar el website" };
   }
 
+  // Actualizar user_metadata del usuario asociado para sincronizar el business_type
+  const { data: clientData } = await supabase
+    .from("clients")
+    .select("auth_user_id")
+    .eq("id", clientId)
+    .single();
+
+  if (clientData?.auth_user_id) {
+    const { error: userUpdateError } = await supabase.auth.admin.updateUserById(
+      clientData.auth_user_id,
+      {
+        user_metadata: {
+          business_name: businessName.trim(),
+          business_type: businessType,
+        },
+      }
+    );
+
+    if (userUpdateError) {
+      console.error("[SUPERADMIN] Error updating user metadata:", userUpdateError);
+      // No retornamos error porque el cliente ya se actualizo correctamente
+      // Solo logeamos para debugging
+    }
+  }
+
   revalidatePath("/super/businesses");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
