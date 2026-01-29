@@ -15,7 +15,7 @@ import { FooterFull, FooterMinimal, FooterCentered } from "@restaurant/component
 import { ReservationClassic } from "@restaurant/components/ReservationForm";
 
 // Import Supabase helpers
-import { getMenuItems } from "@restaurant/lib/supabase";
+import { getBusinessHours, getMenuItems } from "@restaurant/lib/supabase";
 
 // Get tenant from middleware
 const tenant = Astro.locals.tenant as TenantData;
@@ -59,6 +59,13 @@ const FooterComponent = componentMap.footer[variants.footer as keyof typeof comp
 
 // Get menu items from Supabase
 const menuItems = await getMenuItems(tenant.id);
+const businessHours = await getBusinessHours(tenant.id);
+const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
+  const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (!openDay) return "Cerrado";
+  return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
+};
+const scheduleLabel = buildScheduleLabel(businessHours);
 
 const formatPrice = (priceCents: number) => {
   return new Intl.NumberFormat("es-ES", {
@@ -167,13 +174,20 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header restaurantName={pageConfig.restaurantName} logo={pageConfig.logo} />
+  <Header
+    restaurantName={pageConfig.restaurantName}
+    logo={pageConfig.logo}
+    logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+  />
 
   <main>
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
       backgroundImage={pageConfig.heroImage}
+      scheduleLabel={scheduleLabel}
+      address={pageConfig.address}
+      phone={pageConfig.phone}
     />
 
     <Features

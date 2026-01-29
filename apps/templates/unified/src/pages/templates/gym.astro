@@ -12,6 +12,7 @@ import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@gym/components/
 import { ClassesTabs, ClassesGrid, ClassesList, ClassesCarousel } from "@gym/components/Classes";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@gym/components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@gym/components/Footer";
+import { getBusinessHours } from "@gym/lib/supabase";
 
 // Get tenant from middleware
 const tenant = Astro.locals.tenant as TenantData;
@@ -52,6 +53,14 @@ const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] 
 const Classes = componentMap.classes[variants.classes as keyof typeof componentMap.classes] || ClassesTabs;
 const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
 const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+
+const businessHours = await getBusinessHours(tenant.id);
+const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
+  const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (!openDay) return "Cerrado";
+  return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
+};
+const scheduleLabel = buildScheduleLabel(businessHours);
 
 // Extraer configuración de personalización visual
 const customization = {
@@ -94,13 +103,20 @@ const pageConfig = {
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header businessName={pageConfig.gymName} logo={pageConfig.logo} />
+  <Header
+    businessName={pageConfig.gymName}
+    logo={pageConfig.logo}
+    logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+  />
 
   <main>
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
       backgroundImage={pageConfig.heroImage}
+      scheduleLabel={scheduleLabel}
+      address={pageConfig.address}
+      phone={pageConfig.phone}
     />
 
     <Features

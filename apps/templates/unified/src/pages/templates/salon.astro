@@ -15,7 +15,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@salon/components/
 import { FooterFull, FooterMinimal, FooterCentered } from "@salon/components/Footer";
 
 // Import Supabase helpers
-import { getServiceCatalog } from "@salon/lib/supabase";
+import { getBusinessHours, getServiceCatalog } from "@salon/lib/supabase";
 import { createPortalClient } from "../../lib/supabase-portal";
 
 // Get tenant from middleware
@@ -100,6 +100,13 @@ const FooterComponent = componentMap.footer[variants.footer as keyof typeof comp
 
 // Get service catalog from Supabase
 const serviceCatalog = await getServiceCatalog(tenant.id);
+const businessHours = await getBusinessHours(tenant.id);
+const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
+  const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (!openDay) return "Cerrado";
+  return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
+};
+const scheduleLabel = buildScheduleLabel(businessHours);
 
 // Mapa de iconos (sincronizado con servicios-client.tsx del admin)
 const ICON_MAP: Record<string, string> = {
@@ -187,13 +194,20 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   theme={pageConfig.theme}
   customization={customization}
 >
-  <Header businessName={pageConfig.businessName} logo={pageConfig.logo} />
+  <Header
+    businessName={pageConfig.businessName}
+    logo={pageConfig.logo}
+    logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+  />
 
   <main>
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
       backgroundImage={pageConfig.heroImage}
+      scheduleLabel={scheduleLabel}
+      address={pageConfig.address}
+      phone={pageConfig.phone}
     />
 
     <Features

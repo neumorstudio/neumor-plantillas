@@ -17,7 +17,7 @@ interface Props {
 const {
   title,
   subtitle,
-  ctaText = "Pedir Ahora",
+  ctaText = "Reservar cita",
   ctaLink = "#reserve",
   backgroundImage,
 } = Astro.props;
@@ -31,11 +31,6 @@ const words = title.split(' ');
     <!-- Left: Content -->
     <div class="hero-content">
       <div class="content-inner">
-        <div class="hero-badge animate-slide-right">
-          <span class="badge-dot"></span>
-          <span>Abierto Ahora</span>
-        </div>
-
         <h1 class="hero-title">
           {words.map((word, i) => (
             <span class="title-word animate-slide-right" style={`animation-delay: ${0.1 + i * 0.1}s`}>
@@ -53,28 +48,8 @@ const words = title.split(' ');
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </a>
-          <a href="#menu" class="hero-cta-secondary">
-            Ver Menu
-          </a>
         </div>
 
-        <!-- Stats -->
-        <div class="hero-stats animate-slide-right animation-delay-600">
-          <div class="stat">
-            <span class="stat-number">4.9</span>
-            <span class="stat-label">Rating</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-number">500+</span>
-            <span class="stat-label">Reviews</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-number">15min</span>
-            <span class="stat-label">Entrega</span>
-          </div>
-        </div>
       </div>
     </div>
 
