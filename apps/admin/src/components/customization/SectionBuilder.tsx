@@ -43,14 +43,6 @@ function GripVerticalIcon({ className }: { className?: string }) {
   );
 }
 
-function EyeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
 
 function CheckCircleIcon({ className }: { className?: string }) {
   return (
@@ -89,7 +81,6 @@ interface SortableSectionItemProps {
   definition: SectionDefinition;
   onToggle: () => void;
   onVariantChange: (variant: string) => void;
-  onPreview: () => void;
 }
 
 function SortableSectionItem({
@@ -97,7 +88,6 @@ function SortableSectionItem({
   definition,
   onToggle,
   onVariantChange,
-  onPreview,
 }: SortableSectionItemProps) {
   const {
     attributes,
@@ -198,16 +188,6 @@ function SortableSectionItem({
             />
           </button>
         )}
-
-        {/* Preview button */}
-        <button
-          type="button"
-          onClick={onPreview}
-          className="hidden sm:block p-2 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
-          title="Vista previa de esta seccion"
-        >
-          <EyeIcon className="w-4 h-4" />
-        </button>
       </div>
     </div>
   );
@@ -221,14 +201,12 @@ interface SectionBuilderProps {
   businessType: BusinessType;
   sections: SectionConfig[];
   onChange: (sections: SectionConfig[]) => void;
-  onPreviewSection?: (sectionId: SectionId | null) => void;
 }
 
 export function SectionBuilder({
   businessType,
   sections,
   onChange,
-  onPreviewSection,
 }: SectionBuilderProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -292,13 +270,6 @@ export function SectionBuilder({
     [sections, onChange]
   );
 
-  const handlePreview = useCallback(
-    (sectionId: SectionId) => {
-      onPreviewSection?.(sectionId);
-    },
-    [onPreviewSection]
-  );
-
   // Separar secciones habilitadas y deshabilitadas
   const enabledSections = sections
     .filter((s) => s.enabled)
@@ -339,7 +310,6 @@ export function SectionBuilder({
                   definition={definition}
                   onToggle={() => handleToggle(section.id)}
                   onVariantChange={(v) => handleVariantChange(section.id, v)}
-                  onPreview={() => handlePreview(section.id)}
                 />
               );
             })}
@@ -365,7 +335,6 @@ export function SectionBuilder({
                   definition={definition}
                   onToggle={() => handleToggle(section.id)}
                   onVariantChange={(v) => handleVariantChange(section.id, v)}
-                  onPreview={() => handlePreview(section.id)}
                 />
               );
             })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 
 interface ColorPickerProps {
   label: string;
@@ -25,6 +25,12 @@ const PRESET_COLORS = [
   "#1e293b", // Slate dark
 ];
 
+// Validar formato de color hex
+const isValidHex = (color: string): boolean => /^#[0-9A-Fa-f]{6}$/.test(color);
+
+// Validar formato parcial (mientras escribe)
+const isPartialHex = (color: string): boolean => /^#[0-9A-Fa-f]{0,6}$/.test(color);
+
 export function ColorPicker({ label, value, onChange, description }: ColorPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -46,14 +52,38 @@ export function ColorPicker({ label, value, onChange, description }: ColorPicker
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Determinar si el input es válido o inválido
+  const inputStatus = useMemo(() => {
+    if (isValidHex(inputValue)) return "valid";
+    if (isPartialHex(inputValue)) return "partial";
+    return "invalid";
+  }, [inputValue]);
+
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+
+    // Auto-añadir # si no empieza con él
+    if (newValue && !newValue.startsWith("#")) {
+      newValue = "#" + newValue;
+    }
+
+    // Convertir a mayúsculas para consistencia
+    newValue = newValue.toUpperCase();
+
     setInputValue(newValue);
-    // Validate hex color
-    if (/^#[0-9A-Fa-f]{6}$/.test(newValue)) {
-      onChange(newValue);
+
+    // Solo aplicar si es un hex válido
+    if (isValidHex(newValue)) {
+      onChange(newValue.toLowerCase());
     }
   }, [onChange]);
+
+  const handleInputBlur = useCallback(() => {
+    // Si el valor no es válido al perder foco, restaurar al último válido
+    if (!isValidHex(inputValue)) {
+      setInputValue(value);
+    }
+  }, [inputValue, value]);
 
   const handlePresetClick = useCallback((color: string) => {
     setInputValue(color);
@@ -66,6 +96,18 @@ export function ColorPicker({ label, value, onChange, description }: ColorPicker
     setInputValue(newValue);
     onChange(newValue);
   }, [onChange]);
+
+  // Estilos del input según estado
+  const inputClassName = useMemo(() => {
+    const base = "neumor-input w-full pr-10 font-mono text-sm";
+    if (inputStatus === "invalid") {
+      return `${base} border-red-400 focus:border-red-500`;
+    }
+    if (inputStatus === "valid") {
+      return base;
+    }
+    return base; // partial
+  }, [inputStatus]);
 
   return (
     <div ref={containerRef} className="relative">
@@ -90,10 +132,17 @@ export function ColorPicker({ label, value, onChange, description }: ColorPicker
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            placeholder="#6366f1"
-            className="neumor-input w-full pr-10 font-mono text-sm"
+            onBlur={handleInputBlur}
+            placeholder="#6366F1"
+            className={inputClassName}
             maxLength={7}
           />
+          {/* Indicador de estado */}
+          {inputStatus === "invalid" && (
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">
+              !
+            </span>
+          )}
           {/* Native color picker */}
           <input
             type="color"
@@ -107,6 +156,13 @@ export function ColorPicker({ label, value, onChange, description }: ColorPicker
           />
         </div>
       </div>
+
+      {/* Error message */}
+      {inputStatus === "invalid" && (
+        <p className="text-xs text-red-500 mt-1">
+          Formato invalido. Usa #RRGGBB (ej: #6366F1)
+        </p>
+      )}
 
       {/* Preset colors dropdown */}
       {isOpen && (

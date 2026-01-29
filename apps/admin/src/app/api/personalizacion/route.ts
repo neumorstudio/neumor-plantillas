@@ -181,6 +181,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Tema no valido" }, { status: 400 });
     }
 
+    // Validate numeric ranges in config
+    if (config?.effects) {
+      const { shadowIntensity, blurIntensity } = config.effects;
+      if (shadowIntensity !== undefined && (shadowIntensity < 0 || shadowIntensity > 100)) {
+        return NextResponse.json(
+          { error: "shadowIntensity debe estar entre 0 y 100" },
+          { status: 400 }
+        );
+      }
+      if (blurIntensity !== undefined && (blurIntensity < 8 || blurIntensity > 32)) {
+        return NextResponse.json(
+          { error: "blurIntensity debe estar entre 8 y 32" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (config?.typography?.baseFontSize !== undefined) {
+      const { baseFontSize } = config.typography;
+      if (baseFontSize < 14 || baseFontSize > 20) {
+        return NextResponse.json(
+          { error: "baseFontSize debe estar entre 14 y 20" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Verify user owns this website
     const { data: client } = await supabase
       .from("clients")

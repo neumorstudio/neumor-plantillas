@@ -362,41 +362,6 @@ const templatePresets: TemplatePreset[] = [
   },
 ];
 
-const variantOptions = {
-  hero: [
-    { value: "classic", label: "Clasico" },
-    { value: "modern", label: "Moderno" },
-    { value: "bold", label: "Llamativo" },
-    { value: "minimal", label: "Minimalista" },
-  ],
-  menu: [
-    { value: "tabs", label: "Pestanas" },
-    { value: "grid", label: "Cuadricula" },
-    { value: "list", label: "Lista" },
-    { value: "carousel", label: "Carrusel" },
-  ],
-  features: [
-    { value: "cards", label: "Tarjetas" },
-    { value: "icons", label: "Iconos" },
-    { value: "banner", label: "Banner" },
-  ],
-  reviews: [
-    { value: "grid", label: "Cuadricula" },
-    { value: "carousel", label: "Carrusel" },
-    { value: "minimal", label: "Minimalista" },
-  ],
-  footer: [
-    { value: "full", label: "Completo" },
-    { value: "minimal", label: "Minimalista" },
-    { value: "centered", label: "Centrado" },
-  ],
-  reservation: [
-    { value: "classic", label: "Clasico" },
-    { value: "wizard", label: "Asistente" },
-    { value: "modal", label: "Modal" },
-    { value: "modern", label: "Moderno" },
-  ],
-};
 
 const defaultVariants: Variants = {
   hero: "classic",
@@ -664,10 +629,33 @@ export function PersonalizacionClient({
     { id: "3", icon: "calendar", title: "Servicio 3", description: "Descripcion del tercer servicio." },
   ];
 
+  // Normalizar iconos: si viene SVG legacy, intentar mapear a ID
+  const normalizeFeatureIcon = (icon: string): string => {
+    // Si ya es un ID válido, retornarlo
+    if (FEATURE_ICONS.some(i => i.id === icon)) {
+      return icon;
+    }
+    // Si es un SVG, buscar el ID correspondiente
+    const matchedIcon = FEATURE_ICONS.find(i => i.svg === icon);
+    if (matchedIcon) {
+      return matchedIcon.id;
+    }
+    // Fallback a star si no se reconoce
+    return "star";
+  };
+
+  const normalizeFeatureItems = (items: FeatureItemConfig[] | undefined): FeatureItemConfig[] => {
+    if (!items) return defaultFeatureItems;
+    return items.map(item => ({
+      ...item,
+      icon: normalizeFeatureIcon(item.icon),
+    }));
+  };
+
   const [features, setFeatures] = useState<FeaturesConfig>({
     title: initialConfig.features?.title || "Nuestros Servicios",
     subtitle: initialConfig.features?.subtitle || "Lo mejor para ti",
-    items: (initialConfig.features?.items as FeatureItemConfig[]) || defaultFeatureItems,
+    items: normalizeFeatureItems(initialConfig.features?.items as FeatureItemConfig[] | undefined),
   });
 
   // Estado para preset activo (null si personalización manual)
@@ -759,8 +747,11 @@ export function PersonalizacionClient({
           iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
         })),
       },
+      // Configuración de secciones para preview
+      sectionsConfig: sectionsConfig,
+      variants: variants,
     });
-  }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sendPreviewMessage]);
+  }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sectionsConfig, variants, sendPreviewMessage]);
 
   // Build preview URL - includes variants for component selection
   // CSS/theme changes are sent via postMessage, but variants require reload (different components)
@@ -823,9 +814,11 @@ export function PersonalizacionClient({
             iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
           })),
         },
+        sectionsConfig: sectionsConfig,
+        variants: variants,
       });
     }, 100);
-  }, [theme, skin, colors, typography, effects, branding, content, features, sendPreviewMessage]);
+  }, [theme, skin, colors, typography, effects, branding, content, features, sectionsConfig, variants, sendPreviewMessage]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {
@@ -837,11 +830,6 @@ export function PersonalizacionClient({
   }, [previewMode]);
 
   // Handlers - limpian el preset activo al hacer cambios manuales
-  const handleVariantChange = useCallback((key: keyof Variants, value: string) => {
-    setVariants(prev => ({ ...prev, [key]: value }));
-    setActivePreset(null);
-  }, []);
-
   const handleColorChange = useCallback((key: keyof ColorsConfig, value: string) => {
     setColors(prev => ({ ...prev, [key]: value }));
     setActivePreset(null);
@@ -1006,22 +994,71 @@ export function PersonalizacionClient({
   }, []);
 
   const handleReset = useCallback(() => {
-    if (confirm("Esto restaurara todos los valores por defecto. ¿Continuar?")) {
-      setTheme("light");
-      setVariants(defaultVariants);
-      setColors(defaultColors);
-      setTypography(defaultTypography);
-      setEffects(defaultEffects);
-      setBranding({});
-      setContent({});
+    if (confirm("Esto restaurara la configuracion guardada. ¿Continuar?")) {
+      // Restaurar a valores iniciales (guardados en BD), no a defaults del sistema
+      setTheme(initialTheme);
+      setVariants(initialConfig.variants as Variants || defaultVariants);
+      setColors({
+        ...defaultColors,
+        ...initialConfig.colors,
+        primary: initialConfig.colors?.primary || initialConfig.primaryColor || defaultColors.primary,
+        secondary: initialConfig.colors?.secondary || initialConfig.secondaryColor || defaultColors.secondary,
+      });
+      setTypography({
+        ...defaultTypography,
+        ...initialConfig.typography,
+      });
+      setEffects({
+        ...defaultEffects,
+        ...initialConfig.effects,
+      });
+      setBranding({
+        ...initialConfig.branding,
+        logo: initialConfig.branding?.logo || initialConfig.logo,
+        logoDisplay:
+          initialConfig.branding?.logoDisplay ||
+          (initialConfig.branding?.logo || initialConfig.logo ? "logo" : "name"),
+      });
+      setSkin(initialConfig.skin || "neumorphic");
+      setContent({
+        heroTitle: initialConfig.heroTitle || "",
+        heroSubtitle: initialConfig.heroSubtitle || "",
+        heroImage: initialConfig.heroImage || "",
+        heroImages: (initialConfig.heroImages as string[] | undefined) ||
+          (initialConfig.heroImage ? [initialConfig.heroImage] : []),
+        address: initialConfig.address || "",
+        phone: initialConfig.phone || "",
+        email: initialConfig.email || "",
+        socialLinks: initialConfig.socialLinks || {},
+        schedule: initialConfig.schedule || {
+          weekdays: "Lunes - Viernes: 10:00 - 20:00",
+          saturday: "Sabado: 10:00 - 14:00",
+          sunday: "Domingo: Cerrado",
+        },
+      });
+      setFeatures({
+        title: initialConfig.features?.title || "Nuestros Servicios",
+        subtitle: initialConfig.features?.subtitle || "Lo mejor para ti",
+        items: normalizeFeatureItems(initialConfig.features?.items as FeatureItemConfig[] | undefined),
+      });
+      setSectionsConfig(initialConfig.sectionsConfig || getDefaultSectionsConfig(businessType));
+      setActivePreset(null);
+      setMessage({ type: "success", text: "Configuracion restaurada" });
+      setTimeout(() => setMessage(null), 3000);
     }
-  }, []);
+  }, [initialTheme, initialConfig, businessType]);
 
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
 
     try {
+      // Normalizar heroImages/heroImage para consistencia
+      const normalizedHeroImages = content.heroImages || (content.heroImage ? [content.heroImage] : []);
+      const normalizedHeroImage = normalizedHeroImages.includes(content.heroImage || "")
+        ? content.heroImage
+        : normalizedHeroImages[0] || "";
+
       const config: Partial<WebsiteConfig> = {
         variants,
         skin,
@@ -1035,12 +1072,16 @@ export function PersonalizacionClient({
           subtitle: features.subtitle,
           items: features.items.map(item => ({
             id: item.id,
-            icon: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || item.icon,
+            // Guardar el ID del icono, no el SVG
+            icon: item.icon,
             title: item.title,
             description: item.description,
           })),
         },
         ...content,
+        // Sobrescribir con valores normalizados
+        heroImage: normalizedHeroImage,
+        heroImages: normalizedHeroImages,
       };
 
       const response = await fetch("/api/personalizacion", {
@@ -1333,12 +1374,15 @@ export function PersonalizacionClient({
                 ]}
                 columns={isMobile ? 2 : 4}
               />
-              {(theme === "neuglass" || theme === "neuglass-dark") && (
+              {/* Glassmorphism disponible para temas neuglass o skin glass */}
+              {(theme === "neuglass" || theme === "neuglass-dark" || skin === "glass") && (
                 <>
                   <div className="flex items-center justify-between p-3 neumor-inset rounded-lg">
                     <div>
                       <p className="font-medium text-sm">Glassmorphism</p>
-                      <p className="text-xs text-[var(--text-secondary)]">Efecto cristal</p>
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        {skin === "glass" ? "Ajusta el efecto cristal del skin" : "Efecto cristal"}
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -1737,31 +1781,12 @@ export function PersonalizacionClient({
               </div>
             </CollapsibleSection>
 
-            {/* Secciones/Variantes */}
-            <CollapsibleSection title="Variantes de Secciones" defaultOpen={!isMobile}>
-              {(Object.keys(variantOptions) as (keyof Variants)[]).map((key) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium mb-2">
-                    {key === "hero" ? "Cabecera" :
-                     key === "menu" ? "Menu" :
-                     key === "features" ? "Caracteristicas" :
-                     key === "reviews" ? "Resenas" :
-                     key === "footer" ? "Pie de pagina" : "Reservas"}
-                  </label>
-                  <select
-                    value={variants[key]}
-                    onChange={(e) => handleVariantChange(key, e.target.value)}
-                    className="neumor-input w-full h-12 text-base"
-                  >
-                    {variantOptions[key].map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </CollapsibleSection>
+            {/* Nota sobre variantes */}
+            <div className="p-4 neumor-inset rounded-xl">
+              <p className="text-sm text-[var(--text-secondary)]">
+                Para cambiar las variantes de cada seccion, usa la pestana <strong>Secciones</strong> donde puedes reordenar, activar/desactivar y elegir el estilo de cada una.
+              </p>
+            </div>
           </div>
         );
 
