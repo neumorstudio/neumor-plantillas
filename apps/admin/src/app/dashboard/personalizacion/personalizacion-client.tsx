@@ -364,7 +364,8 @@ export function PersonalizacionClient({
   // Enviar mensaje postMessage a los iframes de preview
   const sendPreviewMessage = useCallback((type: string, payload: Record<string, unknown>) => {
     const message = { type, payload, source: "neumorstudio-admin" };
-    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme);
+    const contentPayload = payload.content as { heroImage?: string } | undefined;
+    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme, "heroImage:", contentPayload?.heroImage);
     iframeRef.current?.contentWindow?.postMessage(message, "*");
     iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
   }, []);
