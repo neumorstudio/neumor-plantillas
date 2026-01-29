@@ -122,8 +122,23 @@ const defaultFonts = !fontImports
           if (!event.data || event.data.source !== 'neumorstudio-admin') return;
           if (event.data.type !== 'update-styles') return;
 
-          const { colors, typography, effects, branding } = event.data.payload;
+          console.log('[Preview] Received postMessage:', event.data.type);
+          console.log('[Preview] Theme value:', event.data.payload.theme);
+
+          const { theme, colors, typography, effects, branding } = event.data.payload;
           const root = document.documentElement;
+
+          // Aplicar tema (cambiar clase en html)
+          if (theme) {
+            console.log('[Preview] Applying theme:', theme, 'Current classes:', root.className);
+            // Remover todas las clases de tema existentes
+            root.classList.remove('theme-dark', 'theme-colorful', 'theme-rustic', 'theme-elegant', 'theme-neuglass', 'theme-neuglass-dark');
+            // Añadir la nueva clase de tema (light no tiene clase)
+            if (theme !== 'light') {
+              root.classList.add('theme-' + theme);
+            }
+            console.log('[Preview] New classes:', root.className);
+          }
 
           // Aplicar colores
           if (colors) {
@@ -134,6 +149,8 @@ const defaultFonts = !fontImports
               root.style.setProperty('--color-secondary', colors.secondary);
             }
             if (colors.accent) {
+              // IMPORTANTE: Actualizar --accent que es la variable que usa el CSS
+              root.style.setProperty('--accent', colors.accent);
               root.style.setProperty('--color-accent', colors.accent);
               root.style.setProperty('--accent-hover', adjustLuminosity(colors.accent, -10));
               root.style.setProperty('--accent-light', hexToRgba(colors.accent, 0.1));
@@ -181,9 +198,21 @@ const defaultFonts = !fontImports
           }
 
           // Aplicar branding
-          if (branding && branding.logoSize) {
-            const sizeMap = { sm: '2rem', md: '3rem', lg: '4rem' };
-            root.style.setProperty('--logo-size', sizeMap[branding.logoSize] || '3rem');
+          if (branding) {
+            if (branding.logoSize) {
+              const sizeMap = { sm: '2rem', md: '3rem', lg: '4rem' };
+              root.style.setProperty('--logo-size', sizeMap[branding.logoSize] || '3rem');
+              root.style.setProperty('--logo-height', sizeMap[branding.logoSize] || '3rem');
+            }
+            // Actualizar logo en tiempo real
+            if (branding.logo) {
+              const logoImages = document.querySelectorAll('.logo-img, .nav-logo img, .navbar-logo img, [data-logo]');
+              logoImages.forEach(function(img) {
+                if (img.tagName === 'IMG') {
+                  img.src = branding.logo;
+                }
+              });
+            }
           }
 
           // Aplicar contenido de texto

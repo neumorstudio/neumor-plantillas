@@ -50,6 +50,7 @@ export interface ServiceCategory {
   id: string;
   website_id: string;
   name: string;
+  icon: string | null;
   sort_order: number;
   is_active: boolean;
   items: ServiceItem[];
@@ -182,7 +183,7 @@ export async function getServiceCatalog(websiteId?: string): Promise<ServiceCate
   try {
     const { data: categories, error: categoryError } = await supabase
       .from("service_categories")
-      .select("id, website_id, name, sort_order, is_active")
+      .select("id, website_id, name, icon, sort_order, is_active")
       .eq("website_id", websiteId)
       .eq("is_active", true)
       .order("sort_order", { ascending: true })

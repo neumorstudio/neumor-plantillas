@@ -6,6 +6,7 @@ type ServiceCategory = {
   id: string;
   website_id: string;
   name: string;
+  icon: string | null;
   sort_order: number;
   is_active: boolean;
 };
@@ -27,7 +28,7 @@ async function loadServiceCatalog(websiteId: string) {
 
   const { data: categories, error: categoriesError } = await supabase
     .from("service_categories")
-    .select("id, website_id, name, sort_order, is_active")
+    .select("id, website_id, name, icon, sort_order, is_active")
     .eq("website_id", websiteId)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
         const { error } = await supabase.from("service_categories").insert({
           website_id: websiteId,
           name,
+          icon: payload?.icon ? String(payload.icon) : null,
           sort_order: Number(payload?.sortOrder ?? 0),
           is_active: payload?.isActive ?? true,
         });
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
         }
         const updateData: Record<string, unknown> = {};
         if (payload?.name !== undefined) updateData.name = String(payload.name).trim();
+        if (payload?.icon !== undefined) updateData.icon = payload.icon ? String(payload.icon) : null;
         if (payload?.sortOrder !== undefined) updateData.sort_order = Number(payload.sortOrder);
         if (payload?.isActive !== undefined) updateData.is_active = Boolean(payload.isActive);
         const { error } = await supabase
