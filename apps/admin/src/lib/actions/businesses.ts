@@ -145,6 +145,25 @@ export async function getBusiness(
 }
 
 /**
+ * Parsea un dominio y extrae subdomain o custom_domain.
+ * - "misalon.neumorstudio.com" -> { subdomain: "misalon", customDomain: null }
+ * - "www.minegocio.com" -> { subdomain: null, customDomain: "minegocio.com" }
+ */
+function parseDomainInput(domain: string): { subdomain: string | null; customDomain: string | null } {
+  const cleanDomain = domain.toLowerCase().trim();
+
+  // Patron: xxx.neumorstudio.com
+  const neumorMatch = cleanDomain.match(/^([a-z0-9-]+)\.neumorstudio\.com$/);
+  if (neumorMatch) {
+    return { subdomain: neumorMatch[1], customDomain: null };
+  }
+
+  // Es un dominio personalizado
+  const withoutWww = cleanDomain.replace(/^www\./, "");
+  return { subdomain: null, customDomain: withoutWww };
+}
+
+/**
  * Crea un nuevo negocio (client + website).
  */
 export async function createBusiness(formData: FormData) {
@@ -174,15 +193,36 @@ export async function createBusiness(formData: FormData) {
     return { error: "El dominio es requerido (min 3 caracteres)" };
   }
 
-  // Verificar que el dominio no existe
-  const { data: existingDomain } = await supabase
-    .from("websites")
-    .select("id")
-    .eq("domain", domain.toLowerCase().trim())
-    .single();
+  // Parsear dominio para extraer subdomain o custom_domain
+  const { subdomain, customDomain } = parseDomainInput(domain);
 
-  if (existingDomain) {
-    return { error: "Este dominio ya esta en uso" };
+  if (!subdomain && !customDomain) {
+    return { error: "Formato de dominio invalido" };
+  }
+
+  // Verificar que el subdomain/domain no existe
+  if (subdomain) {
+    const { data: existingSubdomain } = await supabase
+      .from("websites")
+      .select("id")
+      .eq("subdomain", subdomain)
+      .single();
+
+    if (existingSubdomain) {
+      return { error: "Este subdominio ya esta en uso" };
+    }
+  }
+
+  if (customDomain) {
+    const { data: existingCustomDomain } = await supabase
+      .from("websites")
+      .select("id")
+      .eq("custom_domain", customDomain)
+      .single();
+
+    if (existingCustomDomain) {
+      return { error: "Este dominio personalizado ya esta en uso" };
+    }
   }
 
   // Crear client
@@ -202,10 +242,12 @@ export async function createBusiness(formData: FormData) {
     return { error: clientError?.message || "Error al crear el negocio" };
   }
 
-  // Crear website
+  // Crear website con subdomain y/o custom_domain correctamente
   const { error: websiteError } = await supabase.from("websites").insert({
     client_id: client.id,
-    domain: domain.toLowerCase().trim(),
+    subdomain: subdomain,
+    custom_domain: customDomain,
+    domain: domain.toLowerCase().trim(), // Mantener para retrocompatibilidad
     theme: theme,
     is_active: isActive,
     config: {
@@ -252,15 +294,36 @@ export async function updateBusiness(clientId: string, formData: FormData) {
     return { error: "El dominio es requerido (min 3 caracteres)" };
   }
 
-  // Verificar que el dominio no existe (excepto el actual)
-  const { data: existingDomain } = await supabase
-    .from("websites")
-    .select("id, client_id")
-    .eq("domain", domain.toLowerCase().trim())
-    .single();
+  // Parsear dominio
+  const { subdomain, customDomain } = parseDomainInput(domain);
 
-  if (existingDomain && existingDomain.client_id !== clientId) {
-    return { error: "Este dominio ya esta en uso por otro negocio" };
+  if (!subdomain && !customDomain) {
+    return { error: "Formato de dominio invalido" };
+  }
+
+  // Verificar que el subdomain/domain no existe (excepto el actual)
+  if (subdomain) {
+    const { data: existingSubdomain } = await supabase
+      .from("websites")
+      .select("id, client_id")
+      .eq("subdomain", subdomain)
+      .single();
+
+    if (existingSubdomain && existingSubdomain.client_id !== clientId) {
+      return { error: "Este subdominio ya esta en uso por otro negocio" };
+    }
+  }
+
+  if (customDomain) {
+    const { data: existingCustomDomain } = await supabase
+      .from("websites")
+      .select("id, client_id")
+      .eq("custom_domain", customDomain)
+      .single();
+
+    if (existingCustomDomain && existingCustomDomain.client_id !== clientId) {
+      return { error: "Este dominio personalizado ya esta en uso por otro negocio" };
+    }
   }
 
   // Actualizar client
@@ -279,10 +342,12 @@ export async function updateBusiness(clientId: string, formData: FormData) {
     return { error: clientError.message || "Error al actualizar el negocio" };
   }
 
-  // Actualizar website
+  // Actualizar website con subdomain y/o custom_domain
   const { error: websiteError } = await supabase
     .from("websites")
     .update({
+      subdomain: subdomain,
+      custom_domain: customDomain,
       domain: domain.toLowerCase().trim(),
       theme: theme,
       is_active: isActive,
