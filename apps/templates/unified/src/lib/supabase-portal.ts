@@ -71,12 +71,19 @@ export interface CustomerProfile {
   phone: string | null;
 }
 
+export interface ServiceItem {
+  id: string;
+  name: string;
+  price_cents: number;
+  duration_minutes: number;
+}
+
 export interface CustomerBooking {
   id: string;
   booking_date: string;
   booking_time: string;
   status: string;
-  services: string[];
+  services: ServiceItem[];
   total_price_cents: number | null;
   notes: string | null;
 }
@@ -109,6 +116,23 @@ export async function getCustomerProfile(
 }
 
 /**
+ * Parsea el campo services que puede venir como string JSON o como array
+ */
+function parseServices(services: unknown): ServiceItem[] {
+  if (!services) return [];
+  if (Array.isArray(services)) return services as ServiceItem[];
+  if (typeof services === "string") {
+    try {
+      const parsed = JSON.parse(services);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
  * Obtiene las reservas del cliente
  */
 export async function getCustomerBookings(
@@ -129,12 +153,16 @@ export async function getCustomerBookings(
 
   console.log("[getCustomerBookings] Result:", data?.length, "bookings, error:", error?.message);
   if (data && data.length > 0) {
-    console.log("[getCustomerBookings] First booking customer_id:", data[0].customer_id);
+    console.log("[getCustomerBookings] First booking services:", data[0].services);
   }
 
   if (error || !data) return [];
 
-  return data as CustomerBooking[];
+  // Parsear services que puede venir como string JSON
+  return data.map((booking) => ({
+    ...booking,
+    services: parseServices(booking.services),
+  })) as CustomerBooking[];
 }
 
 /**
