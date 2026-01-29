@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import "../styles/neuglass.css";
+import "../styles/skins.css";
 import { compileCustomization, applyPreviewParams, type WebsiteCustomization } from "@lib/tokens";
 
 interface Props {
@@ -125,7 +126,7 @@ const defaultFonts = !fontImports
           console.log('[Preview] Received postMessage:', event.data.type);
           console.log('[Preview] Theme value:', event.data.payload.theme);
 
-          const { theme, colors, typography, effects, branding } = event.data.payload;
+          const { theme, skin, colors, typography, effects, branding } = event.data.payload;
           const root = document.documentElement;
 
           // Aplicar tema (cambiar clase en html)
@@ -147,6 +148,20 @@ const defaultFonts = !fontImports
               root.classList.add('theme-' + theme);
             }
             console.log('[Preview] New classes:', root.className);
+          }
+
+          // Aplicar skin (estilo visual de componentes)
+          if (skin !== undefined) {
+            console.log('[Preview] Applying skin:', skin);
+            var allSkins = ['flat', 'glass', 'material', 'brutalist', 'soft', '3d', 'outline'];
+            // Remover todas las clases de skin existentes
+            allSkins.forEach(function(s) {
+              root.classList.remove('skin-' + s);
+            });
+            // Añadir la nueva clase de skin (neumorphic/default no tiene clase)
+            if (skin && skin !== 'neumorphic') {
+              root.classList.add('skin-' + skin);
+            }
           }
 
           // Aplicar colores

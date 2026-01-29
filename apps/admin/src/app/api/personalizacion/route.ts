@@ -122,6 +122,9 @@ export async function GET() {
         // Efectos
         effects: config.effects,
 
+        // Skin visual
+        skin: config.skin,
+
         // Redes sociales
         socialLinks: config.socialLinks,
 

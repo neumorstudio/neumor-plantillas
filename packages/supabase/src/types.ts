@@ -451,6 +451,9 @@ export interface WebsiteConfig {
 
   // === PERSONALIZACIÓN VISUAL (NUEVO) ===
 
+  /** Skin visual de componentes (neumorphic, flat, glass, material, brutalist, soft, 3d, outline) */
+  skin?: string;
+
   /** Colores personalizados */
   colors?: ColorsConfig;
 

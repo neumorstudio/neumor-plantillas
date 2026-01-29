@@ -156,6 +156,61 @@ const themeCategories: ThemeCategory[] = [
 const themes = themeCategories.flatMap(cat => cat.themes);
 
 // ============================================
+// SKIN OPTIONS - Estilos visuales de componentes
+// ============================================
+
+const skinOptions = [
+  {
+    value: "neumorphic",
+    label: "Neumórfico",
+    description: "Sombras suaves y relieve sutil",
+    preview: "inset 2px 2px 5px rgba(0,0,0,.1), inset -2px -2px 5px rgba(255,255,255,.8)"
+  },
+  {
+    value: "flat",
+    label: "Flat",
+    description: "Diseño plano y minimalista",
+    preview: "none"
+  },
+  {
+    value: "glass",
+    label: "Glassmorphism",
+    description: "Efecto cristal translúcido",
+    preview: "0 4px 30px rgba(0,0,0,.1)"
+  },
+  {
+    value: "material",
+    label: "Material",
+    description: "Sombras elevadas tipo Google",
+    preview: "0 2px 4px rgba(0,0,0,.2)"
+  },
+  {
+    value: "brutalist",
+    label: "Brutalista",
+    description: "Bordes marcados y audaces",
+    preview: "4px 4px 0 currentColor"
+  },
+  {
+    value: "soft",
+    label: "Soft UI",
+    description: "Sombras extra suaves y difusas",
+    preview: "8px 8px 16px rgba(0,0,0,.05), -8px -8px 16px rgba(255,255,255,.8)"
+  },
+  {
+    value: "3d",
+    label: "3D",
+    description: "Efecto tridimensional con bordes",
+    preview: "0 6px 0 rgba(0,0,0,.2)"
+  },
+  {
+    value: "outline",
+    label: "Outline",
+    description: "Solo bordes, fondo transparente",
+    preview: "none"
+  },
+];
+
+// ============================================
 // TEMPLATE PRESETS - Combinaciones completas
 // ============================================
 
@@ -165,6 +220,7 @@ interface TemplatePreset {
   description: string;
   preview: string; // URL o gradient para preview
   theme: Theme;
+  skin: string;
   colors: ColorsConfig;
   typography: TypographyConfig;
   effects: EffectsConfig;
@@ -185,6 +241,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Limpio y contemporáneo",
     preview: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #3b82f6 100%)",
     theme: "minimal",
+    skin: "flat",
     colors: { primary: "#3b82f6", secondary: "#64748b", accent: "#3b82f6" },
     typography: { headingFont: "Inter", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
     effects: { shadowIntensity: 40, borderRadius: "soft", glassmorphism: false, blurIntensity: 0 },
@@ -196,6 +253,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Sofisticado y lujoso",
     preview: "linear-gradient(135deg, #faf5f0 0%, #d4a574 50%, #8b6914 100%)",
     theme: "elegant",
+    skin: "soft",
     colors: { primary: "#8b6914", secondary: "#d4a574", accent: "#c9a96e" },
     typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.333 },
     effects: { shadowIntensity: 50, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
@@ -207,6 +265,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Vibrante y atrevido",
     preview: "linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #10b981 100%)",
     theme: "colorful",
+    skin: "3d",
     colors: { primary: "#f59e0b", secondary: "#10b981", accent: "#f59e0b" },
     typography: { headingFont: "Poppins", bodyFont: "Poppins", baseFontSize: 16, scale: 1.25 },
     effects: { shadowIntensity: 70, borderRadius: "pill", glassmorphism: false, blurIntensity: 0 },
@@ -218,6 +277,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Ultra limpio y simple",
     preview: "linear-gradient(135deg, #ffffff 0%, #f1f1f1 50%, #333333 100%)",
     theme: "minimal",
+    skin: "outline",
     colors: { primary: "#171717", secondary: "#525252", accent: "#171717" },
     typography: { headingFont: "system", bodyFont: "system", baseFontSize: 15, scale: 1.2 },
     effects: { shadowIntensity: 20, borderRadius: "sharp", glassmorphism: false, blurIntensity: 0 },
@@ -229,6 +289,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Cálido y familiar",
     preview: "linear-gradient(135deg, #fef3c7 0%, #d4a574 50%, #78350f 100%)",
     theme: "rustic",
+    skin: "neumorphic",
     colors: { primary: "#78350f", secondary: "#a16207", accent: "#b45309" },
     typography: { headingFont: "Merriweather", bodyFont: "Source Sans Pro", baseFontSize: 17, scale: 1.25 },
     effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
@@ -240,6 +301,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Glassmorfismo elegante",
     preview: "linear-gradient(135deg, #e8ecf1 0%, #6366f1 50%, #4f46e5 100%)",
     theme: "neuglass",
+    skin: "glass",
     colors: { primary: "#6366f1", secondary: "#8b5cf6", accent: "#6366f1" },
     typography: { headingFont: "DM Sans", bodyFont: "DM Sans", baseFontSize: 16, scale: 1.25 },
     effects: { shadowIntensity: 60, borderRadius: "rounded", glassmorphism: true, blurIntensity: 16 },
@@ -251,6 +313,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Elegancia oscura",
     preview: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #6366f1 100%)",
     theme: "midnight",
+    skin: "material",
     colors: { primary: "#818cf8", secondary: "#a78bfa", accent: "#818cf8" },
     typography: { headingFont: "Space Grotesk", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
     effects: { shadowIntensity: 45, borderRadius: "soft", glassmorphism: false, blurIntensity: 0 },
@@ -262,6 +325,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Ligero y natural",
     preview: "linear-gradient(135deg, #ecfdf5 0%, #6ee7b7 50%, #059669 100%)",
     theme: "spring",
+    skin: "soft",
     colors: { primary: "#059669", secondary: "#34d399", accent: "#10b981" },
     typography: { headingFont: "Quicksand", bodyFont: "Nunito", baseFontSize: 16, scale: 1.25 },
     effects: { shadowIntensity: 45, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
@@ -273,6 +337,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Playa y sol",
     preview: "linear-gradient(135deg, #fef3c7 0%, #38bdf8 50%, #f97316 100%)",
     theme: "summer",
+    skin: "3d",
     colors: { primary: "#0891b2", secondary: "#f97316", accent: "#f97316" },
     typography: { headingFont: "Pacifico", bodyFont: "Open Sans", baseFontSize: 16, scale: 1.25 },
     effects: { shadowIntensity: 50, borderRadius: "pill", glassmorphism: false, blurIntensity: 0 },
@@ -284,6 +349,7 @@ const templatePresets: TemplatePreset[] = [
     description: "Festivo y acogedor",
     preview: "linear-gradient(135deg, #fef2f2 0%, #dc2626 50%, #16a34a 100%)",
     theme: "christmas",
+    skin: "neumorphic",
     colors: { primary: "#dc2626", secondary: "#16a34a", accent: "#dc2626" },
     typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.25 },
     effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 0 },
@@ -600,9 +666,13 @@ export function PersonalizacionClient({
   // Estado para preset activo (null si personalización manual)
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
+  // Estado para skin visual de componentes (neumorphic por defecto)
+  const [skin, setSkin] = useState<string>(initialConfig.skin || "neumorphic");
+
   // Función para aplicar un preset completo
   const applyPreset = useCallback((preset: TemplatePreset) => {
     setTheme(preset.theme);
+    setSkin(preset.skin);
     setColors(preset.colors);
     setTypography(preset.typography);
     setEffects(preset.effects);
@@ -634,6 +704,7 @@ export function PersonalizacionClient({
   useEffect(() => {
     sendPreviewMessage("update-styles", {
       theme,
+      skin,
       colors: {
         primary: colors.primary,
         secondary: colors.secondary,
@@ -672,7 +743,7 @@ export function PersonalizacionClient({
         })),
       },
     });
-  }, [theme, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sendPreviewMessage]);
+  }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sendPreviewMessage]);
 
   // Build preview URL - includes variants for component selection
   // CSS/theme changes are sent via postMessage, but variants require reload (different components)
@@ -697,6 +768,7 @@ export function PersonalizacionClient({
     setTimeout(() => {
       sendPreviewMessage("update-styles", {
         theme,
+        skin,
         colors: {
           primary: colors.primary,
           secondary: colors.secondary,
@@ -736,7 +808,7 @@ export function PersonalizacionClient({
         },
       });
     }, 100);
-  }, [theme, colors, typography, effects, branding, content, features, sendPreviewMessage]);
+  }, [theme, skin, colors, typography, effects, branding, content, features, sendPreviewMessage]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {
@@ -765,6 +837,11 @@ export function PersonalizacionClient({
 
   const handleEffectsChange = useCallback((key: keyof EffectsConfig, value: number | string | boolean) => {
     setEffects(prev => ({ ...prev, [key]: value }));
+    setActivePreset(null);
+  }, []);
+
+  const handleSkinChange = useCallback((value: string) => {
+    setSkin(value);
     setActivePreset(null);
   }, []);
 
@@ -930,6 +1007,7 @@ export function PersonalizacionClient({
     try {
       const config: Partial<WebsiteConfig> = {
         variants,
+        skin,
         colors,
         typography,
         effects,
@@ -1089,6 +1167,44 @@ export function PersonalizacionClient({
                   </div>
                 </div>
               ))}
+            </CollapsibleSection>
+
+            {/* Skin - Estilo visual de componentes */}
+            <CollapsibleSection title="Estilo de Componentes" defaultOpen={false}>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">
+                Cambia el aspecto visual de botones, tarjetas y controles.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {skinOptions.map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => handleSkinChange(s.value)}
+                    className={`relative p-3 rounded-lg text-left transition-all ${
+                      skin === s.value
+                        ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02] bg-[var(--shadow-light)]"
+                        : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <div
+                        className="w-6 h-6 rounded-md bg-[var(--neumor-bg)] border border-[var(--shadow-dark)]"
+                        style={{ boxShadow: s.preview }}
+                      />
+                      <span className="text-xs font-medium">{s.label}</span>
+                    </div>
+                    <p className="text-[9px] text-[var(--text-secondary)] line-clamp-2">
+                      {s.description}
+                    </p>
+                    {skin === s.value && (
+                      <div className="absolute top-1 right-1 text-[var(--accent)]">
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </CollapsibleSection>
 
             {/* Logo */}
