@@ -142,27 +142,3 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
     return [];
   }
 }
-
-export async function getBusinessHours(websiteId?: string): Promise<BusinessHour[]> {
-  if (!supabase || !websiteId) {
-    return [];
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("business_hours")
-      .select("id, website_id, day_of_week, is_open, open_time, close_time")
-      .eq("website_id", websiteId)
-      .order("day_of_week", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching business hours:", error.message);
-      return [];
-    }
-
-    return (data as BusinessHour[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
-    return [];
-  }
-}
