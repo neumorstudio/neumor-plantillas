@@ -13,6 +13,8 @@ import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@salon/component
 import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@salon/components/Services";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@salon/components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@salon/components/Footer";
+import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@salon/components/Reviews";
+import { FAQSection, ContactSection, OpenStatusSection, TeamSection, GallerySection, PlansSection } from "@salon/components/Sections";
 
 // Import Supabase helpers
 import { getBusinessHours, getServiceCatalog } from "@salon/lib/supabase";
@@ -74,6 +76,7 @@ const componentMap = {
   services: { tabs: ServicesTabs, grid: ServicesGrid, list: ServicesList, carousel: ServicesCarousel },
   features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
   footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+  testimonials: { grid: ReviewsGrid, carousel: ReviewsCarousel, minimal: ReviewsMinimal },
 };
 
 // Get variants from config or use defaults
@@ -97,6 +100,7 @@ const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] 
 const Services = componentMap.services[variants.services as keyof typeof componentMap.services] || ServicesTabs;
 const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
 const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+const Testimonials = componentMap.testimonials[(configVariants as Record<string, string>).testimonials as keyof typeof componentMap.testimonials] || ReviewsCarousel;
 
 // Get service catalog from Supabase
 const serviceCatalog = await getServiceCatalog(tenant.id);
@@ -298,7 +302,28 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                 email={pageConfig.email}
               />
             );
+          case "testimonials":
+            return <Testimonials />;
+          case "faq":
+            return <FAQSection />;
+          case "contact":
+            return (
+              <ContactSection
+                address={pageConfig.address}
+                phone={pageConfig.phone}
+                email={pageConfig.email}
+              />
+            );
+          case "openStatus":
+            return <OpenStatusSection businessHours={businessHours} />;
+          case "team":
+            return <TeamSection />;
+          case "gallery":
+            return <GallerySection />;
+          case "plans":
+            return <PlansSection />;
           default:
+            console.log("[Salon Unified] Unknown section:", section.id);
             return null;
         }
       })}

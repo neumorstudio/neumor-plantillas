@@ -1,0 +1,144 @@
+---
+interface TeamMember {
+  name: string;
+  role: string;
+  image?: string;
+  description?: string;
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  members?: TeamMember[];
+}
+
+const defaultMembers: TeamMember[] = [
+  {
+    name: "Ana García",
+    role: "Estilista Senior",
+    description: "Especialista en coloración y cortes creativos",
+  },
+  {
+    name: "Carlos Martín",
+    role: "Barbero",
+    description: "Experto en barbería clásica y moderna",
+  },
+  {
+    name: "Laura Sánchez",
+    role: "Esteticista",
+    description: "Tratamientos faciales y de belleza",
+  },
+];
+
+const {
+  title = "Nuestro Equipo",
+  subtitle = "Profesionales dedicados a tu bienestar",
+  members = defaultMembers,
+} = Astro.props;
+---
+
+<section id="team" class="section">
+  <div class="container">
+    <div class="team-header">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+    </div>
+    <div class="team-grid">
+      {members.map((member) => (
+        <div class="team-card neumor-card">
+          <div class="member-avatar neumor-inset">
+            {member.image ? (
+              <img src={member.image} alt={member.name} loading="lazy" />
+            ) : (
+              <span class="avatar-initial">{member.name.charAt(0)}</span>
+            )}
+          </div>
+          <h3 class="member-name">{member.name}</h3>
+          <span class="member-role">{member.role}</span>
+          {member.description && (
+            <p class="member-description">{member.description}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .team-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .team-header h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .team-header p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .team-card {
+    padding: 2rem;
+    border-radius: 1.25rem;
+    text-align: center;
+  }
+
+  .member-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .member-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-initial {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .member-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .member-role {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  .member-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+  }
+</style>
