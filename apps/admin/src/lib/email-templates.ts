@@ -27,6 +27,7 @@ interface AppointmentEmailData {
   email?: string;
   businessPhone?: string;
   businessAddress?: string;
+  logoUrl?: string;
 }
 
 interface FitnessBookingEmailData {
@@ -671,73 +672,84 @@ export function getSalonAppointmentConfirmationEmail(
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);">
 
-          <tr>
-            <td style="background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">
-                Tu cita esta en camino
-              </h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
-                ${data.businessName}
-              </p>
-            </td>
-          </tr>
+            <tr>
+              <td style="background: linear-gradient(135deg, #16a34a 0%, #0f766e 100%); padding: 28px 30px; text-align: center;">
+                ${data.logoUrl ? `
+                <div style="margin-bottom: 10px;">
+                  <img src="${data.logoUrl}" alt="${data.businessName}" style="height: 44px; max-width: 160px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 6px 10px;" />
+                </div>
+                ` : ""}
+                <div style="display: inline-flex; align-items: center; gap: 8px; justify-content: center; color: #ffffff;">
+                  <span style="display: inline-flex; width: 26px; height: 26px; border-radius: 999px; background: rgba(255,255,255,0.2); align-items: center; justify-content: center;">
+                    ✓
+                  </span>
+                  <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">
+                    Cita confirmada
+                  </h1>
+                </div>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+                  ${data.businessName}
+                </p>
+              </td>
+            </tr>
 
           <tr>
             <td style="padding: 40px 30px;">
               <p style="color: #374151; font-size: 16px; margin: 0 0 20px 0;">
                 Hola <strong>${data.customerName}</strong>,
               </p>
-              <p style="color: #6b7280; font-size: 15px; margin: 0 0 30px 0; line-height: 1.6;">
-                Hemos recibido tu solicitud de cita. Te confirmaremos el horario muy pronto.
-              </p>
+                <p style="color: #475569; font-size: 15px; margin: 0 0 30px 0; line-height: 1.6;">
+                  Tu cita esta confirmada. Te esperamos pronto para atenderte.
+                </p>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff1f2; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ecfdf5; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
                 <tr>
                   <td>
-                    <h3 style="color: #9d174d; margin: 0 0 20px 0; font-size: 18px;">
-                      Detalles de tu cita
-                    </h3>
+                      <h3 style="color: #14532d; margin: 0 0 20px 0; font-size: 18px;">
+                        Detalles de tu cita
+                      </h3>
                     <table width="100%" cellpadding="0" cellspacing="0">
                       ${detailRows}
                       ${data.notes ? `
                       <tr>
                         <td colspan="2" style="padding: 15px 0 0 0;">
-                          <span style="color: #9d174d; font-size: 14px;">Notas:</span>
-                          <p style="color: #831843; font-size: 14px; margin: 5px 0 0 0; font-style: italic;">${data.notes}</p>
-                        </td>
-                      </tr>
-                      ` : ""}
+                            <span style="color: #166534; font-size: 14px;">Notas:</span>
+                            <p style="color: #14532d; font-size: 14px; margin: 5px 0 0 0; font-style: italic;">${data.notes}</p>
+                          </td>
+                        </tr>
+                        ` : ""}
                     </table>
                   </td>
                 </tr>
               </table>
 
-              ${data.businessPhone || data.businessAddress ? `
-              <div style="background-color: #fce7f3; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <p style="color: #831843; font-size: 14px; margin: 0;">
-                  <strong>Necesitas cambiar tu cita?</strong><br>
-                  ${data.businessPhone ? `Llamanos al <a href="tel:${data.businessPhone}" style="color: #831843;">${data.businessPhone}</a>` : ""}
-                  ${data.businessAddress ? `<br>Direccion: ${data.businessAddress}` : ""}
-                </p>
-              </div>
-              ` : ""}
+                ${data.businessPhone || data.businessAddress ? `
+                <div style="background-color: #dcfce7; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                  <p style="color: #166534; font-size: 14px; margin: 0; line-height: 1.5;">
+                    <strong>¿Necesitas cambiar tu cita?</strong><br>
+                    ${data.businessPhone ? `Llamanos al <a href="tel:${data.businessPhone}" style="color: #166534;">${data.businessPhone}</a>` : ""}
+                    ${data.businessAddress ? `<br>Direccion: ${data.businessAddress}` : ""}
+                    <br>¿Tienes un problema para venir o quieres cancelarla?
+                  </p>
+                </div>
+                ` : ""}
 
-              <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
-                Estamos listas para cuidarte.
-              </p>
+                <p style="color: #475569; font-size: 14px; margin: 0; text-align: center;">
+                  Gracias por confiar en nosotros. ¡Te esperamos!
+                </p>
             </td>
           </tr>
 
           <tr>
-            <td style="background-color: #fff1f2; padding: 25px 30px; text-align: center; border-top: 1px solid #fbcfe8;">
+              <td style="background-color: #ecfdf5; padding: 25px 30px; text-align: center; border-top: 1px solid #bbf7d0;">
               <p style="color: #9ca3af; font-size: 12px; margin: 0;">
                 Este email fue enviado por ${data.businessName}
               </p>
               <p style="color: #9ca3af; font-size: 11px; margin: 10px 0 0 0;">
-                Powered by <a href="https://neumorstudio.com" style="color: #ec4899; text-decoration: none;">NeumorStudio</a>
-              </p>
-            </td>
-          </tr>
+                  Powered by <a href="https://neumorstudio.com" style="color: #16a34a; text-decoration: none;">NeumorStudio</a>
+                </p>
+              </td>
+            </tr>
 
         </table>
       </td>

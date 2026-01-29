@@ -250,25 +250,30 @@ export async function POST(request: NextRequest) {
       (website.config as { businessName?: string })?.businessName ||
       client?.business_name ||
       "Clinica";
+    const businessLogo =
+      (website.config as { branding?: { logo?: string } })?.branding?.logo ||
+      (website.config as { logo?: string })?.logo ||
+      undefined;
     const businessPhone = (website.config as { phone?: string })?.phone;
     const businessAddress = (website.config as { address?: string })?.address;
     const businessEmail = client?.email;
     const businessType = client?.business_type;
     const isSalon = businessType === "salon";
 
-    const emailData = {
-      businessName,
-      customerName: nombre,
-      date: formatDate(body.fecha),
-      time: body.hora,
-      service: servicio,
-      professional: profesional || undefined,
-      notes: notas || undefined,
-      phone: telefono,
-      email: email || undefined,
-      businessPhone,
-      businessAddress,
-    };
+      const emailData = {
+        businessName,
+        customerName: nombre,
+        date: formatDate(body.fecha),
+        time: body.hora,
+        service: servicio,
+        professional: profesional || undefined,
+        notes: notas || undefined,
+        phone: telefono,
+        email: email || undefined,
+        businessPhone,
+        businessAddress,
+        logoUrl: businessLogo,
+      };
 
     const emailResults = {
       customerEmail: false,
