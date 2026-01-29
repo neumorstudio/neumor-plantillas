@@ -34,12 +34,22 @@ function getSupabaseAdmin() {
   );
 }
 
+interface ServiceItem {
+  id: string;
+  name: string;
+  price_cents: number;
+  duration_minutes: number;
+}
+
 interface AppointmentData {
   website_id: string;
   nombre: string;
   email?: string;
   telefono: string;
   servicio: string;
+  services?: ServiceItem[];
+  total_price_cents?: number;
+  total_duration_minutes?: number;
   profesional?: string;
   professional_id?: string;
   fecha: string;
@@ -53,6 +63,9 @@ const allowedAppointmentKeys = new Set([
   "email",
   "telefono",
   "servicio",
+  "services",
+  "total_price_cents",
+  "total_duration_minutes",
   "profesional",
   "professional_id",
   "fecha",
@@ -122,7 +135,10 @@ export async function POST(request: NextRequest) {
       (body.profesional && typeof body.profesional !== "string") ||
       (body.professional_id && typeof body.professional_id !== "string") ||
       (body.professional_id && !isValidUuid(body.professional_id)) ||
-      (body.notas && typeof body.notas !== "string")
+      (body.notas && typeof body.notas !== "string") ||
+      (body.services && !Array.isArray(body.services)) ||
+      (body.total_price_cents && typeof body.total_price_cents !== "number") ||
+      (body.total_duration_minutes && typeof body.total_duration_minutes !== "number")
     ) {
       return NextResponse.json(
         { error: "Datos invalidos" },
@@ -213,9 +229,12 @@ export async function POST(request: NextRequest) {
         booking_time: body.hora,
         guests: 1,
         notes: noteParts.join(" | ").slice(0, 1000) || null,
-        status: "pending",
+        status: "confirmed",
         source: "website",
         professional_id: body.professional_id || null,
+        services: body.services || null,
+        total_price_cents: body.total_price_cents || null,
+        total_duration_minutes: body.total_duration_minutes || null,
       })
       .select()
       .single();
