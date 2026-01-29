@@ -6,6 +6,7 @@ import type {
   TypographyConfig,
   EffectsConfig,
   BrandingConfig,
+  SectionsConfig,
   Theme,
 } from "@neumorstudio/supabase";
 
@@ -130,6 +131,9 @@ export async function GET() {
 
         // Estado abierto/cerrado
         openStatus: config.openStatus,
+
+        // Secciones configuradas
+        sectionsConfig: config.sectionsConfig,
       },
     });
   } catch (error) {
@@ -255,6 +259,11 @@ export async function POST(request: NextRequest) {
         ? { ...existingConfig.socialLinks, ...config.socialLinks }
         : undefined;
 
+      // Merge para sectionsConfig - usa la nueva si se proporciona, o mantiene la existente
+      const mergedSectionsConfig: SectionsConfig | undefined = config.sectionsConfig
+        ? config.sectionsConfig
+        : existingConfig.sectionsConfig;
+
       updateData.config = {
         ...existingConfig,
         ...config,
@@ -264,6 +273,7 @@ export async function POST(request: NextRequest) {
         effects: Object.keys(mergedEffects).length > 0 ? mergedEffects : undefined,
         variants: mergedVariants,
         socialLinks: mergedSocialLinks,
+        sectionsConfig: mergedSectionsConfig,
         // Mantener compatibilidad con campos legacy
         primaryColor: config.colors?.primary || config.primaryColor || existingConfig.primaryColor,
         secondaryColor: config.colors?.secondary || config.secondaryColor || existingConfig.secondaryColor,

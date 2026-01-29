@@ -400,6 +400,83 @@ export interface FeatureItem {
   link?: string;
 }
 
+// ============================================
+// SECTION BUILDER TYPES
+// ============================================
+
+/** Identificadores de secciones disponibles en el sistema */
+export type SectionId =
+  // Comunes a todos los tipos de negocio
+  | "hero"
+  | "features"
+  | "testimonials"
+  | "faq"
+  | "contact"
+  | "footer"
+  // Restaurant
+  | "menu"
+  | "reservation"
+  | "orders"
+  | "openStatus"
+  // Salon / Clinic
+  | "services"
+  | "team"
+  | "gallery"
+  | "booking"
+  // Fitness
+  | "classes"
+  | "trainers"
+  | "schedule"
+  | "plans"
+  | "membership"
+  // Shop
+  | "products"
+  | "cart"
+  | "categories"
+  // Real Estate
+  | "properties"
+  | "search"
+  | "agents"
+  // Repairs
+  | "quotes"
+  | "portfolio"
+  | "process";
+
+/** Variante de una sección */
+export interface SectionVariant {
+  value: string;
+  label: string;
+  preview?: string;
+}
+
+/** Definición de una sección en el catálogo */
+export interface SectionDefinition {
+  id: SectionId;
+  label: string;
+  description: string;
+  icon: string;
+  variants: SectionVariant[];
+  defaultVariant: string;
+  required?: boolean;
+  fixedPosition?: "top" | "bottom";
+  businessTypes: BusinessType[];
+}
+
+/** Configuración de una sección activa en el website */
+export interface SectionConfig {
+  id: SectionId;
+  enabled: boolean;
+  variant: string;
+  order: number;
+  settings?: Record<string, unknown>;
+}
+
+/** Configuración completa de secciones del website */
+export interface SectionsConfig {
+  sections: SectionConfig[];
+  updatedAt?: string;
+}
+
 /** Configuración base del website */
 export interface WebsiteConfig {
   // === INFORMACIÓN DEL NEGOCIO ===
@@ -472,6 +549,11 @@ export interface WebsiteConfig {
 
   /** Efectos visuales */
   effects?: EffectsConfig;
+
+  // === SECTION BUILDER ===
+
+  /** Configuración de secciones del website (orden, variantes, habilitadas) */
+  sectionsConfig?: SectionsConfig;
 }
 
 /** Website con config tipada para uso en templates */

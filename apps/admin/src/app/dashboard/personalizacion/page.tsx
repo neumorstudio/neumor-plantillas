@@ -1,5 +1,6 @@
 import { getWebsitePersonalizationConfig } from "@/lib/data";
 import { PersonalizacionClient } from "./personalizacion-client";
+import type { BusinessType } from "@neumorstudio/supabase";
 
 export default async function PersonalizacionPage() {
   const websiteConfig = await getWebsitePersonalizationConfig();
@@ -21,6 +22,7 @@ export default async function PersonalizacionPage() {
       domain={websiteConfig.domain}
       initialTheme={websiteConfig.theme}
       initialConfig={websiteConfig.config}
+      businessType={websiteConfig.config.businessType as BusinessType | undefined}
     />
   );
 }

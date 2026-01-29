@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { ColorPicker, FontSelector, SliderControl, OptionSelector } from "@/components/customization";
+import { ColorPicker, FontSelector, SliderControl, OptionSelector, SectionBuilder } from "@/components/customization";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
   Theme,
@@ -10,7 +10,11 @@ import type {
   TypographyConfig,
   EffectsConfig,
   BrandingConfig,
+  SectionConfig,
+  SectionsConfig,
+  BusinessType,
 } from "@neumorstudio/supabase";
+import { getDefaultSectionsConfig } from "@neumorstudio/supabase";
 
 // ============================================
 // TYPES
@@ -30,9 +34,10 @@ interface Props {
   domain: string;
   initialTheme: Theme;
   initialConfig: WebsiteConfig;
+  businessType?: BusinessType;
 }
 
-type TabId = "diseno" | "contenido" | "negocio" | "layout";
+type TabId = "diseno" | "contenido" | "negocio" | "secciones" | "layout";
 
 interface ContentConfig {
   heroTitle?: string;
@@ -557,6 +562,7 @@ const tabs: { id: TabId; label: string; shortLabel: string; icon: React.ReactNod
   { id: "diseno", label: "Diseno", shortLabel: "Diseno", icon: <PaletteIcon /> },
   { id: "contenido", label: "Contenido", shortLabel: "Textos", icon: <TextIcon /> },
   { id: "negocio", label: "Negocio", shortLabel: "Info", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
+  { id: "secciones", label: "Secciones", shortLabel: "Secc", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg> },
   { id: "layout", label: "Layout", shortLabel: "Layout", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg> },
 ];
 
@@ -603,6 +609,7 @@ export function PersonalizacionClient({
   domain,
   initialTheme,
   initialConfig,
+  businessType = "salon",
 }: Props) {
   const isMobile = useIsMobile();
 
@@ -668,6 +675,16 @@ export function PersonalizacionClient({
 
   // Estado para skin visual de componentes (neumorphic por defecto)
   const [skin, setSkin] = useState<string>(initialConfig.skin || "neumorphic");
+
+  // Estado para secciones del builder
+  const [sectionsConfig, setSectionsConfig] = useState<SectionsConfig>(() => {
+    return initialConfig.sectionsConfig || getDefaultSectionsConfig(businessType);
+  });
+
+  // Handler para cambios en secciones
+  const handleSectionsChange = useCallback((sections: SectionConfig[]) => {
+    setSectionsConfig({ sections, updatedAt: new Date().toISOString() });
+  }, []);
 
   // Función para aplicar un preset completo
   const applyPreset = useCallback((preset: TemplatePreset) => {
@@ -1012,6 +1029,7 @@ export function PersonalizacionClient({
         typography,
         effects,
         branding,
+        sectionsConfig,
         features: {
           title: features.title,
           subtitle: features.subtitle,
@@ -1744,6 +1762,26 @@ export function PersonalizacionClient({
                 </div>
               ))}
             </CollapsibleSection>
+          </div>
+        );
+
+      // ============================================
+      // GRUPO 5: SECCIONES (Constructor de secciones)
+      // ============================================
+      case "secciones":
+        return (
+          <div className="space-y-4">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold mb-1">Constructor de Secciones</h3>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Arrastra para reordenar las secciones de tu web. Activa o desactiva las que necesites.
+              </p>
+            </div>
+            <SectionBuilder
+              businessType={businessType}
+              sections={sectionsConfig.sections}
+              onChange={handleSectionsChange}
+            />
           </div>
         );
 

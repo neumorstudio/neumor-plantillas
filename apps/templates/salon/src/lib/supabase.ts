@@ -27,9 +27,55 @@ export interface WebsiteConfig {
   };
   googleRating?: number;
   totalReviews?: number;
+  // Section Builder config
+  sectionsConfig?: SectionsConfig;
 }
 
-export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
+export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark" | "christmas" | "summer" | "autumn" | "spring" | "ocean" | "sunset" | "forest" | "midnight" | "rose" | "lavender" | "coral" | "minimal" | "wellness" | "vintage";
+
+// Tipos para el Section Builder
+export type SectionId =
+  | "hero"
+  | "features"
+  | "testimonials"
+  | "faq"
+  | "contact"
+  | "footer"
+  | "menu"
+  | "reservation"
+  | "orders"
+  | "openStatus"
+  | "services"
+  | "team"
+  | "gallery"
+  | "booking"
+  | "classes"
+  | "trainers"
+  | "schedule"
+  | "plans"
+  | "membership"
+  | "products"
+  | "cart"
+  | "categories"
+  | "properties"
+  | "search"
+  | "agents"
+  | "quotes"
+  | "portfolio"
+  | "process";
+
+export interface SectionConfig {
+  id: SectionId;
+  enabled: boolean;
+  variant: string;
+  order: number;
+  settings?: Record<string, unknown>;
+}
+
+export interface SectionsConfig {
+  sections: SectionConfig[];
+  updatedAt?: string;
+}
 
 export interface Website {
   id: string;

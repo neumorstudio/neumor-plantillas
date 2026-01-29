@@ -28,7 +28,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -164,6 +164,38 @@ const customization = websiteData?.config ? {
 } : {};
 
 // ============================================
+// CONFIGURACION DE SECCIONES DINAMICAS
+// ============================================
+
+// Secciones por defecto para salon (backward compatibility)
+const defaultSections: SectionConfig[] = [
+  { id: "hero", enabled: true, variant: "classic", order: 0 },
+  { id: "features", enabled: true, variant: "cards", order: 1 },
+  { id: "services", enabled: true, variant: "tabs", order: 2 },
+  { id: "booking", enabled: true, variant: "classic", order: 3 },
+  { id: "footer", enabled: true, variant: "full", order: 4 },
+];
+
+// Obtener sectionsConfig de la BD o usar defaults
+const sectionsConfig: SectionsConfig = websiteData?.config?.sectionsConfig || {
+  sections: defaultSections,
+};
+
+// Filtrar secciones habilitadas y ordenar por order
+const enabledSections = sectionsConfig.sections
+  .filter((s) => s.enabled)
+  .sort((a, b) => a.order - b.order);
+
+// Crear un mapa para acceso rapido a la configuracion de cada seccion
+const sectionConfigMap = new Map(enabledSections.map((s) => [s.id, s]));
+
+// Helper para verificar si una seccion esta habilitada
+const isSectionEnabled = (sectionId: SectionId): boolean => {
+  const sectionCfg = sectionConfigMap.get(sectionId);
+  return sectionCfg?.enabled ?? false;
+};
+
+// ============================================
 // SELECCION DINAMICA DE COMPONENTES
 // ============================================
 
@@ -248,33 +280,50 @@ const serviceCategories = serviceCatalog.length
   />
 
   <main>
-    <Hero
-      title={config.heroTitle}
-      subtitle={config.heroSubtitle}
-      backgroundImage={config.heroImage}
-      scheduleLabel={scheduleLabel}
-      address={config.address}
-      phone={config.phone}
-    />
+    {/* Renderizado dinamico de secciones basado en sectionsConfig */}
+    {enabledSections
+      .filter((s) => s.id !== "footer") // Footer va fuera del main
+      .map((section) => {
+        switch (section.id) {
+          case "hero":
+            return (
+              <Hero
+                title={config.heroTitle}
+                subtitle={config.heroSubtitle}
+                backgroundImage={config.heroImage}
+                scheduleLabel={scheduleLabel}
+                address={config.address}
+                phone={config.phone}
+              />
+            );
+          case "features":
+            return <Features />;
+          case "services":
+            return <Services categories={serviceCategories} />;
+          case "booking":
+            return (
+              <AppointmentForm
+                webhookUrl={config.webhookUrl}
+                websiteId={currentWebsiteId}
+                address={config.address}
+                phone={config.phone}
+                email={config.email}
+              />
+            );
+          default:
+            return null;
+        }
+      })}
+  </main>
 
-    <Features />
-
-    <Services categories={serviceCategories} />
-
-    <AppointmentForm
-      webhookUrl={config.webhookUrl}
-      websiteId={currentWebsiteId}
+  {/* Footer siempre va al final si esta habilitado */}
+  {isSectionEnabled("footer") && (
+    <FooterComponent
+      businessName={config.businessName}
       address={config.address}
       phone={config.phone}
       email={config.email}
+      socialLinks={config.socialLinks}
     />
-  </main>
-
-  <FooterComponent
-    businessName={config.businessName}
-    address={config.address}
-    phone={config.phone}
-    email={config.email}
-    socialLinks={config.socialLinks}
-  />
+  )}
 </Layout>
