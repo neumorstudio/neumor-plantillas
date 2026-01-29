@@ -242,34 +242,51 @@ const defaultFonts = !fontImports
             // Siempre intentar actualizar heroImage si existe en el contenido
             if (content.heroImage) {
               console.log('[Preview] Attempting to update hero image to:', content.heroImage);
+              var imageUpdated = false;
 
-              // Buscar todos los posibles elementos de imagen hero
+              // 1. Buscar .hero-image (HeroClassic, HeroBold)
               var heroImg = document.querySelector('.hero-image');
-              console.log('[Preview] .hero-image element:', heroImg, 'tagName:', heroImg?.tagName);
-
               if (heroImg && heroImg.tagName === 'IMG') {
-                console.log('[Preview] Updating .hero-image src from:', heroImg.src, 'to:', content.heroImage);
+                console.log('[Preview] Updating .hero-image');
                 heroImg.src = content.heroImage;
+                imageUpdated = true;
               }
 
-              // También buscar otras variantes de img
-              var altHeroImg = document.querySelector('.hero-bg, [data-hero-image]');
-              if (altHeroImg && altHeroImg.tagName === 'IMG') {
-                console.log('[Preview] Updating alt hero img');
-                altHeroImg.src = content.heroImage;
+              // 2. Buscar .hero-bg-image (HeroModern - imagen fullscreen)
+              var heroBgImg = document.querySelector('.hero-bg-image');
+              if (heroBgImg && heroBgImg.tagName === 'IMG') {
+                console.log('[Preview] Updating .hero-bg-image (HeroModern)');
+                heroBgImg.src = content.heroImage;
+                imageUpdated = true;
               }
 
-              // Actualizar background-image para heroes que usen fondo CSS (HeroBold)
-              var heroSection = document.querySelector('.hero-bold, .hero-bg-image, [data-hero-bg]');
+              // 3. Buscar elementos con data-hero-image
+              var dataHeroImg = document.querySelector('[data-hero-image]');
+              if (dataHeroImg && dataHeroImg.tagName === 'IMG') {
+                console.log('[Preview] Updating [data-hero-image]');
+                dataHeroImg.src = content.heroImage;
+                imageUpdated = true;
+              }
+
+              // 4. Buscar background-image CSS (fallback)
+              var heroSection = document.querySelector('[data-hero-bg]');
               if (heroSection) {
                 console.log('[Preview] Updating hero section background');
                 heroSection.style.backgroundImage = 'url(' + content.heroImage + ')';
+                imageUpdated = true;
               }
 
-              // Si no encontramos ningún elemento, loguearlo
-              if (!heroImg && !altHeroImg && !heroSection) {
-                console.log('[Preview] WARNING: No hero image element found in DOM');
-                console.log('[Preview] Available images:', document.querySelectorAll('img').length);
+              if (!imageUpdated) {
+                console.log('[Preview] WARNING: No hero image element found. Looking for any img in hero...');
+                // Fallback: buscar cualquier img dentro de un section.hero*
+                var heroSection = document.querySelector('section[class*="hero"]');
+                if (heroSection) {
+                  var anyImg = heroSection.querySelector('img');
+                  if (anyImg) {
+                    console.log('[Preview] Found fallback img in hero section');
+                    anyImg.src = content.heroImage;
+                  }
+                }
               }
             }
             if (content.address) {
