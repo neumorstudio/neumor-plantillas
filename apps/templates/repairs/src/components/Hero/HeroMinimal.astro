@@ -9,6 +9,9 @@ interface Props {
   ctaText?: string;
   ctaLink?: string;
   backgroundImage?: string; // No se usa pero mantiene la interfaz
+  scheduleLabel?: string;
+  address?: string;
+  phone?: string;
 }
 
 const {
@@ -16,6 +19,9 @@ const {
   subtitle,
   ctaText = "Solicitar presupuesto",
   ctaLink = "#contact",
+  scheduleLabel = "8:00 - 22:00",
+  address = "Centro, Madrid",
+  phone = "+34 912 345 678",
 } = Astro.props;
 ---
 
@@ -68,7 +74,7 @@ const {
       </span>
       <div class="info-text">
         <span class="info-label">Horario</span>
-        <span class="info-value">8:00 - 22:00</span>
+        <span class="info-value">{scheduleLabel}</span>
       </div>
     </div>
 
@@ -83,7 +89,7 @@ const {
       </span>
       <div class="info-text">
         <span class="info-label">Ubicacion</span>
-        <span class="info-value">Centro, Madrid</span>
+        <span class="info-value">{address}</span>
       </div>
     </div>
 
@@ -97,7 +103,7 @@ const {
       </span>
       <div class="info-text">
         <span class="info-label">Contacto</span>
-        <span class="info-value">+34 912 345 678</span>
+        <span class="info-value">{phone}</span>
       </div>
     </div>
   </div>
