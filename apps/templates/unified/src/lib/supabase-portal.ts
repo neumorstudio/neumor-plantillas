@@ -133,6 +133,19 @@ function parseServices(services: unknown): ServiceItem[] {
 }
 
 /**
+ * Extrae el nombre del servicio del campo notes para bookings antiguos
+ * Format: "Servicio: NombreServicio | Profesional: NombreProfesional"
+ */
+function extractServiceFromNotes(notes: string | null): string | null {
+  if (!notes) return null;
+  const match = notes.match(/Servicio:\s*([^|]+)/i);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return null;
+}
+
+/**
  * Obtiene las reservas del cliente
  */
 export async function getCustomerBookings(
@@ -146,26 +159,31 @@ export async function getCustomerBookings(
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, booking_date, booking_time, status, services, total_price_cents, notes, customer_id")
+    .select("id, booking_date, booking_time, status, services, total_price_cents, notes, customer_id, created_at")
     .eq("customer_id", customerId)
-    .order("booking_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(50);
-
-  console.log("[getCustomerBookings] Result:", data?.length, "bookings, error:", error?.message);
-  if (data && data.length > 0) {
-    // Log all bookings to debug
-    data.forEach((b, i) => {
-      console.log(`[getCustomerBookings] Booking ${i}: id=${b.id}, date=${b.booking_date}, services_type=${typeof b.services}, services_raw=${JSON.stringify(b.services)?.slice(0, 100)}`);
-    });
-  }
 
   if (error || !data) return [];
 
   // Parsear services que puede venir como string JSON
-  return data.map((booking) => ({
-    ...booking,
-    services: parseServices(booking.services),
-  })) as CustomerBooking[];
+  // Para bookings antiguos sin services, extraer del campo notes
+  return data.map((booking) => {
+    let services = parseServices(booking.services);
+
+    // Fallback: si no hay services, intentar extraer del campo notes
+    if (services.length === 0 && booking.notes) {
+      const serviceName = extractServiceFromNotes(booking.notes);
+      if (serviceName) {
+        services = [{ id: "legacy", name: serviceName, price_cents: 0, duration_minutes: 0 }];
+      }
+    }
+
+    return {
+      ...booking,
+      services,
+    };
+  }) as CustomerBooking[];
 }
 
 /**
