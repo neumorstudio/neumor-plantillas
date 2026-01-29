@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         booking_time: body.hora,
         guests: 1,
         notes: noteParts.join(" | ").slice(0, 1000) || null,
-        status: "pending",
+        status: "confirmed",
         source: "website",
         professional_id: body.professional_id || null,
       })
