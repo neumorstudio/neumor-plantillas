@@ -29,7 +29,7 @@ interface Booking {
   booking_time: string | null;
   professional_id?: string | null;
   created_at?: string | null;
-  services?: { name: string; duration_minutes?: number }[] | null;
+  services?: { name: string; duration_minutes?: number; price_cents?: number }[] | null;
   status: string;
   notes?: string | null;
   total_price_cents?: number | null;
@@ -149,7 +149,25 @@ export default function CalendarioClient({
     if (Number.isFinite(booking.total_price_cents) && Number(booking.total_price_cents) > 0) {
       return (Number(booking.total_price_cents) / 100).toFixed(2);
     }
-    return "";
+    const catalogItems = serviceCatalog.flatMap((category) => category.items);
+    const priceByName = new Map<string, number>();
+    catalogItems.forEach((item) => {
+      priceByName.set(item.name.trim().toLowerCase(), item.price_cents || 0);
+    });
+    let total = 0;
+    const services = booking.services || [];
+    services.forEach((service) => {
+      const servicePrice = Number(service.price_cents);
+      if (Number.isFinite(servicePrice) && servicePrice > 0) {
+        total += servicePrice;
+        return;
+      }
+      const match = priceByName.get((service.name || "").trim().toLowerCase());
+      if (match) {
+        total += match;
+      }
+    });
+    return total > 0 ? (total / 100).toFixed(2) : "";
   };
   const fallbackSlots =
     initialSlots.length > 0
