@@ -388,8 +388,13 @@ export function PersonalizacionClient({
         phone: content.phone,
         email: content.email,
       },
+      features: {
+        title: features.title,
+        subtitle: features.subtitle,
+        items: features.items,
+      },
     });
-  }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, sendPreviewMessage]);
+  }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
 
   // Build preview URL - static to avoid iframe reloads
   // All changes are sent via postMessage for real-time updates
@@ -428,9 +433,14 @@ export function PersonalizacionClient({
           phone: content.phone,
           email: content.email,
         },
+        features: {
+          title: features.title,
+          subtitle: features.subtitle,
+          items: features.items,
+        },
       });
     }, 100);
-  }, [colors, typography, effects, branding, content, sendPreviewMessage]);
+  }, [colors, typography, effects, branding, content, features, sendPreviewMessage]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {

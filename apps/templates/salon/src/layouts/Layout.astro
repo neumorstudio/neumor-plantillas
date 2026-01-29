@@ -213,6 +213,32 @@ const defaultFonts = !fontImports
               });
             }
           }
+
+          // Aplicar features
+          const { features } = event.data.payload;
+          if (features) {
+            // Titulo y subtitulo de la seccion
+            if (features.title) {
+              const el = document.querySelector('.features-header h2, #features h2');
+              if (el) el.textContent = features.title;
+            }
+            if (features.subtitle) {
+              const el = document.querySelector('.features-header p, #features > .container > .features-header > p');
+              if (el) el.textContent = features.subtitle;
+            }
+            // Items individuales
+            if (features.items && features.items.length > 0) {
+              const cards = document.querySelectorAll('.feature-card');
+              features.items.forEach(function(item, index) {
+                if (cards[index]) {
+                  const titleEl = cards[index].querySelector('.feature-title, h3');
+                  const descEl = cards[index].querySelector('.feature-description, p');
+                  if (titleEl && item.title) titleEl.textContent = item.title;
+                  if (descEl && item.description) descEl.textContent = item.description;
+                }
+              });
+            }
+          }
         });
       })();
     </script>
