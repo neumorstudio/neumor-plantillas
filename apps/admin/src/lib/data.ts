@@ -147,6 +147,23 @@ export async function getDashboardStats() {
 }
 
 // Recent bookings - only select columns used in dashboard view
+/**
+ * Parsea el campo services que puede venir como string JSON o como array
+ */
+function parseRecentBookingServices(services: unknown): { name: string; price_cents?: number; duration_minutes?: number }[] | null {
+  if (!services) return null;
+  if (Array.isArray(services)) return services;
+  if (typeof services === "string") {
+    try {
+      const parsed = JSON.parse(services);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function getRecentBookings(limit = 5) {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();
@@ -156,18 +173,19 @@ export async function getRecentBookings(limit = 5) {
   const { data } = await supabase
     .from("bookings")
     .select(
-      "id, customer_name, booking_date, booking_time, guests, status, professional_id, professional:professionals(name)"
+      "id, customer_name, booking_date, booking_time, guests, status, professional_id, services, total_price_cents, total_duration_minutes, professional:professionals(name)"
     )
     .eq("website_id", websiteId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  // Map professional from array to object (Supabase returns array for relations)
+  // Map professional from array to object and parse services
   return (data || []).map((item) => ({
     ...item,
     professional: Array.isArray(item.professional)
       ? item.professional[0] || null
       : item.professional,
+    services: parseRecentBookingServices(item.services),
   }));
 }
 

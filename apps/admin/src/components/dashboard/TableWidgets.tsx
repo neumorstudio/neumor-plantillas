@@ -60,6 +60,9 @@ interface Booking {
   guests: number | null;
   status: string;
   professional?: { name: string } | null;
+  services?: { name: string; price_cents?: number; duration_minutes?: number }[] | null;
+  total_price_cents?: number | null;
+  total_duration_minutes?: number | null;
 }
 
 // Tipo para trabajos
@@ -123,28 +126,52 @@ export function RecentBookingsTable({
                 <th>Cliente</th>
                 <th>Fecha</th>
                 <th>Hora</th>
-                {variant === "salon" ? <th>Profesional</th> : <th>Personas</th>}
-                {variant !== "salon" && <th>Estado</th>}
+                {variant === "salon" ? (
+                  <>
+                    <th>Servicios</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                  </>
+                ) : (
+                  <>
+                    <th>Personas</th>
+                    <th>Estado</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
               {bookings.map((booking) => {
+                const serviceNames = booking.services?.map(s => s.name).join(", ") || "-";
+                const price = booking.total_price_cents
+                  ? `${(booking.total_price_cents / 100).toFixed(2)} €`
+                  : "-";
                 return (
                   <tr key={booking.id}>
                     <td className="font-medium">{booking.customer_name}</td>
                     <td>{formatDate(booking.booking_date)}</td>
                     <td>{booking.booking_time || "-"}</td>
                     {variant === "salon" ? (
-                      <td>{booking.professional?.name || "-"}</td>
+                      <>
+                        <td className="max-w-[150px] truncate" title={serviceNames}>
+                          {serviceNames}
+                        </td>
+                        <td>{price}</td>
+                        <td>
+                          <span className={`badge ${getBookingStatusBadge(booking.status).class}`}>
+                            {getBookingStatusBadge(booking.status).label}
+                          </span>
+                        </td>
+                      </>
                     ) : (
-                      <td>{booking.guests || 1}</td>
-                    )}
-                    {variant !== "salon" && (
-                      <td>
-                        <span className={`badge ${getBookingStatusBadge(booking.status).class}`}>
-                          {getBookingStatusBadge(booking.status).label}
-                        </span>
-                      </td>
+                      <>
+                        <td>{booking.guests || 1}</td>
+                        <td>
+                          <span className={`badge ${getBookingStatusBadge(booking.status).class}`}>
+                            {getBookingStatusBadge(booking.status).label}
+                          </span>
+                        </td>
+                      </>
                     )}
                   </tr>
                 );
