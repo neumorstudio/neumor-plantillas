@@ -38,6 +38,7 @@ interface ContentConfig {
   heroTitle?: string;
   heroSubtitle?: string;
   heroImage?: string;
+  heroImages?: string[]; // Galería de hasta 3 imágenes
   address?: string;
   phone?: string;
   email?: string;
@@ -317,10 +318,15 @@ export function PersonalizacionClient({
       initialConfig.branding?.logoDisplay ||
       (initialConfig.branding?.logo || initialConfig.logo ? "logo" : "name"),
   });
+  // Inicializar heroImages: si hay heroImage existente, incluirlo en el array
+  const initialHeroImages = (initialConfig.heroImages as string[] | undefined) ||
+    (initialConfig.heroImage ? [initialConfig.heroImage] : []);
+
   const [content, setContent] = useState<ContentConfig>({
     heroTitle: initialConfig.heroTitle || "",
     heroSubtitle: initialConfig.heroSubtitle || "",
     heroImage: initialConfig.heroImage || "",
+    heroImages: initialHeroImages,
     address: initialConfig.address || "",
     phone: initialConfig.phone || "",
     email: initialConfig.email || "",
@@ -539,6 +545,15 @@ export function PersonalizacionClient({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Verificar límite de 3 imágenes
+    setContent(prev => {
+      if ((prev.heroImages?.length || 0) >= 3) {
+        setMessage({ type: "error", text: "Maximo 3 imagenes. Elimina una para subir otra." });
+        return prev;
+      }
+      return prev;
+    });
+
     setUploadingHero(true);
     setMessage(null);
 
@@ -555,7 +570,18 @@ export function PersonalizacionClient({
       const data = await response.json();
 
       if (response.ok && data.url) {
-        setContent(prev => ({ ...prev, heroImage: data.url }));
+        setContent(prev => {
+          const currentImages = prev.heroImages || [];
+          if (currentImages.length >= 3) {
+            return prev; // Ya verificado arriba, pero por seguridad
+          }
+          const newImages = [...currentImages, data.url];
+          return {
+            ...prev,
+            heroImage: data.url, // Seleccionar la nueva imagen
+            heroImages: newImages,
+          };
+        });
         setMessage({ type: "success", text: "Imagen subida correctamente" });
         setTimeout(() => setMessage(null), 3000);
       } else {
@@ -567,6 +593,27 @@ export function PersonalizacionClient({
       setUploadingHero(false);
       e.target.value = "";
     }
+  }, []);
+
+  // Seleccionar una imagen de la galería como activa
+  const handleSelectHeroImage = useCallback((url: string) => {
+    setContent(prev => ({ ...prev, heroImage: url }));
+  }, []);
+
+  // Eliminar una imagen de la galería
+  const handleRemoveHeroImage = useCallback((url: string) => {
+    setContent(prev => {
+      const newImages = (prev.heroImages || []).filter(img => img !== url);
+      // Si eliminamos la imagen activa, seleccionar otra o vaciar
+      const newHeroImage = prev.heroImage === url
+        ? (newImages[0] || "")
+        : prev.heroImage;
+      return {
+        ...prev,
+        heroImage: newHeroImage,
+        heroImages: newImages,
+      };
+    });
   }, []);
 
   const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => {
@@ -883,35 +930,91 @@ export function PersonalizacionClient({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Imagen de Fondo</label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={content.heroImage || ""}
-                    onChange={(e) => handleContentChange("heroImage", e.target.value)}
-                    placeholder="https://..."
-                    className="neumor-input flex-1 h-12"
-                  />
-                  <label className={`neumor-btn h-12 px-3 flex items-center justify-center cursor-pointer ${uploadingHero ? "opacity-50" : ""}`}>
-                    {uploadingHero ? (
-                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleHeroImageUpload}
-                      disabled={uploadingHero}
-                      className="hidden"
-                    />
-                  </label>
+                <label className="block text-sm font-medium mb-2">
+                  Imagen de Fondo
+                  <span className="text-xs text-[var(--text-secondary)] ml-2">
+                    ({content.heroImages?.length || 0}/3)
+                  </span>
+                </label>
+
+                {/* Galería de imágenes */}
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {/* Imágenes existentes */}
+                  {(content.heroImages || []).map((imgUrl, index) => (
+                    <div
+                      key={index}
+                      className={`relative aspect-video rounded-xl overflow-hidden cursor-pointer group transition-all ${
+                        content.heroImage === imgUrl
+                          ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--neumor-bg)]"
+                          : "neumor-inset"
+                      }`}
+                      onClick={() => handleSelectHeroImage(imgUrl)}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`Hero ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 15l6-6 4 4 8-8'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3C/svg%3E";
+                        }}
+                      />
+                      {/* Indicador de seleccionada */}
+                      {content.heroImage === imgUrl && (
+                        <div className="absolute top-1 left-1 bg-[var(--accent)] text-white rounded-full p-1">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                      {/* Botón eliminar */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveHeroImage(imgUrl);
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Slot para subir nueva imagen */}
+                  {(content.heroImages?.length || 0) < 3 && (
+                    <label className={`aspect-video rounded-xl border-2 border-dashed border-[var(--shadow-dark)] flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploadingHero ? "opacity-50 pointer-events-none" : ""}`}>
+                      {uploadingHero ? (
+                        <svg className="w-6 h-6 animate-spin text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <>
+                          <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-xs text-[var(--text-secondary)] mt-1">Subir</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHeroImageUpload}
+                        disabled={uploadingHero}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
                 </div>
+
+                {/* Mensaje de ayuda */}
+                {(content.heroImages?.length || 0) === 0 && (
+                  <p className="text-xs text-[var(--text-secondary)] text-center">
+                    Sube hasta 3 imagenes y selecciona la que quieres mostrar
+                  </p>
+                )}
               </div>
             </CollapsibleSection>
 
