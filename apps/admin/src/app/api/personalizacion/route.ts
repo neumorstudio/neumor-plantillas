@@ -9,15 +9,34 @@ import type {
   Theme,
 } from "@neumorstudio/supabase";
 
-// Temas válidos
+// Temas válidos - Todos los temas disponibles
 const VALID_THEMES: Theme[] = [
+  // Base
   "light",
   "dark",
   "colorful",
   "rustic",
   "elegant",
+  // Premium NeuGlass
   "neuglass",
   "neuglass-dark",
+  // Seasonal
+  "christmas",
+  "summer",
+  "autumn",
+  "spring",
+  // Mood/Style
+  "ocean",
+  "sunset",
+  "forest",
+  "midnight",
+  "rose",
+  "lavender",
+  "coral",
+  "minimal",
+  // Industry
+  "wellness",
+  "vintage",
 ];
 
 // GET: Obtener configuración actual del tema y personalización
