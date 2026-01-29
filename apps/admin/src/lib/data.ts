@@ -172,6 +172,23 @@ export async function getRecentBookings(limit = 5) {
 }
 
 // All bookings with pagination
+/**
+ * Parsea el campo services que puede venir como string JSON o como array
+ */
+function parseBookingServices(services: unknown): { name: string; price_cents?: number; duration_minutes?: number }[] | null {
+  if (!services) return null;
+  if (Array.isArray(services)) return services;
+  if (typeof services === "string") {
+    try {
+      const parsed = JSON.parse(services);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function getBookings(page = 1, pageSize = 10) {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();
@@ -188,7 +205,13 @@ export async function getBookings(page = 1, pageSize = 10) {
     .order("booking_date", { ascending: false })
     .range(from, to);
 
-  return { data: data || [], count: count || 0 };
+  // Parsear services que puede venir como string JSON
+  const parsedData = (data || []).map((booking) => ({
+    ...booking,
+    services: parseBookingServices(booking.services),
+  }));
+
+  return { data: parsedData, count: count || 0 };
 }
 
 export async function getBusinessHours() {
