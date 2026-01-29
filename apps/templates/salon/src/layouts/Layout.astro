@@ -239,15 +239,22 @@ const defaultFonts = !fontImports
               if (el) el.textContent = content.heroSubtitle;
             }
             if (content.heroImage) {
-              // Actualizar imagen de fondo del hero
-              const heroSection = document.querySelector('.hero-section, .hero, [data-hero]');
+              console.log('[Preview] Updating hero image to:', content.heroImage);
+              // Primero buscar img con clase hero-image (usado por HeroClassic, HeroModern)
+              const heroImg = document.querySelector('.hero-image');
+              if (heroImg && heroImg.tagName === 'IMG') {
+                console.log('[Preview] Found .hero-image img, updating src');
+                heroImg.src = content.heroImage;
+              }
+              // También buscar otras variantes de img
+              const altHeroImg = document.querySelector('.hero-bg, [data-hero-image]');
+              if (altHeroImg && altHeroImg.tagName === 'IMG') {
+                altHeroImg.src = content.heroImage;
+              }
+              // Actualizar background-image para heroes que usen fondo CSS (HeroBold)
+              const heroSection = document.querySelector('.hero-bold, .hero-bg-image, [data-hero-bg]');
               if (heroSection) {
                 heroSection.style.backgroundImage = 'url(' + content.heroImage + ')';
-              }
-              // También actualizar si es una etiqueta img
-              const heroImg = document.querySelector('.hero-bg, .hero-image, [data-hero-image]');
-              if (heroImg && heroImg.tagName === 'IMG') {
-                heroImg.src = content.heroImage;
               }
             }
             if (content.address) {
