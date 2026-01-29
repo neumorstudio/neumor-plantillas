@@ -153,7 +153,10 @@ export async function getCustomerBookings(
 
   console.log("[getCustomerBookings] Result:", data?.length, "bookings, error:", error?.message);
   if (data && data.length > 0) {
-    console.log("[getCustomerBookings] First booking services:", data[0].services);
+    // Log all bookings to debug
+    data.forEach((b, i) => {
+      console.log(`[getCustomerBookings] Booking ${i}: id=${b.id}, date=${b.booking_date}, services_type=${typeof b.services}, services_raw=${JSON.stringify(b.services)?.slice(0, 100)}`);
+    });
   }
 
   if (error || !data) return [];
