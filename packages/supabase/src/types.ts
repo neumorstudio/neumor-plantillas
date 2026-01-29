@@ -394,6 +394,7 @@ export interface WebsiteConfig {
   heroTitle?: string;
   heroSubtitle?: string;
   heroImage?: string;
+  heroImages?: string[]; // Galería de hasta 3 imágenes
 
   // === VARIANTES DE COMPONENTES ===
   variants?: WebsiteVariants;
