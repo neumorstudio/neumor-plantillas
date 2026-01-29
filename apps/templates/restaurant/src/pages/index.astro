@@ -325,6 +325,12 @@ const bookings: BookingRow[] = currentWebsiteId
   ? await getBookingsInRange(currentWebsiteId, toIsoDate(bookingsStart), toIsoDate(bookingsEnd))
   : [];
 const menuCategories = menuItems?.length ? buildMenuCategories(menuItems) : undefined;
+const buildScheduleLabel = (hours: BusinessHourRow[]) => {
+  const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (!openDay) return "Cerrado";
+  return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
+};
+const scheduleLabel = buildScheduleLabel(businessHours);
 
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
@@ -422,6 +428,9 @@ const heroCtaLink = ordersEnabled ? "#orders" : undefined;
       backgroundImage={config.heroImage}
       ctaText={heroCtaText}
       ctaLink={heroCtaLink}
+      scheduleLabel={scheduleLabel}
+      address={config.address}
+      phone={config.phone}
     />
 
     <Features />

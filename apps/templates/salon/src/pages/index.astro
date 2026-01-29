@@ -28,7 +28,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -195,6 +195,13 @@ const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFu
 // Website ID para el formulario de citas
 const currentWebsiteId = websiteData?.id || websiteId || "";
 const serviceCatalog = await getServiceCatalog(currentWebsiteId);
+const businessHours = await getBusinessHours(currentWebsiteId);
+const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
+  const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (!openDay) return "Cerrado";
+  return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
+};
+const scheduleLabel = buildScheduleLabel(businessHours);
 <<<<<<< HEAD
 const scissorsIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`;
 =======
@@ -249,6 +256,9 @@ const serviceCategories = serviceCatalog.length
       title={config.heroTitle}
       subtitle={config.heroSubtitle}
       backgroundImage={config.heroImage}
+      scheduleLabel={scheduleLabel}
+      address={config.address}
+      phone={config.phone}
     />
 
     <Features />
