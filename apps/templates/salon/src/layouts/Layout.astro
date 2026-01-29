@@ -131,8 +131,17 @@ const defaultFonts = !fontImports
           // Aplicar tema (cambiar clase en html)
           if (theme) {
             console.log('[Preview] Applying theme:', theme, 'Current classes:', root.className);
+            // Lista completa de todos los temas disponibles
+            var allThemes = [
+              'dark', 'colorful', 'rustic', 'elegant', 'neuglass', 'neuglass-dark',
+              'christmas', 'summer', 'autumn', 'spring',
+              'ocean', 'sunset', 'forest', 'midnight', 'rose', 'lavender', 'coral', 'minimal',
+              'wellness', 'vintage'
+            ];
             // Remover todas las clases de tema existentes
-            root.classList.remove('theme-dark', 'theme-colorful', 'theme-rustic', 'theme-elegant', 'theme-neuglass', 'theme-neuglass-dark');
+            allThemes.forEach(function(t) {
+              root.classList.remove('theme-' + t);
+            });
             // Añadir la nueva clase de tema (light no tiene clase)
             if (theme !== 'light') {
               root.classList.add('theme-' + theme);

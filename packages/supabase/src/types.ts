@@ -25,13 +25,32 @@ export type BusinessType =
 
 // Theme variants
 export type Theme =
-  | "dark"
+  // Base themes
   | "light"
+  | "dark"
   | "colorful"
   | "rustic"
   | "elegant"
+  // Premium NeuGlass
   | "neuglass"
-  | "neuglass-dark";
+  | "neuglass-dark"
+  // Seasonal / Holiday
+  | "christmas"
+  | "summer"
+  | "autumn"
+  | "spring"
+  // Mood / Style
+  | "ocean"
+  | "sunset"
+  | "forest"
+  | "midnight"
+  | "rose"
+  | "lavender"
+  | "coral"
+  | "minimal"
+  // Industry specific
+  | "wellness"
+  | "vintage";
 
 // Status types
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";

@@ -92,15 +92,68 @@ const FEATURE_ICONS = [
 // THEME DATA
 // ============================================
 
-const themes: { value: Theme; label: string; icon: string; colors: string[] }[] = [
-  { value: "light", label: "Light", icon: "sun", colors: ["#f0f4f8", "#e2e8f0", "#3b82f6"] },
-  { value: "dark", label: "Dark", icon: "moon", colors: ["#1a1a2e", "#2d2d44", "#6366f1"] },
-  { value: "colorful", label: "Colorful", icon: "palette", colors: ["#fef3c7", "#fbbf24", "#10b981"] },
-  { value: "rustic", label: "Rustic", icon: "leaf", colors: ["#d4a574", "#8b4513", "#654321"] },
-  { value: "elegant", label: "Elegant", icon: "crown", colors: ["#f5f0e8", "#c9a96e", "#8b6914"] },
-  { value: "neuglass", label: "NeuGlass", icon: "diamond", colors: ["#e8ecf1", "#6366f1", "#4f46e5"] },
-  { value: "neuglass-dark", label: "NeuGlass Dark", icon: "sparkles", colors: ["#13151a", "#818cf8", "#6366f1"] },
+// Theme categories for organized display
+type ThemeCategory = {
+  label: string;
+  themes: { value: Theme; label: string; icon: string; colors: string[] }[];
+};
+
+const themeCategories: ThemeCategory[] = [
+  {
+    label: "Básicos",
+    themes: [
+      { value: "light", label: "Light", icon: "sun", colors: ["#f0f4f8", "#e2e8f0", "#3b82f6"] },
+      { value: "dark", label: "Dark", icon: "moon", colors: ["#1a1a2e", "#2d2d44", "#6366f1"] },
+      { value: "minimal", label: "Minimal", icon: "minus", colors: ["#f8f8f8", "#888888", "#333333"] },
+    ]
+  },
+  {
+    label: "Estilo",
+    themes: [
+      { value: "colorful", label: "Colorful", icon: "palette", colors: ["#fef3c7", "#fbbf24", "#10b981"] },
+      { value: "rustic", label: "Rustic", icon: "leaf", colors: ["#d4a574", "#8b4513", "#654321"] },
+      { value: "elegant", label: "Elegant", icon: "crown", colors: ["#f5f0e8", "#c9a96e", "#8b6914"] },
+      { value: "vintage", label: "Vintage", icon: "camera", colors: ["#e8d4b8", "#8b7355", "#654321"] },
+    ]
+  },
+  {
+    label: "Premium",
+    themes: [
+      { value: "neuglass", label: "NeuGlass", icon: "diamond", colors: ["#e8ecf1", "#6366f1", "#4f46e5"] },
+      { value: "neuglass-dark", label: "NeuGlass Dark", icon: "sparkles", colors: ["#13151a", "#818cf8", "#6366f1"] },
+    ]
+  },
+  {
+    label: "Estacionales",
+    themes: [
+      { value: "christmas", label: "Navidad", icon: "gift", colors: ["#f5ebe0", "#c41e3a", "#228b22"] },
+      { value: "summer", label: "Verano", icon: "umbrella", colors: ["#fff8e7", "#00bcd4", "#ff7043"] },
+      { value: "autumn", label: "Otoño", icon: "wind", colors: ["#e8d4b8", "#d2691e", "#8b4513"] },
+      { value: "spring", label: "Primavera", icon: "flower", colors: ["#f0fff0", "#90ee90", "#ff69b4"] },
+    ]
+  },
+  {
+    label: "Naturaleza",
+    themes: [
+      { value: "ocean", label: "Océano", icon: "waves", colors: ["#e0f2f7", "#0097a7", "#00796b"] },
+      { value: "forest", label: "Bosque", icon: "tree", colors: ["#e8f5e9", "#4caf50", "#2e7d32"] },
+      { value: "sunset", label: "Atardecer", icon: "sunset", colors: ["#fff3e0", "#ff9800", "#e65100"] },
+      { value: "midnight", label: "Medianoche", icon: "stars", colors: ["#1a237e", "#3f51b5", "#9575cd"] },
+    ]
+  },
+  {
+    label: "Suaves",
+    themes: [
+      { value: "rose", label: "Rosa", icon: "heart", colors: ["#fce4ec", "#f48fb1", "#e91e63"] },
+      { value: "lavender", label: "Lavanda", icon: "sparkle", colors: ["#f3e5f5", "#ba68c8", "#8e24aa"] },
+      { value: "coral", label: "Coral", icon: "circle", colors: ["#fbe9e7", "#ff8a65", "#ff5722"] },
+      { value: "wellness", label: "Wellness", icon: "spa", colors: ["#e0f2f1", "#80cbc4", "#00897b"] },
+    ]
+  },
 ];
+
+// Flatten themes for easy lookup
+const themes = themeCategories.flatMap(cat => cat.themes);
 
 const variantOptions = {
   hero: [
@@ -192,6 +245,49 @@ function DiamondIcon() {
 function SparklesIcon() {
   return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>;
 }
+// Additional theme icons
+function GiftIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>;
+}
+function UmbrellaIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v1m0 18v1m-9-10h1m16 0h1M5.6 5.6l.7.7m11.4 11.4l.7.7M5.6 18.4l.7-.7m11.4-11.4l.7-.7M12 5a7 7 0 017 7H5a7 7 0 017-7z"/></svg>;
+}
+function WindIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>;
+}
+function FlowerIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.5a4 4 0 014 0 4 4 0 012 3.5 4 4 0 01-2 3.5 4 4 0 01-4 0 4 4 0 01-4 0 4 4 0 01-2-3.5 4 4 0 012-3.5 4 4 0 014 0zM12 6.5V3m0 18v-7"/></svg>;
+}
+function WavesIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15c2.483 0 4.345-1.5 6-3 1.655 1.5 3.517 3 6 3s4.345-1.5 6-3M3 19c2.483 0 4.345-1.5 6-3 1.655 1.5 3.517 3 6 3s4.345-1.5 6-3M3 11c2.483 0 4.345-1.5 6-3 1.655 1.5 3.517 3 6 3s4.345-1.5 6-3"/></svg>;
+}
+function TreeIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 7h-4l5 5h-4l4 6H4l4-6H4l5-5H5l7-7z"/></svg>;
+}
+function SunsetIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v2m0 0a5 5 0 015 5m-5-5a5 5 0 00-5 5m10 0H7m12 7H5M8 17l4-4 4 4"/></svg>;
+}
+function StarsIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>;
+}
+function HeartIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>;
+}
+function SparkleIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>;
+}
+function CircleIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" strokeWidth={2}/></svg>;
+}
+function SpaIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0-6c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1s-1-.45-1-1V3c0-.55.45-1 1-1zm0 16c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1zM5 12c0-.55-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1h2c.55 0 1-.45 1-1zm17 0c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1h2c.55 0 1-.45 1-1z"/></svg>;
+}
+function CameraIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>;
+}
+function MinusIcon() {
+  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4"/></svg>;
+}
 function CheckIcon() {
   return <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>;
 }
@@ -232,6 +328,21 @@ function getThemeIcon(icon: string) {
     case "crown": return <CrownIcon />;
     case "diamond": return <DiamondIcon />;
     case "sparkles": return <SparklesIcon />;
+    // New theme icons
+    case "gift": return <GiftIcon />;
+    case "umbrella": return <UmbrellaIcon />;
+    case "wind": return <WindIcon />;
+    case "flower": return <FlowerIcon />;
+    case "waves": return <WavesIcon />;
+    case "tree": return <TreeIcon />;
+    case "sunset": return <SunsetIcon />;
+    case "stars": return <StarsIcon />;
+    case "heart": return <HeartIcon />;
+    case "sparkle": return <SparkleIcon />;
+    case "circle": return <CircleIcon />;
+    case "spa": return <SpaIcon />;
+    case "camera": return <CameraIcon />;
+    case "minus": return <MinusIcon />;
     default: return <SunIcon />;
   }
 }
@@ -717,48 +828,59 @@ export function PersonalizacionClient({
       case "diseno":
         return (
           <div className="space-y-6">
-            {/* Tema - Siempre visible, es lo principal */}
-            <div className="space-y-3">
+            {/* Tema - Organizado por categorías */}
+            <div className="space-y-4">
               <p className="text-sm text-[var(--text-secondary)]">
-                Selecciona un tema base para tu web.
+                Selecciona un tema base para tu web. Tenemos {themes.length} temas disponibles.
               </p>
-              <div className="grid grid-cols-2 gap-3">
-                {themes.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setTheme(t.value)}
-                    className={`relative p-3 rounded-xl text-left transition-all min-h-[70px] ${
-                      theme === t.value
-                        ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
-                        : "hover:shadow-md hover:scale-[1.01]"
-                    }`}
-                    style={{
-                      background: `linear-gradient(135deg, ${t.colors[0]} 0%, ${t.colors[1]} 100%)`,
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span style={{ color: t.colors[2] }}>{getThemeIcon(t.icon)}</span>
-                      <span className="text-xs font-medium" style={{ color: t.colors[2] }}>
-                        {t.label}
-                      </span>
-                    </div>
-                    <div className="flex gap-1">
-                      {t.colors.map((color, i) => (
-                        <div
-                          key={i}
-                          className="w-3 h-3 rounded-full border border-white/30"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                    {theme === t.value && (
-                      <div className="absolute top-2 right-2 text-[var(--accent)]">
-                        <CheckIcon />
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
+              {themeCategories.map((category) => (
+                <div key={category.label} className="space-y-2">
+                  <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+                    {category.label}
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {category.themes.map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => setTheme(t.value)}
+                        className={`relative p-2 rounded-lg text-left transition-all ${
+                          theme === t.value
+                            ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
+                            : "hover:shadow-md hover:scale-[1.01]"
+                        }`}
+                        style={{
+                          background: `linear-gradient(135deg, ${t.colors[0]} 0%, ${t.colors[1]} 100%)`,
+                        }}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span style={{ color: t.colors[2] }} className="w-4 h-4">
+                            {getThemeIcon(t.icon)}
+                          </span>
+                          <span className="text-[10px] font-medium truncate" style={{ color: t.colors[2] }}>
+                            {t.label}
+                          </span>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {t.colors.map((color, i) => (
+                            <div
+                              key={i}
+                              className="w-2.5 h-2.5 rounded-full border border-white/30"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        {theme === t.value && (
+                          <div className="absolute top-1 right-1 text-[var(--accent)]">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Logo */}
