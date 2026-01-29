@@ -51,6 +51,12 @@ export default async function SuperAdminLayout({
               >
                 Negocios
               </Link>
+              <Link
+                href="/super/users"
+                className="text-sm font-medium hover:text-[var(--accent)] transition-colors"
+              >
+                Usuarios
+              </Link>
             </nav>
 
             {/* User + Logout */}
