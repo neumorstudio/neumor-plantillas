@@ -186,15 +186,26 @@ function SortableSectionItem({
           <button
             type="button"
             onClick={onToggle}
-            className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-              section.enabled ? "bg-[var(--accent)]" : "bg-[var(--shadow-dark)]"
-            }`}
+            className="w-12 h-7 rounded-full transition-all relative flex-shrink-0"
+            style={{
+              background: section.enabled
+                ? 'var(--accent)'
+                : 'linear-gradient(145deg, var(--neumor-bg), var(--shadow-light))',
+              boxShadow: section.enabled
+                ? 'inset 2px 2px 4px rgba(0,0,0,0.2)'
+                : 'inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light)',
+            }}
             title={section.enabled ? "Desactivar seccion" : "Activar seccion"}
           >
             <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow ${
-                section.enabled ? "translate-x-5" : "translate-x-1"
+              className={`absolute top-1 w-5 h-5 rounded-full transition-all duration-200 ${
+                section.enabled ? "translate-x-6 bg-white" : "translate-x-1 bg-[var(--text-secondary)]"
               }`}
+              style={{
+                boxShadow: section.enabled
+                  ? '0 2px 4px rgba(0,0,0,0.2)'
+                  : '2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light)',
+              }}
             />
           </button>
         )}
