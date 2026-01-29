@@ -20,6 +20,9 @@ const formatDate = (dateStr: string) => {
 
 // Status badge
 const getStatusBadge = (status: string) => {
+  if (status === "pending") {
+    return { class: "portal-badge-confirmed", label: "Confirmada" };
+  }
   const statusMap: Record<string, { class: string; label: string }> = {
     pending: { class: "portal-badge-pending", label: "Pendiente" },
     confirmed: { class: "portal-badge-confirmed", label: "Confirmada" },

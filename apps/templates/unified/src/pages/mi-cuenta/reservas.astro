@@ -31,8 +31,13 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+const isSalon = tenant.businessType === "salon";
+
 // Status badge
 const getStatusBadge = (status: string) => {
+  if (isSalon && status === "pending") {
+    return { class: "portal-badge-confirmed", label: "Confirmada" };
+  }
   const statusMap: Record<string, { class: string; label: string }> = {
     pending: { class: "portal-badge-pending", label: "Pendiente" },
     confirmed: { class: "portal-badge-confirmed", label: "Confirmada" },
@@ -53,6 +58,13 @@ const getLabel = () => {
       return "Mis Citas";
   }
 };
+
+const emptyText =
+  tenant.businessType === "restaurant"
+    ? "Aun no tienes ninguna reserva registrada."
+    : tenant.businessType === "gym"
+      ? "Aun no tienes ninguna sesion registrada."
+      : "Aun no tienes ninguna cita registrada.";
 
 // Helper to extract service name (handles both string and object formats)
 const getServiceName = (service: unknown): string => {
@@ -79,7 +91,13 @@ const getServiceName = (service: unknown): string => {
                   <span class="salon-service-badge">{getServiceName(service)}</span>
                 ))}
                 {booking.services?.length === 0 && (
-                  <span class="portal-list-item-title">Reserva</span>
+                  <span class="portal-list-item-title">
+                    {tenant.businessType === "restaurant"
+                      ? "Reserva"
+                      : tenant.businessType === "gym"
+                        ? "Sesion"
+                        : "Cita"}
+                  </span>
                 )}
               </div>
               <span class={`portal-badge ${badge.class}`}>{badge.label}</span>
@@ -110,7 +128,7 @@ const getServiceName = (service: unknown): string => {
         <line x1="3" y1="10" x2="21" y2="10"></line>
       </svg>
       <p class="portal-empty-title">Sin reservas</p>
-      <p class="portal-empty-text">Aun no tienes ninguna reserva registrada.</p>
+      <p class="portal-empty-text">{emptyText}</p>
     </div>
   )}
 </PortalLayout>

@@ -130,6 +130,27 @@ export default function CalendarioClient({
     const mins = minutes % 60;
     return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
   };
+
+  const parseLegacyNotes = (notes?: string | null) => {
+    if (!notes) return { servicesFromNotes: "", cleanNotes: "" };
+    if (!notes.includes("Servicio:")) {
+      return { servicesFromNotes: "", cleanNotes: notes };
+    }
+    const parts = notes.split("|").map((part) => part.trim());
+    const servicePart = parts.find((part) => part.startsWith("Servicio:"));
+    const notesPart = parts.find((part) => part.startsWith("Notas:"));
+    return {
+      servicesFromNotes: servicePart ? servicePart.replace("Servicio:", "").trim() : "",
+      cleanNotes: notesPart ? notesPart.replace("Notas:", "").trim() : "",
+    };
+  };
+
+  const getBookingPriceText = (booking: Booking) => {
+    if (Number.isFinite(booking.total_price_cents) && Number(booking.total_price_cents) > 0) {
+      return (Number(booking.total_price_cents) / 100).toFixed(2);
+    }
+    return "";
+  };
   const fallbackSlots =
     initialSlots.length > 0
       ? initialSlots
@@ -922,28 +943,32 @@ export default function CalendarioClient({
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => {
-                                  setBookingEdit(booking);
-                                  setServicesText(
-                                    booking.services?.map((service) => service.name).join(", ") || ""
-                                  );
-                                  setPriceText(
-                                    Number.isFinite(booking.total_price_cents)
-                                      ? (Number(booking.total_price_cents) / 100).toFixed(2)
-                                      : ""
-                                  );
+                                  const legacy = parseLegacyNotes(booking.notes);
+                                  const servicesFromBooking =
+                                    booking.services?.map((service) => service.name).join(", ") ||
+                                    legacy.servicesFromNotes ||
+                                    "";
+                                  setBookingEdit({
+                                    ...booking,
+                                    notes: legacy.cleanNotes,
+                                  });
+                                  setServicesText(servicesFromBooking);
+                                  setPriceText(getBookingPriceText(booking));
                                 }}
                                 onKeyDown={(event) => {
                                   if (event.key === "Enter" || event.key === " ") {
                                     event.preventDefault();
-                                    setBookingEdit(booking);
-                                    setServicesText(
-                                      booking.services?.map((service) => service.name).join(", ") || ""
-                                    );
-                                    setPriceText(
-                                      Number.isFinite(booking.total_price_cents)
-                                        ? (Number(booking.total_price_cents) / 100).toFixed(2)
-                                        : ""
-                                    );
+                                    const legacy = parseLegacyNotes(booking.notes);
+                                    const servicesFromBooking =
+                                      booking.services?.map((service) => service.name).join(", ") ||
+                                      legacy.servicesFromNotes ||
+                                      "";
+                                    setBookingEdit({
+                                      ...booking,
+                                      notes: legacy.cleanNotes,
+                                    });
+                                    setServicesText(servicesFromBooking);
+                                    setPriceText(getBookingPriceText(booking));
                                   }
                                 }}
                               >
@@ -1614,7 +1639,7 @@ export default function CalendarioClient({
                 onClick={() => setCreateOpen(false)}
                 disabled={savingCreate}
               >
-                Cancelar
+                Cerrar
               </button>
               <button
                 type="button"
@@ -1773,7 +1798,7 @@ export default function CalendarioClient({
                 className="neumor-btn px-5"
                 onClick={() => setDeleteConfirm(null)}
               >
-                Cancelar
+                  Cerrar
               </button>
               <button
                 className="neumor-btn px-5 text-red-600"

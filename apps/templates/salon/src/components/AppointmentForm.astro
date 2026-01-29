@@ -1543,6 +1543,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     const now = new Date();
     const todayIso = now.toISOString().slice(0, 10);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (dateValue < todayIso) {
+      return;
+    }
     const professionalId = getSelectedProfessionalId();
     if (!professionalId) {
       return;
@@ -1555,7 +1558,10 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     const bookedSlots = dateValue ? await loadBookedSlots(dateValue, professionalId) : [];
     schedule.slots.forEach((slotRange) => {
       const startMinutes = timeToMinutes(slotRange.open_time);
-      const endMinutes = timeToMinutes(slotRange.close_time);
+      let endMinutes = timeToMinutes(slotRange.close_time);
+      if (endMinutes <= startMinutes) {
+        endMinutes = 24 * 60;
+      }
 
       for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
         const slot = minutesToTime(minutes);
