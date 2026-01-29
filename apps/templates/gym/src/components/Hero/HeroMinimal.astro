@@ -23,6 +23,8 @@ const {
   address = "Centro, Madrid",
   phone = "+34 600 000 000",
 } = Astro.props;
+
+const currentYear = new Date().getFullYear();
 ---
 
 <section class="hero-minimal">
@@ -30,7 +32,7 @@ const {
     <div class="hero-content">
       <div class="hero-eyebrow animate-fade">
         <span class="eyebrow-line"></span>
-        <span class="eyebrow-text">Est. 2024</span>
+        <span class="eyebrow-text">{currentYear}</span>
         <span class="eyebrow-line"></span>
       </div>
 

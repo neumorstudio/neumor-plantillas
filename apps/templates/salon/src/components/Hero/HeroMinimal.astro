@@ -23,6 +23,8 @@ const {
   address = "Centro, Madrid",
   phone = "+34 912 345 678",
 } = Astro.props;
+
+const currentYear = new Date().getFullYear();
 ---
 
 <section class="hero-minimal">
@@ -30,7 +32,7 @@ const {
     <div class="hero-content">
       <div class="hero-eyebrow animate-fade">
         <span class="eyebrow-line"></span>
-        <span class="eyebrow-text">Est. 2024</span>
+        <span class="eyebrow-text">{currentYear}</span>
         <span class="eyebrow-line"></span>
       </div>
 
@@ -45,12 +47,6 @@ const {
       <div class="hero-cta-group animate-fade animation-delay-300">
         <a href={ctaLink} class="hero-cta">
           {ctaText}
-        </a>
-        <a href="#menu" class="hero-link">
-          Explorar Menu
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
         </a>
       </div>
     </div>
