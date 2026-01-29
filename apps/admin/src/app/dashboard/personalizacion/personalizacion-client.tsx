@@ -391,7 +391,10 @@ export function PersonalizacionClient({
       features: {
         title: features.title,
         subtitle: features.subtitle,
-        items: features.items,
+        items: features.items.map(item => ({
+          ...item,
+          iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
+        })),
       },
     });
   }, [colors, typography, effects, branding.logoSize, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
@@ -436,7 +439,10 @@ export function PersonalizacionClient({
         features: {
           title: features.title,
           subtitle: features.subtitle,
-          items: features.items,
+          items: features.items.map(item => ({
+            ...item,
+            iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
+          })),
         },
       });
     }, 100);

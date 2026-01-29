@@ -246,8 +246,10 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
                 if (cards[index]) {
                   const titleEl = cards[index].querySelector('.feature-title, h3');
                   const descEl = cards[index].querySelector('.feature-description, p');
+                  const iconEl = cards[index].querySelector('.feature-icon');
                   if (titleEl && item.title) titleEl.textContent = item.title;
                   if (descEl && item.description) descEl.textContent = item.description;
+                  if (iconEl && item.iconSvg) iconEl.innerHTML = item.iconSvg;
                 }
               });
             }
