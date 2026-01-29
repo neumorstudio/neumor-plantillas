@@ -125,6 +125,50 @@ const ICON_MAP: Record<string, string> = {
 };
 const defaultIcon = ICON_MAP.scissors;
 
+// ============================================
+// CONFIGURACION DE SECCIONES DINAMICAS
+// ============================================
+
+interface SectionConfig {
+  id: string;
+  enabled: boolean;
+  variant: string;
+  order: number;
+}
+
+// Secciones por defecto (backward compatibility)
+const defaultSections: SectionConfig[] = [
+  { id: "hero", enabled: true, variant: "classic", order: 0 },
+  { id: "features", enabled: true, variant: "cards", order: 1 },
+  { id: "services", enabled: true, variant: "tabs", order: 2 },
+  { id: "booking", enabled: true, variant: "classic", order: 3 },
+  { id: "footer", enabled: true, variant: "full", order: 4 },
+];
+
+// Obtener sectionsConfig de la BD o usar defaults
+const sectionsConfigRaw = config.sectionsConfig as { sections: SectionConfig[] } | undefined;
+const sectionsConfig = sectionsConfigRaw || { sections: defaultSections };
+
+// DEBUG
+console.log("[Salon Unified] sectionsConfig loaded:", !!sectionsConfigRaw);
+console.log("[Salon Unified] Sections:", sectionsConfig.sections?.map(s => `${s.id}:${s.enabled}`).join(", "));
+
+// Filtrar secciones habilitadas y ordenar
+const enabledSections = sectionsConfig.sections
+  .filter((s) => s.enabled)
+  .sort((a, b) => a.order - b.order);
+
+console.log("[Salon Unified] Enabled sections:", enabledSections.map(s => s.id).join(", "));
+
+// Helper para verificar si una seccion esta habilitada
+const isSectionEnabled = (sectionId: string): boolean => {
+  return enabledSections.some(s => s.id === sectionId);
+};
+
+// ============================================
+// SERVICE DATA
+// ============================================
+
 const serviceCategories = serviceCatalog.length
   ? serviceCatalog.map((category) => ({
       name: category.name,
@@ -136,6 +180,22 @@ const serviceCategories = serviceCatalog.length
         duration: `${item.duration_minutes} min`,
       })),
     }))
+  : undefined;
+
+// Features se generan desde las categorías de servicios (no desde config.features)
+const serviceFeatures = serviceCatalog.length
+  ? {
+      title: "Nuestros Servicios",
+      subtitle: "Descubre todo lo que podemos hacer por ti",
+      features: serviceCatalog.slice(0, 4).map((category) => ({
+        icon: category.icon ? (ICON_MAP[category.icon] || defaultIcon) : defaultIcon,
+        title: category.name,
+        description: category.items.length > 0
+          ? `${category.items.length} servicios disponibles`
+          : "Servicios profesionales",
+        link: "#services",
+      })),
+    }
   : undefined;
 
 // Extraer configuración de personalización visual
@@ -180,7 +240,7 @@ const pageConfig = {
     whatsapp: "#",
   },
   schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
-  features: config.features as { title?: string; subtitle?: string; items?: { icon: string; title: string; description: string }[] } | undefined,
+  // Features ahora se generan desde serviceCatalog, no desde config.features
 };
 
 const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
@@ -201,39 +261,58 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   />
 
   <main>
-    <Hero
-      title={pageConfig.heroTitle}
-      subtitle={pageConfig.heroSubtitle}
-      backgroundImage={pageConfig.heroImage}
-      scheduleLabel={scheduleLabel}
-      address={pageConfig.address}
-      phone={pageConfig.phone}
-    />
+    {/* Renderizado dinámico de secciones basado en sectionsConfig */}
+    {enabledSections
+      .filter((s) => s.id !== "footer")
+      .map((section) => {
+        switch (section.id) {
+          case "hero":
+            return (
+              <Hero
+                title={pageConfig.heroTitle}
+                subtitle={pageConfig.heroSubtitle}
+                backgroundImage={pageConfig.heroImage}
+                scheduleLabel={scheduleLabel}
+                address={pageConfig.address}
+                phone={pageConfig.phone}
+              />
+            );
+          case "features":
+            return (
+              <Features
+                title={serviceFeatures?.title}
+                subtitle={serviceFeatures?.subtitle}
+                features={serviceFeatures?.features}
+              />
+            );
+          case "services":
+            return <Services categories={serviceCategories} />;
+          case "booking":
+            return (
+              <AppointmentForm
+                webhookUrl={webhookUrl}
+                websiteId={tenant.id}
+                currentUser={currentUser}
+                address={pageConfig.address}
+                phone={pageConfig.phone}
+                email={pageConfig.email}
+              />
+            );
+          default:
+            return null;
+        }
+      })}
+  </main>
 
-    <Features
-      title={pageConfig.features?.title}
-      subtitle={pageConfig.features?.subtitle}
-      features={pageConfig.features?.items}
-    />
-
-    <Services categories={serviceCategories} />
-
-    <AppointmentForm
-      webhookUrl={webhookUrl}
-      websiteId={tenant.id}
-      currentUser={currentUser}
+  {/* Footer siempre al final si está habilitado */}
+  {isSectionEnabled("footer") && (
+    <FooterComponent
+      businessName={pageConfig.businessName}
       address={pageConfig.address}
       phone={pageConfig.phone}
       email={pageConfig.email}
+      schedule={pageConfig.schedule}
+      socialLinks={pageConfig.socialLinks}
     />
-  </main>
-
-  <FooterComponent
-    businessName={pageConfig.businessName}
-    address={pageConfig.address}
-    phone={pageConfig.phone}
-    email={pageConfig.email}
-    schedule={pageConfig.schedule}
-    socialLinks={pageConfig.socialLinks}
-  />
+  )}
 </Layout>
