@@ -358,6 +358,7 @@ export function PersonalizacionClient({
   // Enviar mensaje postMessage a los iframes de preview
   const sendPreviewMessage = useCallback((type: string, payload: Record<string, unknown>) => {
     const message = { type, payload, source: "neumorstudio-admin" };
+    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme);
     iframeRef.current?.contentWindow?.postMessage(message, "*");
     iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
   }, []);
@@ -365,6 +366,7 @@ export function PersonalizacionClient({
   // Enviar cambios CSS en tiempo real via postMessage
   useEffect(() => {
     sendPreviewMessage("update-styles", {
+      theme,
       colors: {
         primary: colors.primary,
         secondary: colors.secondary,
@@ -382,6 +384,7 @@ export function PersonalizacionClient({
         blurIntensity: effects.blurIntensity,
       },
       branding: {
+        logo: branding.logo,
         logoSize: branding.logoSize,
         logoDisplay: branding.logoDisplay,
       },
@@ -401,11 +404,18 @@ export function PersonalizacionClient({
         })),
       },
     });
-  }, [colors, typography, effects, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
+  }, [theme, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.address, content.phone, content.email, features, sendPreviewMessage]);
 
   // Build preview URL - static to avoid iframe reloads
   // All changes are sent via postMessage for real-time updates
+  // In development, use NEXT_PUBLIC_PREVIEW_URL env var if set (e.g., http://localhost:4321)
   const previewUrl = useMemo(() => {
+    const localPreview = process.env.NEXT_PUBLIC_PREVIEW_URL;
+    console.log("[Admin] NEXT_PUBLIC_PREVIEW_URL:", localPreview, "domain:", domain);
+    if (localPreview) {
+      console.log("[Admin] Using local preview URL:", localPreview);
+      return `${localPreview}?preview=1`;
+    }
     return `https://${domain}?preview=1`;
   }, [domain]);
 
@@ -414,6 +424,7 @@ export function PersonalizacionClient({
     // Small delay to ensure iframe is ready to receive messages
     setTimeout(() => {
       sendPreviewMessage("update-styles", {
+        theme,
         colors: {
           primary: colors.primary,
           secondary: colors.secondary,
@@ -431,6 +442,7 @@ export function PersonalizacionClient({
           blurIntensity: effects.blurIntensity,
         },
         branding: {
+          logo: branding.logo,
           logoSize: branding.logoSize,
           logoDisplay: branding.logoDisplay,
         },
@@ -451,7 +463,7 @@ export function PersonalizacionClient({
         },
       });
     }, 100);
-  }, [colors, typography, effects, branding, content, features, sendPreviewMessage]);
+  }, [theme, colors, typography, effects, branding, content, features, sendPreviewMessage]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {
