@@ -35,7 +35,7 @@ import {
 } from "./constants";
 
 // Hooks locales
-import { usePreviewSync } from "./hooks";
+import { usePreviewSync, useFileUpload } from "./hooks";
 
 // Datos estáticos extraídos
 import {
@@ -177,9 +177,14 @@ export function PersonalizacionClient({
   }, []);
 
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadingHero, setUploadingHero] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Hook para manejar uploads de archivos
+  const { uploading, uploadingHero, handleLogoUpload, handleHeroImageUpload } = useFileUpload({
+    setBranding,
+    setContent,
+    setMessage,
+  });
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [previewExpanded, setPreviewExpanded] = useState(false);
 
@@ -252,94 +257,6 @@ export function PersonalizacionClient({
 
   const handleBrandingChange = useCallback((key: keyof BrandingConfig, value: string) => {
     setBranding(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setMessage(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "logo");
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.url) {
-        setBranding(prev => ({ ...prev, logo: data.url }));
-        setMessage({ type: "success", text: "Logo subido correctamente" });
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setMessage({ type: "error", text: data.error || "Error al subir el logo" });
-      }
-    } catch {
-      setMessage({ type: "error", text: "Error de conexion al subir el logo" });
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  }, []);
-
-  const handleHeroImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Verificar límite de 3 imágenes
-    setContent(prev => {
-      if ((prev.heroImages?.length || 0) >= 3) {
-        setMessage({ type: "error", text: "Maximo 3 imagenes. Elimina una para subir otra." });
-        return prev;
-      }
-      return prev;
-    });
-
-    setUploadingHero(true);
-    setMessage(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "hero");
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.url) {
-        setContent(prev => {
-          const currentImages = prev.heroImages || [];
-          if (currentImages.length >= 3) {
-            return prev; // Ya verificado arriba, pero por seguridad
-          }
-          const newImages = [...currentImages, data.url];
-          return {
-            ...prev,
-            heroImage: data.url, // Seleccionar la nueva imagen
-            heroImages: newImages,
-          };
-        });
-        setMessage({ type: "success", text: "Imagen subida correctamente" });
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setMessage({ type: "error", text: data.error || "Error al subir la imagen" });
-      }
-    } catch {
-      setMessage({ type: "error", text: "Error de conexion al subir la imagen" });
-    } finally {
-      setUploadingHero(false);
-      e.target.value = "";
-    }
   }, []);
 
   // Seleccionar una imagen de la galería como activa

@@ -3,3 +3,4 @@
  */
 
 export { usePreviewSync } from "./usePreviewSync";
+export { useFileUpload } from "./useFileUpload";
