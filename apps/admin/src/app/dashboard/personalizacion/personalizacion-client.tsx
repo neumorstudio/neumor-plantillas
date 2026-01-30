@@ -1133,11 +1133,17 @@ export function PersonalizacionClient({
         setTimeout(() => setMessage(null), 3000);
 
         // Refrescar el iframe para mostrar los cambios guardados
+        // Añadir timestamp para invalidar caché del middleware y navegador
+        const refreshIframe = (iframe: HTMLIFrameElement) => {
+          const currentUrl = new URL(iframe.src);
+          currentUrl.searchParams.set("_t", Date.now().toString());
+          iframe.src = currentUrl.toString();
+        };
         if (iframeRef.current) {
-          iframeRef.current.src = iframeRef.current.src;
+          refreshIframe(iframeRef.current);
         }
         if (iframeMobileRef.current) {
-          iframeMobileRef.current.src = iframeMobileRef.current.src;
+          refreshIframe(iframeMobileRef.current);
         }
       } else {
         setMessage({ type: "error", text: data.error || "Error al guardar" });
@@ -1394,20 +1400,20 @@ export function PersonalizacionClient({
               {/* Separador */}
               <div className="border-t border-[var(--shadow-dark)] my-4" />
 
-              {/* Colores de marca (uso limitado actualmente) */}
+              {/* Colores de marca */}
               <div className="space-y-2">
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Colores de marca (para futuras personalizaciones):
+                  Colores de marca para titulos y textos:
                 </p>
                 <ColorPicker
-                  label="Principal"
-                  description="Color principal de tu marca"
+                  label="Titulos"
+                  description="Color para titulos de secciones (h2)"
                   value={colors.primary || defaultColors.primary!}
                   onChange={(v) => handleColorChange("primary", v)}
                 />
                 <ColorPicker
                   label="Secundario"
-                  description="Color secundario complementario"
+                  description="Color secundario para subtitulos"
                   value={colors.secondary || defaultColors.secondary!}
                   onChange={(v) => handleColorChange("secondary", v)}
                 />

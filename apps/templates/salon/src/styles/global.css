@@ -14,6 +14,10 @@
   --text-secondary: oklch(0.45 0.02 250);
   --accent: oklch(0.55 0.12 250);
   --accent-hover: oklch(0.5 0.14 250);
+
+  /* Colores de marca personalizables - heredan de defaults si no se definen */
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
 }
 
 /* Dark theme */
@@ -357,7 +361,6 @@ main {
 
 /* Tipografia */
 h1,
-h2,
 h3,
 h4,
 h5,
@@ -365,6 +368,13 @@ h6 {
   margin: 0;
   line-height: 1.2;
   color: var(--text-primary);
+}
+
+/* Títulos de sección (h2) usan color de marca principal */
+h2 {
+  margin: 0;
+  line-height: 1.2;
+  color: var(--color-primary);
 }
 
 p {
