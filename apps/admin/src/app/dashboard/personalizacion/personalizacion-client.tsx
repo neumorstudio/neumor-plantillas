@@ -707,7 +707,8 @@ export function PersonalizacionClient({
   const sendPreviewMessage = useCallback((type: string, payload: Record<string, unknown>) => {
     const message = { type, payload, source: "neumorstudio-admin" };
     const contentPayload = payload.content as { heroImage?: string } | undefined;
-    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme, "heroImage:", contentPayload?.heroImage);
+    const sectionsPayload = payload.sectionsConfig as { sections?: unknown[] } | undefined;
+    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme, "heroImage:", contentPayload?.heroImage, "sections:", sectionsPayload?.sections?.length ?? 0);
     iframeRef.current?.contentWindow?.postMessage(message, "*");
     iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
   }, []);
@@ -1130,6 +1131,14 @@ export function PersonalizacionClient({
       if (response.ok) {
         setMessage({ type: "success", text: "Guardado correctamente" });
         setTimeout(() => setMessage(null), 3000);
+
+        // Refrescar el iframe para mostrar los cambios guardados
+        if (iframeRef.current) {
+          iframeRef.current.src = iframeRef.current.src;
+        }
+        if (iframeMobileRef.current) {
+          iframeMobileRef.current.src = iframeMobileRef.current.src;
+        }
       } else {
         setMessage({ type: "error", text: data.error || "Error al guardar" });
       }
