@@ -3,3 +3,4 @@
  */
 
 export { PreviewPanel } from "./PreviewPanel";
+export { DesignTab } from "./tabs";
