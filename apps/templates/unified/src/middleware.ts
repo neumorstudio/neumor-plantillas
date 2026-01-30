@@ -138,7 +138,9 @@ async function resolveTenant(
     return null;
   }
 
-  const clientData = websiteData.clients as { business_type: string; business_name: string };
+  // Supabase devuelve clients como array, tomamos el primero
+  const clientsArray = websiteData.clients as { business_type: string; business_name: string }[];
+  const clientData = clientsArray?.[0];
 
   const tenant: TenantData = {
     id: websiteData.id,
