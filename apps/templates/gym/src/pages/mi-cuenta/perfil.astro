@@ -20,8 +20,8 @@ if (request.method === "POST") {
 
   const result = await updateCustomerProfile(Astro.cookies, currentDomain, {
     name: name || customer.name,
-    phone: phone || null,
-    address: address || null,
+    phone: phone || undefined,
+    address: address || undefined,
   }, request);
 
   if (result.success) {

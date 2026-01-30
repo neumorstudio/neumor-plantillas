@@ -32,6 +32,18 @@ export interface OpenStatusConfig {
   language?: "es" | "en";
 }
 
+// Section configuration for dynamic layout
+export interface SectionConfig {
+  id: string;
+  enabled: boolean;
+  variant?: string;
+  order: number;
+}
+
+export interface SectionsConfig {
+  sections: SectionConfig[];
+}
+
 export interface WebsiteConfig {
   businessName?: string;
   businessType?: string;
@@ -52,6 +64,18 @@ export interface WebsiteConfig {
   totalReviews?: number;
   // Configuración del indicador de estado abierto/cerrado
   openStatus?: OpenStatusConfig;
+  // Personalization fields
+  colors?: Record<string, string>;
+  primaryColor?: string;
+  secondaryColor?: string;
+  typography?: Record<string, unknown>;
+  effects?: Record<string, unknown>;
+  branding?: {
+    logo?: string;
+    logoDisplay?: "logo" | "name";
+  };
+  logo?: string;
+  sectionsConfig?: SectionsConfig;
 }
 
 export interface MenuItemRow {

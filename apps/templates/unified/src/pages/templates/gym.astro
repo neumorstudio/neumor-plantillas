@@ -100,7 +100,7 @@ const pageConfig = {
 <Layout
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
-  theme={pageConfig.theme}
+  theme={pageConfig.theme === "auto" ? "light" : pageConfig.theme}
   customization={customization}
 >
   <Header
@@ -119,11 +119,7 @@ const pageConfig = {
       phone={pageConfig.phone}
     />
 
-    <Features
-      title={pageConfig.features?.title}
-      subtitle={pageConfig.features?.subtitle}
-      features={pageConfig.features?.items}
-    />
+    <Features features={pageConfig.features?.items} />
 
     <Classes />
   </main>

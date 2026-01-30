@@ -28,7 +28,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig } from "@lib/supabase";
+import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig, type SectionId } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -326,7 +326,7 @@ const serviceCategories = serviceCatalog.length
     */}
     {(() => {
       // Definir todas las secciones posibles (excepto footer)
-      const allSections = ["hero", "features", "services", "booking"];
+      const allSections: SectionId[] = ["hero", "features", "services", "booking"];
 
       return allSections.map((sectionId) => {
         const sectionCfg = sectionConfigMap.get(sectionId);

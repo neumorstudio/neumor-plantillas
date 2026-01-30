@@ -110,12 +110,12 @@ if (tenant.businessType === "store") {
 // Transform bookings to appointments for clinic
 const appointments = bookings.map(b => ({
   id: b.id,
-  date: b.date,
-  time: b.time,
+  date: b.date || b.booking_date,
+  time: b.time || b.booking_time,
   treatment: b.service_name || "Consulta",
   doctor: b.professional_name,
   status: b.status,
-  notes: b.notes
+  notes: b.notes ?? undefined
 }));
 ---
 

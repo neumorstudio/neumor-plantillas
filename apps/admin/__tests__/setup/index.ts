@@ -17,7 +17,7 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
 process.env.SUPERADMIN_EMAILS = "admin@test.com,superadmin@test.com";
 process.env.RESEND_API_KEY = "re_test_fake_key";
-process.env.NODE_ENV = "test";
+// NODE_ENV is automatically set to 'test' by Vitest
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IMPORTAR MOCKS

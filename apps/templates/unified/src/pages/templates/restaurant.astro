@@ -171,7 +171,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
 <Layout
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
-  theme={pageConfig.theme}
+  theme={pageConfig.theme === "auto" ? "light" : pageConfig.theme}
   customization={customization}
 >
   <Header
@@ -190,11 +190,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
       phone={pageConfig.phone}
     />
 
-    <Features
-      title={pageConfig.features?.title}
-      subtitle={pageConfig.features?.subtitle}
-      features={pageConfig.features?.items}
-    />
+    <Features features={pageConfig.features?.items} />
 
     <Menu categories={menuCategories} />
 

@@ -255,7 +255,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
 <Layout
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
-  theme={pageConfig.theme}
+  theme={pageConfig.theme === "auto" ? "light" : pageConfig.theme}
   customization={customization}
 >
   <Header
