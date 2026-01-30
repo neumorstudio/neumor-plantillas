@@ -264,80 +264,90 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
   />
 
-  <main>
-    {/* Renderizado dinámico de secciones basado en sectionsConfig */}
-    {enabledSections
-      .filter((s) => s.id !== "footer")
-      .map((section) => {
-        switch (section.id) {
+  <main class="sections-container" style="display: flex; flex-direction: column;">
+    {/*
+      Renderizado de TODAS las secciones para permitir live preview.
+      Las secciones deshabilitadas se ocultan con display:none.
+      El orden se controla con CSS order para reordenamiento en tiempo real.
+    */}
+    {(() => {
+      const allSections = ["hero", "features", "services", "booking"];
+      const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
+
+      return allSections.map((sectionId) => {
+        const sectionCfg = sectionConfigMap.get(sectionId);
+        const isEnabled = sectionCfg?.enabled ?? true;
+        const order = sectionCfg?.order ?? 99;
+        const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
+
+        switch (sectionId) {
           case "hero":
             return (
-              <Hero
-                title={pageConfig.heroTitle}
-                subtitle={pageConfig.heroSubtitle}
-                backgroundImage={pageConfig.heroImage}
-                scheduleLabel={scheduleLabel}
-                address={pageConfig.address}
-                phone={pageConfig.phone}
-              />
+              <section data-section-id="hero" style={style}>
+                <Hero
+                  title={pageConfig.heroTitle}
+                  subtitle={pageConfig.heroSubtitle}
+                  backgroundImage={pageConfig.heroImage}
+                  scheduleLabel={scheduleLabel}
+                  address={pageConfig.address}
+                  phone={pageConfig.phone}
+                />
+              </section>
             );
           case "features":
             return (
-              <Features
-                title={serviceFeatures?.title}
-                subtitle={serviceFeatures?.subtitle}
-                features={serviceFeatures?.features}
-              />
+              <section data-section-id="features" style={style}>
+                <Features
+                  title={serviceFeatures?.title}
+                  subtitle={serviceFeatures?.subtitle}
+                  features={serviceFeatures?.features}
+                />
+              </section>
             );
           case "services":
-            return <Services categories={serviceCategories} />;
+            return (
+              <section data-section-id="services" style={style}>
+                <Services categories={serviceCategories} />
+              </section>
+            );
           case "booking":
             return (
-              <AppointmentForm
-                webhookUrl={webhookUrl}
-                websiteId={tenant.id}
-                currentUser={currentUser}
-                address={pageConfig.address}
-                phone={pageConfig.phone}
-                email={pageConfig.email}
-              />
+              <section data-section-id="booking" style={style}>
+                <AppointmentForm
+                  webhookUrl={webhookUrl}
+                  websiteId={tenant.id}
+                  currentUser={currentUser}
+                  address={pageConfig.address}
+                  phone={pageConfig.phone}
+                  email={pageConfig.email}
+                />
+              </section>
             );
-          case "testimonials":
-            return <Testimonials />;
-          case "faq":
-            return <FAQSection />;
-          case "contact":
-            return (
-              <ContactSection
-                address={pageConfig.address}
-                phone={pageConfig.phone}
-                email={pageConfig.email}
-              />
-            );
-          case "openStatus":
-            return <OpenStatusSection businessHours={businessHours} />;
-          case "team":
-            return <TeamSection />;
-          case "gallery":
-            return <GallerySection />;
-          case "plans":
-            return <PlansSection />;
           default:
-            console.log("[Salon Unified] Unknown section:", section.id);
             return null;
         }
-      })}
+      });
+    })()}
   </main>
 
-  {/* Footer siempre al final si está habilitado */}
-  {isSectionEnabled("footer") && (
-    <FooterComponent
-      businessName={pageConfig.businessName}
-      address={pageConfig.address}
-      phone={pageConfig.phone}
-      email={pageConfig.email}
-      schedule={pageConfig.schedule}
-      socialLinks={pageConfig.socialLinks}
-    />
-  )}
+  {/* Footer - siempre renderizado para live preview */}
+  {(() => {
+    const footerCfg = sectionsConfig.sections.find((s) => s.id === "footer");
+    const isFooterEnabled = footerCfg?.enabled ?? true;
+    const footerOrder = footerCfg?.order ?? 100;
+    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+    return (
+      <div data-section-id="footer" style={footerStyle}>
+        <FooterComponent
+          businessName={pageConfig.businessName}
+          address={pageConfig.address}
+          phone={pageConfig.phone}
+          email={pageConfig.email}
+          schedule={pageConfig.schedule}
+          socialLinks={pageConfig.socialLinks}
+        />
+      </div>
+    );
+  })()}
 </Layout>
