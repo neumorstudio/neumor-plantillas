@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { ColorPicker, FontSelector, SliderControl, OptionSelector, SectionBuilder } from "@/components/customization";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
@@ -34,6 +34,9 @@ import {
   tabs,
 } from "./constants";
 
+// Hooks locales
+import { usePreviewSync } from "./hooks";
+
 // Datos estáticos extraídos
 import {
   themeCategories,
@@ -42,7 +45,6 @@ import {
   skinOptions,
   FEATURE_ICONS,
   normalizeFeatureIcon,
-  getFeatureIconSvg,
 } from "@/lib/personalizacion";
 import type { TemplatePreset } from "@/lib/personalizacion";
 
@@ -185,81 +187,21 @@ export function PersonalizacionClient({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeMobileRef = useRef<HTMLIFrameElement>(null);
 
-  // Enviar mensaje postMessage a los iframes de preview
-  const sendPreviewMessage = useCallback((type: string, payload: Record<string, unknown>) => {
-    const message = { type, payload, source: "neumorstudio-admin" };
-    const contentPayload = payload.content as { heroImage?: string } | undefined;
-    const sectionsPayload = payload.sectionsConfig as { sections?: unknown[] } | undefined;
-    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme, "heroImage:", contentPayload?.heroImage, "sections:", sectionsPayload?.sections?.length ?? 0);
-    iframeRef.current?.contentWindow?.postMessage(message, "*");
-    iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
-  }, []);
-
-  // Ref para debounce del preview message
-  const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Enviar cambios CSS en tiempo real via postMessage (con debounce para evitar flicker al aplicar presets)
-  useEffect(() => {
-    // Limpiar timeout anterior
-    if (previewDebounceRef.current) {
-      clearTimeout(previewDebounceRef.current);
-    }
-
-    // Debounce de 50ms para agrupar múltiples cambios de estado (ej: al aplicar un preset)
-    previewDebounceRef.current = setTimeout(() => {
-      sendPreviewMessage("update-styles", {
-        theme,
-        skin,
-        colors: {
-          primary: colors.primary,
-          secondary: colors.secondary,
-          accent: colors.accent,
-        },
-        typography: {
-          headingFont: typography.headingFont,
-          bodyFont: typography.bodyFont,
-          baseFontSize: typography.baseFontSize,
-        },
-        effects: {
-          shadowIntensity: effects.shadowIntensity,
-          borderRadius: effects.borderRadius,
-          glassmorphism: effects.glassmorphism,
-          blurIntensity: effects.blurIntensity,
-        },
-        branding: {
-          logo: branding.logo,
-          logoSize: branding.logoSize,
-          logoDisplay: branding.logoDisplay,
-        },
-        content: {
-          heroTitle: content.heroTitle,
-          heroSubtitle: content.heroSubtitle,
-          heroImage: content.heroImage,
-          address: content.address,
-          phone: content.phone,
-          email: content.email,
-        },
-        features: {
-          title: features.title,
-          subtitle: features.subtitle,
-          items: features.items.map(item => ({
-            ...item,
-            iconSvg: getFeatureIconSvg(item.icon),
-          })),
-        },
-        // Configuración de secciones para preview
-        sectionsConfig: sectionsConfig,
-        variants: variants,
-      });
-    }, 50);
-
-    // Cleanup: limpiar timeout al desmontar o antes de re-ejecutar
-    return () => {
-      if (previewDebounceRef.current) {
-        clearTimeout(previewDebounceRef.current);
-      }
-    };
-  }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sectionsConfig, variants, sendPreviewMessage]);
+  // Hook para sincronizar cambios con preview iframes
+  const { handleIframeLoad } = usePreviewSync({
+    theme,
+    skin,
+    colors,
+    typography,
+    effects,
+    branding,
+    content,
+    features,
+    sectionsConfig,
+    variants,
+    iframeRef,
+    iframeMobileRef,
+  });
 
   // Build preview URL - includes variants for component selection
   // CSS/theme changes are sent via postMessage, but variants require reload (different components)
@@ -277,56 +219,6 @@ export function PersonalizacionClient({
     console.log("[Admin] Preview URL:", `${baseUrl}?${params.toString()}`);
     return `${baseUrl}?${params.toString()}`;
   }, [domain, variants]);
-
-  // Send initial state when iframe loads
-  const handleIframeLoad = useCallback(() => {
-    // Small delay to ensure iframe is ready to receive messages
-    setTimeout(() => {
-      sendPreviewMessage("update-styles", {
-        theme,
-        skin,
-        colors: {
-          primary: colors.primary,
-          secondary: colors.secondary,
-          accent: colors.accent,
-        },
-        typography: {
-          headingFont: typography.headingFont,
-          bodyFont: typography.bodyFont,
-          baseFontSize: typography.baseFontSize,
-        },
-        effects: {
-          shadowIntensity: effects.shadowIntensity,
-          borderRadius: effects.borderRadius,
-          glassmorphism: effects.glassmorphism,
-          blurIntensity: effects.blurIntensity,
-        },
-        branding: {
-          logo: branding.logo,
-          logoSize: branding.logoSize,
-          logoDisplay: branding.logoDisplay,
-        },
-        content: {
-          heroTitle: content.heroTitle,
-          heroSubtitle: content.heroSubtitle,
-          heroImage: content.heroImage,
-          address: content.address,
-          phone: content.phone,
-          email: content.email,
-        },
-        features: {
-          title: features.title,
-          subtitle: features.subtitle,
-          items: features.items.map(item => ({
-            ...item,
-            iconSvg: getFeatureIconSvg(item.icon),
-          })),
-        },
-        sectionsConfig: sectionsConfig,
-        variants: variants,
-      });
-    }, 100);
-  }, [theme, skin, colors, typography, effects, branding, content, features, sectionsConfig, variants, sendPreviewMessage]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {
