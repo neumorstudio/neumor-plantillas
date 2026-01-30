@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef } from "react";
-import { SectionBuilder } from "@/components/customization";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
   Theme,
@@ -38,7 +37,7 @@ import {
 import { usePreviewSync, useFileUpload } from "./hooks";
 
 // Componentes locales
-import { PreviewPanel, DesignTab, ContentTab, BusinessTab, LayoutTab } from "./components";
+import { PreviewPanel, DesignTab, ContentTab, BusinessTab, LayoutTab, SectionsTab } from "./components";
 
 // Datos estáticos extraídos
 import { normalizeFeatureIcon } from "@/lib/personalizacion";
@@ -516,19 +515,11 @@ export function PersonalizacionClient({
       // ============================================
       case "secciones":
         return (
-          <div className="space-y-4">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold mb-1">Constructor de Secciones</h3>
-              <p className="text-xs text-[var(--text-secondary)]">
-                Arrastra para reordenar las secciones de tu web. Activa o desactiva las que necesites.
-              </p>
-            </div>
-            <SectionBuilder
-              businessType={businessType}
-              sections={sectionsConfig.sections}
-              onChange={handleSectionsChange}
-            />
-          </div>
+          <SectionsTab
+            sections={sectionsConfig.sections}
+            businessType={businessType}
+            onSectionsChange={handleSectionsChange}
+          />
         );
 
       default:
