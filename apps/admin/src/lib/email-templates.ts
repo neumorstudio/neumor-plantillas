@@ -679,18 +679,26 @@ export function getSalonAppointmentConfirmationEmail(
             <tr>
               <td style="background: linear-gradient(135deg, #16a34a 0%, #0f766e 100%); padding: 28px 30px; text-align: center;">
                 ${data.logoUrl ? `
-                <div style="margin-bottom: 10px;">
-                  <img src="${data.logoUrl}" alt="${data.businessName}" style="height: 44px; max-width: 160px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 6px 10px;" />
-                </div>
+                <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto 12px auto;">
+                  <tr>
+                    <td style="text-align: center;">
+                      <img src="${data.logoUrl}" alt="${data.businessName}" style="height: 44px; max-width: 160px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 6px 10px; display: inline-block;" />
+                    </td>
+                  </tr>
+                </table>
                 ` : ""}
-                <div style="display: inline-flex; align-items: center; gap: 8px; justify-content: center; color: #ffffff;">
-                  <span style="display: inline-flex; width: 26px; height: 26px; border-radius: 999px; background: rgba(255,255,255,0.2); align-items: center; justify-content: center;">
-                    ✓
-                  </span>
-                  <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">
-                    Cita confirmada
-                  </h1>
-                </div>
+                <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="vertical-align: middle; text-align: center;">
+                      <span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 999px; background: rgba(255,255,255,0.25); color: #ffffff; font-size: 14px; font-weight: 700; text-align: center; margin-right: 8px;">✓</span>
+                    </td>
+                    <td style="vertical-align: middle;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">
+                        Cita confirmada
+                      </h1>
+                    </td>
+                  </tr>
+                </table>
                 <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
                   ${data.businessName}
                 </p>
