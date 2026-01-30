@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef } from "react";
-import { ColorPicker, FontSelector, SliderControl, OptionSelector, SectionBuilder } from "@/components/customization";
+import { SectionBuilder } from "@/components/customization";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
   Theme,
@@ -38,14 +38,13 @@ import {
 import { usePreviewSync, useFileUpload } from "./hooks";
 
 // Componentes locales
-import { PreviewPanel, DesignTab, ContentTab } from "./components";
+import { PreviewPanel, DesignTab, ContentTab, BusinessTab, LayoutTab } from "./components";
 
 // Datos estáticos extraídos
 import { normalizeFeatureIcon } from "@/lib/personalizacion";
 import type { TemplatePreset } from "@/lib/personalizacion";
 
 // Componentes UI extraídos
-import { CollapsibleSection } from "@/components/ui";
 import {
   CheckIcon,
   ExternalLinkIcon,
@@ -493,109 +492,11 @@ export function PersonalizacionClient({
       // ============================================
       case "negocio":
         return (
-          <div className="space-y-6">
-            {/* Contacto */}
-            <CollapsibleSection title="Contacto" defaultOpen={true}>
-              <div>
-                <label className="block text-sm font-medium mb-2">Direccion</label>
-                <input
-                  type="text"
-                  value={content.address || ""}
-                  onChange={(e) => handleContentChange("address", e.target.value)}
-                  placeholder="Calle, numero, ciudad..."
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Telefono</label>
-                <input
-                  type="tel"
-                  value={content.phone || ""}
-                  onChange={(e) => handleContentChange("phone", e.target.value)}
-                  placeholder="+34 600 000 000"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={content.email || ""}
-                  onChange={(e) => handleContentChange("email", e.target.value)}
-                  placeholder="contacto@tunegocio.com"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-            </CollapsibleSection>
-
-            {/* Horario */}
-            <CollapsibleSection title="Horario" defaultOpen={!isMobile}>
-              <div>
-                <label className="block text-sm font-medium mb-2">Lunes - Viernes</label>
-                <input
-                  type="text"
-                  value={content.schedule?.weekdays || ""}
-                  onChange={(e) => handleContentChange("schedule", { ...content.schedule, weekdays: e.target.value })}
-                  placeholder="10:00 - 20:00"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Sabado</label>
-                <input
-                  type="text"
-                  value={content.schedule?.saturday || ""}
-                  onChange={(e) => handleContentChange("schedule", { ...content.schedule, saturday: e.target.value })}
-                  placeholder="10:00 - 14:00"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Domingo</label>
-                <input
-                  type="text"
-                  value={content.schedule?.sunday || ""}
-                  onChange={(e) => handleContentChange("schedule", { ...content.schedule, sunday: e.target.value })}
-                  placeholder="Cerrado"
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-            </CollapsibleSection>
-
-            {/* Redes Sociales */}
-            <CollapsibleSection title="Redes Sociales" defaultOpen={!isMobile}>
-              <div>
-                <label className="block text-sm font-medium mb-2">Instagram</label>
-                <input
-                  type="url"
-                  value={content.socialLinks?.instagram || ""}
-                  onChange={(e) => handleContentChange("socialLinks", { ...content.socialLinks, instagram: e.target.value })}
-                  placeholder="https://instagram.com/..."
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Facebook</label>
-                <input
-                  type="url"
-                  value={content.socialLinks?.facebook || ""}
-                  onChange={(e) => handleContentChange("socialLinks", { ...content.socialLinks, facebook: e.target.value })}
-                  placeholder="https://facebook.com/..."
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">WhatsApp</label>
-                <input
-                  type="url"
-                  value={content.socialLinks?.whatsapp || ""}
-                  onChange={(e) => handleContentChange("socialLinks", { ...content.socialLinks, whatsapp: e.target.value })}
-                  placeholder="https://wa.me/34..."
-                  className="neumor-input w-full h-12"
-                />
-              </div>
-            </CollapsibleSection>
-          </div>
+          <BusinessTab
+            content={content}
+            isMobile={isMobile}
+            onContentChange={handleContentChange}
+          />
         );
 
       // ============================================
@@ -603,63 +504,11 @@ export function PersonalizacionClient({
       // ============================================
       case "layout":
         return (
-          <div className="space-y-6">
-            {/* Tipografia */}
-            <CollapsibleSection title="Tipografia" defaultOpen={true}>
-              <FontSelector
-                label="Fuente de Titulos"
-                description="Para titulos y encabezados"
-                value={typography.headingFont || "system"}
-                onChange={(v) => handleTypographyChange("headingFont", v)}
-              />
-              <FontSelector
-                label="Fuente de Texto"
-                description="Para parrafos y texto general"
-                value={typography.bodyFont || "system"}
-                onChange={(v) => handleTypographyChange("bodyFont", v)}
-              />
-              <div className="space-y-2">
-                <SliderControl
-                  label="Tamano Base"
-                  description="Tamano del texto base"
-                  value={typography.baseFontSize || 16}
-                  onChange={(v) => handleTypographyChange("baseFontSize", v)}
-                  min={14}
-                  max={20}
-                  step={1}
-                  unit="px"
-                />
-                {isMobile && (
-                  <div className="flex items-center justify-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => handleTypographyChange("baseFontSize", Math.max(14, (typography.baseFontSize || 16) - 1))}
-                      className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
-                    >
-                      −
-                    </button>
-                    <span className="text-base font-medium w-12 text-center">
-                      {typography.baseFontSize || 16}px
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleTypographyChange("baseFontSize", Math.min(20, (typography.baseFontSize || 16) + 1))}
-                      className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
-                    >
-                      +
-                    </button>
-                  </div>
-                )}
-              </div>
-            </CollapsibleSection>
-
-            {/* Nota sobre variantes */}
-            <div className="p-4 neumor-inset rounded-xl">
-              <p className="text-sm text-[var(--text-secondary)]">
-                Para cambiar las variantes de cada seccion, usa la pestana <strong>Secciones</strong> donde puedes reordenar, activar/desactivar y elegir el estilo de cada una.
-              </p>
-            </div>
-          </div>
+          <LayoutTab
+            typography={typography}
+            isMobile={isMobile}
+            onTypographyChange={handleTypographyChange}
+          />
         );
 
       // ============================================

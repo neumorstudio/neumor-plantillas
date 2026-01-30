@@ -4,3 +4,5 @@
 
 export { DesignTab } from "./DesignTab";
 export { ContentTab } from "./ContentTab";
+export { BusinessTab } from "./BusinessTab";
+export { LayoutTab } from "./LayoutTab";
