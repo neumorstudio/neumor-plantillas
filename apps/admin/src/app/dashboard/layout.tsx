@@ -79,8 +79,6 @@ export default async function DashboardLayout({
 }) {
   // Obtener datos en el servidor - sin useEffect, sin flash
   const clientInfo = await getClientInfo();
-  const showGoogleBusiness =
-    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS === "true";
 
   // Preparar props para el Sidebar
   const sidebarProps = clientInfo
@@ -91,12 +89,10 @@ export default async function DashboardLayout({
           email: clientInfo.email,
         },
         visibleSections: clientInfo.config.visible_sections,
-        showGoogleBusiness,
       }
     : {
         clientInfo: null,
         visibleSections: DEFAULT_CONFIG.visible_sections,
-        showGoogleBusiness,
       };
 
   return (

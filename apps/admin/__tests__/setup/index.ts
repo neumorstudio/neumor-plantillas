@@ -16,9 +16,6 @@ process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test-project.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
 process.env.SUPERADMIN_EMAILS = "admin@test.com,superadmin@test.com";
-process.env.TOKEN_ENCRYPTION_KEY = "0".repeat(64); // 32 bytes hex para tests
-process.env.STRIPE_SECRET_KEY = "sk_test_fake_key";
-process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_fake_secret";
 process.env.RESEND_API_KEY = "re_test_fake_key";
 process.env.NODE_ENV = "test";
 
@@ -28,7 +25,6 @@ process.env.NODE_ENV = "test";
 
 import "./mocks/supabase";
 import "./mocks/next";
-import "./mocks/stripe";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIFECYCLE HOOKS
