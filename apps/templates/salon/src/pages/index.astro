@@ -28,7 +28,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig } from "@lib/supabase";
+import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig, type SectionId } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -196,7 +196,8 @@ console.log("Enabled sections:", enabledSections.map(s => s.id).join(", "));
 console.log("=== END SECTIONS DEBUG ===");
 
 // Crear un mapa para acceso rapido a la configuracion de cada seccion
-const sectionConfigMap = new Map(enabledSections.map((s) => [s.id, s]));
+// IMPORTANTE: Incluir TODAS las secciones (no solo habilitadas) para permitir live preview
+const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
 
 // Helper para verificar si una seccion esta habilitada
 const isSectionEnabled = (sectionId: SectionId): boolean => {
@@ -317,57 +318,90 @@ const serviceCategories = serviceCatalog.length
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
   />
 
-  <main>
-    {/* Renderizado dinamico de secciones basado en sectionsConfig */}
-    {enabledSections
-      .filter((s) => s.id !== "footer") // Footer va fuera del main
-      .map((section) => {
-        switch (section.id) {
+  <main class="sections-container" style="display: flex; flex-direction: column;">
+    {/*
+      Renderizado de TODAS las secciones posibles para permitir live preview.
+      Las secciones deshabilitadas se ocultan con display:none.
+      El orden se controla con CSS order para reordenamiento en tiempo real.
+    */}
+    {(() => {
+      // Definir todas las secciones posibles (excepto footer)
+      const allSections: SectionId[] = ["hero", "features", "services", "booking"];
+
+      return allSections.map((sectionId) => {
+        const sectionCfg = sectionConfigMap.get(sectionId);
+        // Default true para secciones no configuradas (backward compatibility)
+        const isEnabled = sectionCfg?.enabled ?? true;
+        const order = sectionCfg?.order ?? 99;
+
+        const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
+
+        switch (sectionId) {
           case "hero":
             return (
-              <Hero
-                title={config.heroTitle}
-                subtitle={config.heroSubtitle}
-                backgroundImage={config.heroImage}
-                scheduleLabel={scheduleLabel}
-                address={config.address}
-                phone={config.phone}
-              />
+              <section data-section-id="hero" style={style}>
+                <Hero
+                  title={config.heroTitle}
+                  subtitle={config.heroSubtitle}
+                  backgroundImage={config.heroImage}
+                  scheduleLabel={scheduleLabel}
+                  address={config.address}
+                  phone={config.phone}
+                />
+              </section>
             );
           case "features":
             return (
-              <Features
-                title={serviceFeatures?.title}
-                subtitle={serviceFeatures?.subtitle}
-                features={serviceFeatures?.features}
-              />
+              <section data-section-id="features" style={style}>
+                <Features
+                  title={serviceFeatures?.title}
+                  subtitle={serviceFeatures?.subtitle}
+                  features={serviceFeatures?.features}
+                />
+              </section>
             );
           case "services":
-            return <Services categories={serviceCategories} />;
+            return (
+              <section data-section-id="services" style={style}>
+                <Services categories={serviceCategories} />
+              </section>
+            );
           case "booking":
             return (
-              <AppointmentForm
-                webhookUrl={config.webhookUrl}
-                websiteId={currentWebsiteId}
-                address={config.address}
-                phone={config.phone}
-                email={config.email}
-              />
+              <section data-section-id="booking" style={style}>
+                <AppointmentForm
+                  webhookUrl={config.webhookUrl}
+                  websiteId={currentWebsiteId}
+                  address={config.address}
+                  phone={config.phone}
+                  email={config.email}
+                />
+              </section>
             );
           default:
             return null;
         }
-      })}
+      });
+    })()}
   </main>
 
-  {/* Footer siempre va al final si esta habilitado */}
-  {isSectionEnabled("footer") && (
-    <FooterComponent
-      businessName={config.businessName}
-      address={config.address}
-      phone={config.phone}
-      email={config.email}
-      socialLinks={config.socialLinks}
-    />
-  )}
+  {/* Footer - siempre renderizado para live preview, oculto si no está habilitado */}
+  {(() => {
+    const footerCfg = sectionConfigMap.get("footer");
+    const isFooterEnabled = footerCfg?.enabled ?? true;
+    const footerOrder = footerCfg?.order ?? 100;
+    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+    return (
+      <div data-section-id="footer" style={footerStyle}>
+        <FooterComponent
+          businessName={config.businessName}
+          address={config.address}
+          phone={config.phone}
+          email={config.email}
+          socialLinks={config.socialLinks}
+        />
+      </div>
+    );
+  })()}
 </Layout>

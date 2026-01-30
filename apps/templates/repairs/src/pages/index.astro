@@ -28,7 +28,7 @@ import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Featur
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 
 // Importar cliente Supabase
-import { getBusinessHours, getWebsiteConfig, type Theme, type WebsiteVariants } from "@lib/supabase";
+import { getBusinessHours, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -195,6 +195,27 @@ const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_
   return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
 };
 const scheduleLabel = buildScheduleLabel(businessHours);
+
+// ============================================
+// CONFIGURACION DE SECCIONES DINAMICAS
+// ============================================
+
+// Secciones por defecto para repairs/reformas
+const defaultSections: SectionConfig[] = [
+  { id: "hero", enabled: true, variant: "classic", order: 0 },
+  { id: "features", enabled: true, variant: "cards", order: 1 },
+  { id: "services", enabled: true, variant: "tabs", order: 2 },
+  { id: "contact", enabled: true, variant: "classic", order: 3 },
+  { id: "footer", enabled: true, variant: "full", order: 4 },
+];
+
+// Obtener sectionsConfig de la BD o usar defaults
+const sectionsConfig: SectionsConfig = websiteData?.config?.sectionsConfig || {
+  sections: defaultSections,
+};
+
+// Crear un mapa para acceso rapido a la configuracion de cada seccion
+const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
 ---
 
 <Layout
@@ -209,30 +230,73 @@ const scheduleLabel = buildScheduleLabel(businessHours);
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
   />
 
-  <main>
-    <Hero
-      title={config.heroTitle}
-      subtitle={config.heroSubtitle}
-      backgroundImage={config.heroImage}
-      ctaText="Solicitar presupuesto"
-      ctaLink="#contact"
-      scheduleLabel={scheduleLabel}
-      address={config.address}
-      phone={config.phone}
-    />
+  <main class="sections-container" style="display: flex; flex-direction: column;">
+    {(() => {
+      const allSections = ["hero", "features", "services", "contact"];
 
-    <Features />
+      return allSections.map((sectionId) => {
+        const sectionCfg = sectionConfigMap.get(sectionId);
+        const isEnabled = sectionCfg?.enabled ?? true;
+        const order = sectionCfg?.order ?? 99;
+        const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
 
-    <Products />
-
-    <ContactForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+        switch (sectionId) {
+          case "hero":
+            return (
+              <section data-section-id="hero" style={style}>
+                <Hero
+                  title={config.heroTitle}
+                  subtitle={config.heroSubtitle}
+                  backgroundImage={config.heroImage}
+                  ctaText="Solicitar presupuesto"
+                  ctaLink="#contact"
+                  scheduleLabel={scheduleLabel}
+                  address={config.address}
+                  phone={config.phone}
+                />
+              </section>
+            );
+          case "features":
+            return (
+              <section data-section-id="features" style={style}>
+                <Features />
+              </section>
+            );
+          case "services":
+            return (
+              <section data-section-id="services" style={style}>
+                <Products />
+              </section>
+            );
+          case "contact":
+            return (
+              <section data-section-id="contact" style={style}>
+                <ContactForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+              </section>
+            );
+          default:
+            return null;
+        }
+      });
+    })()}
   </main>
 
-  <FooterComponent
-    businessName={config.businessName}
-    address={config.address}
-    phone={config.phone}
-    email={config.email}
-    socialLinks={config.socialLinks}
-  />
+  {(() => {
+    const footerCfg = sectionConfigMap.get("footer");
+    const isFooterEnabled = footerCfg?.enabled ?? true;
+    const footerOrder = footerCfg?.order ?? 100;
+    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+    return (
+      <div data-section-id="footer" style={footerStyle}>
+        <FooterComponent
+          businessName={config.businessName}
+          address={config.address}
+          phone={config.phone}
+          email={config.email}
+          socialLinks={config.socialLinks}
+        />
+      </div>
+    );
+  })()}
 </Layout>

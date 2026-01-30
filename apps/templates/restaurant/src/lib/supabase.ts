@@ -32,6 +32,18 @@ export interface OpenStatusConfig {
   language?: "es" | "en";
 }
 
+// Section configuration for dynamic layout
+export interface SectionConfig {
+  id: string;
+  enabled: boolean;
+  variant?: string;
+  order: number;
+}
+
+export interface SectionsConfig {
+  sections: SectionConfig[];
+}
+
 export interface WebsiteConfig {
   businessName?: string;
   businessType?: string;
@@ -52,6 +64,18 @@ export interface WebsiteConfig {
   totalReviews?: number;
   // Configuración del indicador de estado abierto/cerrado
   openStatus?: OpenStatusConfig;
+  // Personalization fields
+  colors?: Record<string, string>;
+  primaryColor?: string;
+  secondaryColor?: string;
+  typography?: Record<string, unknown>;
+  effects?: Record<string, unknown>;
+  branding?: {
+    logo?: string;
+    logoDisplay?: "logo" | "name";
+  };
+  logo?: string;
+  sectionsConfig?: SectionsConfig;
 }
 
 export interface MenuItemRow {
@@ -65,11 +89,6 @@ export interface MenuItemRow {
   image_url?: string | null;
   is_active: boolean;
   sort_order: number;
-}
-
-export interface OrderSettings {
-  pickup_start_time: string;
-  pickup_end_time: string;
 }
 
 export interface BusinessHourRow {
@@ -189,29 +208,6 @@ export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | 
     }
 
     return data as MenuItemRow[];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
-    return null;
-  }
-}
-
-export async function getOrderSettings(websiteId?: string): Promise<OrderSettings | null> {
-  if (!supabase || !websiteId) {
-    return null;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("order_settings")
-      .select("pickup_start_time, pickup_end_time")
-      .eq("website_id", websiteId)
-      .single();
-
-    if (error) {
-      return null;
-    }
-
-    return data as OrderSettings;
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return null;

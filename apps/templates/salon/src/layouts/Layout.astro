@@ -357,6 +357,33 @@ const defaultFonts = !fontImports
               });
             }
           }
+
+          // Aplicar sectionsConfig - Mostrar/ocultar y reordenar secciones en tiempo real
+          const { sectionsConfig } = event.data.payload;
+          if (sectionsConfig && sectionsConfig.sections) {
+            console.log('[Preview] Applying sectionsConfig:', sectionsConfig.sections.length, 'sections');
+
+            sectionsConfig.sections.forEach(function(sectionCfg) {
+              const sectionEl = document.querySelector('[data-section-id="' + sectionCfg.id + '"]');
+              if (sectionEl) {
+                // Actualizar visibilidad
+                if (sectionCfg.enabled) {
+                  sectionEl.style.display = '';
+                  console.log('[Preview] Section', sectionCfg.id, 'enabled, order:', sectionCfg.order);
+                } else {
+                  sectionEl.style.display = 'none';
+                  console.log('[Preview] Section', sectionCfg.id, 'disabled');
+                }
+
+                // Actualizar orden (CSS order para flexbox)
+                if (sectionCfg.order !== undefined) {
+                  sectionEl.style.order = sectionCfg.order.toString();
+                }
+              } else {
+                console.log('[Preview] Section element not found:', sectionCfg.id);
+              }
+            });
+          }
         });
       })();
     </script>

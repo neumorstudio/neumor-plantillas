@@ -4,21 +4,21 @@ slug: /
 description: SaaS multi-tenant para sitios web de negocios con panel de administración y automatizaciones.
 ---
 
-NeumorStudio es una plataforma SaaS multi-tenant para crear sitios web de negocios y administrar operaciones como reservas, pedidos, leads y automatizaciones. El repositorio reúne el panel de administración, las plantillas públicas y los paquetes compartidos que permiten operar múltiples verticales con un único backend.
+NeumorStudio es una plataforma SaaS multi-tenant para crear sitios web de negocios y administrar operaciones como reservas, leads y automatizaciones. El repositorio reúne el panel de administración, las plantillas públicas y los paquetes compartidos que permiten operar múltiples verticales con un único backend.
 
 ## Qué incluye el producto
 
 - Panel de administración (Next.js 15) para gestionar datos del negocio por cliente.
 - Plantillas públicas (Astro 5 SSR) para restaurant, salon, clinic, gym, store y repairs.
 - Backend serverless con Supabase (PostgreSQL + Auth + RLS).
-- Integraciones y automatizaciones (n8n, Stripe, Google Business, Instagram).
+- Integraciones y automatizaciones (n8n).
 - CLI de provisioning para crear clientes y sitios.
 
 ## Verticales soportadas
 
 | Business type | Plantilla | Uso principal |
 |---|---|---|
-| restaurant | `apps/templates/restaurant` | Reservas + pedidos online |
+| restaurant | `apps/templates/restaurant` | Reservas y menú |
 | salon | `apps/templates/salon` | Citas y servicios |
 | clinic | `apps/templates/clinic` | Citas y tratamientos |
 | gym | `apps/templates/gym` | Entrenamientos y portal de clientes |
@@ -36,7 +36,7 @@ NeumorStudio es una plataforma SaaS multi-tenant para crear sitios web de negoci
 1. El sitio público carga la configuración desde Supabase (`websites`) usando `PUBLIC_WEBSITE_ID` o el dominio.
 2. Formularios públicos (reservas/citas/presupuestos/contacto) envían datos a endpoints del admin o a webhooks de automatización.
 3. El panel admin consulta y gestiona datos filtrados por `website_id` bajo políticas RLS.
-4. Automatizaciones (n8n) y servicios externos (Stripe, Google Business) completan el flujo.
+4. Automatizaciones (n8n) completan el flujo.
 
 ## Documentos clave
 

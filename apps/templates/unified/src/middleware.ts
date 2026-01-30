@@ -31,8 +31,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
+  // Skip cache in preview mode to always get fresh data
+  const isPreview = url.searchParams.get("preview") === "1";
+
   // Resolve tenant from Supabase
-  const tenant = await resolveTenant(subdomain, customDomain);
+  const tenant = await resolveTenant(subdomain, customDomain, isPreview);
 
   if (!tenant) {
     console.log("[Middleware] No tenant found, showing 404");
@@ -79,16 +82,19 @@ function parseDomain(host: string): { subdomain: string | null; customDomain: st
 
 async function resolveTenant(
   subdomain: string | null,
-  customDomain: string | null
+  customDomain: string | null,
+  skipCache: boolean = false
 ): Promise<TenantData | null> {
   if (!subdomain && !customDomain) return null;
 
   const cacheKey = subdomain || customDomain || "";
 
-  // Check cache
-  const cached = tenantCache.get(cacheKey);
-  if (cached && cached.expires > Date.now()) {
-    return cached.data;
+  // Check cache (skip if in preview mode)
+  if (!skipCache) {
+    const cached = tenantCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      return cached.data;
+    }
   }
 
   // Query Supabase
@@ -132,7 +138,8 @@ async function resolveTenant(
     return null;
   }
 
-  const clientData = websiteData.clients as { business_type: string; business_name: string };
+  // Con !inner Supabase devuelve objeto único, no array
+  const clientData = websiteData.clients as unknown as { business_type: string; business_name: string };
 
   const tenant: TenantData = {
     id: websiteData.id,

@@ -115,10 +115,10 @@ console.log("[Callback] No code, client will handle hash fragment");
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.js"></script>
   <script>
     // Wait for Supabase SDK to load
-    const waitForSupabase = (callback, maxWait = 5000) => {
+    const waitForSupabase = (callback: () => void, maxWait = 5000) => {
       const start = Date.now();
       const check = () => {
-        if (window.supabase) {
+        if ((window as unknown as { supabase?: unknown }).supabase) {
           callback();
         } else if (Date.now() - start < maxWait) {
           setTimeout(check, 50);
@@ -148,7 +148,7 @@ console.log("[Callback] No code, client will handle hash fragment");
         }
 
         // Create client and explicitly set the session to persist it
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = (window as unknown as { supabase: { createClient: (url: string, key: string) => { auth: { setSession: (params: { access_token: string; refresh_token: string }) => Promise<{ data: { session?: { user: { email: string } } }; error: unknown }> } } } }).supabase.createClient(supabaseUrl, supabaseKey);
 
         console.log("[Callback] Calling setSession with tokens...");
         const { data, error } = await supabase.auth.setSession({

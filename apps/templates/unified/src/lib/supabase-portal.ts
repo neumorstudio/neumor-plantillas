@@ -49,8 +49,8 @@ export function createPortalClient(cookies: AstroCookies, request?: Request) {
 
         return allCookies;
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
+      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options?: Record<string, unknown> }) => {
           cookies.set(name, value, {
             path: "/",
             secure: true,
@@ -86,6 +86,11 @@ export interface CustomerBooking {
   services: ServiceItem[];
   total_price_cents: number | null;
   notes: string | null;
+  // Alias properties for different business types
+  date?: string;
+  time?: string;
+  service_name?: string;
+  professional_name?: string;
 }
 
 /**

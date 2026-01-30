@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound } from "lucide-react";
 
 interface SidebarProps {
   clientInfo: {
@@ -12,7 +12,6 @@ interface SidebarProps {
     businessType: string;
     email: string;
   } | null;
-  showGoogleBusiness: boolean;
   visibleSections?: string[] | null;
 }
 
@@ -21,7 +20,6 @@ interface NavItem {
   label: string;
   slug: string;
   icon: React.ReactNode;
-  feature?: string;
 }
 
 // Iconos usando Lucide para consistencia y mejor rendimiento
@@ -37,18 +35,6 @@ const navItems: NavItem[] = [
     label: "Reservas",
     slug: "reservas",
     icon: <Calendar className="w-5 h-5" />,
-  },
-  {
-    href: "/dashboard/pedidos",
-    label: "Pedidos",
-    slug: "pedidos",
-    icon: <ShoppingBag className="w-5 h-5" />,
-  },
-  {
-    href: "/dashboard/menu",
-    label: "Menu",
-    slug: "menu",
-    icon: <UtensilsCrossed className="w-5 h-5" />,
   },
   {
     href: "/dashboard/calendario",
@@ -117,20 +103,6 @@ const navItems: NavItem[] = [
     icon: <Mail className="w-5 h-5" />,
   },
   {
-    href: "/dashboard/google-business",
-    label: "Google Business",
-    slug: "google-business",
-    feature: "googleBusiness",
-    icon: (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-      </svg>
-    ),
-  },
-  {
     href: "/dashboard/personalizacion",
     label: "Personalizacion",
     slug: "personalizacion",
@@ -176,7 +148,7 @@ function getPageTitle(pathname: string, navItems: NavItem[]): string {
   return item?.label || "Dashboard";
 }
 
-export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: SidebarProps) {
+export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -197,12 +169,6 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
           "profesionales",
         ].includes(section)
     );
-    if (!restaurantSections.includes("pedidos")) {
-      restaurantSections.push("pedidos");
-    }
-    if (!restaurantSections.includes("menu")) {
-      restaurantSections.push("menu");
-    }
     resolvedSections = restaurantSections;
   } else if (clientInfo?.businessType === "salon") {
     const baseSections = resolvedSections ?? navItems.map((item) => item.slug);
@@ -217,13 +183,9 @@ export function Sidebar({ clientInfo, showGoogleBusiness, visibleSections }: Sid
     );
   }
 
-  const sectionFilteredItems = resolvedSections?.length
+  const visibleNavItems = resolvedSections?.length
     ? navItems.filter((item) => resolvedSections.includes(item.slug))
     : navItems;
-
-  const visibleNavItems = sectionFilteredItems.filter(
-    (item) => !item.feature || (item.feature === "googleBusiness" && showGoogleBusiness)
-  );
 
   // Cerrar sidebar al cambiar de ruta
   useEffect(() => {

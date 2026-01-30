@@ -110,8 +110,8 @@ export function createPortalClient(cookies: AstroCookies, request?: Request) {
 
         return allCookies;
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
+      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options?: Record<string, unknown> }) => {
           cookies.set(name, value, {
             path: "/",
             secure: true,

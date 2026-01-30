@@ -27,8 +27,6 @@ flowchart LR
   AdminPanel[Admin (Next.js)] --> Supabase[(Supabase Postgres)]
   AdminAPI --> Supabase
   AdminAPI --> Resend[Email/Resend]
-  AdminAPI --> Stripe[Stripe]
-  AdminAPI --> Google[Google Business]
   AdminAPI --> n8n[n8n Webhooks]
   Supabase --> AdminPanel
 ```
@@ -39,7 +37,7 @@ El aislamiento de datos se basa en `website_id` y políticas RLS en PostgreSQL:
 
 - `clients` se vincula a `auth.users` por `auth_user_id`.
 - `websites` pertenece a un `client`.
-- Todas las tablas de negocio (bookings, leads, orders, etc.) incluyen `website_id`.
+- Todas las tablas de negocio (bookings, leads, etc.) incluyen `website_id`.
 
 Este patrón permite que cada usuario vea solo los datos de su website sin lógica adicional en el frontend.
 

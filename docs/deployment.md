@@ -9,7 +9,6 @@ description: Despliegue en Vercel y configuración de entornos.
 - **Templates**: Astro 5 SSR con adapter de Vercel.
 - **DB/Auth**: Supabase (PostgreSQL + Auth).
 - **Automatizaciones**: n8n.
-- **Pagos**: Stripe (solo restaurant).
 
 ## Variables de entorno
 

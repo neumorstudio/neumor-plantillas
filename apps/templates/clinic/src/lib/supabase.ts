@@ -9,8 +9,21 @@ export interface WebsiteVariants {
   footer: "full" | "minimal" | "centered";
 }
 
+// Section configuration for dynamic layout
+export interface SectionConfig {
+  id: string;
+  enabled: boolean;
+  variant?: string;
+  order: number;
+}
+
+export interface SectionsConfig {
+  sections: SectionConfig[];
+}
+
 export interface WebsiteConfig {
   businessName?: string;
+  business_name?: string;
   businessType?: string;
   variants?: WebsiteVariants;
   // Otros campos de configuracion del salon
@@ -27,6 +40,18 @@ export interface WebsiteConfig {
   };
   googleRating?: number;
   totalReviews?: number;
+  // Personalization fields
+  colors?: Record<string, string>;
+  primaryColor?: string;
+  secondaryColor?: string;
+  typography?: Record<string, unknown>;
+  effects?: Record<string, unknown>;
+  branding?: {
+    logo?: string;
+    logoDisplay?: "logo" | "name";
+  };
+  logo?: string;
+  sectionsConfig?: SectionsConfig;
 }
 
 export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";

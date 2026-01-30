@@ -214,16 +214,16 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
             </div>
             <div class="service-catalog">
               {categories.map((category) => (
-                <div class="service-category" key={category.id}>
+                <div class="service-category">
                   <div class="service-category-title">{category.name}</div>
                   <div class="service-grid">
                     {category.items.map((item) => (
-                      <label class="service-card" key={item.id}>
+                      <label class="service-card">
                         <input
                           type="checkbox"
                           name="services"
                           value={item.id}
-                          data-category-id={item.category_id}
+                          data-category-id={(item as { category_id?: string }).category_id ?? ""}
                           data-name={item.name}
                           data-price={item.price_cents}
                           data-duration={item.duration_minutes}
@@ -251,7 +251,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
               {professionals.length ? (
                 <div class="professional-list">
                   {professionals.map((professional) => (
-                    <label class="professional-chip" key={professional.id}>
+                    <label class="professional-chip">
                       <input
                         type="radio"
                         name="professional_id"
@@ -1323,7 +1323,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     });
 
     if (!selectedAvailable && firstAvailable) {
-      firstAvailable.checked = true;
+      (firstAvailable as HTMLInputElement).checked = true;
       if (timeInput) {
         timeInput.value = "";
       }
@@ -1570,7 +1570,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
           dateValue === todayIso && minutes <= currentMinutes;
         const isBlocked =
           isPastTime ||
-          bookedSlots.some((booked) => minutes < booked.end && slotEnd > booked.start);
+          bookedSlots.some((booked: { start: number; end: number }) => minutes < booked.end && slotEnd > booked.start);
         const button = document.createElement("button");
         button.type = "button";
         button.className = `time-slot${isBlocked ? " is-disabled" : ""}`;

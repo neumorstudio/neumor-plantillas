@@ -11,6 +11,7 @@ export interface WebsiteVariants {
 
 export interface WebsiteConfig {
   businessName?: string;
+  business_name?: string;
   businessType?: string;
   variants?: WebsiteVariants;
   // Otros campos de configuracion del salon
@@ -27,6 +28,17 @@ export interface WebsiteConfig {
   };
   googleRating?: number;
   totalReviews?: number;
+  // Personalization fields
+  colors?: Record<string, string>;
+  primaryColor?: string;
+  secondaryColor?: string;
+  typography?: Record<string, unknown>;
+  effects?: Record<string, unknown>;
+  branding?: {
+    logo?: string;
+    logoDisplay?: "logo" | "name";
+  };
+  logo?: string;
   // Section Builder config
   sectionsConfig?: SectionsConfig;
 }

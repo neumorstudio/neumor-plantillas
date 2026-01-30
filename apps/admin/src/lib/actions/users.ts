@@ -76,7 +76,7 @@ export async function getUsers(): Promise<UserWithClient[]> {
   );
 
   // Filtrar usuarios que no son superadmin y mapear
-  const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase());
+  const superAdminEmails = (process.env.SUPERADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase());
 
   return authUsers.users
     .filter((u) => !superAdminEmails.includes(u.email?.toLowerCase() || ""))

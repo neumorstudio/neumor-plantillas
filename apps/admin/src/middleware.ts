@@ -1,18 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isSuperAdminEmail } from "./lib/superadmin-emails";
 
-/**
- * Verifica si el email del usuario esta en la lista de superadmins.
- * Lista configurada via SUPERADMIN_EMAILS (comma-separated).
- */
-function isSuperAdminEmail(email: string | undefined): boolean {
-  if (!email) return false;
-  const envEmails = process.env.SUPERADMIN_EMAILS || "";
-  const superAdminEmails = envEmails
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter((e) => e.length > 0);
-  return superAdminEmails.includes(email.toLowerCase());
+/** Verifica si el path es exactamente la ruta o una subruta */
+function isRouteOrSubroute(pathname: string, route: string): boolean {
+  return pathname === route || pathname.startsWith(`${route}/`);
 }
 
 export async function middleware(request: NextRequest) {
@@ -55,7 +47,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes - redirect to login if not authenticated
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  if (!user && isRouteOrSubroute(request.nextUrl.pathname, "/dashboard")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -69,7 +61,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // SUPERADMIN routes - requires authentication + superadmin email
-  if (request.nextUrl.pathname.startsWith("/super")) {
+  if (isRouteOrSubroute(request.nextUrl.pathname, "/super")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
@@ -91,8 +83,8 @@ export async function middleware(request: NextRequest) {
     }
     // Redirect any other page to change-password
     if (
-      request.nextUrl.pathname.startsWith("/dashboard") ||
-      request.nextUrl.pathname.startsWith("/super") ||
+      isRouteOrSubroute(request.nextUrl.pathname, "/dashboard") ||
+      isRouteOrSubroute(request.nextUrl.pathname, "/super") ||
       request.nextUrl.pathname === "/login"
     ) {
       const url = request.nextUrl.clone();
@@ -110,7 +102,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // SuperAdmin no deberia acceder al dashboard normal
-  if (user && request.nextUrl.pathname.startsWith("/dashboard") && isSuperAdminEmail(user.email)) {
+  if (user && isRouteOrSubroute(request.nextUrl.pathname, "/dashboard") && isSuperAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/super";
     return NextResponse.redirect(url);

@@ -76,7 +76,6 @@ docs/
 | `websites` | Sitios web de cada cliente |
 | `bookings` | Reservas |
 | `leads` | Contactos y presupuestos |
-| `orders` | Pedidos online |
 | `menu_items` | Items del menú (restaurant) |
 
 Ver [DATABASE.md](DATABASE.md) para esquema completo.

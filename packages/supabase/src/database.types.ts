@@ -52,47 +52,108 @@ export type Database = {
           booking_time: string
           created_at: string | null
           customer_email: string | null
+          customer_id: string | null
           customer_name: string
           customer_phone: string
+          duration_minutes: number | null
           guests: number | null
           id: string
+          is_paid: boolean | null
           notes: string | null
+          package_id: string | null
+          professional_id: string | null
+          service_id: string | null
+          services: Json | null
+          session_notes: string | null
           source: string | null
           status: string | null
+          total_duration_minutes: number | null
+          total_price_cents: number | null
           updated_at: string | null
           website_id: string | null
+          workout_summary: string | null
         }
         Insert: {
           booking_date: string
           booking_time: string
           created_at?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name: string
           customer_phone: string
+          duration_minutes?: number | null
           guests?: number | null
           id?: string
+          is_paid?: boolean | null
           notes?: string | null
+          package_id?: string | null
+          professional_id?: string | null
+          service_id?: string | null
+          services?: Json | null
+          session_notes?: string | null
           source?: string | null
           status?: string | null
+          total_duration_minutes?: number | null
+          total_price_cents?: number | null
           updated_at?: string | null
           website_id?: string | null
+          workout_summary?: string | null
         }
         Update: {
           booking_date?: string
           booking_time?: string
           created_at?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string
           customer_phone?: string
+          duration_minutes?: number | null
           guests?: number | null
           id?: string
+          is_paid?: boolean | null
           notes?: string | null
+          package_id?: string | null
+          professional_id?: string | null
+          service_id?: string | null
+          services?: Json | null
+          session_notes?: string | null
           source?: string | null
           status?: string | null
+          total_duration_minutes?: number | null
+          total_price_cents?: number | null
           updated_at?: string | null
           website_id?: string | null
+          workout_summary?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_services"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_website_id_fkey"
             columns: ["website_id"]
@@ -102,8 +163,328 @@ export type Database = {
           },
         ]
       }
+      business_hour_slots: {
+        Row: {
+          close_time: string
+          created_at: string | null
+          day_of_week: number
+          id: string
+          is_active: boolean | null
+          open_time: string
+          sort_order: number | null
+          updated_at: string | null
+          website_id: string | null
+        }
+        Insert: {
+          close_time: string
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          is_active?: boolean | null
+          open_time: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          close_time?: string
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          is_active?: boolean | null
+          open_time?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_hour_slots_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_hours: {
+        Row: {
+          close_time: string
+          created_at: string | null
+          day_of_week: number
+          id: string
+          is_open: boolean | null
+          open_time: string
+          updated_at: string | null
+          website_id: string | null
+        }
+        Insert: {
+          close_time?: string
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          is_open?: boolean | null
+          open_time?: string
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          close_time?: string
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          is_open?: boolean | null
+          open_time?: string
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_hours_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_type_config: {
+        Row: {
+          business_type: string
+          created_at: string | null
+          dashboard_widgets: string[]
+          default_section: string | null
+          icon: string | null
+          label: string
+          updated_at: string | null
+          visible_sections: string[]
+        }
+        Insert: {
+          business_type: string
+          created_at?: string | null
+          dashboard_widgets: string[]
+          default_section?: string | null
+          icon?: string | null
+          label: string
+          updated_at?: string | null
+          visible_sections: string[]
+        }
+        Update: {
+          business_type?: string
+          created_at?: string | null
+          dashboard_widgets?: string[]
+          default_section?: string | null
+          icon?: string | null
+          label?: string
+          updated_at?: string | null
+          visible_sections?: string[]
+        }
+        Relationships: []
+      }
+      client_packages: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          name: string
+          notes: string | null
+          price_cents: number
+          remaining_sessions: number | null
+          status: string | null
+          total_sessions: number | null
+          updated_at: string | null
+          used_sessions: number | null
+          valid_from: string | null
+          valid_until: string | null
+          website_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          name: string
+          notes?: string | null
+          price_cents: number
+          remaining_sessions?: number | null
+          status?: string | null
+          total_sessions?: number | null
+          updated_at?: string | null
+          used_sessions?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+          website_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          price_cents?: number
+          remaining_sessions?: number | null
+          status?: string | null
+          total_sessions?: number | null
+          updated_at?: string | null
+          used_sessions?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_packages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_packages_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_progress: {
+        Row: {
+          arm_left_cm: number | null
+          arm_right_cm: number | null
+          body_fat_percent: number | null
+          calf_cm: number | null
+          chest_cm: number | null
+          created_at: string | null
+          customer_id: string
+          hips_cm: number | null
+          id: string
+          muscle_mass_kg: number | null
+          notes: string | null
+          photos: Json | null
+          recorded_at: string
+          thigh_left_cm: number | null
+          thigh_right_cm: number | null
+          updated_at: string | null
+          waist_cm: number | null
+          website_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          arm_left_cm?: number | null
+          arm_right_cm?: number | null
+          body_fat_percent?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string | null
+          customer_id: string
+          hips_cm?: number | null
+          id?: string
+          muscle_mass_kg?: number | null
+          notes?: string | null
+          photos?: Json | null
+          recorded_at?: string
+          thigh_left_cm?: number | null
+          thigh_right_cm?: number | null
+          updated_at?: string | null
+          waist_cm?: number | null
+          website_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          arm_left_cm?: number | null
+          arm_right_cm?: number | null
+          body_fat_percent?: number | null
+          calf_cm?: number | null
+          chest_cm?: number | null
+          created_at?: string | null
+          customer_id?: string
+          hips_cm?: number | null
+          id?: string
+          muscle_mass_kg?: number | null
+          notes?: string | null
+          photos?: Json | null
+          recorded_at?: string
+          thigh_left_cm?: number | null
+          thigh_right_cm?: number | null
+          updated_at?: string | null
+          waist_cm?: number | null
+          website_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_progress_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_records: {
+        Row: {
+          achieved_at: string
+          created_at: string | null
+          customer_id: string
+          exercise_name: string
+          id: string
+          notes: string | null
+          previous_value: number | null
+          record_unit: string
+          record_value: number
+          website_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          created_at?: string | null
+          customer_id: string
+          exercise_name: string
+          id?: string
+          notes?: string | null
+          previous_value?: number | null
+          record_unit?: string
+          record_value: number
+          website_id: string
+        }
+        Update: {
+          achieved_at?: string
+          created_at?: string | null
+          customer_id?: string
+          exercise_name?: string
+          id?: string
+          notes?: string | null
+          previous_value?: number | null
+          record_unit?: string
+          record_value?: number
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_records_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
+          address: string | null
           auth_user_id: string | null
           business_name: string
           business_type: string
@@ -114,6 +495,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           auth_user_id?: string | null
           business_name: string
           business_type: string
@@ -124,6 +506,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           auth_user_id?: string | null
           business_name?: string
           business_type?: string
@@ -134,6 +517,77 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      customers: {
+        Row: {
+          address: string | null
+          auth_user_id: string | null
+          birth_date: string | null
+          created_at: string | null
+          email: string | null
+          fitness_goals: string | null
+          gender: string | null
+          height_cm: number | null
+          id: string
+          injuries: string | null
+          medical_notes: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          start_date: string | null
+          trainer_notes: string | null
+          updated_at: string | null
+          website_id: string
+        }
+        Insert: {
+          address?: string | null
+          auth_user_id?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string | null
+          fitness_goals?: string | null
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          injuries?: string | null
+          medical_notes?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          start_date?: string | null
+          trainer_notes?: string | null
+          updated_at?: string | null
+          website_id: string
+        }
+        Update: {
+          address?: string | null
+          auth_user_id?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string | null
+          fitness_goals?: string | null
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          injuries?: string | null
+          medical_notes?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          start_date?: string | null
+          trainer_notes?: string | null
+          updated_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       google_business_locations: {
         Row: {
@@ -244,9 +698,162 @@ export type Database = {
           },
         ]
       }
+      job_photos: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          job_id: string
+          taken_at: string | null
+          type: Database["public"]["Enums"]["job_photo_type"]
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          job_id: string
+          taken_at?: string | null
+          type: Database["public"]["Enums"]["job_photo_type"]
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          job_id?: string
+          taken_at?: string | null
+          type?: Database["public"]["Enums"]["job_photo_type"]
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_photos_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_tasks: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          is_completed: boolean | null
+          job_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          is_completed?: boolean | null
+          job_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_completed?: boolean | null
+          job_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_tasks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          actual_end_date: string | null
+          address: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          estimated_end_date: string | null
+          id: string
+          notes: string | null
+          quote_id: string | null
+          status: Database["public"]["Enums"]["job_status"]
+          total_amount: number | null
+          updated_at: string | null
+          website_id: string
+        }
+        Insert: {
+          actual_end_date?: string | null
+          address?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          estimated_end_date?: string | null
+          id?: string
+          notes?: string | null
+          quote_id?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          total_amount?: number | null
+          updated_at?: string | null
+          website_id: string
+        }
+        Update: {
+          actual_end_date?: string | null
+          address?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          estimated_end_date?: string | null
+          id?: string
+          notes?: string | null
+          quote_id?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          total_amount?: number | null
+          updated_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string | null
+          customer_id: string | null
           details: Json | null
           email: string | null
           id: string
@@ -261,6 +868,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          customer_id?: string | null
           details?: Json | null
           email?: string | null
           id?: string
@@ -275,6 +883,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          customer_id?: string | null
           details?: Json | null
           email?: string | null
           id?: string
@@ -288,6 +897,13 @@ export type Database = {
           website_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_website_id_fkey"
             columns: ["website_id"]
@@ -816,6 +1432,170 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          client_name: string
+          created_at: string | null
+          customer_id: string | null
+          due_date: string | null
+          id: string
+          job_id: string | null
+          method: Database["public"]["Enums"]["payment_method"] | null
+          notes: string | null
+          paid_at: string | null
+          quote_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string | null
+          website_id: string
+        }
+        Insert: {
+          amount: number
+          client_name: string
+          created_at?: string | null
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          job_id?: string | null
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          notes?: string | null
+          paid_at?: string | null
+          quote_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string | null
+          website_id: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          created_at?: string | null
+          customer_id?: string | null
+          due_date?: string | null
+          id?: string
+          job_id?: string | null
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          notes?: string | null
+          paid_at?: string | null
+          quote_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_categories: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          professional_id: string | null
+          website_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          professional_id?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          professional_id?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_categories_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_categories_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professionals: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+          website_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professionals_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurants: {
         Row: {
           capacity: number | null
@@ -923,6 +1703,104 @@ export type Database = {
           },
         ]
       }
+      service_categories: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+          website_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id: string
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_items: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          price_cents: number
+          sort_order: number | null
+          updated_at: string | null
+          website_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          price_cents: number
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          price_cents?: number
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_items_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_accounts: {
         Row: {
           access_token: string
@@ -985,14 +1863,149 @@ export type Database = {
           },
         ]
       }
+      special_day_slots: {
+        Row: {
+          close_time: string
+          created_at: string | null
+          id: string
+          open_time: string
+          sort_order: number | null
+          special_day_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          close_time: string
+          created_at?: string | null
+          id?: string
+          open_time: string
+          sort_order?: number | null
+          special_day_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          close_time?: string
+          created_at?: string | null
+          id?: string
+          open_time?: string
+          sort_order?: number | null
+          special_day_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_day_slots_special_day_id_fkey"
+            columns: ["special_day_id"]
+            isOneToOne: false
+            referencedRelation: "special_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      special_days: {
+        Row: {
+          close_time: string
+          created_at: string | null
+          date: string
+          id: string
+          is_open: boolean | null
+          note: string | null
+          open_time: string
+          updated_at: string | null
+          website_id: string | null
+        }
+        Insert: {
+          close_time?: string
+          created_at?: string | null
+          date: string
+          id?: string
+          is_open?: boolean | null
+          note?: string | null
+          open_time?: string
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          close_time?: string
+          created_at?: string | null
+          date?: string
+          id?: string
+          is_open?: boolean | null
+          note?: string | null
+          open_time?: string
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_days_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_services: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          is_online: boolean | null
+          name: string
+          price_cents: number
+          sort_order: number | null
+          updated_at: string | null
+          website_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_online?: boolean | null
+          name: string
+          price_cents: number
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_online?: boolean | null
+          name?: string
+          price_cents?: number
+          sort_order?: number | null
+          updated_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_services_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       websites: {
         Row: {
           client_id: string | null
           config: Json | null
           created_at: string | null
+          custom_domain: string | null
           domain: string
+          domain_status: string | null
           id: string
           is_active: boolean | null
+          subdomain: string | null
           theme: string | null
           updated_at: string | null
         }
@@ -1000,9 +2013,12 @@ export type Database = {
           client_id?: string | null
           config?: Json | null
           created_at?: string | null
+          custom_domain?: string | null
           domain: string
+          domain_status?: string | null
           id?: string
           is_active?: boolean | null
+          subdomain?: string | null
           theme?: string | null
           updated_at?: string | null
         }
@@ -1010,9 +2026,12 @@ export type Database = {
           client_id?: string | null
           config?: Json | null
           created_at?: string | null
+          custom_domain?: string | null
           domain?: string
+          domain_status?: string | null
           id?: string
           is_active?: boolean | null
+          subdomain?: string | null
           theme?: string | null
           updated_at?: string | null
         }
@@ -1041,6 +2060,7 @@ export type Database = {
         }
         Returns: string
       }
+      check_expired_packages: { Args: never; Returns: undefined }
       get_newsletter_audience: {
         Args: { p_audience_type: string; p_website_id: string }
         Returns: {
@@ -1077,13 +2097,34 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      link_or_create_customer: {
+        Args: {
+          p_auth_user_id: string
+          p_email: string
+          p_name: string
+          p_website_id: string
+        }
+        Returns: string
+      }
       mark_newsletter_sent: {
         Args: { p_automation_id: string }
         Returns: undefined
       }
+      user_owns_website: {
+        Args: { website_client_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      job_photo_type: "before" | "progress" | "after"
+      job_status:
+        | "pending"
+        | "in_progress"
+        | "waiting_material"
+        | "completed"
+        | "cancelled"
+      payment_method: "cash" | "transfer" | "bizum" | "card"
+      payment_status: "pending" | "paid" | "partial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1210,6 +2251,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      job_photo_type: ["before", "progress", "after"],
+      job_status: [
+        "pending",
+        "in_progress",
+        "waiting_material",
+        "completed",
+        "cancelled",
+      ],
+      payment_method: ["cash", "transfer", "bizum", "card"],
+      payment_status: ["pending", "paid", "partial"],
+    },
   },
 } as const
