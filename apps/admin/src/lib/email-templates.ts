@@ -21,6 +21,7 @@ interface AppointmentEmailData {
   date: string;
   time: string;
   service: string;
+  totalPrice?: string;
   professional?: string;
   notes?: string;
   phone?: string;
@@ -448,6 +449,7 @@ export function getClinicAppointmentConfirmationEmail(
     { label: "Fecha", value: data.date },
     { label: "Hora", value: data.time },
     { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
     ...(data.professional ? [{ label: "Profesional", value: data.professional }] : []),
   ]);
 
@@ -550,6 +552,7 @@ export function getClinicAppointmentNotificationEmail(
     { label: "Fecha", value: data.date },
     { label: "Hora", value: data.time },
     { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
     ...(data.professional ? [{ label: "Profesional", value: data.professional }] : []),
   ]);
 
@@ -655,6 +658,7 @@ export function getSalonAppointmentConfirmationEmail(
     { label: "Fecha", value: data.date },
     { label: "Hora", value: data.time },
     { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
     ...(data.professional ? [{ label: "Estilista", value: data.professional }] : []),
   ]);
 
@@ -768,6 +772,7 @@ export function getSalonAppointmentNotificationEmail(
     { label: "Fecha", value: data.date },
     { label: "Hora", value: data.time },
     { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
     ...(data.professional ? [{ label: "Estilista", value: data.professional }] : []),
   ]);
 
@@ -873,6 +878,7 @@ export function getSalonAppointmentReminder1hEmail(
     { label: "Fecha", value: data.date },
     { label: "Hora", value: data.time },
     { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
     ...(data.professional ? [{ label: "Estilista", value: data.professional }] : []),
   ]);
 

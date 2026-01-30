@@ -260,12 +260,18 @@ export async function POST(request: NextRequest) {
     const businessType = client?.business_type;
     const isSalon = businessType === "salon";
 
+      const totalPrice =
+        typeof body.total_price_cents === "number"
+          ? `${(body.total_price_cents / 100).toFixed(2)} EUR`
+          : undefined;
+
       const emailData = {
         businessName,
         customerName: nombre,
         date: formatDate(body.fecha),
         time: body.hora,
         service: servicio,
+        totalPrice,
         professional: profesional || undefined,
         notes: notas || undefined,
         phone: telefono,
