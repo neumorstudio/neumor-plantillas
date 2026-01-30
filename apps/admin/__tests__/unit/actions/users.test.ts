@@ -49,19 +49,20 @@ vi.mock("@supabase/supabase-js", () => ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Guardar valores originales
-const originalSuperAdminEmails = process.env.SUPER_ADMIN_EMAILS;
 const originalSuperadminEmails = process.env.SUPERADMIN_EMAILS;
 
-function setEnvVars(vars: { SUPER_ADMIN_EMAILS?: string; SUPERADMIN_EMAILS?: string }) {
-  if (vars.SUPER_ADMIN_EMAILS === undefined) {
-    delete process.env.SUPER_ADMIN_EMAILS;
-  } else {
-    process.env.SUPER_ADMIN_EMAILS = vars.SUPER_ADMIN_EMAILS;
-  }
+function setEnvVars(vars: { SUPERADMIN_EMAILS?: string; SUPER_ADMIN_EMAILS?: string }) {
+  // SUPERADMIN_EMAILS es la variable correcta que se usa en produccion
   if (vars.SUPERADMIN_EMAILS === undefined) {
     delete process.env.SUPERADMIN_EMAILS;
   } else {
     process.env.SUPERADMIN_EMAILS = vars.SUPERADMIN_EMAILS;
+  }
+  // SUPER_ADMIN_EMAILS (legacy) - solo para tests de consistencia
+  if (vars.SUPER_ADMIN_EMAILS === undefined) {
+    delete process.env.SUPER_ADMIN_EMAILS;
+  } else {
+    process.env.SUPER_ADMIN_EMAILS = vars.SUPER_ADMIN_EMAILS;
   }
 }
 
@@ -86,25 +87,19 @@ function mockClients(clients: Array<{ id: string; business_name: string; busines
 describe("users.ts - getUsers()", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Setup env vars por defecto
-    setEnvVars({
-      SUPER_ADMIN_EMAILS: "superadmin@test.com",
-      SUPERADMIN_EMAILS: "superadmin@test.com",
-    });
+    // Setup env var por defecto (solo SUPERADMIN_EMAILS)
+    setEnvVars({ SUPERADMIN_EMAILS: "superadmin@test.com" });
   });
 
   afterEach(() => {
-    // Restaurar valores originales
-    if (originalSuperAdminEmails !== undefined) {
-      process.env.SUPER_ADMIN_EMAILS = originalSuperAdminEmails;
-    } else {
-      delete process.env.SUPER_ADMIN_EMAILS;
-    }
+    // Restaurar valor original
     if (originalSuperadminEmails !== undefined) {
       process.env.SUPERADMIN_EMAILS = originalSuperadminEmails;
     } else {
       delete process.env.SUPERADMIN_EMAILS;
     }
+    // Limpiar variable legacy por si algun test la seteo
+    delete process.env.SUPER_ADMIN_EMAILS;
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -113,8 +108,7 @@ describe("users.ts - getUsers()", () => {
 
   describe("filtrado basico de superadmin", () => {
     it("excluye usuarios superadmin de la lista", async () => {
-      // El codigo actual usa SUPER_ADMIN_EMAILS
-      setEnvVars({ SUPER_ADMIN_EMAILS: "admin@company.com" });
+      setEnvVars({ SUPERADMIN_EMAILS: "admin@company.com" });
 
       mockAuthUsers([
         { id: "1", email: "admin@company.com", created_at: "2024-01-01" },
@@ -135,7 +129,7 @@ describe("users.ts - getUsers()", () => {
     });
 
     it("incluye todos los usuarios si no hay superadmin configurado", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "" });
+      setEnvVars({ SUPERADMIN_EMAILS: "" });
 
       mockAuthUsers([
         { id: "1", email: "user1@test.com", created_at: "2024-01-01" },
@@ -151,7 +145,7 @@ describe("users.ts - getUsers()", () => {
     });
 
     it("excluye multiples superadmins", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "admin1@test.com,admin2@test.com" });
+      setEnvVars({ SUPERADMIN_EMAILS: "admin1@test.com,admin2@test.com" });
 
       mockAuthUsers([
         { id: "1", email: "admin1@test.com", created_at: "2024-01-01" },
@@ -175,7 +169,7 @@ describe("users.ts - getUsers()", () => {
 
   describe("case-insensitivity", () => {
     it("excluye superadmin independiente del case en env var", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "ADMIN@TEST.COM" });
+      setEnvVars({ SUPERADMIN_EMAILS: "ADMIN@TEST.COM" });
 
       mockAuthUsers([
         { id: "1", email: "admin@test.com", created_at: "2024-01-01" },
@@ -192,7 +186,7 @@ describe("users.ts - getUsers()", () => {
     });
 
     it("excluye superadmin independiente del case en user email", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "admin@test.com" });
+      setEnvVars({ SUPERADMIN_EMAILS: "admin@test.com" });
 
       mockAuthUsers([
         { id: "1", email: "ADMIN@TEST.COM", created_at: "2024-01-01" },
@@ -209,7 +203,7 @@ describe("users.ts - getUsers()", () => {
     });
 
     it("excluye superadmin con mixed case", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "Admin@Test.Com" });
+      setEnvVars({ SUPERADMIN_EMAILS: "Admin@Test.Com" });
 
       mockAuthUsers([
         { id: "1", email: "aDMIN@tEST.cOM", created_at: "2024-01-01" },
@@ -231,7 +225,7 @@ describe("users.ts - getUsers()", () => {
 
   describe("trimming de espacios", () => {
     it("excluye superadmin con espacios al inicio de env var", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: " admin@test.com" });
+      setEnvVars({ SUPERADMIN_EMAILS: " admin@test.com" });
 
       mockAuthUsers([
         { id: "1", email: "admin@test.com", created_at: "2024-01-01" },
@@ -248,7 +242,7 @@ describe("users.ts - getUsers()", () => {
     });
 
     it("excluye superadmin con espacios alrededor de comas", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "admin1@test.com , admin2@test.com , admin3@test.com" });
+      setEnvVars({ SUPERADMIN_EMAILS: "admin1@test.com , admin2@test.com , admin3@test.com" });
 
       mockAuthUsers([
         { id: "1", email: "admin2@test.com", created_at: "2024-01-01" },
@@ -270,8 +264,8 @@ describe("users.ts - getUsers()", () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe("fail-safe con env var faltante/vacia", () => {
-    it("no falla si SUPER_ADMIN_EMAILS es undefined", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: undefined });
+    it("no falla si SUPERADMIN_EMAILS es undefined", async () => {
+      setEnvVars({ SUPERADMIN_EMAILS: undefined });
 
       mockAuthUsers([
         { id: "1", email: "user@test.com", created_at: "2024-01-01" },
@@ -285,8 +279,8 @@ describe("users.ts - getUsers()", () => {
       await expect(getUsers()).resolves.toBeDefined();
     });
 
-    it("no falla si SUPER_ADMIN_EMAILS es string vacio", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "" });
+    it("no falla si SUPERADMIN_EMAILS es string vacio", async () => {
+      setEnvVars({ SUPERADMIN_EMAILS: "" });
 
       mockAuthUsers([
         { id: "1", email: "user@test.com", created_at: "2024-01-01" },
@@ -300,7 +294,7 @@ describe("users.ts - getUsers()", () => {
     });
 
     it("retorna todos los usuarios si env var esta vacia", async () => {
-      setEnvVars({ SUPER_ADMIN_EMAILS: "" });
+      setEnvVars({ SUPERADMIN_EMAILS: "" });
 
       mockAuthUsers([
         { id: "1", email: "anyone@test.com", created_at: "2024-01-01" },
@@ -318,18 +312,15 @@ describe("users.ts - getUsers()", () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Consistencia de env var (BUG DETECTION)
+  // Consistencia de env var (POST-FIX)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe("consistencia de env var - BUG DETECTION", () => {
-    it("ACTUALMENTE usa SUPER_ADMIN_EMAILS (con underscore) - detecta bug", async () => {
-      // Este test documenta el bug actual:
-      // users.ts usa SUPER_ADMIN_EMAILS pero superadmin.ts usa SUPERADMIN_EMAILS
-
-      // Solo configurar SUPERADMIN_EMAILS (la version correcta)
+  describe("consistencia de env var - usa SOLO SUPERADMIN_EMAILS", () => {
+    it("usa SUPERADMIN_EMAILS para filtrar superadmins", async () => {
+      // Solo configurar SUPERADMIN_EMAILS (la variable correcta)
       setEnvVars({
-        SUPER_ADMIN_EMAILS: undefined,  // NO configurada
-        SUPERADMIN_EMAILS: "admin@test.com",  // SI configurada
+        SUPER_ADMIN_EMAILS: undefined,  // NO debe afectar
+        SUPERADMIN_EMAILS: "admin@test.com",  // ESTA es la que se usa
       });
 
       mockAuthUsers([
@@ -342,25 +333,17 @@ describe("users.ts - getUsers()", () => {
       const { getUsers } = await import("@/lib/actions/users");
       const result = await getUsers();
 
-      // BUG: Como users.ts usa SUPER_ADMIN_EMAILS y esta undefined,
-      // el superadmin NO es filtrado (aparece en la lista)
-      // ESPERADO (post-fix): deberia filtrar usando SUPERADMIN_EMAILS
-      // ACTUAL (bug): no filtra porque SUPER_ADMIN_EMAILS es undefined
-
-      // Este test PASA si el bug existe (documenta comportamiento actual)
-      // Despues del fix, este test deberia FALLAR y necesitar actualizacion
-      expect(result).toHaveLength(2); // BUG: admin@test.com NO fue filtrado
-      expect(result.map((u) => u.email)).toContain("admin@test.com"); // BUG confirmado
+      // El superadmin DEBE ser filtrado usando SUPERADMIN_EMAILS
+      expect(result).toHaveLength(1);
+      expect(result[0].email).toBe("user@test.com");
+      expect(result.map((u) => u.email)).not.toContain("admin@test.com");
     });
 
-    it("DEBERIA usar SUPERADMIN_EMAILS (sin underscore extra) - test post-fix", async () => {
-      // Este test fallara HASTA que se aplique el fix
-      // Una vez aplicado el fix, este test pasara
-
-      // Solo configurar SUPERADMIN_EMAILS (la version correcta)
+    it("SUPER_ADMIN_EMAILS (con underscore extra) NO afecta el resultado", async () => {
+      // Configurar SOLO la variable legacy (incorrecta)
       setEnvVars({
-        SUPER_ADMIN_EMAILS: undefined,
-        SUPERADMIN_EMAILS: "admin@test.com",
+        SUPER_ADMIN_EMAILS: "admin@test.com",  // NO debe tener efecto
+        SUPERADMIN_EMAILS: undefined,  // NO configurada
       });
 
       mockAuthUsers([
@@ -373,14 +356,31 @@ describe("users.ts - getUsers()", () => {
       const { getUsers } = await import("@/lib/actions/users");
       const result = await getUsers();
 
-      // POST-FIX esperado: admin@test.com DEBERIA ser filtrado
-      // Este expect fallara mientras el bug exista
-      // Descomentar despues del fix:
-      // expect(result).toHaveLength(1);
-      // expect(result[0].email).toBe("user@test.com");
+      // SUPER_ADMIN_EMAILS NO debe filtrar nada (se ignora)
+      expect(result).toHaveLength(2);
+      expect(result.map((u) => u.email)).toContain("admin@test.com");
+      expect(result.map((u) => u.email)).toContain("user@test.com");
+    });
 
-      // Por ahora, solo verificamos que no crashea
-      expect(result).toBeDefined();
+    it("consistente con superadmin.ts - ambos usan SUPERADMIN_EMAILS", async () => {
+      // Verificar que usa la misma variable que superadmin.ts
+      setEnvVars({
+        SUPERADMIN_EMAILS: "shared-admin@test.com",
+      });
+
+      mockAuthUsers([
+        { id: "1", email: "shared-admin@test.com", created_at: "2024-01-01" },
+        { id: "2", email: "regular@test.com", created_at: "2024-01-02" },
+      ]);
+      mockClients([]);
+
+      vi.resetModules();
+      const { getUsers } = await import("@/lib/actions/users");
+      const result = await getUsers();
+
+      // El superadmin configurado en SUPERADMIN_EMAILS es filtrado
+      expect(result).toHaveLength(1);
+      expect(result[0].email).toBe("regular@test.com");
     });
   });
 
