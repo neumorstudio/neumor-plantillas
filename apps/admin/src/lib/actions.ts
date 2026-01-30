@@ -148,7 +148,7 @@ export async function deleteBooking(bookingId: string): Promise<void> {
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, website_id, customer_name, customer_email, booking_date, booking_time, services, total_price_cents, notes, professional:professionals(name), customer:customers(email)"
+      "id, website_id, customer_name, customer_email, customer_phone, booking_date, booking_time, services, total_price_cents, notes, professional:professionals(name), customer:customers(email)"
     )
     .eq("id", bookingId)
     .single();
@@ -160,11 +160,22 @@ export async function deleteBooking(bookingId: string): Promise<void> {
 
   if (error) throw new Error(error.message);
 
-  const customerEmail =
+  let customerEmail =
     booking?.customer_email ||
     (Array.isArray(booking?.customer)
       ? booking?.customer[0]?.email
       : booking?.customer?.email);
+
+  if (!customerEmail && booking?.customer_phone && booking?.website_id) {
+    const { data: customerByPhone } = await supabase
+      .from("customers")
+      .select("email")
+      .eq("website_id", booking.website_id)
+      .eq("phone", booking.customer_phone)
+      .limit(1)
+      .maybeSingle();
+    customerEmail = customerByPhone?.email || customerEmail;
+  }
 
   if (customerEmail) {
     const { data: website } = await supabase
