@@ -42,14 +42,11 @@ auth.users (Supabase Auth)
                     |
                     +-- bookings.website_id
                     +-- customers.website_id
-                    +-- orders.website_id
                     +-- menu_items.website_id
                     +-- jobs.website_id
-                    +-- payments.website_id
                     +-- trainer_services.website_id
                     +-- client_packages.website_id
                     +-- client_progress.website_id
-                    +-- social_accounts.website_id
                     +-- newsletter_*.website_id
                     +-- notification_settings.website_id
 ```
@@ -108,55 +105,37 @@ auth.users (Supabase Auth)
 |                            RESTAURANT TABLES   |  |  |  |  |                       |
 +------------------------------------------------+--+--+--+--+-----------------------+
 |                                                |  |  |  |  |                       |
-|  +-------------+  +-------------+              |  |  |  |  |                       |
-|  | menu_items  |  |   orders    |<-------------+  |  |  |  |                       |
-|  +-------------+  +-------------+                 |  |  |  |                       |
-|  | id (PK)     |  | id (PK)     |                 |  |  |  |                       |
-|  | website_id  |  | website_id  |                 |  |  |  |                       |
-|  | name, price |  | customer_*  |                 |  |  |  |                       |
-|  | category    |  | status      |                 |  |  |  |                       |
-|  +-------------+  | stripe_*    |                 |  |  |  |                       |
-|        |          +------+------+                 |  |  |  |                       |
-|        |                 |                        |  |  |  |                       |
-|        |          +------+------+                 |  |  |  |                       |
-|        +--------->| order_items |                 |  |  |  |                       |
-|                   +-------------+                 |  |  |  |                       |
+|  +-------------+                               |  |  |  |  |                       |
+|  | menu_items  |<------------------------------+  |  |  |  |                       |
+|  +-------------+                                  |  |  |  |                       |
+|  | id (PK)     |                                  |  |  |  |                       |
+|  | website_id  |                                  |  |  |  |                       |
+|  | name, price |                                  |  |  |  |                       |
+|  | category    |                                  |  |  |  |                       |
+|  +-------------+                                  |  |  |  |                       |
 |                                                   |  |  |  |                       |
-|  +---------------+                                |  |  |  |                       |
-|  |order_settings |<-------------------------------+  |  |  |                       |
-|  +---------------+                                   |  |  |                       |
++---------------------------------------------------+--+--+--+-----------------------+
+|                            REPAIRS/JOBS TABLES       |  |  |                       |
++------------------------------------------------------+--+--+----------------------+
+|                                                      |  |  |                       |
+|  +-------------+      +-------------+                |  |  |                       |
+|  |    jobs     |<-----+  job_tasks  |                |  |  |                       |
+|  +-------------+      +-------------+                |  |  |                       |
+|  | id (PK)     |      | id (PK)     |                |  |  |                       |
+|  | website_id  |<-----+ job_id      |                |  |  |                       |
+|  | customer_id |      | title       |                |  |  |                       |
+|  | status      |      | is_completed|                |  |  |                       |
+|  | costs       |      +-------------+                |  |  |                       |
+|  +------+------+                                     |  |  |                       |
+|         |             +-------------+                |  |  |                       |
+|         +------------>| job_photos  |                |  |  |                       |
+|                       +-------------+                |  |  |                       |
+|                       | type (enum) |                |  |  |                       |
+|                       +-------------+                |  |  |                       |
 |                                                      |  |  |                       |
 +------------------------------------------------------+--+--+-----------------------+
-|                            REPAIRS/JOBS TABLES          |  |                       |
+|                            FITNESS TABLES               |  |                       |
 +---------------------------------------------------------+--+----------------------+
-|                                                         |  |                       |
-|  +-------------+      +-------------+                   |  |                       |
-|  |    jobs     |<-----+  job_tasks  |                   |  |                       |
-|  +-------------+      +-------------+                   |  |                       |
-|  | id (PK)     |      | id (PK)     |                   |  |                       |
-|  | website_id  |<-----+ job_id      |                   |  |                       |
-|  | customer_id |      | title       |                   |  |                       |
-|  | status      |      | is_completed|                   |  |                       |
-|  | costs       |      +-------------+                   |  |                       |
-|  +------+------+                                        |  |                       |
-|         |             +-------------+                   |  |                       |
-|         +------------>| job_photos  |                   |  |                       |
-|                       +-------------+                   |  |                       |
-|                       | type (enum) |                   |  |                       |
-|                       +-------------+                   |  |                       |
-|                                                         |  |                       |
-|  +-------------+                                        |  |                       |
-|  |  payments   |<---------------------------------------+  |                       |
-|  +-------------+                                           |                       |
-|  | website_id  |                                           |                       |
-|  | job_id      |                                           |                       |
-|  | customer_id |                                           |                       |
-|  | method/stat |                                           |                       |
-|  +-------------+                                           |                       |
-|                                                            |                       |
-+------------------------------------------------------------+-----------------------+
-|                            FITNESS TABLES                   |                      |
-+-------------------------------------------------------------+----------------------+
 |                                                             |                      |
 |  +------------------+    +------------------+               |                      |
 |  |trainer_services  |    | client_packages  |<--------------+                      |
@@ -177,21 +156,6 @@ auth.users (Supabase Auth)
 |                          | weight_kg, etc.  |    | exercise_name    |              |
 |                          | photos (JSONB)   |    | record_value     |              |
 |                          +------------------+    +------------------+              |
-|                                                                                    |
-+------------------------------------------------------------------------------------+
-|                            INTEGRATION TABLES                                      |
-+------------------------------------------------------------------------------------+
-|                                                                                    |
-|  +------------------+        +---------------------------+                         |
-|  | social_accounts  | 1----N | google_business_locations |                         |
-|  +------------------+        +---------------------------+                         |
-|  | platform         |        | social_account_id         |                         |
-|  | access_token     |        | location_name             |                         |
-|  +--------+---------+        +-----------+---------------+                         |
-|           |                              |                                         |
-|  +--------+---------+        +-----------+---------------+                         |
-|  | scheduled_posts  |        |   google_reviews_cache    |                         |
-|  +------------------+        +---------------------------+                         |
 |                                                                                    |
 +------------------------------------------------------------------------------------+
 |                            NEWSLETTER TABLES                                       |
@@ -538,62 +502,6 @@ Items del menu para restaurantes.
 
 ---
 
-### `order_settings`
-
-Configuracion de pedidos online.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
-| `website_id` | UUID | FK -> websites(id), UNIQUE | Sitio asociado |
-| `pickup_start_time` | TIME | DEFAULT '12:00' | Hora inicio recogida |
-| `pickup_end_time` | TIME | DEFAULT '22:00' | Hora fin recogida |
-| `min_pickup_advance_minutes` | INTEGER | DEFAULT 30 | Minutos minimos de antelacion |
-| `max_pickup_advance_minutes` | INTEGER | DEFAULT 1440 | Minutos maximos de antelacion |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
-
----
-
-### `orders`
-
-Pedidos online con pago via Stripe.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
-| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
-| `customer_name` | TEXT | NOT NULL | Nombre del cliente |
-| `customer_email` | TEXT | - | Email |
-| `customer_phone` | TEXT | - | Telefono |
-| `status` | TEXT | DEFAULT 'pending' | Estado del pedido |
-| `pickup_time` | TIMESTAMPTZ | NOT NULL | Hora de recogida |
-| `total_cents` | INTEGER | NOT NULL | Total en centimos |
-| `stripe_payment_intent_id` | TEXT | - | ID del PaymentIntent |
-| `notes` | TEXT | - | Notas del pedido |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
-
-**status:** `pending`, `paid`, `cancelled`, `failed`, `refunded`
-
----
-
-### `order_items`
-
-Lineas de pedido.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
-| `order_id` | UUID | FK -> orders(id) ON DELETE CASCADE | Pedido padre |
-| `menu_item_id` | UUID | FK -> menu_items(id) | Item del menu |
-| `name` | TEXT | NOT NULL | Nombre del item (snapshot) |
-| `quantity` | INTEGER | NOT NULL, CHECK > 0 | Cantidad |
-| `unit_price_cents` | INTEGER | NOT NULL | Precio unitario |
-| `total_cents` | INTEGER | NOT NULL | Total de la linea |
-
----
-
 ## Tablas de Reparaciones/Reformas
 
 ### `jobs`
@@ -647,27 +555,6 @@ Fotos de trabajos (antes, durante, despues).
 | `type` | job_photo_type | NOT NULL | Tipo (ver enum) |
 | `caption` | TEXT | - | Descripcion |
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-
----
-
-### `payments`
-
-Pagos recibidos (reparaciones, fitness, etc.).
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
-| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
-| `job_id` | UUID | FK -> jobs(id) | Trabajo asociado (opcional) |
-| `customer_id` | UUID | FK -> customers(id) | Cliente |
-| `amount_cents` | INTEGER | NOT NULL | Monto en centimos |
-| `method` | payment_method | NOT NULL | Metodo (ver enum) |
-| `status` | payment_status | DEFAULT 'completed' | Estado (ver enum) |
-| `reference` | TEXT | - | Referencia/numero |
-| `notes` | TEXT | - | Notas |
-| `paid_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de pago |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
 
 ---
 
@@ -864,92 +751,6 @@ Configuracion especifica de restaurantes.
 | `takeaway_enabled` | BOOLEAN | DEFAULT false | Pedidos para llevar |
 | `capacity` | INTEGER | DEFAULT 20 | Capacidad de comensales |
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
-
----
-
-## Tablas de Integraciones
-
-### `social_accounts`
-
-Cuentas de redes sociales conectadas.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
-| `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
-| `platform` | TEXT | NOT NULL | Plataforma |
-| `platform_user_id` | TEXT | NOT NULL | ID en la plataforma |
-| `access_token` | TEXT | NOT NULL | Token de acceso |
-| `refresh_token` | TEXT | - | Token de refresco |
-| `token_expires_at` | TIMESTAMPTZ | - | Expiracion del token |
-| `account_name` | TEXT | - | Nombre de usuario |
-| `is_active` | BOOLEAN | DEFAULT true | Activa |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
-
-**platform:** `instagram`, `facebook`, `tiktok`, `google_business`
-
----
-
-### `scheduled_posts`
-
-Posts programados para redes sociales.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK | Identificador unico |
-| `website_id` | UUID | FK -> websites(id) | Sitio asociado |
-| `social_account_id` | UUID | FK -> social_accounts(id) | Cuenta destino |
-| `content` | TEXT | - | Texto del post |
-| `media_urls` | TEXT[] | - | URLs de medios |
-| `scheduled_for` | TIMESTAMPTZ | - | Fecha programada |
-| `published_at` | TIMESTAMPTZ | - | Fecha de publicacion |
-| `status` | TEXT | DEFAULT 'draft' | Estado |
-| `error_message` | TEXT | - | Mensaje de error |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
-
-**status:** `draft`, `scheduled`, `publishing`, `published`, `failed`
-
----
-
-### `google_business_locations`
-
-Ubicaciones de Google Business Profile.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK | Identificador unico |
-| `social_account_id` | UUID | FK -> social_accounts(id) | Cuenta GBP |
-| `location_id` | TEXT | NOT NULL | ID de ubicacion |
-| `name` | TEXT | NOT NULL | Nombre del negocio |
-| `address` | TEXT | - | Direccion |
-| `phone` | TEXT | - | Telefono |
-| `website` | TEXT | - | URL del sitio |
-| `place_id` | TEXT | - | Google Place ID |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
-| `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
-
----
-
-### `google_reviews_cache`
-
-Cache de resenas de Google.
-
-| Columna | Tipo | Restricciones | Descripcion |
-|---------|------|---------------|-------------|
-| `id` | UUID | PK | Identificador unico |
-| `location_id` | UUID | FK -> google_business_locations(id) | Ubicacion |
-| `review_id` | TEXT | UNIQUE, NOT NULL | ID de resena en Google |
-| `reviewer_name` | TEXT | - | Nombre del resenador |
-| `reviewer_photo` | TEXT | - | Foto del resenador |
-| `rating` | INTEGER | CHECK 1-5 | Calificacion |
-| `comment` | TEXT | - | Comentario |
-| `review_time` | TIMESTAMPTZ | - | Fecha de la resena |
-| `reply` | TEXT | - | Respuesta del negocio |
-| `reply_time` | TIMESTAMPTZ | - | Fecha de respuesta |
-| `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de cache |
 | `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
 
 ---
@@ -1254,9 +1055,6 @@ CREATE INDEX idx_client_records_exercise ON client_records(customer_id, exercise
 ```sql
 CREATE INDEX idx_menu_items_website ON menu_items(website_id);
 CREATE INDEX idx_menu_items_category ON menu_items(website_id, category);
-CREATE INDEX idx_orders_website ON orders(website_id);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_order_items_order ON order_items(order_id);
 ```
 
 ### Newsletter
@@ -1269,16 +1067,6 @@ CREATE INDEX idx_newsletter_subscribers_website ON newsletter_subscribers(websit
 CREATE INDEX idx_newsletter_subscribers_email ON newsletter_subscribers(email);
 ```
 
-### Social/Integrations
-
-```sql
-CREATE INDEX idx_social_accounts_website ON social_accounts(website_id);
-CREATE INDEX idx_scheduled_posts_website ON scheduled_posts(website_id);
-CREATE INDEX idx_scheduled_posts_status ON scheduled_posts(status);
-CREATE INDEX idx_gbp_locations_social ON google_business_locations(social_account_id);
-CREATE INDEX idx_reviews_location ON google_reviews_cache(location_id);
-```
-
 ---
 
 ## Historial de Migraciones
@@ -1289,12 +1077,9 @@ CREATE INDEX idx_reviews_location ON google_reviews_cache(location_id);
 |---|---------|-------------|
 | 0001 | `initial_schema.sql` | Tablas core: clients, websites, bookings, leads, notification_settings, activity_log |
 | 0002 | `rls_policies.sql` | Politicas RLS iniciales |
-| 0003 | `social_accounts.sql` | Redes sociales: social_accounts, scheduled_posts |
 | 0004 | `newsletter.sql` | Newsletter: templates, campaigns, subscribers, automation + funciones RPC |
-| 0005 | `google_business.sql` | Google Business: locations, reviews_cache |
 | 0006 | `auto_create_user.sql` | Trigger para auto-crear cliente/website en signup |
-| 0007 | `fix_social_google_rls.sql` | Fix RLS usando auth_user_id |
-| 0008 | `menu_orders.sql` | Menu y pedidos: menu_items, order_settings, orders, order_items |
+| 0008 | `menu_orders.sql` | Menu: menu_items |
 | 0009 | `drop_reservations.sql` | Eliminar tabla obsoleta |
 | 0010 | `add_lead_quote_fields.sql` | Campos lead_type y details para presupuestos |
 | 0011 | `add_business_type_repairs.sql` | Anadir tipo de negocio "repairs" |
@@ -1308,7 +1093,6 @@ CREATE INDEX idx_reviews_location ON google_reviews_cache(location_id);
 | 0019 | `business_type_config.sql` | Tabla de configuracion por tipo de negocio |
 | 0020 | `customers_table.sql` | Tabla CRM universal de clientes |
 | 0021 | `jobs_tables.sql` | Tablas para reparaciones: jobs, job_tasks, job_photos |
-| 0022 | `payments_table.sql` | Tabla de pagos |
 | 0023 | `remove_leads_from_config.sql` | Eliminar referencias a leads de business_type_config |
 | 0024 | `trainer_services.sql` | Servicios del entrenador personal |
 | 0025 | `client_packages.sql` | Paquetes/bonos de sesiones |

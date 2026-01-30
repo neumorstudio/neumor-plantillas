@@ -67,11 +67,6 @@ export interface MenuItemRow {
   sort_order: number;
 }
 
-export interface OrderSettings {
-  pickup_start_time: string;
-  pickup_end_time: string;
-}
-
 export interface BusinessHourRow {
   day_of_week: number;
   is_open: boolean;
@@ -189,29 +184,6 @@ export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | 
     }
 
     return data as MenuItemRow[];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
-    return null;
-  }
-}
-
-export async function getOrderSettings(websiteId?: string): Promise<OrderSettings | null> {
-  if (!supabase || !websiteId) {
-    return null;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("order_settings")
-      .select("pickup_start_time, pickup_end_time")
-      .eq("website_id", websiteId)
-      .single();
-
-    if (error) {
-      return null;
-    }
-
-    return data as OrderSettings;
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return null;

@@ -40,26 +40,7 @@ description: Problemas comunes y cómo resolverlos.
 - Configura `PUBLIC_ADMIN_URL` en la plantilla.
 - Si usas webhooks externos, setea `PUBLIC_RESERVATION_WEBHOOK_URL` o equivalente.
 
-## Pedidos online no aparecen
-
-**Causa:** falta `PUBLIC_STRIPE_PUBLISHABLE_KEY` o el endpoint de intent.
-
-**Solución:**
-
-- Define `PUBLIC_STRIPE_PUBLISHABLE_KEY` en la plantilla restaurant.
-- Asegura `PUBLIC_ADMIN_URL` o `PUBLIC_ORDER_INTENT_URL`.
-- Verifica `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET` en el admin.
-
-## Google Business no aparece en el panel
-
-**Causa:** feature flag desactivado.
-
-**Solución:**
-
-- `NEXT_PUBLIC_ENABLE_GOOGLE_BUSINESS=true` en `apps/admin/.env`.
-- Configura credenciales OAuth (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
-
-## “Turborepo cache issues”
+## "Turborepo cache issues"
 
 ```bash
 pnpm clean

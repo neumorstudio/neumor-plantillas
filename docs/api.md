@@ -8,7 +8,6 @@ description: Endpoints internos del panel admin y servicios públicos usados por
 Este repositorio **no expone una API pública estable**. Los endpoints se implementan como Route Handlers de Next.js dentro de `apps/admin/src/app/api`. Se usan para:
 
 - Formularios públicos de los templates.
-- Integraciones (Stripe, Google Business, Instagram).
 - Operaciones internas del panel admin.
 
 ## Endpoints usados por templates
@@ -20,12 +19,10 @@ Este repositorio **no expone una API pública estable**. Los endpoints se implem
 | `/api/presupuestos` | `apps/admin/src/app/api/presupuestos/route.ts` | Solicitudes de presupuesto (repairs). |
 | `/api/entrenamientos` | `apps/admin/src/app/api/entrenamientos/route.ts` | Solicitudes relacionadas con entrenamientos (gym). |
 | `/api/contacto` | `apps/admin/src/app/api/contacto/route.ts` | Formulario de contacto (store). |
-| `/api/pedidos/intent` | `apps/admin/src/app/api/pedidos/intent/route.ts` | Creación de PaymentIntent para pedidos online. |
-| `/api/stripe/webhook` | `apps/admin/src/app/api/stripe/webhook/route.ts` | Webhook de Stripe. |
 
 Notas:
 
-- `/api/reservas` y `/api/pedidos/intent` implementan validación estricta de payload, allowlist de CORS y rate limiting (ver `docs/security/public-api-verification.md`).
+- `/api/reservas` implementa validación estricta de payload, allowlist de CORS y rate limiting (ver `docs/security/public-api-verification.md`).
 - Los templates apuntan a estos endpoints mediante `PUBLIC_ADMIN_URL` o webhooks alternativos.
 
 ## Endpoints internos del admin
@@ -48,17 +45,5 @@ Notas:
 | `/api/newsletter/templates` | `apps/admin/src/app/api/newsletter/templates/route.ts` | Templates de newsletter. |
 | `/api/newsletter/generate` | `apps/admin/src/app/api/newsletter/generate/route.ts` | Generación de contenido de newsletter. |
 | `/api/newsletter/automation` | `apps/admin/src/app/api/newsletter/automation/route.ts` | Automatización de newsletters. |
-
-## Integraciones
-
-| Ruta | Archivo | Uso |
-|---|---|---|
-| `/api/google-business/auth` | `apps/admin/src/app/api/google-business/auth/route.ts` | OAuth de Google Business. |
-| `/api/google-business/auth/callback` | `apps/admin/src/app/api/google-business/auth/callback/route.ts` | Callback OAuth. |
-| `/api/google-business/locations` | `apps/admin/src/app/api/google-business/locations/route.ts` | Locaciones de Google Business. |
-| `/api/google-business/reviews` | `apps/admin/src/app/api/google-business/reviews/route.ts` | Reviews. |
-| `/api/google-business/reviews/[reviewId]/reply` | `apps/admin/src/app/api/google-business/reviews/[reviewId]/reply/route.ts` | Respuesta a reviews. |
-| `/api/google-business/disconnect` | `apps/admin/src/app/api/google-business/disconnect/route.ts` | Desconexión. |
-| `/api/auth/instagram/callback` | `apps/admin/src/app/api/auth/instagram/callback/route.ts` | OAuth de Instagram (Meta). |
 
 Para detalles de payloads y respuestas, revisa cada `route.ts`.

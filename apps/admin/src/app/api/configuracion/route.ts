@@ -23,15 +23,11 @@ export async function POST(request: NextRequest) {
       websiteId,
       businessData,
       notificationSettings,
-      orderSettings,
-      restaurantConfig,
     } = body as {
       clientId: string;
       websiteId: string;
       businessData: { business_name: string; phone?: string | null; address?: string | null };
       notificationSettings: Record<string, unknown>;
-      orderSettings?: { pickup_start_time: string; pickup_end_time: string };
-      restaurantConfig?: Record<string, unknown>;
     };
 
     // Verify user owns this client (by auth_user_id)
@@ -81,31 +77,6 @@ export async function POST(request: NextRequest) {
         email: client.email || null,
       };
 
-      if (restaurantConfig && typeof restaurantConfig === "object") {
-        const incomingRestaurant = restaurantConfig as Record<string, unknown>;
-        const existingRestaurant =
-          (nextConfig.restaurant as Record<string, unknown> | undefined) || {};
-        const mergedRestaurant: Record<string, unknown> = {
-          ...existingRestaurant,
-          ...incomingRestaurant,
-        };
-
-        if (
-          incomingRestaurant.orders &&
-          typeof incomingRestaurant.orders === "object"
-        ) {
-          const existingOrders =
-            (existingRestaurant.orders as Record<string, unknown> | undefined) ||
-            {};
-          mergedRestaurant.orders = {
-            ...existingOrders,
-            ...(incomingRestaurant.orders as Record<string, unknown>),
-          };
-        }
-
-        nextConfig.restaurant = mergedRestaurant;
-      }
-
       const { error: websiteError } = await supabase
         .from("websites")
         .update({ config: nextConfig })
@@ -144,27 +115,6 @@ export async function POST(request: NextRequest) {
         { error: "Error al actualizar configuracion de notificaciones" },
         { status: 500 }
       );
-    }
-
-    if (orderSettings) {
-      const { error: orderSettingsError } = await supabase
-        .from("order_settings")
-        .upsert(
-          {
-            website_id: websiteId,
-            pickup_start_time: orderSettings.pickup_start_time,
-            pickup_end_time: orderSettings.pickup_end_time,
-          },
-          { onConflict: "website_id" }
-        );
-
-      if (orderSettingsError) {
-        console.error("Error updating order settings:", orderSettingsError);
-        return NextResponse.json(
-          { error: "Error al actualizar configuracion de pedidos" },
-          { status: 500 }
-        );
-      }
     }
 
     return NextResponse.json({ success: true });
