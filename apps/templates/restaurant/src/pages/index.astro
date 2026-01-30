@@ -47,6 +47,8 @@ import {
   type SpecialDayRow,
   type BookingRow,
   type RestaurantRow,
+  type SectionConfig,
+  type SectionsConfig,
 } from "@lib/supabase";
 
 // ============================================
@@ -393,6 +395,29 @@ const pickupStart = normalizeTimeString(orderSettings?.pickup_start_time || defa
 const pickupEnd = normalizeTimeString(orderSettings?.pickup_end_time || defaultOrderSettings.pickupEnd);
 const heroCtaText = ordersEnabled ? "Pedir online" : undefined;
 const heroCtaLink = ordersEnabled ? "#orders" : undefined;
+
+// ============================================
+// CONFIGURACION DE SECCIONES DINAMICAS
+// ============================================
+
+// Secciones por defecto para restaurant
+const defaultSections: SectionConfig[] = [
+  { id: "hero", enabled: true, variant: "classic", order: 0 },
+  { id: "features", enabled: true, variant: "cards", order: 1 },
+  { id: "menu", enabled: true, variant: "tabs", order: 2 },
+  { id: "orders", enabled: ordersEnabled, variant: "default", order: 3 },
+  { id: "reservation", enabled: true, variant: "modern", order: 4 },
+  { id: "footer", enabled: true, variant: "full", order: 5 },
+];
+
+// Obtener sectionsConfig de la BD o usar defaults
+const sectionsConfig: SectionsConfig = websiteData?.config?.sectionsConfig || {
+  sections: defaultSections,
+};
+
+// Crear un mapa para acceso rapido a la configuracion de cada seccion
+// IMPORTANTE: Incluir TODAS las secciones (no solo habilitadas) para permitir live preview
+const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
 ---
 
 <Layout
@@ -421,54 +446,107 @@ const heroCtaLink = ordersEnabled ? "#orders" : undefined;
     </div>
   )}
 
-  <main>
-    <Hero
-      title={config.heroTitle}
-      subtitle={config.heroSubtitle}
-      backgroundImage={config.heroImage}
-      ctaText={heroCtaText}
-      ctaLink={heroCtaLink}
-      scheduleLabel={scheduleLabel}
-      address={config.address}
-      phone={config.phone}
-    />
+  <main class="sections-container" style="display: flex; flex-direction: column;">
+    {/*
+      Renderizado de TODAS las secciones posibles para permitir live preview.
+      Las secciones deshabilitadas se ocultan con display:none.
+      El orden se controla con CSS order para reordenamiento en tiempo real.
+    */}
+    {(() => {
+      const allSections = ["hero", "features", "menu", "orders", "reservation"];
 
-    <Features />
+      return allSections.map((sectionId) => {
+        const sectionCfg = sectionConfigMap.get(sectionId);
+        const isEnabled = sectionCfg?.enabled ?? true;
+        const order = sectionCfg?.order ?? 99;
+        // Para orders, también verificar ordersEnabled del sistema
+        const shouldShow = sectionId === "orders" ? (isEnabled && ordersEnabled) : isEnabled;
+        const style = `order: ${order}; ${!shouldShow ? 'display: none;' : ''}`;
 
-    <Menu categories={menuCategories} />
-
-    {ordersEnabled && (
-      <OrderOnline
-        categories={menuCategories}
-        websiteId={currentWebsiteId}
-        orderApiUrl={ordersApiUrl}
-        stripePublishableKey={ordersPaymentMode === "stripe" ? stripePublishableKey : ""}
-        paymentMode={ordersPaymentMode}
-        pickupStart={pickupStart}
-        pickupEnd={pickupEnd}
-        businessHours={businessHours}
-        specialDays={specialDays}
-        ordersConfig={ordersUiConfig}
-      />
-    )}
-
-    <ReservationForm
-      webhookUrl={config.webhookUrl}
-      websiteId={currentWebsiteId}
-      businessHours={businessHours}
-      specialDays={specialDays}
-      bookings={bookings}
-      capacity={restaurantSettings?.capacity ?? null}
-    />
+        switch (sectionId) {
+          case "hero":
+            return (
+              <section data-section-id="hero" style={style}>
+                <Hero
+                  title={config.heroTitle}
+                  subtitle={config.heroSubtitle}
+                  backgroundImage={config.heroImage}
+                  ctaText={heroCtaText}
+                  ctaLink={heroCtaLink}
+                  scheduleLabel={scheduleLabel}
+                  address={config.address}
+                  phone={config.phone}
+                />
+              </section>
+            );
+          case "features":
+            return (
+              <section data-section-id="features" style={style}>
+                <Features />
+              </section>
+            );
+          case "menu":
+            return (
+              <section data-section-id="menu" style={style}>
+                <Menu categories={menuCategories} />
+              </section>
+            );
+          case "orders":
+            return (
+              <section data-section-id="orders" style={style}>
+                <OrderOnline
+                  categories={menuCategories}
+                  websiteId={currentWebsiteId}
+                  orderApiUrl={ordersApiUrl}
+                  stripePublishableKey={ordersPaymentMode === "stripe" ? stripePublishableKey : ""}
+                  paymentMode={ordersPaymentMode}
+                  pickupStart={pickupStart}
+                  pickupEnd={pickupEnd}
+                  businessHours={businessHours}
+                  specialDays={specialDays}
+                  ordersConfig={ordersUiConfig}
+                />
+              </section>
+            );
+          case "reservation":
+            return (
+              <section data-section-id="reservation" style={style}>
+                <ReservationForm
+                  webhookUrl={config.webhookUrl}
+                  websiteId={currentWebsiteId}
+                  businessHours={businessHours}
+                  specialDays={specialDays}
+                  bookings={bookings}
+                  capacity={restaurantSettings?.capacity ?? null}
+                />
+              </section>
+            );
+          default:
+            return null;
+        }
+      });
+    })()}
   </main>
 
-  <FooterComponent
-    restaurantName={config.restaurantName}
-    address={config.address}
-    phone={config.phone}
-    email={config.email}
-    socialLinks={config.socialLinks}
-  />
+  {/* Footer - siempre renderizado para live preview */}
+  {(() => {
+    const footerCfg = sectionConfigMap.get("footer");
+    const isFooterEnabled = footerCfg?.enabled ?? true;
+    const footerOrder = footerCfg?.order ?? 100;
+    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+    return (
+      <div data-section-id="footer" style={footerStyle}>
+        <FooterComponent
+          restaurantName={config.restaurantName}
+          address={config.address}
+          phone={config.phone}
+          email={config.email}
+          socialLinks={config.socialLinks}
+        />
+      </div>
+    );
+  })()}
 
   {/* Indicador de Estado Abierto/Cerrado */}
   {openStatusConfig.enabled && openStatusConfig.position === "floating" && (
