@@ -865,6 +865,111 @@ export function getSalonAppointmentNotificationEmail(
   `.trim();
 }
 
+// Plantilla: Recordatorio 1h antes (Salon)
+export function getSalonAppointmentReminder1hEmail(
+  data: AppointmentEmailData
+): string {
+  const detailRows = renderDetailRows([
+    { label: "Fecha", value: data.date },
+    { label: "Hora", value: data.time },
+    { label: "Servicio", value: data.service },
+    ...(data.professional ? [{ label: "Estilista", value: data.professional }] : []),
+  ]);
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recordatorio de cita</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0fdf4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eff6ff; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); padding: 26px 30px; text-align: center;">
+              ${data.logoUrl ? `
+              <div style="margin-bottom: 10px;">
+                <img src="${data.logoUrl}" alt="${data.businessName}" style="height: 44px; max-width: 160px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 6px 10px;" />
+              </div>
+              ` : ""}
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">
+                Recordatorio de cita
+              </h1>
+              <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 15px;">
+                ${data.businessName}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 32px 30px;">
+              <p style="color: #374151; font-size: 16px; margin: 0 0 12px 0;">
+                Hola <strong>${data.customerName}</strong>,
+              </p>
+              <p style="color: #475569; font-size: 15px; margin: 0 0 24px 0; line-height: 1.6;">
+                Te recordamos que tu cita es en aproximadamente 1 hora. Te esperamos pronto.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eff6ff; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #1e3a8a; margin: 0 0 16px 0; font-size: 16px;">
+                      Detalles de tu cita
+                    </h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${detailRows}
+                      ${data.notes ? `
+                      <tr>
+                        <td colspan="2" style="padding: 12px 0 0 0;">
+                          <span style="color: #1e3a8a; font-size: 14px;">Notas:</span>
+                          <p style="color: #1e3a8a; font-size: 14px; margin: 5px 0 0 0; font-style: italic;">${data.notes}</p>
+                        </td>
+                      </tr>
+                      ` : ""}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              ${data.businessPhone || data.businessAddress ? `
+              <div style="background-color: #dbeafe; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+                <p style="color: #1e3a8a; font-size: 14px; margin: 0; line-height: 1.5;">
+                  <strong>¿Necesitas cambiar tu cita?</strong><br>
+                  ${data.businessPhone ? `Llamanos al <a href="tel:${data.businessPhone}" style="color: #1e3a8a;">${data.businessPhone}</a>` : ""}
+                  ${data.businessAddress ? `<br>Direccion: ${data.businessAddress}` : ""}
+                </p>
+              </div>
+              ` : ""}
+
+              <p style="color: #475569; font-size: 14px; margin: 0; text-align: center;">
+                Gracias por confiar en nosotros. ¡Te esperamos!
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #eff6ff; padding: 22px 30px; text-align: center; border-top: 1px solid #bfdbfe;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Este email fue enviado por ${data.businessName}
+              </p>
+              <p style="color: #9ca3af; font-size: 11px; margin: 10px 0 0 0;">
+                Powered by <a href="https://neumorstudio.com" style="color: #2563eb; text-decoration: none;">NeumorStudio</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
 // Plantilla: Confirmacion de reserva Fitness (CLIENTE)
 export function getFitnessBookingConfirmationEmail(
   data: FitnessBookingEmailData
