@@ -163,15 +163,17 @@ export async function deleteBooking(bookingId: string): Promise<void> {
 
   if (error) throw new Error(error.message);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const customerRelation = booking?.customer as { email?: string } | { email?: string }[] | null;
   let customerEmail =
     booking?.customer_email ||
-    (Array.isArray(booking?.customer)
-      ? booking?.customer[0]?.email
-      : booking?.customer?.email);
+    (Array.isArray(customerRelation)
+      ? customerRelation[0]?.email
+      : customerRelation?.email);
 
   console.log("[deleteBooking] Initial customerEmail:", customerEmail);
   console.log("[deleteBooking] customer_email field:", booking?.customer_email);
-  console.log("[deleteBooking] customer relation:", booking?.customer);
+  console.log("[deleteBooking] customer relation:", customerRelation);
 
   if (!customerEmail && booking?.customer_phone && booking?.website_id) {
     const { data: customerByPhone } = await supabase
@@ -187,7 +189,7 @@ export async function deleteBooking(bookingId: string): Promise<void> {
 
   console.log("[deleteBooking] Final customerEmail:", customerEmail);
 
-  if (customerEmail) {
+  if (customerEmail && booking) {
     const { data: website } = await supabase
       .from("websites")
       .select("id, config, client:clients(business_name, business_type)")
@@ -204,8 +206,10 @@ export async function deleteBooking(bookingId: string): Promise<void> {
       undefined;
     const businessPhone = (website?.config as { phone?: string })?.phone;
     const businessAddress = (website?.config as { address?: string })?.address;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const professional = booking.professional as { name?: string } | { name?: string }[] | null;
     const professionalName =
-      Array.isArray(booking.professional) ? booking.professional[0]?.name : booking.professional?.name;
+      Array.isArray(professional) ? professional[0]?.name : professional?.name;
 
     const emailData = {
       businessName,
