@@ -21,9 +21,11 @@ export async function isSuperAdmin(): Promise<boolean> {
 
   if (superAdminEmails.length === 0) {
     // Si no hay emails configurados, denegar acceso por seguridad
-    console.warn(
-      "[SUPERADMIN] No hay emails configurados en SUPERADMIN_EMAILS"
-    );
+    if (process.env.NODE_ENV !== "test") {
+      console.warn(
+        "[SUPERADMIN] No hay emails configurados en SUPERADMIN_EMAILS"
+      );
+    }
     return false;
   }
 
