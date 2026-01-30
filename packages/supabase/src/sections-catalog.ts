@@ -45,6 +45,13 @@ const SECTION_ICONS: Record<string, string> = {
 // ============================================
 
 export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
+  // ============================================
+  // NOTA IMPORTANTE:
+  // Solo incluir en businessTypes los tipos donde la sección está
+  // REALMENTE IMPLEMENTADA en el template correspondiente.
+  // Esto asegura que el Section Builder solo muestre secciones funcionales.
+  // ============================================
+
   // === SECCIONES COMUNES ===
   hero: {
     id: "hero",
@@ -60,7 +67,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     defaultVariant: "classic",
     required: true,
     fixedPosition: "top",
-    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "realestate", "repairs"],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   features: {
@@ -74,7 +82,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "banner", label: "Banner" },
     ],
     defaultVariant: "cards",
-    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "realestate", "repairs"],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   testimonials: {
@@ -88,7 +97,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "minimal", label: "Minimalista" },
     ],
     defaultVariant: "carousel",
-    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "realestate", "repairs"],
+    // NO IMPLEMENTADO - No hay componente Testimonials en ningún template
+    businessTypes: [],
   },
 
   faq: {
@@ -102,7 +112,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "simple", label: "Simple" },
     ],
     defaultVariant: "accordion",
-    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "realestate", "repairs"],
+    // NO IMPLEMENTADO - No hay componente FAQ en ningún template
+    businessTypes: [],
   },
 
   contact: {
@@ -112,11 +123,10 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     icon: SECTION_ICONS.contact,
     variants: [
       { value: "form", label: "Formulario" },
-      { value: "map", label: "Con Mapa" },
-      { value: "split", label: "Dividido" },
     ],
     defaultVariant: "form",
-    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "realestate", "repairs"],
+    // Implementado en: shop (store), repairs (usan ContactForm)
+    businessTypes: ["shop", "repairs"],
   },
 
   footer: {
@@ -132,7 +142,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     defaultVariant: "full",
     required: true,
     fixedPosition: "bottom",
-    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "realestate", "repairs"],
+    // Implementado en: todos los templates implementados
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // === SECCIONES RESTAURANT ===
@@ -190,10 +201,12 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "time", label: "Con Hora" },
     ],
     defaultVariant: "pulse",
-    businessTypes: ["restaurant", "salon", "clinic", "shop"],
+    // NO es una sección del main - es un componente especial posicionado fuera
+    // Solo restaurant lo usa actualmente
+    businessTypes: [],
   },
 
-  // === SECCIONES SALON / CLINIC ===
+  // === SECCIONES SALON / CLINIC / FITNESS / SHOP / REPAIRS ===
   services: {
     id: "services",
     label: "Servicios",
@@ -206,7 +219,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "tabs",
-    businessTypes: ["salon", "clinic"],
+    // Implementado en: salon (Services), clinic (Treatments), fitness (Classes), shop (Products), repairs (Products)
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   team: {
@@ -220,7 +234,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "list", label: "Lista" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["salon", "clinic", "fitness", "realestate"],
+    // NO IMPLEMENTADO - No hay componente Team en ningún template
+    businessTypes: [],
   },
 
   gallery: {
@@ -234,7 +249,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "masonry",
-    businessTypes: ["salon", "clinic", "fitness", "restaurant", "repairs"],
+    // NO IMPLEMENTADO - No hay componente Gallery en ningún template
+    businessTypes: [],
   },
 
   booking: {
@@ -244,14 +260,14 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     icon: SECTION_ICONS.booking,
     variants: [
       { value: "wizard", label: "Asistente" },
-      { value: "inline", label: "En linea" },
-      { value: "modal", label: "Modal" },
     ],
     defaultVariant: "wizard",
-    businessTypes: ["salon", "clinic"],
+    // Implementado en: salon (AppointmentForm), clinic (AppointmentForm), fitness (ClassBookingForm)
+    businessTypes: ["salon", "clinic", "fitness"],
   },
 
   // === SECCIONES FITNESS ===
+  // NOTA: fitness usa "services" para Classes y "booking" para ClassBookingForm
   classes: {
     id: "classes",
     label: "Clases",
@@ -263,7 +279,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["fitness"],
+    // NO IMPLEMENTADO como sección separada - fitness usa "services" que renderiza Classes
+    businessTypes: [],
   },
 
   trainers: {
@@ -276,7 +293,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["fitness"],
+    // NO IMPLEMENTADO - No hay componente Trainers
+    businessTypes: [],
   },
 
   schedule: {
@@ -290,7 +308,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "list", label: "Lista" },
     ],
     defaultVariant: "table",
-    businessTypes: ["fitness"],
+    // NO IMPLEMENTADO - No hay componente Schedule
+    businessTypes: [],
   },
 
   plans: {
@@ -304,7 +323,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "comparison", label: "Comparativa" },
     ],
     defaultVariant: "cards",
-    businessTypes: ["fitness", "salon", "clinic"],
+    // NO IMPLEMENTADO - No hay componente Plans
+    businessTypes: [],
   },
 
   membership: {
@@ -317,10 +337,12 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "list", label: "Lista" },
     ],
     defaultVariant: "cards",
-    businessTypes: ["fitness"],
+    // NO IMPLEMENTADO - No hay componente Membership
+    businessTypes: [],
   },
 
   // === SECCIONES SHOP ===
+  // NOTA: shop usa "services" para Products y "contact" para ContactForm
   products: {
     id: "products",
     label: "Productos",
@@ -332,7 +354,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["shop"],
+    // NO IMPLEMENTADO como sección separada - shop usa "services" que renderiza Products
+    businessTypes: [],
   },
 
   cart: {
@@ -345,7 +368,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "modal", label: "Modal" },
     ],
     defaultVariant: "sidebar",
-    businessTypes: ["shop"],
+    // NO IMPLEMENTADO - No hay componente Cart
+    businessTypes: [],
   },
 
   categories: {
@@ -358,10 +382,12 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "list", label: "Lista" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["shop"],
+    // NO IMPLEMENTADO - No hay componente Categories
+    businessTypes: [],
   },
 
   // === SECCIONES REAL ESTATE ===
+  // NOTA: No hay template realestate implementado
   properties: {
     id: "properties",
     label: "Propiedades",
@@ -373,7 +399,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "map", label: "Con Mapa" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["realestate"],
+    // NO IMPLEMENTADO - No hay template realestate
+    businessTypes: [],
   },
 
   search: {
@@ -386,7 +413,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "advanced", label: "Avanzado" },
     ],
     defaultVariant: "inline",
-    businessTypes: ["realestate"],
+    // NO IMPLEMENTADO - No hay template realestate
+    businessTypes: [],
   },
 
   agents: {
@@ -399,10 +427,12 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["realestate"],
+    // NO IMPLEMENTADO - No hay template realestate
+    businessTypes: [],
   },
 
   // === SECCIONES REPAIRS ===
+  // NOTA: repairs usa "services" para Products y "contact" para ContactForm
   quotes: {
     id: "quotes",
     label: "Presupuestos",
@@ -413,7 +443,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "wizard", label: "Asistente" },
     ],
     defaultVariant: "form",
-    businessTypes: ["repairs"],
+    // NO IMPLEMENTADO - repairs usa "contact" con ContactForm
+    businessTypes: [],
   },
 
   portfolio: {
@@ -427,7 +458,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "grid",
-    businessTypes: ["repairs"],
+    // NO IMPLEMENTADO - No hay componente Portfolio
+    businessTypes: [],
   },
 
   process: {
@@ -440,7 +472,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "timeline", label: "Timeline" },
     ],
     defaultVariant: "steps",
-    businessTypes: ["repairs"],
+    // NO IMPLEMENTADO - No hay componente Process
+    businessTypes: [],
   },
 };
 
@@ -480,14 +513,15 @@ export function getDefaultSectionsConfig(businessType: BusinessType): SectionsCo
   });
 
   // Secciones habilitadas por defecto según tipo de negocio
+  // NOTA: Solo incluir secciones que tienen businessTypes configurados para este tipo
   const defaultEnabled: Record<BusinessType, SectionId[]> = {
-    salon: ["hero", "features", "services", "booking", "testimonials", "footer"],
-    restaurant: ["hero", "features", "menu", "reservation", "testimonials", "footer"],
-    fitness: ["hero", "features", "classes", "trainers", "plans", "footer"],
-    clinic: ["hero", "features", "services", "team", "booking", "footer"],
-    shop: ["hero", "features", "products", "categories", "testimonials", "footer"],
-    realestate: ["hero", "features", "properties", "search", "team", "footer"],
-    repairs: ["hero", "features", "portfolio", "quotes", "process", "footer"],
+    salon: ["hero", "features", "services", "booking", "footer"],
+    restaurant: ["hero", "features", "menu", "orders", "reservation", "footer"],
+    fitness: ["hero", "features", "services", "booking", "footer"],
+    clinic: ["hero", "features", "services", "booking", "footer"],
+    shop: ["hero", "features", "services", "contact", "footer"],
+    repairs: ["hero", "features", "services", "contact", "footer"],
+    realestate: ["hero", "features", "footer"], // Template no implementado
   };
 
   const enabledForType = defaultEnabled[businessType] || [];
