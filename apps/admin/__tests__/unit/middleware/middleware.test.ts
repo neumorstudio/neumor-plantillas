@@ -541,27 +541,48 @@ describe("Admin Middleware", () => {
         expect(response2.status).toBe(307);
       });
 
-      /**
-       * BUG DETECTADO: El middleware usa startsWith("/dashboard") lo cual
-       * tambien coincide con rutas como /dashboardx, /dashboard-admin, etc.
-       *
-       * Comportamiento actual: Redirige a /login
-       * Comportamiento esperado: No deberia proteger rutas que no son /dashboard/*
-       *
-       * Este test documenta el comportamiento ACTUAL (no el ideal).
-       * Ver seccion "BUGS DETECTADOS" al final de este archivo.
-       */
-      it("BUG: protege rutas que empiezan con /dashboard aunque no sean subrutas", async () => {
+      it("/dashboardx NO debe considerarse ruta protegida de dashboard", async () => {
         mockUnauthenticated();
         const request = createMockRequest("/dashboardx");
 
         const middleware = await getMiddleware();
         const response = await middleware(request);
 
-        // COMPORTAMIENTO ACTUAL (bug): Redirige porque empieza con "/dashboard"
-        // COMPORTAMIENTO ESPERADO: No deberia redirigir (status 200)
-        expect(response.status).toBe(307);
-        expect(response.headers.get("location")).toContain("/login");
+        // /dashboardx NO es /dashboard ni /dashboard/*
+        expect(response.status).toBe(200);
+      });
+
+      it("/dashboard-admin NO debe considerarse ruta protegida de dashboard", async () => {
+        mockUnauthenticated();
+        const request = createMockRequest("/dashboard-admin");
+
+        const middleware = await getMiddleware();
+        const response = await middleware(request);
+
+        // /dashboard-admin NO es /dashboard ni /dashboard/*
+        expect(response.status).toBe(200);
+      });
+
+      it("/superx NO debe considerarse ruta protegida de super", async () => {
+        mockUnauthenticated();
+        const request = createMockRequest("/superx");
+
+        const middleware = await getMiddleware();
+        const response = await middleware(request);
+
+        // /superx NO es /super ni /super/*
+        expect(response.status).toBe(200);
+      });
+
+      it("/super-admin NO debe considerarse ruta protegida de super", async () => {
+        mockUnauthenticated();
+        const request = createMockRequest("/super-admin");
+
+        const middleware = await getMiddleware();
+        const response = await middleware(request);
+
+        // /super-admin NO es /super ni /super/*
+        expect(response.status).toBe(200);
       });
     });
 
