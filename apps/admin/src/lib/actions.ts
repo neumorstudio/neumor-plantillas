@@ -148,7 +148,7 @@ export async function deleteBooking(bookingId: string): Promise<void> {
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, website_id, customer_name, customer_email, booking_date, booking_time, services, total_price_cents, notes, professional:professionals(name)"
+      "id, website_id, customer_name, customer_email, booking_date, booking_time, services, total_price_cents, notes, professional:professionals(name), customer:customers(email)"
     )
     .eq("id", bookingId)
     .single();
@@ -160,7 +160,13 @@ export async function deleteBooking(bookingId: string): Promise<void> {
 
   if (error) throw new Error(error.message);
 
-  if (booking?.customer_email) {
+  const customerEmail =
+    booking?.customer_email ||
+    (Array.isArray(booking?.customer)
+      ? booking?.customer[0]?.email
+      : booking?.customer?.email);
+
+  if (customerEmail) {
     const { data: website } = await supabase
       .from("websites")
       .select("id, config, client:clients(business_name, business_type)")
@@ -200,7 +206,7 @@ export async function deleteBooking(bookingId: string): Promise<void> {
         : getClinicAppointmentCancellationEmail(emailData);
 
     await sendEmail({
-      to: booking.customer_email,
+      to: customerEmail,
       subject: `Cita cancelada - ${businessName}`,
       html,
       from: getFromAddress(businessName),
