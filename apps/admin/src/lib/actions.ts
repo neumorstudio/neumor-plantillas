@@ -10,6 +10,11 @@ import type {
   LeadUpdate,
   NotificationSettingsUpdate,
 } from "@neumorstudio/supabase";
+import { sendEmail, getFromAddress } from "@/lib/resend";
+import {
+  getClinicAppointmentCancellationEmail,
+  getSalonAppointmentCancellationEmail,
+} from "@/lib/email-templates";
 
 // Create Supabase server client for Server Actions
 // Note: Using any for now until Supabase types are generated from the actual database
@@ -39,6 +44,50 @@ async function getSupabase() {
       },
     }
   );
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("es-ES", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function parseBookingServiceNames(services: unknown): string {
+  if (!services) return "Servicio";
+  if (Array.isArray(services)) {
+    const names = services
+      .map((item) => (item && typeof item === "object" ? (item as { name?: string }).name : ""))
+      .filter(Boolean);
+    return names.length ? names.join(", ") : "Servicio";
+  }
+  if (typeof services === "string") {
+    try {
+      const parsed = JSON.parse(services);
+      if (Array.isArray(parsed)) {
+        const names = parsed
+          .map((item) => (item && typeof item === "object" ? (item as { name?: string }).name : ""))
+          .filter(Boolean);
+        return names.length ? names.join(", ") : "Servicio";
+      }
+    } catch {
+      return services;
+    }
+    return services;
+  }
+  return "Servicio";
+}
+
+function formatTotalPrice(cents?: number | null): string | undefined {
+  if (!cents || cents <= 0) return undefined;
+  return `${(cents / 100).toFixed(2)} EUR`;
 }
 
 // ============================================
@@ -96,12 +145,67 @@ export async function updateBooking(
 export async function deleteBooking(bookingId: string): Promise<void> {
   const supabase = await getSupabase();
 
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select(
+      "id, website_id, customer_name, customer_email, booking_date, booking_time, services, total_price_cents, notes, professional:professionals(name)"
+    )
+    .eq("id", bookingId)
+    .single();
+
   const { error } = await supabase
     .from("bookings")
     .delete()
     .eq("id", bookingId);
 
   if (error) throw new Error(error.message);
+
+  if (booking?.customer_email) {
+    const { data: website } = await supabase
+      .from("websites")
+      .select("id, config, client:clients(business_name, business_type)")
+      .eq("id", booking.website_id)
+      .single();
+
+    const client = Array.isArray(website?.client) ? website?.client[0] : website?.client;
+    const businessName =
+      client?.business_name || (client?.business_type === "salon" ? "Salon" : "Clinica");
+    const businessType = client?.business_type || "salon";
+    const businessLogo =
+      (website?.config as { branding?: { logo?: string } })?.branding?.logo ||
+      (website?.config as { logo?: string })?.logo ||
+      undefined;
+    const businessPhone = (website?.config as { phone?: string })?.phone;
+    const businessAddress = (website?.config as { address?: string })?.address;
+    const professionalName =
+      Array.isArray(booking.professional) ? booking.professional[0]?.name : booking.professional?.name;
+
+    const emailData = {
+      businessName,
+      customerName: booking.customer_name || "Cliente",
+      date: formatDate(booking.booking_date),
+      time: booking.booking_time || "",
+      service: parseBookingServiceNames(booking.services),
+      totalPrice: formatTotalPrice(booking.total_price_cents),
+      professional: professionalName,
+      notes: booking.notes || undefined,
+      businessPhone,
+      businessAddress,
+      logoUrl: businessLogo,
+    };
+
+    const html =
+      businessType === "salon"
+        ? getSalonAppointmentCancellationEmail(emailData)
+        : getClinicAppointmentCancellationEmail(emailData);
+
+    await sendEmail({
+      to: booking.customer_email,
+      subject: `Cita cancelada - ${businessName}`,
+      html,
+      from: getFromAddress(businessName),
+    });
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reservas");

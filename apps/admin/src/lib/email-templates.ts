@@ -650,6 +650,109 @@ export function getClinicAppointmentNotificationEmail(
   `.trim();
 }
 
+// Plantilla: Cancelacion de cita para Clinica (CLIENTE)
+export function getClinicAppointmentCancellationEmail(
+  data: AppointmentEmailData
+): string {
+  const detailRows = renderDetailRows([
+    { label: "Fecha", value: data.date },
+    { label: "Hora", value: data.time },
+    { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
+    ...(data.professional ? [{ label: "Profesional", value: data.professional }] : []),
+  ]);
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cita cancelada</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fef2f2;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef2f2; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);">
+
+          <tr>
+            <td style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 32px 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">
+                Cita cancelada
+              </h1>
+              <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+                ${data.businessName}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="color: #374151; font-size: 16px; margin: 0 0 20px 0;">
+                Hola <strong>${data.customerName}</strong>,
+              </p>
+              <p style="color: #475569; font-size: 15px; margin: 0 0 30px 0; line-height: 1.6;">
+                Tu cita ha sido cancelada. Si deseas reagendar, contáctanos.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fee2e2; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #7f1d1d; margin: 0 0 20px 0; font-size: 18px;">
+                      Detalles de la cita
+                    </h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${detailRows}
+                      ${data.notes ? `
+                      <tr>
+                        <td colspan="2" style="padding: 15px 0 0 0;">
+                          <span style="color: #7f1d1d; font-size: 14px;">Notas:</span>
+                          <p style="color: #7f1d1d; font-size: 14px; margin: 5px 0 0 0; font-style: italic;">${data.notes}</p>
+                        </td>
+                      </tr>
+                      ` : ""}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              ${data.businessPhone || data.businessAddress ? `
+              <div style="background-color: #fecaca; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="color: #7f1d1d; font-size: 14px; margin: 0; line-height: 1.5;">
+                  <strong>¿Quieres reagendar?</strong><br>
+                  ${data.businessPhone ? `Llamanos al <a href="tel:${data.businessPhone}" style="color: #7f1d1d;">${data.businessPhone}</a>` : ""}
+                  ${data.businessAddress ? `<br>Direccion: ${data.businessAddress}` : ""}
+                </p>
+              </div>
+              ` : ""}
+
+              <p style="color: #475569; font-size: 14px; margin: 0; text-align: center;">
+                Gracias por tu comprension.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #fee2e2; padding: 25px 30px; text-align: center; border-top: 1px solid #fecaca;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Este email fue enviado por ${data.businessName}
+              </p>
+              <p style="color: #9ca3af; font-size: 11px; margin: 10px 0 0 0;">
+                Powered by <a href="https://neumorstudio.com" style="color: #ef4444; text-decoration: none;">NeumorStudio</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
 // Plantilla: Confirmacion de cita para Salon (CLIENTE)
 export function getSalonAppointmentConfirmationEmail(
   data: AppointmentEmailData
@@ -762,6 +865,127 @@ export function getSalonAppointmentConfirmationEmail(
                 </p>
               </td>
             </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+// Plantilla: Cancelacion de cita para Salon (CLIENTE)
+export function getSalonAppointmentCancellationEmail(
+  data: AppointmentEmailData
+): string {
+  const detailRows = renderDetailRows([
+    { label: "Fecha", value: data.date },
+    { label: "Hora", value: data.time },
+    { label: "Servicio", value: data.service },
+    ...(data.totalPrice ? [{ label: "Total", value: data.totalPrice }] : []),
+    ...(data.professional ? [{ label: "Estilista", value: data.professional }] : []),
+  ]);
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cita cancelada</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fef2f2;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef2f2; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);">
+
+          <tr>
+            <td style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 28px 30px; text-align: center;">
+              ${data.logoUrl ? `
+              <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto 12px auto;">
+                <tr>
+                  <td style="text-align: center;">
+                    <img src="${data.logoUrl}" alt="${data.businessName}" style="height: 44px; max-width: 160px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 6px 10px; display: inline-block;" />
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+              <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="vertical-align: middle; text-align: center;">
+                    <span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 999px; background: rgba(255,255,255,0.25); color: #ffffff; font-size: 14px; font-weight: 700; text-align: center; margin-right: 8px;">×</span>
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">
+                      Cita cancelada
+                    </h1>
+                  </td>
+                </tr>
+              </table>
+              <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+                ${data.businessName}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="color: #374151; font-size: 16px; margin: 0 0 20px 0;">
+                Hola <strong>${data.customerName}</strong>,
+              </p>
+              <p style="color: #475569; font-size: 15px; margin: 0 0 30px 0; line-height: 1.6;">
+                Tu cita ha sido cancelada. Si deseas reagendar, contáctanos.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fee2e2; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #7f1d1d; margin: 0 0 20px 0; font-size: 18px;">
+                      Detalles de la cita
+                    </h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${detailRows}
+                      ${data.notes ? `
+                      <tr>
+                        <td colspan="2" style="padding: 15px 0 0 0;">
+                          <span style="color: #7f1d1d; font-size: 14px;">Notas:</span>
+                          <p style="color: #7f1d1d; font-size: 14px; margin: 5px 0 0 0; font-style: italic;">${data.notes}</p>
+                        </td>
+                      </tr>
+                      ` : ""}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              ${data.businessPhone || data.businessAddress ? `
+              <div style="background-color: #fecaca; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="color: #7f1d1d; font-size: 14px; margin: 0; line-height: 1.5;">
+                  <strong>¿Quieres reagendar?</strong><br>
+                  ${data.businessPhone ? `Llamanos al <a href="tel:${data.businessPhone}" style="color: #7f1d1d;">${data.businessPhone}</a>` : ""}
+                  ${data.businessAddress ? `<br>Direccion: ${data.businessAddress}` : ""}
+                </p>
+              </div>
+              ` : ""}
+
+              <p style="color: #475569; font-size: 14px; margin: 0; text-align: center;">
+                Sentimos las molestias. Estamos a tu disposicion.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #fee2e2; padding: 25px 30px; text-align: center; border-top: 1px solid #fecaca;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Este email fue enviado por ${data.businessName}
+              </p>
+              <p style="color: #9ca3af; font-size: 11px; margin: 10px 0 0 0;">
+                Powered by <a href="https://neumorstudio.com" style="color: #ef4444; text-decoration: none;">NeumorStudio</a>
+              </p>
+            </td>
+          </tr>
 
         </table>
       </td>
