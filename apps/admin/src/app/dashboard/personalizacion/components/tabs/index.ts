@@ -3,3 +3,4 @@
  */
 
 export { DesignTab } from "./DesignTab";
+export { ContentTab } from "./ContentTab";
