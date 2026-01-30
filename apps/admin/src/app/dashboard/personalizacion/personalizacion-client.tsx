@@ -37,6 +37,9 @@ import {
 // Hooks locales
 import { usePreviewSync, useFileUpload } from "./hooks";
 
+// Componentes locales
+import { PreviewPanel } from "./components";
+
 // Datos estáticos extraídos
 import {
   themeCategories,
@@ -55,9 +58,6 @@ import {
   CheckIcon,
   ExternalLinkIcon,
   ResetIcon,
-  DesktopIcon,
-  TabletIcon,
-  MobileIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   SaveIcon,
@@ -1395,74 +1395,15 @@ export function PersonalizacionClient({
         </div>
 
         {/* Right Panel - Preview */}
-        <div className="xl:col-span-7 neumor-card p-4 flex flex-col min-h-[400px]">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Vista Previa</h2>
-            <div className="flex items-center gap-2">
-              <div className="flex neumor-inset rounded-lg p-1">
-                <button
-                  onClick={() => setPreviewMode("desktop")}
-                  className={`p-2 rounded-lg transition-all ${
-                    previewMode === "desktop" ? "bg-[var(--accent)] text-white" : ""
-                  }`}
-                  title="Desktop"
-                >
-                  <DesktopIcon />
-                </button>
-                <button
-                  onClick={() => setPreviewMode("tablet")}
-                  className={`p-2 rounded-lg transition-all ${
-                    previewMode === "tablet" ? "bg-[var(--accent)] text-white" : ""
-                  }`}
-                  title="Tablet"
-                >
-                  <TabletIcon />
-                </button>
-                <button
-                  onClick={() => setPreviewMode("mobile")}
-                  className={`p-2 rounded-lg transition-all ${
-                    previewMode === "mobile" ? "bg-[var(--accent)] text-white" : ""
-                  }`}
-                  title="Mobile"
-                >
-                  <MobileIcon />
-                </button>
-              </div>
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="neumor-btn p-2 text-[var(--accent)]"
-                title="Abrir en nueva pestana"
-              >
-                <ExternalLinkIcon />
-              </a>
-            </div>
-          </div>
-
-          <div className="flex-1 flex items-center justify-center bg-[var(--shadow-dark)] rounded-xl overflow-hidden">
-            <div
-              className="bg-white h-full transition-all duration-300"
-              style={{
-                width: previewDimensions.width,
-                maxWidth: "100%",
-              }}
-            >
-              <iframe
-                key={previewUrl}
-                ref={iframeRef}
-                src={previewUrl}
-                className="w-full h-full border-0"
-                title="Vista previa del sitio"
-                onLoad={handleIframeLoad}
-              />
-            </div>
-          </div>
-
-          <p className="text-xs text-[var(--text-secondary)] mt-2 text-center">
-            {domain}
-          </p>
-        </div>
+        <PreviewPanel
+          previewUrl={previewUrl}
+          previewMode={previewMode}
+          previewDimensions={previewDimensions}
+          iframeRef={iframeRef}
+          onIframeLoad={handleIframeLoad}
+          onSetPreviewMode={setPreviewMode}
+          domain={domain}
+        />
       </div>
     </div>
   );
