@@ -92,6 +92,65 @@ const CATEGORY_ICONS = [
   },
 ];
 
+// Componente Toggle visual (mismo comportamiento que checkbox)
+function ToggleSwitch({
+  name,
+  defaultChecked,
+  label
+}: {
+  name: string;
+  defaultChecked: boolean;
+  label: string;
+}) {
+  return (
+    <label className="inline-flex items-center gap-3 cursor-pointer select-none">
+      <span className="relative">
+        <input
+          type="checkbox"
+          name={name}
+          defaultChecked={defaultChecked}
+          className="peer sr-only"
+        />
+        <span className="block w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[var(--accent)] transition-colors" />
+        <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+      </span>
+      <span className="text-sm text-[var(--text-secondary)]">{label}</span>
+    </label>
+  );
+}
+
+// Componente para selector de iconos
+function IconSelector({
+  selectedIcon,
+  onSelect,
+}: {
+  selectedIcon: string;
+  onSelect: (iconId: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-6 gap-2">
+      {CATEGORY_ICONS.map((icon) => (
+        <button
+          key={icon.id}
+          type="button"
+          onClick={() => onSelect(selectedIcon === icon.id ? "" : icon.id)}
+          className={`p-3 rounded-xl transition-all ${
+            selectedIcon === icon.id
+              ? "neumor-inset bg-[var(--accent)] text-white"
+              : "neumor-btn hover:scale-105"
+          }`}
+          title={icon.label}
+        >
+          <span
+            className="w-8 h-8 block"
+            dangerouslySetInnerHTML={{ __html: icon.svg }}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ServiciosClient({ initialCategories }: Props) {
   const [categories, setCategories] = useState<ServiceCategory[]>(initialCategories);
   const [loading, setLoading] = useState(false);
@@ -246,188 +305,199 @@ export function ServiciosClient({ initialCategories }: Props) {
     notes: "",
   };
 
+  const getCategoryIcon = (iconId: string | null) => {
+    if (!iconId) return null;
+    const icon = CATEGORY_ICONS.find((i) => i.id === iconId);
+    return icon ? icon.svg : null;
+  };
+
   return (
-    <div>
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold mb-2">Catalogo de Servicios</h1>
-        <p className="text-[var(--text-secondary)]">
-          Gestiona las categorias (pestanas) y los servicios que ofreces con sus precios y duraciones.
+        <h1 className="text-2xl md:text-3xl font-heading font-bold mb-2">
+          Catalogo de Servicios
+        </h1>
+        <p className="text-sm text-[var(--text-secondary)]">
+          Gestiona categorias y servicios con sus precios.
         </p>
       </div>
 
+      {/* Mensaje de feedback */}
       {message && (
         <div
-          className={`mb-6 p-4 rounded-lg ${
+          className={`mb-6 p-4 rounded-xl text-sm font-medium ${
             message.type === "success"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-red-100 text-red-800 border border-red-200"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
           }`}
         >
           {message.text}
         </div>
       )}
 
-      <div className="neumor-card p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      {/* Nueva categoria */}
+      <div className="neumor-card p-5 md:p-6 mb-8">
+        <h2 className="text-lg font-semibold mb-1">Nueva categoria</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-5">
+          Crea una categoria para agrupar tus servicios.
+        </p>
+
+        <div className="space-y-5">
+          {/* Input nombre */}
           <div>
-            <h2 className="text-lg font-semibold">Nueva categoria</h2>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">
-              Solo necesitas un nombre para empezar.
-            </p>
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+              Nombre de la categoria
+            </label>
             <input
               type="text"
               value={newCategoryName}
               onChange={(event) => setNewCategoryName(event.target.value)}
-              className="neumor-input w-full"
-              placeholder="Ej: Peluqueria, Salon de unas, Estetica"
+              className="neumor-input w-full h-12 text-base"
+              placeholder="Ej: Peluqueria, Estetica, Unas..."
             />
-            <button
-              onClick={handleCreateCategory}
-              disabled={loading || !newCategoryName.trim()}
-              className="neumor-btn neumor-btn-accent"
-            >
-              Crear categoria
-            </button>
           </div>
+
+          {/* Selector de iconos */}
           <div>
-            <label className="text-xs text-[var(--text-secondary)] block mb-2">
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-3">
               Icono (opcional)
             </label>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_ICONS.map((icon) => (
-                <button
-                  key={icon.id}
-                  type="button"
-                  onClick={() => setNewCategoryIcon(newCategoryIcon === icon.id ? "" : icon.id)}
-                  className={`p-2 rounded-lg transition-all ${
-                    newCategoryIcon === icon.id
-                      ? "neumor-inset bg-[var(--accent)] text-white"
-                      : "neumor-btn"
-                  }`}
-                  title={icon.label}
-                >
-                  <span
-                    className="w-5 h-5 block"
-                    dangerouslySetInnerHTML={{ __html: icon.svg }}
-                  />
-                </button>
-              ))}
-            </div>
+            <IconSelector
+              selectedIcon={newCategoryIcon}
+              onSelect={setNewCategoryIcon}
+            />
           </div>
+
+          {/* Boton crear */}
+          <button
+            onClick={handleCreateCategory}
+            disabled={loading || !newCategoryName.trim()}
+            className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
+          >
+            Crear categoria
+          </button>
         </div>
       </div>
 
+      {/* Lista de categorias */}
       <div className="space-y-6">
         {categories.length === 0 && (
-          <div className="neumor-card p-6 text-[var(--text-secondary)]">
-            Aun no hay categorias creadas.
+          <div className="neumor-card p-8 text-center text-[var(--text-secondary)]">
+            <p className="text-base">Aun no hay categorias creadas.</p>
+            <p className="text-sm mt-1">Crea tu primera categoria arriba.</p>
           </div>
         )}
 
         {categories.map((category) => {
           const newItem = getNewItemState(category.id);
+          const categoryIconSvg = getCategoryIcon(category.icon);
+
           return (
-            <div key={category.id} className="neumor-card p-6">
+            <div key={category.id} className="neumor-card p-5 md:p-6">
+              {/* Header de categoria */}
+              <div className="flex items-start gap-4 mb-6">
+                {categoryIconSvg && (
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center">
+                    <span
+                      className="w-7 h-7 block"
+                      dangerouslySetInnerHTML={{ __html: categoryIconSvg }}
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-semibold truncate">{category.name}</h3>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                      {category.items.length} servicios
+                    </span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      category.is_active
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}>
+                      {category.is_active ? "Activa" : "Inactiva"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Formulario edicion categoria */}
               <form onSubmit={(event) => handleUpdateCategory(event, category.id)}>
-                <div className="flex flex-col xl:flex-row xl:items-end gap-4">
-                  <div className="flex-1 space-y-2">
-                    <label className="text-xs text-[var(--text-secondary)]">
+                <div className="space-y-5">
+                  {/* Nombre */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
                       Nombre de la categoria
                     </label>
                     <input
                       name="name"
                       defaultValue={category.name}
-                      className="neumor-input w-full"
+                      className="neumor-input w-full h-12 text-base"
                     />
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+
+                  {/* Icono */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-3">
+                      Icono de la categoria
+                    </label>
+                    <IconSelector
+                      selectedIcon={selectedIcons[category.id] || category.icon || ""}
+                      onSelect={(iconId) =>
+                        setSelectedIcons((prev) => ({
+                          ...prev,
+                          [category.id]: iconId,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  {/* Orden y Estado */}
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-[var(--text-secondary)]">Orden</label>
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">
+                        Orden
+                      </label>
                       <input
                         name="sort_order"
                         type="number"
                         defaultValue={category.sort_order}
-                        className="neumor-input w-20"
+                        className="neumor-input w-20 h-10 text-center"
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                      <input type="checkbox" name="is_active" defaultChecked={category.is_active} />
-                      Activa
-                    </label>
-                    <button
-                      type="submit"
-                      className="neumor-btn neumor-btn-accent"
-                      disabled={loading}
-                    >
-                      Guardar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="neumor-btn"
-                      disabled={loading}
-                    >
-                      Eliminar
-                    </button>
+                    <ToggleSwitch
+                      name="is_active"
+                      defaultChecked={category.is_active}
+                      label="Activa"
+                    />
                   </div>
-                </div>
-                <div className="mt-4">
-                  <label className="text-xs text-[var(--text-secondary)] block mb-2">
-                    Icono de la categoria
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORY_ICONS.map((icon) => (
-                      <button
-                        key={icon.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedIcons((prev) => ({
-                            ...prev,
-                            [category.id]: prev[category.id] === icon.id ? "" : icon.id,
-                          }))
-                        }
-                        className={`p-2 rounded-lg transition-all ${
-                          (selectedIcons[category.id] || category.icon) === icon.id
-                            ? "neumor-inset bg-[var(--accent)] text-white"
-                            : "neumor-btn"
-                        }`}
-                        title={icon.label}
-                      >
-                        <span
-                          className="w-5 h-5 block"
-                          dangerouslySetInnerHTML={{ __html: icon.svg }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
-                  <span className="neumor-inset px-3 py-1 rounded-full">
-                    {category.items.length} servicios
-                  </span>
-                  <span className="neumor-inset px-3 py-1 rounded-full">
-                    {category.is_active ? "Activa" : "Inactiva"}
-                  </span>
+
+                  {/* Boton guardar */}
+                  <button
+                    type="submit"
+                    className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
+                    disabled={loading}
+                  >
+                    Guardar cambios
+                  </button>
                 </div>
               </form>
 
-              <div className="mt-6 border-t border-[var(--shadow-light)] pt-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">Servicios de esta categoria</h3>
-                    <p className="text-xs text-[var(--text-secondary)] mt-1">
-                      Estos son los servicios que aparecen en tu web bajo &quot;{category.name}&quot;.
-                    </p>
-                  </div>
-                </div>
+              {/* Separador */}
+              <div className="border-t border-[var(--shadow-light)] my-8" />
 
-                <div className="space-y-5">
+              {/* Seccion servicios */}
+              <div>
+                <h4 className="text-lg font-semibold mb-1">Servicios</h4>
+                <p className="text-xs text-[var(--text-secondary)] mb-5">
+                  Servicios disponibles en &quot;{category.name}&quot;
+                </p>
+
+                {/* Lista de servicios */}
+                <div className="space-y-4">
                   {category.items.length === 0 && (
-                    <div className="text-sm text-[var(--text-secondary)]">
+                    <div className="text-sm text-[var(--text-secondary)] text-center py-6 neumor-inset rounded-xl">
                       No hay servicios en esta categoria.
                     </div>
                   )}
@@ -435,178 +505,233 @@ export function ServiciosClient({ initialCategories }: Props) {
                   {category.items.map((item) => (
                     <form
                       key={item.id}
-                      className="neumor-inset p-4 rounded-xl space-y-3"
+                      className="neumor-inset p-5 rounded-xl"
                       onSubmit={(event) => handleUpdateItem(event, item.id)}
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-[1.3fr_0.7fr_0.7fr] gap-3">
-                        <div className="md:col-span-1">
-                          <label className="text-xs text-[var(--text-secondary)]">
-                            Nombre
+                      <div className="space-y-4">
+                        {/* Nombre */}
+                        <div>
+                          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                            Nombre del servicio
                           </label>
                           <input
                             name="name"
                             defaultValue={item.name}
-                            className="neumor-input w-full"
+                            className="neumor-input w-full h-12 text-base"
                           />
                         </div>
+
+                        {/* Precio y Duracion - 2 columnas */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                              Precio (EUR)
+                            </label>
+                            <input
+                              name="price"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              defaultValue={(item.price_cents / 100).toFixed(2)}
+                              className="neumor-input w-full h-12 text-base"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                              Duracion (min)
+                            </label>
+                            <input
+                              name="duration"
+                              type="number"
+                              min="15"
+                              step="15"
+                              defaultValue={item.duration_minutes}
+                              className="neumor-input w-full h-12 text-base"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Notas */}
                         <div>
-                          <label className="text-xs text-[var(--text-secondary)]">
-                            Precio (EUR)
+                          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                            Notas (opcional)
                           </label>
-                          <input
-                            name="price"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            defaultValue={(item.price_cents / 100).toFixed(2)}
-                            className="neumor-input w-full"
+                          <textarea
+                            name="notes"
+                            defaultValue={item.notes || ""}
+                            className="neumor-input w-full text-base"
+                            rows={2}
+                            placeholder="Descripcion o detalles adicionales..."
                           />
                         </div>
-                        <div>
-                          <label className="text-xs text-[var(--text-secondary)]">
-                            Duracion (min)
-                          </label>
-                          <input
-                            name="duration"
-                            type="number"
-                            min="15"
-                            step="15"
-                            defaultValue={item.duration_minutes}
-                            className="neumor-input w-full"
-                          />
-                          <p className="text-[10px] text-[var(--text-secondary)] mt-1">
-                            Multiplo de 15 minutos.
-                          </p>
-                        </div>
-                      </div>
-                      <textarea
-                        name="notes"
-                        defaultValue={item.notes || ""}
-                        className="neumor-input"
-                        rows={2}
-                        placeholder="Notas (opcional)"
-                      />
-                      <div className="flex flex-wrap items-center gap-3">
-                        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                          <input type="checkbox" name="is_active" defaultChecked={item.is_active} />
-                          Activa
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm text-[var(--text-secondary)]">Orden</label>
-                          <input
-                            name="sort_order"
-                            type="number"
-                            defaultValue={item.sort_order}
-                            className="neumor-input w-24"
+
+                        {/* Orden y Estado */}
+                        <div className="flex flex-wrap items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <label className="text-xs font-medium text-[var(--text-secondary)]">
+                              Orden
+                            </label>
+                            <input
+                              name="sort_order"
+                              type="number"
+                              defaultValue={item.sort_order}
+                              className="neumor-input w-20 h-10 text-center"
+                            />
+                          </div>
+                          <ToggleSwitch
+                            name="is_active"
+                            defaultChecked={item.is_active}
+                            label="Activo"
                           />
                         </div>
+
+                        {/* Boton guardar */}
                         <button
                           type="submit"
-                          className="neumor-btn neumor-btn-accent"
+                          className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
                           disabled={loading}
                         >
-                          Guardar
+                          Guardar servicio
                         </button>
+
+                        {/* Boton eliminar - separado */}
                         <button
                           type="button"
                           onClick={() => handleDeleteItem(item.id)}
-                          className="neumor-btn"
+                          className="w-full h-10 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           disabled={loading}
                         >
-                          Eliminar
+                          Eliminar servicio
                         </button>
                       </div>
                     </form>
                   ))}
                 </div>
 
-                <div className="mt-6 neumor-inset p-4 rounded-lg">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <h4 className="font-semibold">Anadir nuevo servicio</h4>
-                    <span className="text-xs text-[var(--text-secondary)]">
-                      Ej: Corte caballero, Limpieza facial, Manicura
-                    </span>
+                {/* Formulario nuevo servicio */}
+                <div className="mt-6 p-5 rounded-xl bg-[var(--bg-secondary)]/50 border-2 border-dashed border-[var(--shadow-light)]">
+                  <h5 className="font-semibold mb-4">Anadir nuevo servicio</h5>
+
+                  <div className="space-y-4">
+                    {/* Nombre */}
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                        Nombre del servicio
+                      </label>
+                      <input
+                        type="text"
+                        className="neumor-input w-full h-12 text-base"
+                        placeholder="Ej: Corte caballero"
+                        value={newItem.name}
+                        onChange={(event) =>
+                          setNewItemByCategory((prev) => ({
+                            ...prev,
+                            [category.id]: {
+                              ...newItem,
+                              name: event.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+
+                    {/* Precio y Duracion - 2 columnas */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                          Precio (EUR)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="neumor-input w-full h-12 text-base"
+                          placeholder="15.00"
+                          value={newItem.price}
+                          onChange={(event) =>
+                            setNewItemByCategory((prev) => ({
+                              ...prev,
+                              [category.id]: {
+                                ...newItem,
+                                price: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                          Duracion (min)
+                        </label>
+                        <input
+                          type="number"
+                          min="15"
+                          step="15"
+                          className="neumor-input w-full h-12 text-base"
+                          placeholder="30"
+                          value={newItem.duration}
+                          onChange={(event) =>
+                            setNewItemByCategory((prev) => ({
+                              ...prev,
+                              [category.id]: {
+                                ...newItem,
+                                duration: event.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Notas */}
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                        Notas (opcional)
+                      </label>
+                      <textarea
+                        className="neumor-input w-full text-base"
+                        rows={2}
+                        placeholder="Descripcion o detalles..."
+                        value={newItem.notes}
+                        onChange={(event) =>
+                          setNewItemByCategory((prev) => ({
+                            ...prev,
+                            [category.id]: {
+                              ...newItem,
+                              notes: event.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+
+                    {/* Boton crear */}
+                    <button
+                      onClick={() => handleCreateItem(category.id)}
+                      disabled={loading || !newItem.name.trim()}
+                      className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
+                    >
+                      Crear servicio
+                    </button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <input
-                      type="text"
-                      className="neumor-input"
-                      placeholder="Nombre del servicio"
-                      value={newItem.name}
-                      onChange={(event) =>
-                        setNewItemByCategory((prev) => ({
-                          ...prev,
-                          [category.id]: {
-                            ...newItem,
-                            name: event.target.value,
-                          },
-                        }))
-                      }
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      className="neumor-input"
-                      placeholder="Precio (EUR)"
-                      value={newItem.price}
-                      onChange={(event) =>
-                        setNewItemByCategory((prev) => ({
-                          ...prev,
-                          [category.id]: {
-                            ...newItem,
-                            price: event.target.value,
-                          },
-                        }))
-                      }
-                    />
-                    <input
-                      type="number"
-                      min="15"
-                      step="15"
-                      className="neumor-input"
-                      placeholder="Minutos"
-                      value={newItem.duration}
-                      onChange={(event) =>
-                        setNewItemByCategory((prev) => ({
-                          ...prev,
-                          [category.id]: {
-                            ...newItem,
-                            duration: event.target.value,
-                          },
-                        }))
-                      }
-                    />
-                  </div>
-                  <textarea
-                    className="neumor-input mb-3"
-                    rows={2}
-                    placeholder="Notas (opcional)"
-                    value={newItem.notes}
-                    onChange={(event) =>
-                      setNewItemByCategory((prev) => ({
-                        ...prev,
-                        [category.id]: {
-                          ...newItem,
-                          notes: event.target.value,
-                        },
-                      }))
-                    }
-                  />
-                  <button
-                    onClick={() => handleCreateItem(category.id)}
-                    disabled={loading || !newItem.name.trim()}
-                    className="neumor-btn neumor-btn-accent"
-                  >
-                    Crear servicio
-                  </button>
                 </div>
+              </div>
+
+              {/* Separador antes de eliminar */}
+              <div className="border-t border-[var(--shadow-light)] mt-8 pt-6">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteCategory(category.id)}
+                  className="w-full h-10 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  disabled={loading}
+                >
+                  Eliminar categoria y todos sus servicios
+                </button>
               </div>
             </div>
           );
         })}
       </div>
-
     </div>
   );
 }
