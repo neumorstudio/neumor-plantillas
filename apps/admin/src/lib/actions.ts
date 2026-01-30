@@ -145,13 +145,16 @@ export async function updateBooking(
 export async function deleteBooking(bookingId: string): Promise<void> {
   const supabase = await getSupabase();
 
-  const { data: booking } = await supabase
+  const { data: booking, error: fetchError } = await supabase
     .from("bookings")
     .select(
       "id, website_id, customer_name, customer_email, customer_phone, booking_date, booking_time, services, total_price_cents, notes, professional:professionals(name), customer:customers(email)"
     )
     .eq("id", bookingId)
     .single();
+
+  console.log("[deleteBooking] Booking data:", JSON.stringify(booking, null, 2));
+  if (fetchError) console.error("[deleteBooking] Error fetching booking:", fetchError);
 
   const { error } = await supabase
     .from("bookings")
@@ -166,6 +169,10 @@ export async function deleteBooking(bookingId: string): Promise<void> {
       ? booking?.customer[0]?.email
       : booking?.customer?.email);
 
+  console.log("[deleteBooking] Initial customerEmail:", customerEmail);
+  console.log("[deleteBooking] customer_email field:", booking?.customer_email);
+  console.log("[deleteBooking] customer relation:", booking?.customer);
+
   if (!customerEmail && booking?.customer_phone && booking?.website_id) {
     const { data: customerByPhone } = await supabase
       .from("customers")
@@ -174,8 +181,11 @@ export async function deleteBooking(bookingId: string): Promise<void> {
       .eq("phone", booking.customer_phone)
       .limit(1)
       .maybeSingle();
+    console.log("[deleteBooking] Found by phone:", customerByPhone);
     customerEmail = customerByPhone?.email || customerEmail;
   }
+
+  console.log("[deleteBooking] Final customerEmail:", customerEmail);
 
   if (customerEmail) {
     const { data: website } = await supabase
@@ -216,12 +226,19 @@ export async function deleteBooking(bookingId: string): Promise<void> {
         ? getSalonAppointmentCancellationEmail(emailData)
         : getClinicAppointmentCancellationEmail(emailData);
 
-    await sendEmail({
+    console.log("[deleteBooking] Sending cancellation email to:", customerEmail);
+    console.log("[deleteBooking] Business:", businessName, "Type:", businessType);
+
+    const emailResult = await sendEmail({
       to: customerEmail,
       subject: `Cita cancelada - ${businessName}`,
       html,
       from: getFromAddress(businessName),
     });
+
+    console.log("[deleteBooking] Email result:", emailResult);
+  } else {
+    console.log("[deleteBooking] No customer email found, skipping cancellation email");
   }
 
   revalidatePath("/dashboard");
