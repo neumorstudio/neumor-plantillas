@@ -1,19 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-/**
- * Verifica si el email del usuario esta en la lista de superadmins.
- * Lista configurada via SUPERADMIN_EMAILS (comma-separated).
- */
-function isSuperAdminEmail(email: string | undefined): boolean {
-  if (!email) return false;
-  const envEmails = process.env.SUPERADMIN_EMAILS || "";
-  const superAdminEmails = envEmails
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter((e) => e.length > 0);
-  return superAdminEmails.includes(email.toLowerCase());
-}
+import { isSuperAdminEmail } from "./lib/superadmin-emails";
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({

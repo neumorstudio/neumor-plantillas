@@ -1,17 +1,5 @@
 import { createClient } from "./supabase-server";
-
-/**
- * Lista de emails autorizados como superadmin.
- * Se configura via variable de entorno SUPERADMIN_EMAILS (comma-separated).
- * Ejemplo: SUPERADMIN_EMAILS=admin@empresa.com,otro@empresa.com
- */
-function getSuperAdminEmails(): string[] {
-  const envEmails = process.env.SUPERADMIN_EMAILS || "";
-  return envEmails
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter((email) => email.length > 0);
-}
+import { parseSuperAdminEmails, isSuperAdminEmail } from "./superadmin-emails";
 
 /**
  * Verifica si el usuario actual es superadmin.
@@ -29,7 +17,7 @@ export async function isSuperAdmin(): Promise<boolean> {
     return false;
   }
 
-  const superAdminEmails = getSuperAdminEmails();
+  const superAdminEmails = parseSuperAdminEmails(process.env.SUPERADMIN_EMAILS);
 
   if (superAdminEmails.length === 0) {
     // Si no hay emails configurados, denegar acceso por seguridad
@@ -39,7 +27,7 @@ export async function isSuperAdmin(): Promise<boolean> {
     return false;
   }
 
-  return superAdminEmails.includes(user.email.toLowerCase());
+  return isSuperAdminEmail(user.email);
 }
 
 /**
