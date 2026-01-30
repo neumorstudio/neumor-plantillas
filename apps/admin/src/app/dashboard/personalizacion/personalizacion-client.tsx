@@ -16,6 +16,35 @@ import type {
 } from "@neumorstudio/supabase";
 import { getDefaultSectionsConfig } from "@neumorstudio/supabase";
 
+// Datos estáticos extraídos
+import {
+  themeCategories,
+  themes,
+  templatePresets,
+  skinOptions,
+  FEATURE_ICONS,
+  normalizeFeatureIcon,
+  getFeatureIconSvg,
+} from "@/lib/personalizacion";
+import type { TemplatePreset } from "@/lib/personalizacion";
+
+// Componentes UI extraídos
+import { CollapsibleSection } from "@/components/ui";
+import {
+  getThemeIcon,
+  PaletteIcon,
+  TextIcon,
+  CheckIcon,
+  ExternalLinkIcon,
+  ResetIcon,
+  DesktopIcon,
+  TabletIcon,
+  MobileIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  SaveIcon,
+} from "@/components/icons";
+
 // ============================================
 // TYPES
 // ============================================
@@ -73,294 +102,8 @@ interface FeaturesConfig {
   items: FeatureItemConfig[];
 }
 
-// Iconos predefinidos para features
-const FEATURE_ICONS = [
-  { id: "scissors", label: "Tijeras", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>` },
-  { id: "sparkles", label: "Estrellas", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l1.2 3.2L9 7l-2.8 1.2L5 12l-1.2-3.8L1 7l2.8-.8L5 3z"/><path d="M16 5l1.8 4.6L22 11l-4.2 1.4L16 17l-1.8-4.6L10 11l4.2-1.4L16 5z"/></svg>` },
-  { id: "calendar", label: "Calendario", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 15l2.5 2.5L16 12"/></svg>` },
-  { id: "heart", label: "Corazon", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` },
-  { id: "star", label: "Estrella", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` },
-  { id: "clock", label: "Reloj", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>` },
-  { id: "check", label: "Check", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` },
-  { id: "shield", label: "Escudo", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>` },
-  { id: "award", label: "Premio", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>` },
-  { id: "users", label: "Usuarios", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
-  { id: "home", label: "Casa", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
-  { id: "tool", label: "Herramienta", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>` },
-  { id: "truck", label: "Envio", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>` },
-  { id: "coffee", label: "Cafe", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>` },
-  { id: "gift", label: "Regalo", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>` },
-  { id: "phone", label: "Telefono", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>` },
-];
 
-// ============================================
-// THEME DATA
-// ============================================
 
-// Theme categories for organized display
-type ThemeCategory = {
-  label: string;
-  themes: { value: Theme; label: string; icon: string; colors: string[] }[];
-};
-
-const themeCategories: ThemeCategory[] = [
-  {
-    label: "Básicos",
-    themes: [
-      { value: "light", label: "Light", icon: "sun", colors: ["#f0f4f8", "#e2e8f0", "#3b82f6"] },
-      { value: "dark", label: "Dark", icon: "moon", colors: ["#1a1a2e", "#2d2d44", "#6366f1"] },
-      { value: "minimal", label: "Minimal", icon: "minus", colors: ["#f8f8f8", "#888888", "#333333"] },
-    ]
-  },
-  {
-    label: "Estilo",
-    themes: [
-      { value: "colorful", label: "Colorful", icon: "palette", colors: ["#fef3c7", "#fbbf24", "#10b981"] },
-      { value: "rustic", label: "Rustic", icon: "leaf", colors: ["#d4a574", "#8b4513", "#654321"] },
-      { value: "elegant", label: "Elegant", icon: "crown", colors: ["#f5f0e8", "#c9a96e", "#8b6914"] },
-      { value: "vintage", label: "Vintage", icon: "camera", colors: ["#e8d4b8", "#8b7355", "#654321"] },
-    ]
-  },
-  {
-    label: "Premium",
-    themes: [
-      { value: "neuglass", label: "NeuGlass", icon: "diamond", colors: ["#e8ecf1", "#6366f1", "#4f46e5"] },
-      { value: "neuglass-dark", label: "NeuGlass Dark", icon: "sparkles", colors: ["#13151a", "#818cf8", "#6366f1"] },
-    ]
-  },
-  {
-    label: "Estacionales",
-    themes: [
-      { value: "christmas", label: "Navidad", icon: "gift", colors: ["#f5ebe0", "#c41e3a", "#228b22"] },
-      { value: "summer", label: "Verano", icon: "umbrella", colors: ["#fff8e7", "#00bcd4", "#ff7043"] },
-      { value: "autumn", label: "Otoño", icon: "wind", colors: ["#e8d4b8", "#d2691e", "#8b4513"] },
-      { value: "spring", label: "Primavera", icon: "flower", colors: ["#f0fff0", "#90ee90", "#ff69b4"] },
-    ]
-  },
-  {
-    label: "Naturaleza",
-    themes: [
-      { value: "ocean", label: "Océano", icon: "waves", colors: ["#e0f2f7", "#0097a7", "#00796b"] },
-      { value: "forest", label: "Bosque", icon: "tree", colors: ["#e8f5e9", "#4caf50", "#2e7d32"] },
-      { value: "sunset", label: "Atardecer", icon: "sunset", colors: ["#fff3e0", "#ff9800", "#e65100"] },
-      { value: "midnight", label: "Medianoche", icon: "stars", colors: ["#1a237e", "#3f51b5", "#9575cd"] },
-    ]
-  },
-  {
-    label: "Suaves",
-    themes: [
-      { value: "rose", label: "Rosa", icon: "heart", colors: ["#fce4ec", "#f48fb1", "#e91e63"] },
-      { value: "lavender", label: "Lavanda", icon: "sparkle", colors: ["#f3e5f5", "#ba68c8", "#8e24aa"] },
-      { value: "coral", label: "Coral", icon: "circle", colors: ["#fbe9e7", "#ff8a65", "#ff5722"] },
-      { value: "wellness", label: "Wellness", icon: "spa", colors: ["#e0f2f1", "#80cbc4", "#00897b"] },
-    ]
-  },
-];
-
-// Flatten themes for easy lookup
-const themes = themeCategories.flatMap(cat => cat.themes);
-
-// ============================================
-// SKIN OPTIONS - Estilos visuales de componentes
-// ============================================
-
-const skinOptions = [
-  {
-    value: "neumorphic",
-    label: "Neumórfico",
-    description: "Sombras suaves y relieve sutil",
-    preview: "inset 2px 2px 5px rgba(0,0,0,.1), inset -2px -2px 5px rgba(255,255,255,.8)"
-  },
-  {
-    value: "flat",
-    label: "Flat",
-    description: "Diseño plano y minimalista",
-    preview: "none"
-  },
-  {
-    value: "glass",
-    label: "Glassmorphism",
-    description: "Efecto cristal translúcido",
-    preview: "0 4px 30px rgba(0,0,0,.1)"
-  },
-  {
-    value: "material",
-    label: "Material",
-    description: "Sombras elevadas tipo Google",
-    preview: "0 2px 4px rgba(0,0,0,.2)"
-  },
-  {
-    value: "brutalist",
-    label: "Brutalista",
-    description: "Bordes marcados y audaces",
-    preview: "4px 4px 0 currentColor"
-  },
-  {
-    value: "soft",
-    label: "Soft UI",
-    description: "Sombras extra suaves y difusas",
-    preview: "8px 8px 16px rgba(0,0,0,.05), -8px -8px 16px rgba(255,255,255,.8)"
-  },
-  {
-    value: "3d",
-    label: "3D",
-    description: "Efecto tridimensional con bordes",
-    preview: "0 6px 0 rgba(0,0,0,.2)"
-  },
-  {
-    value: "outline",
-    label: "Outline",
-    description: "Solo bordes, fondo transparente",
-    preview: "none"
-  },
-];
-
-// ============================================
-// TEMPLATE PRESETS - Combinaciones completas
-// ============================================
-
-interface TemplatePreset {
-  id: string;
-  name: string;
-  description: string;
-  preview: string; // URL o gradient para preview
-  theme: Theme;
-  skin: string;
-  colors: ColorsConfig;
-  typography: TypographyConfig;
-  effects: EffectsConfig;
-  variants: {
-    hero: "classic" | "modern" | "bold" | "minimal";
-    menu: "tabs" | "grid" | "list" | "carousel";
-    features: "cards" | "icons" | "banner";
-    reviews: "grid" | "carousel" | "minimal";
-    footer: "full" | "minimal" | "centered";
-    reservation: "classic" | "wizard" | "modal" | "modern";
-  };
-}
-
-const templatePresets: TemplatePreset[] = [
-  {
-    id: "moderno",
-    name: "Moderno",
-    description: "Limpio y contemporáneo",
-    preview: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #3b82f6 100%)",
-    theme: "minimal",
-    skin: "flat",
-    colors: { primary: "#3b82f6", secondary: "#64748b", accent: "#3b82f6" },
-    typography: { headingFont: "Inter", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 40, borderRadius: "soft", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "modern", menu: "grid", features: "icons", reviews: "minimal", footer: "minimal", reservation: "modern" },
-  },
-  {
-    id: "elegante",
-    name: "Elegante",
-    description: "Sofisticado y lujoso",
-    preview: "linear-gradient(135deg, #faf5f0 0%, #d4a574 50%, #8b6914 100%)",
-    theme: "elegant",
-    skin: "soft",
-    colors: { primary: "#8b6914", secondary: "#d4a574", accent: "#c9a96e" },
-    typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.333 },
-    effects: { shadowIntensity: 50, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "modern", menu: "list", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
-  },
-  {
-    id: "llamativo",
-    name: "Llamativo",
-    description: "Vibrante y atrevido",
-    preview: "linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #10b981 100%)",
-    theme: "colorful",
-    skin: "3d",
-    colors: { primary: "#f59e0b", secondary: "#10b981", accent: "#f59e0b" },
-    typography: { headingFont: "Poppins", bodyFont: "Poppins", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 70, borderRadius: "pill", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "grid", footer: "full", reservation: "modal" },
-  },
-  {
-    id: "minimalista",
-    name: "Minimalista",
-    description: "Ultra limpio y simple",
-    preview: "linear-gradient(135deg, #ffffff 0%, #f1f1f1 50%, #333333 100%)",
-    theme: "minimal",
-    skin: "outline",
-    colors: { primary: "#171717", secondary: "#525252", accent: "#171717" },
-    typography: { headingFont: "system", bodyFont: "system", baseFontSize: 15, scale: 1.2 },
-    effects: { shadowIntensity: 20, borderRadius: "sharp", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "minimal", menu: "list", features: "icons", reviews: "minimal", footer: "minimal", reservation: "classic" },
-  },
-  {
-    id: "acogedor",
-    name: "Acogedor",
-    description: "Cálido y familiar",
-    preview: "linear-gradient(135deg, #fef3c7 0%, #d4a574 50%, #78350f 100%)",
-    theme: "rustic",
-    skin: "neumorphic",
-    colors: { primary: "#78350f", secondary: "#a16207", accent: "#b45309" },
-    typography: { headingFont: "Merriweather", bodyFont: "Source Sans Pro", baseFontSize: 17, scale: 1.25 },
-    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "classic" },
-  },
-  {
-    id: "premium",
-    name: "Premium Glass",
-    description: "Glassmorfismo elegante",
-    preview: "linear-gradient(135deg, #e8ecf1 0%, #6366f1 50%, #4f46e5 100%)",
-    theme: "neuglass",
-    skin: "glass",
-    colors: { primary: "#6366f1", secondary: "#8b5cf6", accent: "#6366f1" },
-    typography: { headingFont: "DM Sans", bodyFont: "DM Sans", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 60, borderRadius: "rounded", glassmorphism: true, blurIntensity: 16 },
-    variants: { hero: "modern", menu: "grid", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
-  },
-  {
-    id: "nocturno",
-    name: "Nocturno",
-    description: "Elegancia oscura",
-    preview: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #6366f1 100%)",
-    theme: "midnight",
-    skin: "material",
-    colors: { primary: "#818cf8", secondary: "#a78bfa", accent: "#818cf8" },
-    typography: { headingFont: "Space Grotesk", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 45, borderRadius: "soft", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "bold", menu: "grid", features: "icons", reviews: "carousel", footer: "minimal", reservation: "modern" },
-  },
-  {
-    id: "fresco",
-    name: "Fresco",
-    description: "Ligero y natural",
-    preview: "linear-gradient(135deg, #ecfdf5 0%, #6ee7b7 50%, #059669 100%)",
-    theme: "spring",
-    skin: "soft",
-    colors: { primary: "#059669", secondary: "#34d399", accent: "#10b981" },
-    typography: { headingFont: "Quicksand", bodyFont: "Nunito", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 45, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "classic", menu: "carousel", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
-  },
-  {
-    id: "verano",
-    name: "Verano",
-    description: "Playa y sol",
-    preview: "linear-gradient(135deg, #fef3c7 0%, #38bdf8 50%, #f97316 100%)",
-    theme: "summer",
-    skin: "3d",
-    colors: { primary: "#0891b2", secondary: "#f97316", accent: "#f97316" },
-    typography: { headingFont: "Pacifico", bodyFont: "Open Sans", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 50, borderRadius: "pill", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "carousel", footer: "centered", reservation: "modal" },
-  },
-  {
-    id: "navidad",
-    name: "Navidad",
-    description: "Festivo y acogedor",
-    preview: "linear-gradient(135deg, #fef2f2 0%, #dc2626 50%, #16a34a 100%)",
-    theme: "christmas",
-    skin: "neumorphic",
-    colors: { primary: "#dc2626", secondary: "#16a34a", accent: "#dc2626" },
-    typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.25 },
-    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
-  },
-];
 
 
 const defaultVariants: Variants = {
@@ -392,132 +135,6 @@ const defaultEffects: EffectsConfig = {
   blurIntensity: 16,
 };
 
-// ============================================
-// ICONS
-// ============================================
-
-function SunIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path strokeLinecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>;
-}
-function MoonIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>;
-}
-function PaletteIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>;
-}
-function LeafIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>;
-}
-function CrownIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l3.5 7L12 6l3.5 4L19 3v14a2 2 0 01-2 2H7a2 2 0 01-2-2V3z"/></svg>;
-}
-function DiamondIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l9 9-9 9-9-9 9-9z"/></svg>;
-}
-function SparklesIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>;
-}
-// Additional theme icons
-function GiftIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>;
-}
-function UmbrellaIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v1m0 18v1m-9-10h1m16 0h1M5.6 5.6l.7.7m11.4 11.4l.7.7M5.6 18.4l.7-.7m11.4-11.4l.7-.7M12 5a7 7 0 017 7H5a7 7 0 017-7z"/></svg>;
-}
-function WindIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>;
-}
-function FlowerIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.5a4 4 0 014 0 4 4 0 012 3.5 4 4 0 01-2 3.5 4 4 0 01-4 0 4 4 0 01-4 0 4 4 0 01-2-3.5 4 4 0 012-3.5 4 4 0 014 0zM12 6.5V3m0 18v-7"/></svg>;
-}
-function WavesIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15c2.483 0 4.345-1.5 6-3 1.655 1.5 3.517 3 6 3s4.345-1.5 6-3M3 19c2.483 0 4.345-1.5 6-3 1.655 1.5 3.517 3 6 3s4.345-1.5 6-3M3 11c2.483 0 4.345-1.5 6-3 1.655 1.5 3.517 3 6 3s4.345-1.5 6-3"/></svg>;
-}
-function TreeIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 7h-4l5 5h-4l4 6H4l4-6H4l5-5H5l7-7z"/></svg>;
-}
-function SunsetIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v2m0 0a5 5 0 015 5m-5-5a5 5 0 00-5 5m10 0H7m12 7H5M8 17l4-4 4 4"/></svg>;
-}
-function StarsIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>;
-}
-function HeartIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>;
-}
-function SparkleIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>;
-}
-function CircleIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" strokeWidth={2}/></svg>;
-}
-function SpaIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0-6c.55 0 1 .45 1 1v2c0 .55-.45 1-1 1s-1-.45-1-1V3c0-.55.45-1 1-1zm0 16c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1zM5 12c0-.55-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1h2c.55 0 1-.45 1-1zm17 0c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1h2c.55 0 1-.45 1-1z"/></svg>;
-}
-function CameraIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>;
-}
-function MinusIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4"/></svg>;
-}
-function CheckIcon() {
-  return <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>;
-}
-function ExternalLinkIcon() {
-  return <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>;
-}
-function ResetIcon() {
-  return <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
-}
-function DesktopIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
-}
-function TabletIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
-}
-function MobileIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
-}
-function TextIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>;
-}
-function ChevronDownIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
-}
-function ChevronUpIcon() {
-  return <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
-}
-function SaveIcon() {
-  return <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>;
-}
-
-function getThemeIcon(icon: string) {
-  switch (icon) {
-    case "sun": return <SunIcon />;
-    case "moon": return <MoonIcon />;
-    case "palette": return <PaletteIcon />;
-    case "leaf": return <LeafIcon />;
-    case "crown": return <CrownIcon />;
-    case "diamond": return <DiamondIcon />;
-    case "sparkles": return <SparklesIcon />;
-    // New theme icons
-    case "gift": return <GiftIcon />;
-    case "umbrella": return <UmbrellaIcon />;
-    case "wind": return <WindIcon />;
-    case "flower": return <FlowerIcon />;
-    case "waves": return <WavesIcon />;
-    case "tree": return <TreeIcon />;
-    case "sunset": return <SunsetIcon />;
-    case "stars": return <StarsIcon />;
-    case "heart": return <HeartIcon />;
-    case "sparkle": return <SparkleIcon />;
-    case "circle": return <CircleIcon />;
-    case "spa": return <SpaIcon />;
-    case "camera": return <CameraIcon />;
-    case "minus": return <MinusIcon />;
-    default: return <SunIcon />;
-  }
-}
 
 // ============================================
 // TABS
@@ -531,39 +148,6 @@ const tabs: { id: TabId; label: string; shortLabel: string; icon: React.ReactNod
   { id: "layout", label: "Layout", shortLabel: "Layout", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg> },
 ];
 
-// ============================================
-// COLLAPSIBLE SECTION COMPONENT
-// ============================================
-
-function CollapsibleSection({
-  title,
-  children,
-  defaultOpen = false
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border border-[var(--shadow-dark)] rounded-xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-[var(--shadow-light)] hover:bg-[var(--shadow-dark)] transition-colors"
-      >
-        <span className="font-medium text-sm">{title}</span>
-        {isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-      </button>
-      {isOpen && (
-        <div className="p-4 space-y-4">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ============================================
 // MAIN COMPONENT
@@ -628,21 +212,6 @@ export function PersonalizacionClient({
     { id: "2", icon: "sparkles", title: "Servicio 2", description: "Descripcion del segundo servicio." },
     { id: "3", icon: "calendar", title: "Servicio 3", description: "Descripcion del tercer servicio." },
   ];
-
-  // Normalizar iconos: si viene SVG legacy, intentar mapear a ID
-  const normalizeFeatureIcon = (icon: string): string => {
-    // Si ya es un ID válido, retornarlo
-    if (FEATURE_ICONS.some(i => i.id === icon)) {
-      return icon;
-    }
-    // Si es un SVG, buscar el ID correspondiente
-    const matchedIcon = FEATURE_ICONS.find(i => i.svg === icon);
-    if (matchedIcon) {
-      return matchedIcon.id;
-    }
-    // Fallback a star si no se reconoce
-    return "star";
-  };
 
   const normalizeFeatureItems = (items: FeatureItemConfig[] | undefined): FeatureItemConfig[] => {
     if (!items) return defaultFeatureItems;
@@ -762,7 +331,7 @@ export function PersonalizacionClient({
           subtitle: features.subtitle,
           items: features.items.map(item => ({
             ...item,
-            iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
+            iconSvg: getFeatureIconSvg(item.icon),
           })),
         },
         // Configuración de secciones para preview
@@ -837,7 +406,7 @@ export function PersonalizacionClient({
           subtitle: features.subtitle,
           items: features.items.map(item => ({
             ...item,
-            iconSvg: FEATURE_ICONS.find(i => i.id === item.icon)?.svg || '',
+            iconSvg: getFeatureIconSvg(item.icon),
           })),
         },
         sectionsConfig: sectionsConfig,

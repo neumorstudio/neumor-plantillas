@@ -9,36 +9,7 @@ import type {
   SectionsConfig,
   Theme,
 } from "@neumorstudio/supabase";
-
-// Temas válidos - Todos los temas disponibles
-const VALID_THEMES: Theme[] = [
-  // Base
-  "light",
-  "dark",
-  "colorful",
-  "rustic",
-  "elegant",
-  // Premium NeuGlass
-  "neuglass",
-  "neuglass-dark",
-  // Seasonal
-  "christmas",
-  "summer",
-  "autumn",
-  "spring",
-  // Mood/Style
-  "ocean",
-  "sunset",
-  "forest",
-  "midnight",
-  "rose",
-  "lavender",
-  "coral",
-  "minimal",
-  // Industry
-  "wellness",
-  "vintage",
-];
+import { VALID_THEMES } from "@/lib/personalizacion";
 
 // GET: Obtener configuración actual del tema y personalización
 export async function GET() {
@@ -103,19 +74,11 @@ export async function GET() {
         heroSubtitle: config.heroSubtitle,
         heroImage: config.heroImage,
 
-        // Colores (nueva estructura + legacy)
-        colors: config.colors || {
-          primary: config.primaryColor,
-          secondary: config.secondaryColor,
-        },
-        primaryColor: config.primaryColor,
-        secondaryColor: config.secondaryColor,
+        // Colores
+        colors: config.colors,
 
         // Branding
-        branding: config.branding || {
-          logo: config.logo,
-        },
-        logo: config.logo,
+        branding: config.branding,
 
         // Tipografía
         typography: config.typography,
@@ -304,20 +267,8 @@ export async function POST(request: NextRequest) {
         variants: mergedVariants,
         socialLinks: mergedSocialLinks,
         sectionsConfig: mergedSectionsConfig,
-        // Mantener compatibilidad con campos legacy
-        primaryColor: config.colors?.primary || config.primaryColor || existingConfig.primaryColor,
-        secondaryColor: config.colors?.secondary || config.secondaryColor || existingConfig.secondaryColor,
-        logo: config.branding?.logo || config.logo || existingConfig.logo,
       };
     }
-
-    // Debug: Log what we're saving
-    console.log("[Personalization POST] Saving config for websiteId:", websiteId);
-    console.log("[Personalization POST] Theme:", updateData.theme);
-    console.log("[Personalization POST] Config keys:", Object.keys(updateData.config || {}));
-    console.log("[Personalization POST] Colors:", updateData.config?.colors);
-    console.log("[Personalization POST] Features:", updateData.config?.features);
-    console.log("[Personalization POST] SectionsConfig:", updateData.config?.sectionsConfig ? "present" : "missing");
 
     // Update website
     const { error: updateError } = await supabase
@@ -333,7 +284,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Personalization POST] Successfully saved!");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Personalization POST error:", error);
