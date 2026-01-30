@@ -98,6 +98,8 @@ function hexToRgba(hex: string, alpha: number): string {
 
 export interface CompiledTokens {
   cssVariables: string;
+  /** Inline styles for colors - applied to html element to override theme defaults */
+  inlineColorStyles: string;
   fontImports: string;
   favicon: string | null;
 }
@@ -107,38 +109,40 @@ export interface CompiledTokens {
  */
 export function compileCustomization(config: WebsiteCustomization): CompiledTokens {
   const vars: string[] = [];
+  const colorVars: string[] = [];
   const fonts: string[] = [];
 
-  // === COLORES ===
+  // === COLORES (separados para inline styles con máxima especificidad) ===
   const primary = config.colors?.primary || config.primaryColor || DEFAULTS.colors.primary;
   const secondary = config.colors?.secondary || config.secondaryColor || DEFAULTS.colors.secondary;
   const accent = config.colors?.accent || DEFAULTS.colors.accent;
 
-  // Solo generar variables si hay personalización
+  // Solo generar variables de color si hay personalización
   if (config.colors || config.primaryColor || config.secondaryColor) {
-    vars.push(`--color-primary: ${primary};`);
-    vars.push(`--color-secondary: ${secondary};`);
-    vars.push(`--color-accent: ${accent};`);
-    vars.push(`--accent: ${accent};`);
-    vars.push(`--accent-hover: ${adjustLuminosity(accent, -10)};`);
-    vars.push(`--accent-light: ${hexToRgba(accent, 0.1)};`);
-    vars.push(`--accent-glow: ${hexToRgba(accent, 0.4)};`);
+    // Colores van como inline styles para sobrescribir los temas
+    colorVars.push(`--color-primary: ${primary}`);
+    colorVars.push(`--color-secondary: ${secondary}`);
+    colorVars.push(`--color-accent: ${accent}`);
+    colorVars.push(`--accent: ${accent}`);
+    colorVars.push(`--accent-hover: ${adjustLuminosity(accent, -10)}`);
+    colorVars.push(`--accent-light: ${hexToRgba(accent, 0.1)}`);
+    colorVars.push(`--accent-glow: ${hexToRgba(accent, 0.4)}`);
 
     // RGB values
     if (accent.startsWith('#')) {
       const r = parseInt(accent.slice(1, 3), 16);
       const g = parseInt(accent.slice(3, 5), 16);
       const b = parseInt(accent.slice(5, 7), 16);
-      vars.push(`--accent-rgb: ${r}, ${g}, ${b};`);
+      colorVars.push(`--accent-rgb: ${r}, ${g}, ${b}`);
     }
-  }
 
-  // Override de background y text si se especifican
-  if (config.colors?.background) {
-    vars.push(`--neumor-bg: ${config.colors.background};`);
-  }
-  if (config.colors?.text) {
-    vars.push(`--text-primary: ${config.colors.text};`);
+    // Background y text también van inline si se especifican
+    if (config.colors?.background) {
+      colorVars.push(`--neumor-bg: ${config.colors.background}`);
+    }
+    if (config.colors?.text) {
+      colorVars.push(`--text-primary: ${config.colors.text}`);
+    }
   }
 
   // === TIPOGRAFÍA ===
@@ -198,9 +202,14 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
     vars.push(`--logo-height: ${logoSizeMap[config.branding.logoSize] || '40px'};`);
   }
 
-  // Generar CSS
+  // Generar CSS para variables no-color (tipografía, efectos, branding)
   const cssVariables = vars.length > 0
     ? `:root {\n  ${vars.join('\n  ')}\n}`
+    : '';
+
+  // Generar inline styles para colores (máxima especificidad, sobrescribe temas)
+  const inlineColorStyles = colorVars.length > 0
+    ? colorVars.join('; ')
     : '';
 
   // Generar imports de fuentes
@@ -218,6 +227,7 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
 
   return {
     cssVariables,
+    inlineColorStyles,
     fontImports,
     favicon,
   };
