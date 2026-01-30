@@ -12,9 +12,18 @@ import type {
   BrandingConfig,
   SectionConfig,
   SectionsConfig,
-  BusinessType,
 } from "@neumorstudio/supabase";
 import { getDefaultSectionsConfig } from "@neumorstudio/supabase";
+
+// Types locales
+import type {
+  Variants,
+  Props,
+  TabId,
+  ContentConfig,
+  FeatureItemConfig,
+  FeaturesConfig,
+} from "./types";
 
 // Datos estáticos extraídos
 import {
@@ -44,65 +53,6 @@ import {
   ChevronUpIcon,
   SaveIcon,
 } from "@/components/icons";
-
-// ============================================
-// TYPES
-// ============================================
-
-interface Variants {
-  hero: "classic" | "modern" | "bold" | "minimal";
-  menu: "tabs" | "grid" | "list" | "carousel";
-  features: "cards" | "icons" | "banner";
-  reviews: "grid" | "carousel" | "minimal";
-  footer: "full" | "minimal" | "centered";
-  reservation: "classic" | "wizard" | "modal" | "modern";
-}
-
-interface Props {
-  websiteId: string;
-  domain: string;
-  initialTheme: Theme;
-  initialConfig: WebsiteConfig;
-  businessType?: BusinessType;
-}
-
-type TabId = "diseno" | "contenido" | "negocio" | "secciones" | "layout";
-
-interface ContentConfig {
-  heroTitle?: string;
-  heroSubtitle?: string;
-  heroImage?: string;
-  heroImages?: string[]; // Galería de hasta 3 imágenes
-  address?: string;
-  phone?: string;
-  email?: string;
-  socialLinks?: {
-    instagram?: string;
-    facebook?: string;
-    whatsapp?: string;
-    tripadvisor?: string;
-  };
-  schedule?: {
-    weekdays?: string;
-    saturday?: string;
-    sunday?: string;
-  };
-}
-
-interface FeatureItemConfig {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-}
-
-interface FeaturesConfig {
-  title: string;
-  subtitle: string;
-  items: FeatureItemConfig[];
-}
-
-
 
 
 
