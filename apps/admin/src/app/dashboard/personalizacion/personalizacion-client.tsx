@@ -37,21 +37,20 @@ import {
 import { usePreviewSync, useFileUpload } from "./hooks";
 
 // Componentes locales
-import { PreviewPanel, DesignTab, ContentTab, BusinessTab, LayoutTab, SectionsTab } from "./components";
+import {
+  MobileLayout,
+  DesktopLayout,
+  DesignTab,
+  ContentTab,
+  BusinessTab,
+  LayoutTab,
+  SectionsTab,
+} from "./components";
 
 // Datos estáticos extraídos
 import { normalizeFeatureIcon } from "@/lib/personalizacion";
 import type { TemplatePreset } from "@/lib/personalizacion";
 
-// Componentes UI extraídos
-import {
-  CheckIcon,
-  ExternalLinkIcon,
-  ResetIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  SaveIcon,
-} from "@/components/icons";
 
 
 // ============================================
@@ -527,214 +526,50 @@ export function PersonalizacionClient({
     }
   };
 
+  // Calculate tab content once
+  const tabContent = renderTabContent();
+
   // ============================================
-  // MOBILE LAYOUT
+  // RENDER - Delegate to layout components
   // ============================================
   if (isMobile) {
     return (
-      <div className="min-h-screen flex flex-col pb-20">
-        {/* Mobile Header */}
-        <div className="sticky top-0 z-40 bg-[var(--neumor-bg)] px-4 py-3 border-b border-[var(--shadow-dark)]">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold">Personalizar</h1>
-            <button
-              onClick={handleReset}
-              className="neumor-btn p-2"
-              title="Reset"
-            >
-              <ResetIcon />
-            </button>
-          </div>
-        </div>
-
-        {/* Toast Message */}
-        {message && (
-          <div
-            className={`fixed top-16 left-4 right-4 z-50 p-3 rounded-lg text-sm shadow-lg ${
-              message.type === "success"
-                ? "bg-green-500 text-white"
-                : "bg-red-500 text-white"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        {/* Collapsible Preview */}
-        <div className={`relative transition-all duration-300 bg-[var(--shadow-dark)] ${
-          previewExpanded ? 'h-[60vh]' : 'h-[30vh]'
-        }`}>
-          <iframe
-            key={previewUrl}
-            ref={iframeMobileRef}
-            src={previewUrl}
-            className="w-full h-full border-0"
-            title="Vista previa"
-            onLoad={handleIframeLoad}
-          />
-
-          {/* Preview Controls */}
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2 bg-gradient-to-t from-black/50 to-transparent">
-            <button
-              onClick={() => setPreviewExpanded(!previewExpanded)}
-              className="flex items-center gap-1 text-white text-xs bg-black/30 px-3 py-2 rounded-lg"
-            >
-              {previewExpanded ? <ChevronDownIcon /> : <ChevronUpIcon />}
-              {previewExpanded ? 'Colapsar' : 'Expandir'}
-            </button>
-            <a
-              href={previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-white text-xs bg-black/30 px-3 py-2 rounded-lg"
-            >
-              <ExternalLinkIcon />
-              Abrir
-            </a>
-          </div>
-        </div>
-
-        {/* Tab Title */}
-        <div className="px-4 py-3 border-b border-[var(--shadow-dark)]">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            {tabs.find(t => t.id === activeTab)?.icon}
-            {tabs.find(t => t.id === activeTab)?.label}
-          </h2>
-        </div>
-
-        {/* Controls Content */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          {renderTabContent()}
-        </div>
-
-        {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--neumor-bg)] border-t border-[var(--shadow-dark)] safe-area-pb">
-          <div className="flex justify-around py-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center p-2 min-w-[48px] transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-[var(--accent)]'
-                    : 'text-[var(--text-secondary)]'
-                }`}
-              >
-                {tab.icon}
-                <span className="text-[10px] mt-0.5 font-medium">{tab.shortLabel}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
-
-        {/* FAB Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
-            saving
-              ? 'bg-gray-400'
-              : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:scale-95'
-          }`}
-          style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}
-        >
-          {saving ? (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <SaveIcon />
-          )}
-        </button>
-      </div>
+      <MobileLayout
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabContent={tabContent}
+        previewUrl={previewUrl}
+        previewExpanded={previewExpanded}
+        onSetPreviewExpanded={setPreviewExpanded}
+        iframeMobileRef={iframeMobileRef}
+        onIframeLoad={handleIframeLoad}
+        onReset={handleReset}
+        onSave={handleSave}
+        saving={saving}
+        message={message}
+      />
     );
   }
 
-  // ============================================
-  // DESKTOP LAYOUT (original)
-  // ============================================
   return (
-    <div className="h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-heading font-bold mb-1">Personalizacion</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Personaliza el aspecto de tu web en tiempo real
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleReset}
-            className="neumor-btn px-4 py-2 text-sm flex items-center gap-2"
-            title="Restaurar valores por defecto"
-          >
-            <ResetIcon />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="neumor-btn neumor-btn-accent px-6 py-2"
-          >
-            {saving ? "Guardando..." : "Guardar"}
-          </button>
-        </div>
-      </div>
-
-      {/* Message */}
-      {message && (
-        <div
-          className={`mb-4 p-3 rounded-lg text-sm ${
-            message.type === "success"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-red-100 text-red-800 border border-red-200"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-[calc(100vh-180px)]">
-        {/* Left Panel - Tabs */}
-        <div className="xl:col-span-1 flex xl:flex-col gap-2 overflow-x-auto xl:overflow-x-visible pb-2 xl:pb-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center xl:flex-col gap-2 xl:gap-1 p-3 xl:py-4 rounded-xl transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-[var(--accent)] text-white shadow-lg"
-                  : "neumor-btn hover:bg-[var(--shadow-light)]"
-              }`}
-              title={tab.label}
-            >
-              {tab.icon}
-              <span className="text-xs font-medium xl:hidden">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Center Panel - Controls */}
-        <div className="xl:col-span-4 neumor-card p-5 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            {tabs.find(t => t.id === activeTab)?.icon}
-            {tabs.find(t => t.id === activeTab)?.label}
-          </h2>
-          {renderTabContent()}
-        </div>
-
-        {/* Right Panel - Preview */}
-        <PreviewPanel
-          previewUrl={previewUrl}
-          previewMode={previewMode}
-          previewDimensions={previewDimensions}
-          iframeRef={iframeRef}
-          onIframeLoad={handleIframeLoad}
-          onSetPreviewMode={setPreviewMode}
-          domain={domain}
-        />
-      </div>
-    </div>
+    <DesktopLayout
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      tabContent={tabContent}
+      previewUrl={previewUrl}
+      previewMode={previewMode}
+      previewDimensions={previewDimensions}
+      iframeRef={iframeRef}
+      onIframeLoad={handleIframeLoad}
+      onSetPreviewMode={setPreviewMode}
+      domain={domain}
+      onReset={handleReset}
+      onSave={handleSave}
+      saving={saving}
+      message={message}
+    />
   );
 }
 
