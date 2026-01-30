@@ -47,7 +47,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Store tenant data in locals for pages to access
   (locals as Record<string, unknown>).tenant = tenant;
 
-  return next();
+  const response = await next();
+
+  // En modo preview, evitar caché de Vercel/CDN para ver cambios inmediatos
+  if (isPreview) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  }
+
+  return response;
 });
 
 function parseDomain(host: string): { subdomain: string | null; customDomain: string | null } {
