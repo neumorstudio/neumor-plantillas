@@ -35,17 +35,13 @@
 │  ├─────────────────────────────────────────────────────────────────────┤    │
 │  │                                                                      │    │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │    │
-│  │  │     cli      │  │   supabase   │  │      ui      │              │    │
-│  │  │              │  │              │  │              │              │    │
-│  │  │ create-client│  │  migrations  │  │  components  │              │    │
-│  │  │ provisioning │  │    types     │  │   (React)    │              │    │
+│  │  │     cli      │  │   supabase   │  │  api-utils   │              │    │
+│  │  │ create-client│  │  migrations  │  │ CORS/limits  │              │    │
 │  │  └──────────────┘  └──────────────┘  └──────────────┘              │    │
-│  │                                                                      │    │
-│  │  ┌──────────────┐                                                   │    │
-│  │  │ n8n-templates│                                                   │    │
-│  │  │              │                                                   │    │
-│  │  │ automations  │                                                   │    │
-│  │  └──────────────┘                                                   │    │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │    │
+│  │  │    config    │  │    logger    │  │ n8n-templates│              │    │
+│  │  │ tailwind/ts  │  │ shared logs  │  │ automations  │              │    │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘              │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -76,12 +72,16 @@ neumor-plantillas/
 │       ├── clinic/               # Template clínicas
 │       ├── gym/                  # Template gimnasios
 │       ├── store/                # Template tiendas
-│       └── repairs/              # Template reparaciones
+│       ├── repairs/              # Template reparaciones
+│       └── unified/              # Template unificada (uso interno)
 ├── packages/
+│   ├── api-utils/                # CORS, rate-limit, validation
 │   ├── cli/                      # CLI para crear clientes
-│   ├── supabase/                 # Migraciones y tipos
-│   ├── ui/                       # Componentes compartidos
-│   └── n8n-templates/            # Workflows de automatización
+│   ├── config/                   # Config compartida (eslint, tailwind, ts)
+│   ├── logger/                   # Logger compartido
+│   ├── n8n-templates/            # Workflows de automatización
+│   └── supabase/                 # Migraciones y tipos
+├── supabase/                     # Migraciones locales (Supabase CLI)
 └── docs/                         # Documentación
 ```
 
@@ -232,6 +232,10 @@ Cada template incluye:
 
 ## Packages
 
+### API Utils (`packages/api-utils`)
+
+Utilidades compartidas para endpoints: CORS, rate limiting, validación.
+
 ### CLI (`packages/cli`)
 
 Provisioning de nuevos clientes:
@@ -261,9 +265,13 @@ packages/supabase/
     └── supabase.ts
 ```
 
-### UI (`packages/ui`)
+### Config (`packages/config`)
 
-Componentes React compartidos entre apps.
+Configuración compartida (ESLint, Tailwind, TypeScript).
+
+### Logger (`packages/logger`)
+
+Logger compartido para apps y paquetes.
 
 ### n8n Templates (`packages/n8n-templates`)
 
@@ -272,6 +280,8 @@ Workflows de automatización:
 - Notificaciones de leads
 - Recordatorios 24h
 - Envío de newsletters
+
+Nota: Los componentes UI compartidos del admin viven en `apps/admin/src/components/ui` y cada template mantiene sus propios componentes en `src/components`.
 
 ## Scripts
 

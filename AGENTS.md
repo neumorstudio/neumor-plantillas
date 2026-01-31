@@ -15,12 +15,17 @@ neumor-plantillas/
 │       ├── gym/        # Entrenador personal
 │       ├── salon/
 │       ├── clinic/
-│       └── store/
+│       ├── store/
+│       └── unified/    # Template unificada (multi-vertical, uso interno)
 ├── packages/
-│   ├── supabase/       # Migraciones y tipos de BD
-│   │   └── migrations/ # Migraciones SQL (0001-0027)
-│   ├── ui/             # Componentes compartidos
-│   └── api-utils/      # Utilidades compartidas (CORS, rate-limit, validation)
+│   ├── api-utils/      # Utilidades compartidas (CORS, rate-limit, validation)
+│   ├── cli/            # Provisioning de clientes
+│   ├── config/         # Config compartida (eslint, tailwind, ts)
+│   ├── logger/         # Logger compartido
+│   ├── n8n-templates/  # Automatizaciones
+│   └── supabase/       # Migraciones y tipos de BD
+│       └── migrations/ # Migraciones SQL (0001-0027)
+└── supabase/           # Migraciones locales (Supabase CLI)
 └── docs/               # Documentacion
     └── DATABASE.md     # Schema completo de la BD
 ```
@@ -98,8 +103,9 @@ if (webhookUrl) {
 |------------|-----------|---------|
 | `AppointmentForm.astro` | salon, clinic | `/api/citas` via `webhookUrl` |
 | `ReservationForm.astro` | restaurant | `/api/reservas` via `webhookUrl` |
-| `QuoteForm.astro` | repairs | `/api/presupuestos` via `webhookUrl` |
-| `ContactForm.astro` | todas | `/api/contacto` via `webhookUrl` |
+| `ClassBookingForm.astro` | gym | `/api/entrenamientos` via `webhookUrl` |
+| `ContactForm.astro` | store | `/api/contacto` via `webhookUrl` |
+| `ContactForm.astro` | repairs | `/api/presupuestos` via `webhookUrl` |
 
 ## Admin (apps/admin)
 
@@ -114,6 +120,7 @@ if (webhookUrl) {
 /api/citas          - Crear citas (salon, clinic)
 /api/reservas       - Crear reservas (restaurant)
 /api/presupuestos   - Crear presupuestos (repairs)
+/api/entrenamientos - Solicitudes de entrenamiento (gym)
 /api/contacto       - Formularios de contacto
 /api/newsletter     - Suscripciones newsletter
 /api/upload         - Subir archivos
@@ -166,6 +173,7 @@ export function Card({ title, children }: CardProps) {
 | `apps/admin/src/app/dashboard/layout.tsx` | Layout del admin con config dinamica |
 | `apps/admin/src/app/dashboard/Sidebar.tsx` | Navegacion segun tipo de negocio |
 | `apps/templates/salon/src/components/AppointmentForm.astro` | Ejemplo de formulario que usa API |
+| `apps/templates/gym/src/components/ClassBookingForm.astro` | Formulario multipaso (gym) |
 | `packages/supabase/migrations/` | Todas las migraciones de BD |
 
 ## Tipos de Negocio Soportados
@@ -196,6 +204,14 @@ npx supabase db diff        # Ver cambios pendientes
 npx supabase db push        # Aplicar migraciones
 ```
 
+## Carpetas generadas (ruido, evitar tocar)
+
+- `**/node_modules/`
+- `**/dist/`
+- `**/.astro/`
+- `**/.turbo/`
+- `**/.vercel/`
+
 ## ❌ Errores Comunes a Evitar
 
 ### Arquitectura
@@ -207,7 +223,7 @@ npx supabase db push        # Aplicar migraciones
 - No usar `"use client"` en componentes que no lo necesitan
 - No olvidar `revalidatePath()` despues de mutaciones
 - No asumir que las columnas existen sin verificar el schema
-- No crear componentes duplicados - buscar primero en `packages/ui`
+- No crear componentes duplicados - buscar primero en `apps/admin/src/components/ui` y componentes existentes en templates
 - No hardcodear URLs - usar variables de entorno
 
 ### Formularios

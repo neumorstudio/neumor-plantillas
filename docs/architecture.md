@@ -13,8 +13,10 @@ apps/
   templates/          # Sitios públicos (Astro 5 SSR)
 packages/
   cli/                # Provisioning de clientes
+  api-utils/          # CORS, rate-limit, validation
+  config/             # Config compartida (eslint, tailwind, ts)
+  logger/             # Logger compartido
   supabase/           # Migraciones y tipos
-  ui/                 # Componentes compartidos
   n8n-templates/       # Workflows de automatización
 ```
 
@@ -55,7 +57,9 @@ La tabla `business_type_config` define qué secciones del dashboard se muestran 
 ## Paquetes compartidos
 
 - `packages/supabase`: migraciones SQL y tipos TypeScript generados.
-- `packages/ui`: componentes compartidos entre apps.
+- `packages/api-utils`: CORS, rate limiting y validación para endpoints.
+- `packages/config`: configuración compartida (ESLint, Tailwind, TypeScript).
+- `packages/logger`: logger compartido.
 - `packages/cli`: creación de clientes, websites y dominio en Vercel.
 
 Para más detalle de tablas y relaciones, ver `docs/DATABASE.md`.

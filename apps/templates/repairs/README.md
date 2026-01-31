@@ -1,43 +1,43 @@
-# Astro Starter Kit: Minimal
+# NeumorStudio Template: Repairs (Astro 5 SSR)
 
-```sh
-pnpm create astro@latest -- --template minimal
-```
+Plantilla publica para reparaciones y reformas. Render SSR con Astro y formulario de presupuesto via API del admin.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Mapa rapido
 
-## 🚀 Project Structure
+- `src/pages/index.astro`: entrada principal, preview mode, mapeo de variantes, mezcla defaults + Supabase.
+- `src/lib/supabase.ts`: cliente Supabase solo lectura, tipos y fetchers.
+- `src/components/`: secciones y variantes (Hero, Products, Features, Footer, `ContactForm.astro`).
+- `src/layouts/Layout.astro`: HTML base y metadatos.
+- `src/styles/`: estilos globales y temas.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Flujo de datos (no escribir directo en Supabase)
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+- Lee `websites.config` por `PUBLIC_WEBSITE_ID` o por dominio.
+- `ContactForm.astro` envia al webhook configurado:
+  - Default: `${PUBLIC_ADMIN_URL}/api/presupuestos`
+  - Fallback: `PUBLIC_CONTACT_WEBHOOK_URL`
+- Si Supabase no esta configurado, usa `defaultConfig`.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Preview mode
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+- Agrega `?preview=1` y parametros `theme`/`v_*` (ver comentarios en `src/pages/index.astro`).
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Variables de entorno
 
-## 🧞 Commands
+- `PUBLIC_SUPABASE_URL`
+- `PUBLIC_SUPABASE_ANON_KEY`
+- `PUBLIC_WEBSITE_ID`
+- `PUBLIC_ADMIN_URL` (recomendado)
+- `PUBLIC_CONTACT_WEBHOOK_URL` (fallback)
 
-All commands are run from the root of the project, from a terminal:
+## Desarrollo local
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+Desde la raiz del repo:
 
-## 👀 Want to learn more?
+- `pnpm dev:repairs`
+- `pnpm dev --filter @neumorstudio/template-repairs`
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Notas para cambios
+
+- No agregar llamadas directas a Supabase desde frontend; usar `/api/presupuestos`.
+- Para nuevas variantes: crear componente en `src/components/<Seccion>/` y exportarlo en el `index.ts` de la seccion.

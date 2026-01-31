@@ -7,24 +7,44 @@
 ```
 docs/
 ├── README.md                          # Este archivo (índice)
+├── index.md                           # Home de la documentación
+├── getting-started.md                 # Primeros pasos
+├── architecture.md                    # Arquitectura y flujos
+├── api.md                             # Endpoints internos
+├── authentication.md                  # Auth y sesiones
+├── configuration.md                   # Configuración del sistema
+├── deployment.md                      # Deploy y CI/CD
+├── troubleshooting.md                 # Errores comunes
 ├── DATABASE.md                        # Esquema de base de datos
+├── GUIA_COMPLETA.md                   # Guía completa del proyecto
 ├── GUIA-SIMULACION-CLIENTES.md       # Testing y QA
 ├── provisioning/
-│   └── vercel-domain-assignment.md   # Dominios en Vercel
-└── security/
-    ├── SECURITY_CHANGELOG.md         # Auditoría de seguridad
-    └── public-api-verification.md    # Checklist de verificación
+│   └── vercel-domain-assignment.md    # Dominios en Vercel
+├── security/
+│   ├── SECURITY_CHANGELOG.md          # Auditoría de seguridad
+│   └── public-api-verification.md     # Checklist de verificación
+├── plans/                             # Planes de trabajo y diseño
+├── setup/                             # Setup local y tooling
+└── PROMPS IA/                          # Prompts internos para IA
 ```
 
 ---
 
 ## Documentos Principales
 
+### Puesta en marcha
+
+| Documento | Descripción |
+|-----------|-------------|
+| [getting-started.md](getting-started.md) | Primeros pasos para desarrollo local. |
+| [architecture.md](architecture.md) | Vista general de la arquitectura y flujos. |
+| [api.md](api.md) | Endpoints internos usados por templates y admin. |
+
 ### Base de Datos
 
 | Documento | Descripción |
 |-----------|-------------|
-| [DATABASE.md](DATABASE.md) | Esquema completo: 18 tablas, relaciones, RLS, triggers, índices. Referencia técnica para desarrollo. |
+| [DATABASE.md](DATABASE.md) | Esquema completo: tablas, relaciones, RLS, triggers, índices. |
 
 ### Testing y QA
 
@@ -51,13 +71,17 @@ docs/
 
 ### Para Desarrolladores
 
-1. [DATABASE.md](DATABASE.md) - Entender el modelo de datos
-2. [GUIA-SIMULACION-CLIENTES.md](GUIA-SIMULACION-CLIENTES.md) - Testing local
+1. [getting-started.md](getting-started.md) - Primeros pasos
+2. [architecture.md](architecture.md) - Componentes y flujos
+3. [api.md](api.md) - Endpoints internos
+4. [DATABASE.md](DATABASE.md) - Modelo de datos
+5. [GUIA-SIMULACION-CLIENTES.md](GUIA-SIMULACION-CLIENTES.md) - Testing local
 
 ### Para DevOps
 
-1. [vercel-domain-assignment.md](provisioning/vercel-domain-assignment.md) - Provisioning de dominios
-2. [GUIA-SIMULACION-CLIENTES.md](GUIA-SIMULACION-CLIENTES.md) - Verificación de deployment
+1. [deployment.md](deployment.md) - Deploy y CI/CD
+2. [configuration.md](configuration.md) - Variables y configuración
+3. [vercel-domain-assignment.md](provisioning/vercel-domain-assignment.md) - Provisioning de dominios
 
 ### Para Seguridad
 

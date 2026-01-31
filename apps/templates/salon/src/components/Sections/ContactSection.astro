@@ -36,7 +36,7 @@ const {
             </div>
             <div class="contact-text">
               <span class="contact-label">Dirección</span>
-              <span class="contact-value">{address}</span>
+              <span class="contact-value" data-content="address">{address}</span>
             </div>
           </div>
         )}
@@ -49,7 +49,7 @@ const {
             </div>
             <div class="contact-text">
               <span class="contact-label">Teléfono</span>
-              <a href={`tel:${phone}`} class="contact-value">{phone}</a>
+              <a href={`tel:${phone}`} class="contact-value" data-content="phone">{phone}</a>
             </div>
           </div>
         )}
@@ -63,7 +63,7 @@ const {
             </div>
             <div class="contact-text">
               <span class="contact-label">Email</span>
-              <a href={`mailto:${email}`} class="contact-value">{email}</a>
+              <a href={`mailto:${email}`} class="contact-value" data-content="email">{email}</a>
             </div>
           </div>
         )}
