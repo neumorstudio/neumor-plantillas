@@ -20,6 +20,8 @@ export interface TemplatePreset {
   colors: ColorsConfig;
   typography: TypographyConfig;
   effects: EffectsConfig;
+  /** Variación visual de un preset base (para agrupar y evitar duplicados en UI) */
+  variantOf?: string;
   variants: {
     hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
     menu: "tabs" | "grid" | "list" | "carousel";
@@ -418,10 +420,11 @@ export const templatePresets: TemplatePreset[] = [
   {
     id: "dark-elegance",
     name: "Dark Elegance",
-    description: "Lujo y exclusividad nocturna",
+    description: "Variante nocturna de Luxury",
     preview: "linear-gradient(135deg, #0d0d0d 0%, #c9a227 30%, #1a1a2e 70%, #000000 100%)",
     theme: "midnight",
     skin: "glass",
+    variantOf: "luxury",
     colors: {
       primary: "#c9a227",
       secondary: "#d4af37",
@@ -532,10 +535,11 @@ export const templatePresets: TemplatePreset[] = [
   {
     id: "magazine-editorial",
     name: "Magazine Editorial",
-    description: "Estilo revista de moda",
+    description: "Variante de Magazine con contraste editorial",
     preview: "linear-gradient(135deg, #ffffff 0%, #000000 45%, #e63946 100%)",
     theme: "minimal",
     skin: "flat",
+    variantOf: "magazine",
     colors: {
       primary: "#000000",
       secondary: "#333333",
@@ -570,10 +574,11 @@ export const templatePresets: TemplatePreset[] = [
   {
     id: "tropical-paradise",
     name: "Tropical Paradise",
-    description: "Playa y relax total",
+    description: "Variante suave de Tropical",
     preview: "linear-gradient(135deg, #f5deb3 0%, #ff6b6b 25%, #40e0d0 75%, #ffecd2 100%)",
     theme: "summer",
     skin: "3d",
+    variantOf: "tropical",
     colors: {
       primary: "#ff6b6b",
       secondary: "#40e0d0",

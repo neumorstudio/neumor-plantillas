@@ -49,6 +49,38 @@ export function DesignTab({
   onEffectsChange,
   onTypographyChange,
 }: DesignTabProps) {
+  const basePresets = templatePresets.filter((preset) => !preset.variantOf);
+  const variantPresets = templatePresets.filter((preset) => preset.variantOf);
+
+  const renderPresetButton = (preset: TemplatePreset) => (
+    <button
+      key={preset.id}
+      onClick={() => onApplyPreset(preset)}
+      className={`relative p-3 rounded-xl text-left transition-all overflow-hidden ${
+        activePreset === preset.id
+          ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
+          : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
+      }`}
+      style={{ background: preset.preview }}
+    >
+      <div className="relative z-10">
+        <span className="text-xs font-bold text-white drop-shadow-md">
+          {preset.name}
+        </span>
+        <p className="text-[9px] text-white/80 drop-shadow-sm mt-0.5">
+          {preset.description}
+        </p>
+      </div>
+      {activePreset === preset.id && (
+        <div className="absolute top-2 right-2 bg-[var(--accent)] text-white rounded-full p-0.5">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        </div>
+      )}
+    </button>
+  );
+
   return (
     <div className="space-y-6">
       {/* Plantillas Prediseñadas - Lo primero y más visible */}
@@ -68,35 +100,15 @@ export function DesignTab({
           Elige una plantilla completa o personaliza cada detalle abajo.
         </p>
         <div className="grid grid-cols-2 gap-3">
-          {templatePresets.map((preset) => (
-            <button
-              key={preset.id}
-              onClick={() => onApplyPreset(preset)}
-              className={`relative p-3 rounded-xl text-left transition-all overflow-hidden ${
-                activePreset === preset.id
-                  ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
-                  : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
-              }`}
-              style={{ background: preset.preview }}
-            >
-              <div className="relative z-10">
-                <span className="text-xs font-bold text-white drop-shadow-md">
-                  {preset.name}
-                </span>
-                <p className="text-[9px] text-white/80 drop-shadow-sm mt-0.5">
-                  {preset.description}
-                </p>
-              </div>
-              {activePreset === preset.id && (
-                <div className="absolute top-2 right-2 bg-[var(--accent)] text-white rounded-full p-0.5">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
-            </button>
-          ))}
+          {basePresets.map(renderPresetButton)}
         </div>
+        {variantPresets.length > 0 && (
+          <CollapsibleSection title="Variantes de color" defaultOpen={false}>
+            <div className="grid grid-cols-2 gap-3">
+              {variantPresets.map(renderPresetButton)}
+            </div>
+          </CollapsibleSection>
+        )}
       </div>
 
       {/* Separador visual */}
