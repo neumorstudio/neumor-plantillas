@@ -63,6 +63,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "modern", label: "Moderno" },
       { value: "bold", label: "Llamativo" },
       { value: "minimal", label: "Minimalista" },
+      { value: "fullscreen", label: "Pantalla Completa" },
+      { value: "split", label: "Dividido" },
     ],
     defaultVariant: "classic",
     required: true,

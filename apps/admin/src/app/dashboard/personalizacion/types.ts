@@ -10,7 +10,7 @@ import type { Theme, WebsiteConfig, BusinessType } from "@neumorstudio/supabase"
 // ============================================
 
 export interface Variants {
-  hero: "classic" | "modern" | "bold" | "minimal";
+  hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   menu: "tabs" | "grid" | "list" | "carousel";
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";

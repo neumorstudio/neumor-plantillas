@@ -273,7 +273,7 @@ export type PaymentUpdate = Partial<PaymentInsert>;
 
 /** Variantes de componentes para restaurant template */
 export interface RestaurantVariants {
-  hero: "classic" | "modern" | "bold" | "minimal";
+  hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   menu: "tabs" | "grid" | "list" | "carousel";
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";
@@ -284,7 +284,7 @@ export interface RestaurantVariants {
 
 /** Variantes de componentes para salon template */
 export interface SalonVariants {
-  hero: "classic" | "modern" | "bold" | "minimal";
+  hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   services: "tabs" | "grid" | "list" | "carousel";
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";
@@ -293,7 +293,7 @@ export interface SalonVariants {
 
 /** Variantes de componentes para gym template */
 export interface GymVariants {
-  hero: "classic" | "modern" | "bold" | "minimal";
+  hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   classes: "tabs" | "grid" | "list" | "carousel";
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";
@@ -302,7 +302,7 @@ export interface GymVariants {
 
 /** Variantes de componentes para store template */
 export interface StoreVariants {
-  hero: "classic" | "modern" | "bold" | "minimal";
+  hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   products: "tabs" | "grid" | "list" | "carousel";
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";
