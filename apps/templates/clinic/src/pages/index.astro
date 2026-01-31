@@ -26,6 +26,8 @@ import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero
 import { TreatmentsTabs, TreatmentsGrid, TreatmentsList, TreatmentsCarousel } from "@components/Treatments";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
+import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
+import { FAQSection, ContactSection, TeamSection, GallerySection, PlansSection } from "@components/Sections";
 
 // Importar cliente Supabase
 import { getBusinessHours, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig } from "@lib/supabase";
@@ -42,6 +44,7 @@ const previewVariants = {
   hero: url.searchParams.get("v_hero"),
   treatments: url.searchParams.get("v_treatments"),
   features: url.searchParams.get("v_features"),
+  reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
 };
 
@@ -65,6 +68,11 @@ const componentMap = {
     cards: FeaturesCards,
     icons: FeaturesIcons,
     banner: FeaturesBanner,
+  },
+  reviews: {
+    grid: ReviewsGrid,
+    carousel: ReviewsCarousel,
+    minimal: ReviewsMinimal,
   },
   footer: {
     full: FooterFull,
@@ -162,6 +170,7 @@ const customization = websiteData?.config ? {
   branding: websiteData.config.branding,
   logo: websiteData.config.logo,
 } : {};
+const reviewsConfig = websiteData?.config as Record<string, unknown> | undefined;
 
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
@@ -181,7 +190,7 @@ if (isPreview) {
     hero: (previewVariants.hero as WebsiteVariants["hero"]) || selectedVariants.hero,
     treatments: (previewVariants.treatments as WebsiteVariants["treatments"]) || selectedVariants.treatments,
     features: (previewVariants.features as WebsiteVariants["features"]) || selectedVariants.features,
-    reviews: selectedVariants.reviews,
+    reviews: (previewVariants.reviews as WebsiteVariants["reviews"]) || selectedVariants.reviews,
     footer: (previewVariants.footer as WebsiteVariants["footer"]) || selectedVariants.footer,
   };
 }
@@ -190,6 +199,7 @@ if (isPreview) {
 const Hero = componentMap.hero[selectedVariants.hero] || HeroClassic;
 const Treatments = componentMap.treatments[selectedVariants.treatments] || TreatmentsTabs;
 const Features = componentMap.features[selectedVariants.features] || FeaturesCards;
+const ReviewsComponent = componentMap.reviews[selectedVariants.reviews] || ReviewsCarousel;
 const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFull;
 
 // Website ID para el formulario de citas
@@ -268,11 +278,25 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
       El orden se controla con CSS order para reordenamiento en tiempo real.
     */}
     {(() => {
-      const allSections = ["hero", "features", "services", "booking"];
+      const allSections = [
+        "hero",
+        "features",
+        "services",
+        "testimonials",
+        "team",
+        "gallery",
+        "faq",
+        "plans",
+        "contact",
+        "booking",
+      ];
+      const legacyEnabledSections = new Set(
+        defaultSections.filter((section) => section.enabled).map((section) => section.id)
+      );
 
       return allSections.map((sectionId) => {
         const sectionCfg = sectionConfigMap.get(sectionId);
-        const isEnabled = sectionCfg?.enabled ?? true;
+        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
         const order = sectionCfg?.order ?? 99;
         const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
 
@@ -300,6 +324,51 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
             return (
               <section data-section-id="services" style={style}>
                 <Treatments />
+              </section>
+            );
+          case "testimonials":
+            return (
+              <section data-section-id="testimonials" style={style}>
+                <ReviewsComponent
+                  title={reviewsConfig?.reviewsTitle as string | undefined}
+                  subtitle={reviewsConfig?.reviewsSubtitle as string | undefined}
+                  googleRating={reviewsConfig?.googleRating as number | undefined}
+                  totalReviews={reviewsConfig?.totalReviews as number | undefined}
+                />
+              </section>
+            );
+          case "team":
+            return (
+              <section data-section-id="team" style={style}>
+                <TeamSection />
+              </section>
+            );
+          case "gallery":
+            return (
+              <section data-section-id="gallery" style={style}>
+                <GallerySection />
+              </section>
+            );
+          case "faq":
+            return (
+              <section data-section-id="faq" style={style}>
+                <FAQSection />
+              </section>
+            );
+          case "plans":
+            return (
+              <section data-section-id="plans" style={style}>
+                <PlansSection />
+              </section>
+            );
+          case "contact":
+            return (
+              <section data-section-id="contact" style={style}>
+                <ContactSection
+                  address={config.address}
+                  phone={config.phone}
+                  email={config.email}
+                />
               </section>
             );
           case "booking":

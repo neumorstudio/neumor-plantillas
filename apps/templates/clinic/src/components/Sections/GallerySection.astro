@@ -1,0 +1,102 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  images?: string[];
+}
+
+const defaultImages = [
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=80",
+  "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80",
+  "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=600&q=80",
+  "https://images.unsplash.com/photo-1633681926035-ec1ac984418a?w=600&q=80",
+  "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600&q=80",
+  "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&q=80",
+];
+
+const {
+  title = "Nuestra Galería",
+  subtitle = "Descubre nuestro trabajo",
+  images = defaultImages,
+} = Astro.props;
+---
+
+<section id="gallery" class="section">
+  <div class="container">
+    <div class="gallery-header">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+    </div>
+    <div class="gallery-grid">
+      {images.map((image, index) => (
+        <div class="gallery-item neumor-card" style={`animation-delay: ${index * 100}ms`}>
+          <img src={image} alt={`Galería imagen ${index + 1}`} loading="lazy" />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .gallery-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .gallery-header h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .gallery-header p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .gallery-item {
+    padding: 0;
+    border-radius: 1rem;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    animation: fadeInUp 0.5s ease backwards;
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .gallery-item:hover img {
+    transform: scale(1.05);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .gallery-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+  }
+</style>

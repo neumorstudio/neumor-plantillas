@@ -285,12 +285,26 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
       El orden se controla con CSS order para reordenamiento en tiempo real.
     */}
     {(() => {
-      const allSections = ["hero", "features", "services", "booking"];
+      const allSections = [
+        "hero",
+        "features",
+        "services",
+        "testimonials",
+        "team",
+        "gallery",
+        "faq",
+        "plans",
+        "contact",
+        "booking",
+      ];
       const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
+      const legacyEnabledSections = new Set(
+        defaultSections.filter((section) => section.enabled).map((section) => section.id)
+      );
 
       return allSections.map((sectionId) => {
         const sectionCfg = sectionConfigMap.get(sectionId);
-        const isEnabled = sectionCfg?.enabled ?? true;
+        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
         const order = sectionCfg?.order ?? 99;
         const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
 
@@ -322,6 +336,51 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
             return (
               <section data-section-id="services" style={style}>
                 <Services categories={serviceCategories} />
+              </section>
+            );
+          case "testimonials":
+            return (
+              <section data-section-id="testimonials" style={style}>
+                <Testimonials
+                  title={config.reviewsTitle as string | undefined}
+                  subtitle={config.reviewsSubtitle as string | undefined}
+                  googleRating={config.googleRating as number | undefined}
+                  totalReviews={config.totalReviews as number | undefined}
+                />
+              </section>
+            );
+          case "team":
+            return (
+              <section data-section-id="team" style={style}>
+                <TeamSection />
+              </section>
+            );
+          case "gallery":
+            return (
+              <section data-section-id="gallery" style={style}>
+                <GallerySection />
+              </section>
+            );
+          case "faq":
+            return (
+              <section data-section-id="faq" style={style}>
+                <FAQSection />
+              </section>
+            );
+          case "plans":
+            return (
+              <section data-section-id="plans" style={style}>
+                <PlansSection />
+              </section>
+            );
+          case "contact":
+            return (
+              <section data-section-id="contact" style={style}>
+                <ContactSection
+                  address={config.address as string | undefined}
+                  phone={config.phone as string | undefined}
+                  email={config.email as string | undefined}
+                />
               </section>
             );
           case "booking":

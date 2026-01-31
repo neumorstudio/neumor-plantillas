@@ -1,0 +1,133 @@
+---
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  items?: FAQItem[];
+}
+
+const defaultItems: FAQItem[] = [
+  {
+    question: "¿Necesito cita previa?",
+    answer: "Recomendamos reservar cita previa para asegurar disponibilidad, pero también atendemos sin cita según disponibilidad.",
+  },
+  {
+    question: "¿Cuáles son las formas de pago?",
+    answer: "Aceptamos efectivo, tarjeta de crédito/débito y Bizum.",
+  },
+  {
+    question: "¿Puedo cancelar mi cita?",
+    answer: "Sí, puedes cancelar o modificar tu cita con al menos 24 horas de antelación sin coste.",
+  },
+  {
+    question: "¿Ofrecen servicios a domicilio?",
+    answer: "Sí, disponemos de servicios a domicilio para eventos especiales. Consulta disponibilidad y tarifas.",
+  },
+];
+
+const {
+  title = "Preguntas Frecuentes",
+  subtitle = "Resolvemos tus dudas",
+  items = defaultItems,
+} = Astro.props;
+---
+
+<section id="faq" class="section">
+  <div class="container">
+    <div class="faq-header">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+    </div>
+    <div class="faq-list">
+      {items.map((item, index) => (
+        <details class="faq-item neumor-card">
+          <summary class="faq-question">
+            <span>{item.question}</span>
+            <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </summary>
+          <div class="faq-answer">
+            <p>{item.answer}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .faq-header h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .faq-header p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .faq-list {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .faq-item {
+    padding: 0;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+    list-style: none;
+  }
+
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-icon {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+
+  details[open] .faq-icon {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    padding: 0 1.5rem 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .faq-answer p {
+    margin: 0;
+  }
+</style>

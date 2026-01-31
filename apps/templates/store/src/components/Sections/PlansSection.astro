@@ -1,0 +1,242 @@
+---
+interface Plan {
+  name: string;
+  price: string;
+  period?: string;
+  description?: string;
+  features: string[];
+  highlighted?: boolean;
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  plans?: Plan[];
+}
+
+const defaultPlans: Plan[] = [
+  {
+    name: "Básico",
+    price: "29",
+    period: "/mes",
+    description: "Ideal para mantenimiento",
+    features: [
+      "1 corte de pelo al mes",
+      "Lavado incluido",
+      "10% descuento en productos",
+    ],
+  },
+  {
+    name: "Premium",
+    price: "59",
+    period: "/mes",
+    description: "El más popular",
+    features: [
+      "2 cortes de pelo al mes",
+      "1 tratamiento capilar",
+      "Lavado y peinado incluido",
+      "20% descuento en productos",
+      "Reserva prioritaria",
+    ],
+    highlighted: true,
+  },
+  {
+    name: "VIP",
+    price: "99",
+    period: "/mes",
+    description: "La experiencia completa",
+    features: [
+      "Cortes ilimitados",
+      "Tratamientos mensuales",
+      "Color incluido",
+      "30% descuento en productos",
+      "Atención personalizada",
+    ],
+  },
+];
+
+const {
+  title = "Nuestros Planes",
+  subtitle = "Elige el plan que mejor se adapte a ti",
+  plans = defaultPlans,
+} = Astro.props;
+---
+
+<section id="plans" class="section">
+  <div class="container">
+    <div class="plans-header">
+      <h2>{title}</h2>
+      <p>{subtitle}</p>
+    </div>
+    <div class="plans-grid">
+      {plans.map((plan) => (
+        <div class={`plan-card neumor-card ${plan.highlighted ? 'highlighted' : ''}`}>
+          {plan.highlighted && <span class="plan-badge">Popular</span>}
+          <h3 class="plan-name">{plan.name}</h3>
+          {plan.description && <p class="plan-description">{plan.description}</p>}
+          <div class="plan-price">
+            <span class="price-currency">€</span>
+            <span class="price-value">{plan.price}</span>
+            {plan.period && <span class="price-period">{plan.period}</span>}
+          </div>
+          <ul class="plan-features">
+            {plan.features.map((feature) => (
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+          <button class="plan-cta neumor-btn">
+            Elegir Plan
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .plans-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .plans-header h2 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .plans-header p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .plan-card {
+    padding: 2rem;
+    border-radius: 1.25rem;
+    text-align: center;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .plan-card.highlighted {
+    transform: scale(1.05);
+    z-index: 1;
+  }
+
+  .plan-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    padding: 0.35rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .plan-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .plan-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .plan-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .price-currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .price-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .price-period {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    text-align: left;
+    flex-grow: 1;
+  }
+
+  .plan-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+
+  .plan-features svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .plan-cta {
+    width: 100%;
+    padding: 1rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .plan-card.highlighted .plan-cta {
+    background: var(--accent);
+    color: white;
+  }
+
+  @media (max-width: 968px) {
+    .plan-card.highlighted {
+      transform: scale(1);
+    }
+
+    .plans-grid {
+      gap: 1.5rem;
+    }
+  }
+</style>

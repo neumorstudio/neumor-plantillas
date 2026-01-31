@@ -99,8 +99,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "minimal", label: "Minimalista" },
     ],
     defaultVariant: "carousel",
-    // NO IMPLEMENTADO - No hay componente Testimonials en ningún template
-    businessTypes: [],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   faq: {
@@ -114,8 +114,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "simple", label: "Simple" },
     ],
     defaultVariant: "accordion",
-    // NO IMPLEMENTADO - No hay componente FAQ en ningún template
-    businessTypes: [],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   contact: {
@@ -127,8 +127,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "form", label: "Formulario" },
     ],
     defaultVariant: "form",
-    // Implementado en: shop (store), repairs (usan ContactForm)
-    businessTypes: ["shop", "repairs"],
+    // Implementado en: todos los templates (formulario o info)
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   footer: {
@@ -236,8 +236,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "list", label: "Lista" },
     ],
     defaultVariant: "grid",
-    // NO IMPLEMENTADO - No hay componente Team en ningún template
-    businessTypes: [],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   gallery: {
@@ -251,8 +251,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "carousel", label: "Carrusel" },
     ],
     defaultVariant: "masonry",
-    // NO IMPLEMENTADO - No hay componente Gallery en ningún template
-    businessTypes: [],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   booking: {
@@ -325,8 +325,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
       { value: "comparison", label: "Comparativa" },
     ],
     defaultVariant: "cards",
-    // NO IMPLEMENTADO - No hay componente Plans
-    businessTypes: [],
+    // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
+    businessTypes: ["restaurant", "salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   membership: {

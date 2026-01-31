@@ -140,6 +140,36 @@ export function PersonalizacionClient({
     items: normalizeFeatureItems(initialConfig.features?.items as FeatureItemConfig[] | undefined),
   });
 
+  const mergeSectionsConfig = useCallback((existing: SectionsConfig | undefined): SectionsConfig => {
+    const defaults = getDefaultSectionsConfig(businessType);
+    if (!existing?.sections || existing.sections.length === 0) {
+      return defaults;
+    }
+
+    const existingIds = new Set(existing.sections.map((s) => s.id));
+    const maxExistingOrder = existing.sections.reduce(
+      (max, section) => (section.order > max ? section.order : max),
+      -1
+    );
+    let nextOrder = maxExistingOrder + 1;
+
+    const mergedSections = [...existing.sections];
+    defaults.sections.forEach((section) => {
+      if (!existingIds.has(section.id)) {
+        mergedSections.push({
+          ...section,
+          order: nextOrder++,
+        });
+      }
+    });
+
+    return {
+      ...existing,
+      sections: mergedSections,
+      updatedAt: new Date().toISOString(),
+    };
+  }, [businessType]);
+
   // Estado para preset activo (null si personalización manual)
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
@@ -152,7 +182,7 @@ export function PersonalizacionClient({
     const existingConfig = initialConfig.sectionsConfig;
     // Si hay configuración existente con secciones válidas, usarla
     if (existingConfig?.sections && existingConfig.sections.length > 0) {
-      return existingConfig;
+      return mergeSectionsConfig(existingConfig);
     }
     // Si no, generar configuración por defecto para el tipo de negocio
     return getDefaultSectionsConfig(businessType);
@@ -425,7 +455,7 @@ export function PersonalizacionClient({
       // Restaurar secciones - validar que existan secciones válidas
       const existingSections = initialConfig.sectionsConfig;
       if (existingSections?.sections && existingSections.sections.length > 0) {
-        setSectionsConfig(existingSections);
+        setSectionsConfig(mergeSectionsConfig(existingSections));
       } else {
         setSectionsConfig(getDefaultSectionsConfig(businessType));
       }
