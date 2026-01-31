@@ -56,7 +56,79 @@ const defaultFonts = !fontImports
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Critical CSS - Colores personalizados con maxima prioridad para evitar FOUC -->
+    <!-- 1. Critical CSS - Defaults base (se sobrescriben con personalizacion) -->
+    <style is:inline>
+      /* Variables base - se sobrescriben con inline styles si hay personalización */
+      :root {
+        --neumor-bg: #e8ecf1;
+        --shadow-dark: rgba(163, 177, 198, 0.6);
+        --shadow-light: rgba(255, 255, 255, 0.9);
+        --text-primary: #1a1a2e;
+        --text-secondary: #374151;
+        --accent: #6366f1;
+        --accent-hover: #4f46e5;
+        --shadow-intensity: 1;
+        --radius-base: 1rem;
+        --font-heading: "Playfair Display", serif;
+        --font-body: "Inter", system-ui, sans-serif;
+      }
+
+      html, body {
+        background-color: var(--neumor-bg);
+        color: var(--text-primary);
+        font-family: var(--font-body);
+        margin: 0;
+        padding: 0;
+      }
+
+      h1, h2, h3 {
+        font-family: var(--font-heading);
+      }
+
+      /* Botón crítico - evita flash de botones sin estilo */
+      .neumor-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--neumor-bg);
+        color: var(--text-primary);
+        border: none;
+        border-radius: var(--radius-base, 1rem);
+        padding: 0.875rem 1.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow:
+          calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+          calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light);
+      }
+
+      .neumor-btn-accent {
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: white;
+      }
+
+      /* Card crítico */
+      .neumor-card {
+        background-color: var(--neumor-bg);
+        border-radius: var(--radius-base, 1rem);
+        box-shadow:
+          calc(8px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--shadow-dark),
+          calc(-8px * var(--shadow-intensity, 1)) calc(-8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--shadow-light);
+      }
+
+      /* Input crítico */
+      .neumor-input {
+        background-color: var(--neumor-bg);
+        color: var(--text-primary);
+        border: none;
+        border-radius: var(--radius-base, 1rem);
+        box-shadow:
+          inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-dark),
+          inset calc(-4px * var(--shadow-intensity, 1)) calc(-4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-light);
+      }
+    </style>
+
+    <!-- 2. Personalization overrides - colores y efectos del cliente -->
     {inlineColorStyles && (
       <style set:html={`html{${inlineColorStyles}}`}></style>
     )}
@@ -68,7 +140,7 @@ const defaultFonts = !fontImports
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     )}
 
-    <!-- Fonts -->
+    <!-- Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href={defaultFonts} rel="stylesheet" />
@@ -78,29 +150,10 @@ const defaultFonts = !fontImports
 
     <title>{title}</title>
 
-    <!-- Custom CSS Variables from personalization -->
+    <!-- Custom CSS Variables from typography/branding -->
     {cssVariables && (
       <style set:html={cssVariables}></style>
     )}
-
-    <style is:global>
-      :root {
-        --font-heading: "Playfair Display", serif;
-        --font-body: "Inter", system-ui, sans-serif;
-      }
-
-      body {
-        font-family: var(--font-body);
-      }
-
-      h1, h2, h3 {
-        font-family: var(--font-heading);
-      }
-
-      .neumor-card, .neumor-btn, .neumor-input {
-        border-radius: var(--radius-base, 1rem);
-      }
-    </style>
   </head>
   <body>
     <slot />
