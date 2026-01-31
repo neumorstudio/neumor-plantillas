@@ -105,12 +105,18 @@ export function usePreviewSync({
           logoDisplay: branding.logoDisplay,
         },
         content: {
+          businessName: content.businessName,
           heroTitle: content.heroTitle,
           heroSubtitle: content.heroSubtitle,
           heroImage: content.heroImage,
+          heroCta: content.heroCta,
           address: content.address,
           phone: content.phone,
           email: content.email,
+          socialLinks: content.socialLinks,
+          schedule: content.schedule,
+          reviewsTitle: content.reviewsTitle,
+          reviewsSubtitle: content.reviewsSubtitle,
         },
         features: {
           title: features.title,
@@ -132,7 +138,7 @@ export function usePreviewSync({
         clearTimeout(previewDebounceRef.current);
       }
     };
-  }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content.heroTitle, content.heroSubtitle, content.heroImage, content.address, content.phone, content.email, features, sectionsConfig, variants, sendPreviewMessage]);
+  }, [theme, skin, colors, typography, effects, branding.logo, branding.logoSize, branding.logoDisplay, content, features, sectionsConfig, variants, sendPreviewMessage]);
 
   // Send initial state when iframe loads
   const handleIframeLoad = useCallback(() => {
@@ -163,12 +169,18 @@ export function usePreviewSync({
           logoDisplay: branding.logoDisplay,
         },
         content: {
+          businessName: content.businessName,
           heroTitle: content.heroTitle,
           heroSubtitle: content.heroSubtitle,
           heroImage: content.heroImage,
+          heroCta: content.heroCta,
           address: content.address,
           phone: content.phone,
           email: content.email,
+          socialLinks: content.socialLinks,
+          schedule: content.schedule,
+          reviewsTitle: content.reviewsTitle,
+          reviewsSubtitle: content.reviewsSubtitle,
         },
         features: {
           title: features.title,

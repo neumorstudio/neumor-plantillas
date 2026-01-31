@@ -27,27 +27,44 @@ export interface Props {
   businessType?: BusinessType;
 }
 
-export type TabId = "diseno" | "contenido" | "negocio" | "secciones" | "layout";
+export type TabId = "diseno" | "textos" | "marca" | "secciones";
 
 export interface ContentConfig {
+  // Informacion del negocio
+  businessName?: string;
+
+  // Hero section
   heroTitle?: string;
   heroSubtitle?: string;
   heroImage?: string;
   heroImages?: string[]; // Galeria de hasta 3 imagenes
+  heroCta?: string; // Texto del boton CTA
+
+  // Contacto
   address?: string;
   phone?: string;
   email?: string;
+
+  // Redes Sociales
   socialLinks?: {
     instagram?: string;
     facebook?: string;
     whatsapp?: string;
     tripadvisor?: string;
+    tiktok?: string;
+    twitter?: string;
   };
+
+  // Horario
   schedule?: {
     weekdays?: string;
     saturday?: string;
     sunday?: string;
   };
+
+  // Seccion Reviews/Testimonios
+  reviewsTitle?: string;
+  reviewsSubtitle?: string;
 }
 
 export interface FeatureItemConfig {

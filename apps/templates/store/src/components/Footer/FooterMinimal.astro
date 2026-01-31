@@ -25,9 +25,9 @@ const currentYear = new Date().getFullYear();
 <footer id="contact" class="footer-minimal">
   <div class="container">
     <div class="footer-content">
-      <span class="brand">{businessName}</span>
+      <span class="brand" data-content="businessName">{businessName}</span>
       <span class="separator">|</span>
-      <a href={`tel:${phone.replace(/\s/g, "")}`} class="phone">{phone}</a>
+      <a href={`tel:${phone.replace(/\s/g, "")}`} class="phone" data-content="phone">{phone}</a>
       <span class="separator">|</span>
       <div class="social-icons">
         {socialLinks.instagram && (

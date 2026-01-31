@@ -1,10 +1,10 @@
 /**
  * Tab de Diseño para personalizacion.
- * Componente presentacional extraido de personalizacion-client.tsx.
+ * Incluye Presets, Tema, Skin, Colores, Efectos y Tipografia.
  */
 
-import type { Theme, ColorsConfig, EffectsConfig, BrandingConfig } from "@neumorstudio/supabase";
-import { ColorPicker, SliderControl, OptionSelector } from "@/components/customization";
+import type { Theme, ColorsConfig, EffectsConfig, TypographyConfig } from "@neumorstudio/supabase";
+import { ColorPicker, SliderControl, OptionSelector, FontSelector } from "@/components/customization";
 import { CollapsibleSection } from "@/components/ui";
 import { getThemeIcon } from "@/components/icons";
 import {
@@ -22,8 +22,7 @@ interface DesignTabProps {
   activePreset: string | null;
   colors: ColorsConfig;
   effects: EffectsConfig;
-  branding: BrandingConfig;
-  uploading: boolean;
+  typography: TypographyConfig;
   isMobile: boolean;
   onApplyPreset: (preset: TemplatePreset) => void;
   onSetActivePreset: (preset: string | null) => void;
@@ -31,8 +30,7 @@ interface DesignTabProps {
   onSkinChange: (value: string) => void;
   onColorChange: (key: keyof ColorsConfig, value: string) => void;
   onEffectsChange: (key: keyof EffectsConfig, value: number | string | boolean) => void;
-  onBrandingChange: (key: keyof BrandingConfig, value: string) => void;
-  onLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onTypographyChange: (key: keyof TypographyConfig, value: string | number) => void;
 }
 
 export function DesignTab({
@@ -41,8 +39,7 @@ export function DesignTab({
   activePreset,
   colors,
   effects,
-  branding,
-  uploading,
+  typography,
   isMobile,
   onApplyPreset,
   onSetActivePreset,
@@ -50,8 +47,7 @@ export function DesignTab({
   onSkinChange,
   onColorChange,
   onEffectsChange,
-  onBrandingChange,
-  onLogoUpload,
+  onTypographyChange,
 }: DesignTabProps) {
   return (
     <div className="space-y-6">
@@ -203,68 +199,6 @@ export function DesignTab({
         </div>
       </CollapsibleSection>
 
-      {/* Logo */}
-      <CollapsibleSection title="Logo" defaultOpen={!isMobile}>
-        <div>
-          <label className="block text-sm font-medium mb-2">Subir Logo</label>
-          <label className={`flex items-center justify-center gap-3 p-4 border-2 border-dashed border-[var(--shadow-dark)] rounded-xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
-              onChange={onLogoUpload}
-              className="hidden"
-              disabled={uploading}
-            />
-            <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span className="text-sm text-[var(--text-secondary)]">
-              {uploading ? "Subiendo..." : "Toca para subir"}
-            </span>
-          </label>
-        </div>
-        {branding.logo && (
-          <div className="space-y-2">
-            <div className="p-3 neumor-inset rounded-lg flex items-center justify-center">
-              <img
-                src={branding.logo}
-                alt="Logo preview"
-                className="max-h-16 max-w-full object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => onBrandingChange("logo", "")}
-              className="text-xs text-red-500 hover:text-red-700"
-            >
-              Eliminar logo
-            </button>
-          </div>
-        )}
-        <OptionSelector
-          label="Tamano"
-          value={branding.logoSize || "md"}
-          onChange={(v) => onBrandingChange("logoSize", v)}
-          options={[
-            { value: "sm", label: "S" },
-            { value: "md", label: "M" },
-            { value: "lg", label: "L" },
-          ]}
-          columns={3}
-        />
-        <OptionSelector
-          label="Mostrar"
-          value={branding.logoDisplay || "name"}
-          onChange={(v) => onBrandingChange("logoDisplay", v)}
-          options={[
-            { value: "name", label: "Nombre" },
-            { value: "logo", label: "Logo" },
-          ]}
-          columns={2}
-        />
-      </CollapsibleSection>
-
       {/* Colores */}
       <CollapsibleSection title="Colores" defaultOpen={false}>
         {/* Color de Acento - El más importante */}
@@ -378,6 +312,55 @@ export function DesignTab({
             )}
           </>
         )}
+      </CollapsibleSection>
+
+      {/* Tipografia */}
+      <CollapsibleSection title="Tipografia" defaultOpen={false}>
+        <FontSelector
+          label="Fuente de Titulos"
+          description="Para titulos y encabezados"
+          value={typography.headingFont || "system"}
+          onChange={(v) => onTypographyChange("headingFont", v)}
+        />
+        <FontSelector
+          label="Fuente de Texto"
+          description="Para parrafos y texto general"
+          value={typography.bodyFont || "system"}
+          onChange={(v) => onTypographyChange("bodyFont", v)}
+        />
+        <div className="space-y-2">
+          <SliderControl
+            label="Tamano Base"
+            description="Tamano del texto base"
+            value={typography.baseFontSize || 16}
+            onChange={(v) => onTypographyChange("baseFontSize", v)}
+            min={14}
+            max={20}
+            step={1}
+            unit="px"
+          />
+          {isMobile && (
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => onTypographyChange("baseFontSize", Math.max(14, (typography.baseFontSize || 16) - 1))}
+                className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
+              >
+                −
+              </button>
+              <span className="text-base font-medium w-12 text-center">
+                {typography.baseFontSize || 16}px
+              </span>
+              <button
+                type="button"
+                onClick={() => onTypographyChange("baseFontSize", Math.min(20, (typography.baseFontSize || 16) + 1))}
+                className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
       </CollapsibleSection>
     </div>
   );

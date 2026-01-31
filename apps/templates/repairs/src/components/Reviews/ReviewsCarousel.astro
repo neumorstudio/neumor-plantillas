@@ -50,8 +50,8 @@ function renderStars(rating: number): string {
 <section id="reviews" class="reviews-carousel-section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">{title}</h2>
-      <p class="section-subtitle">{subtitle}</p>
+      <h2 class="section-title" data-content="reviewsTitle">{title}</h2>
+      <p class="section-subtitle" data-content="reviewsSubtitle">{subtitle}</p>
       <div class="rating-summary">
         <span class="rating-value">{googleRating}</span>
         <div class="stars" set:html={renderStars(Math.round(googleRating))} />

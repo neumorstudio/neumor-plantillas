@@ -5,7 +5,7 @@
 
 import type { ColorsConfig, TypographyConfig, EffectsConfig } from "@neumorstudio/supabase";
 import type { Variants, TabId } from "./types";
-import { PaletteIcon, TextIcon } from "@/components/icons";
+import { PaletteIcon, TextIcon, ImageIcon } from "@/components/icons";
 
 // ============================================
 // DEFAULT VALUES
@@ -46,9 +46,8 @@ export const defaultEffects: EffectsConfig = {
 // ============================================
 
 export const tabs: { id: TabId; label: string; shortLabel: string; icon: React.ReactNode }[] = [
-  { id: "diseno", label: "Diseno", shortLabel: "Diseno", icon: <PaletteIcon /> },
-  { id: "contenido", label: "Contenido", shortLabel: "Textos", icon: <TextIcon /> },
-  { id: "negocio", label: "Negocio", shortLabel: "Info", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
+  { id: "diseno", label: "Diseño", shortLabel: "Diseño", icon: <PaletteIcon /> },
+  { id: "textos", label: "Textos", shortLabel: "Textos", icon: <TextIcon /> },
+  { id: "marca", label: "Marca", shortLabel: "Marca", icon: <ImageIcon /> },
   { id: "secciones", label: "Secciones", shortLabel: "Secc", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg> },
-  { id: "layout", label: "Layout", shortLabel: "Layout", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg> },
 ];

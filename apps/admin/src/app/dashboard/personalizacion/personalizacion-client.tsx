@@ -41,9 +41,8 @@ import {
   MobileLayout,
   DesktopLayout,
   DesignTab,
-  ContentTab,
-  BusinessTab,
-  LayoutTab,
+  TextosTab,
+  MarcaTab,
   SectionsTab,
 } from "./components";
 
@@ -96,19 +95,29 @@ export function PersonalizacionClient({
     (initialConfig.heroImage ? [initialConfig.heroImage] : []);
 
   const [content, setContent] = useState<ContentConfig>({
+    // Informacion del negocio
+    businessName: initialConfig.businessName || "",
+    // Hero section
     heroTitle: initialConfig.heroTitle || "",
     heroSubtitle: initialConfig.heroSubtitle || "",
     heroImage: initialConfig.heroImage || "",
     heroImages: initialHeroImages,
+    heroCta: (initialConfig as Record<string, unknown>).heroCta as string || "",
+    // Contacto
     address: initialConfig.address || "",
     phone: initialConfig.phone || "",
     email: initialConfig.email || "",
+    // Redes sociales (incluyendo tiktok y twitter)
     socialLinks: initialConfig.socialLinks || {},
+    // Horario
     schedule: initialConfig.schedule || {
       weekdays: "Lunes - Viernes: 10:00 - 20:00",
       saturday: "Sabado: 10:00 - 14:00",
       sunday: "Domingo: Cerrado",
     },
+    // Seccion Reviews
+    reviewsTitle: (initialConfig as Record<string, unknown>).reviewsTitle as string || "",
+    reviewsSubtitle: (initialConfig as Record<string, unknown>).reviewsSubtitle as string || "",
   });
 
   const defaultFeatureItems: FeatureItemConfig[] = [
@@ -389,11 +398,13 @@ export function PersonalizacionClient({
       });
       setSkin(initialConfig.skin || "neumorphic");
       setContent({
+        businessName: initialConfig.businessName || "",
         heroTitle: initialConfig.heroTitle || "",
         heroSubtitle: initialConfig.heroSubtitle || "",
         heroImage: initialConfig.heroImage || "",
         heroImages: (initialConfig.heroImages as string[] | undefined) ||
           (initialConfig.heroImage ? [initialConfig.heroImage] : []),
+        heroCta: (initialConfig as Record<string, unknown>).heroCta as string || "",
         address: initialConfig.address || "",
         phone: initialConfig.phone || "",
         email: initialConfig.email || "",
@@ -403,6 +414,8 @@ export function PersonalizacionClient({
           saturday: "Sabado: 10:00 - 14:00",
           sunday: "Domingo: Cerrado",
         },
+        reviewsTitle: (initialConfig as Record<string, unknown>).reviewsTitle as string || "",
+        reviewsSubtitle: (initialConfig as Record<string, unknown>).reviewsSubtitle as string || "",
       });
       setFeatures({
         title: initialConfig.features?.title || "Nuestros Servicios",
@@ -501,7 +514,7 @@ export function PersonalizacionClient({
   const renderTabContent = () => {
     switch (activeTab) {
       // ============================================
-      // GRUPO 1: DISEÑO (Tema + Logo + Colores + Efectos)
+      // GRUPO 1: DISEÑO (Tema + Skin + Colores + Efectos + Tipografia)
       // ============================================
       case "diseno":
         return (
@@ -511,8 +524,7 @@ export function PersonalizacionClient({
             activePreset={activePreset}
             colors={colors}
             effects={effects}
-            branding={branding}
-            uploading={uploading}
+            typography={typography}
             isMobile={isMobile}
             onApplyPreset={applyPreset}
             onSetActivePreset={setActivePreset}
@@ -520,26 +532,21 @@ export function PersonalizacionClient({
             onSkinChange={handleSkinChange}
             onColorChange={handleColorChange}
             onEffectsChange={handleEffectsChange}
-            onBrandingChange={handleBrandingChange}
-            onLogoUpload={handleLogoUpload}
+            onTypographyChange={handleTypographyChange}
           />
         );
 
       // ============================================
-      // GRUPO 2: CONTENIDO (Hero + Features)
+      // GRUPO 2: TEXTOS (Hero + Features + Contacto + Horario + Redes)
       // ============================================
-      case "contenido":
+      case "textos":
         return (
-          <ContentTab
+          <TextosTab
             content={content}
             features={features}
-            uploadingHero={uploadingHero}
             businessType={businessType}
             isMobile={isMobile}
             onContentChange={handleContentChange}
-            onSelectHeroImage={handleSelectHeroImage}
-            onRemoveHeroImage={handleRemoveHeroImage}
-            onHeroImageUpload={handleHeroImageUpload}
             onFeaturesTitleChange={handleFeaturesTitleChange}
             onFeatureItemChange={handleFeatureItemChange}
             onAddFeatureItem={handleAddFeatureItem}
@@ -548,31 +555,26 @@ export function PersonalizacionClient({
         );
 
       // ============================================
-      // GRUPO 3: NEGOCIO (Contacto + Horario + Redes)
+      // GRUPO 3: MARCA (Logo + Imagenes Hero)
       // ============================================
-      case "negocio":
+      case "marca":
         return (
-          <BusinessTab
+          <MarcaTab
+            branding={branding}
             content={content}
+            uploading={uploading}
+            uploadingHero={uploadingHero}
             isMobile={isMobile}
-            onContentChange={handleContentChange}
+            onBrandingChange={handleBrandingChange}
+            onLogoUpload={handleLogoUpload}
+            onSelectHeroImage={handleSelectHeroImage}
+            onRemoveHeroImage={handleRemoveHeroImage}
+            onHeroImageUpload={handleHeroImageUpload}
           />
         );
 
       // ============================================
-      // GRUPO 4: LAYOUT (Tipografia + Secciones)
-      // ============================================
-      case "layout":
-        return (
-          <LayoutTab
-            typography={typography}
-            isMobile={isMobile}
-            onTypographyChange={handleTypographyChange}
-          />
-        );
-
-      // ============================================
-      // GRUPO 5: SECCIONES (Constructor de secciones)
+      // GRUPO 4: SECCIONES (Constructor de secciones)
       // ============================================
       case "secciones":
         return (

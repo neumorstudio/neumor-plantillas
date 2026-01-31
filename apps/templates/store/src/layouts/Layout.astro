@@ -299,6 +299,14 @@ const defaultFonts = !fontImports
           const { content } = event.data.payload;
           console.log('[Preview] Content received:', content ? 'yes' : 'no', 'heroImage:', content?.heroImage);
           if (content) {
+            // Nombre del negocio
+            if (content.businessName) {
+              document.querySelectorAll('[data-content="businessName"], .business-name, .nav-logo-text, .footer-business-name').forEach(function(el) {
+                el.textContent = content.businessName;
+              });
+            }
+
+            // Hero title
             if (content.heroTitle) {
               const el = document.querySelector('.hero-title');
               if (el) {
@@ -321,10 +329,20 @@ const defaultFonts = !fontImports
                 }
               }
             }
+
+            // Hero subtitle
             if (content.heroSubtitle) {
               const el = document.querySelector('.hero-subtitle');
               if (el) el.textContent = content.heroSubtitle;
             }
+
+            // Hero CTA button text
+            if (content.heroCta) {
+              document.querySelectorAll('.hero-cta, .hero-btn, [data-content="heroCta"]').forEach(function(el) {
+                el.textContent = content.heroCta;
+              });
+            }
+
             // Siempre intentar actualizar heroImage si existe en el contenido
             if (content.heroImage) {
               console.log('[Preview] Attempting to update hero image to:', content.heroImage);
@@ -375,6 +393,8 @@ const defaultFonts = !fontImports
                 }
               }
             }
+
+            // Contacto
             if (content.address) {
               document.querySelectorAll('[data-content="address"], .footer-address, .contact-address').forEach(function(el) {
                 el.textContent = content.address;
@@ -388,6 +408,54 @@ const defaultFonts = !fontImports
             if (content.email) {
               document.querySelectorAll('[data-content="email"], .footer-email, .contact-email').forEach(function(el) {
                 el.textContent = content.email;
+              });
+            }
+
+            // Horario
+            if (content.schedule) {
+              if (content.schedule.weekdays) {
+                document.querySelectorAll('[data-content="schedule-weekdays"], .schedule-weekdays').forEach(function(el) {
+                  el.textContent = content.schedule.weekdays;
+                });
+              }
+              if (content.schedule.saturday) {
+                document.querySelectorAll('[data-content="schedule-saturday"], .schedule-saturday').forEach(function(el) {
+                  el.textContent = content.schedule.saturday;
+                });
+              }
+              if (content.schedule.sunday) {
+                document.querySelectorAll('[data-content="schedule-sunday"], .schedule-sunday').forEach(function(el) {
+                  el.textContent = content.schedule.sunday;
+                });
+              }
+            }
+
+            // Reviews section title/subtitle
+            if (content.reviewsTitle) {
+              document.querySelectorAll('.reviews-title, #reviews h2, #testimonials h2, [data-content="reviewsTitle"]').forEach(function(el) {
+                el.textContent = content.reviewsTitle;
+              });
+            }
+            if (content.reviewsSubtitle) {
+              document.querySelectorAll('.reviews-subtitle, #reviews .section-subtitle, #testimonials .section-subtitle, [data-content="reviewsSubtitle"]').forEach(function(el) {
+                el.textContent = content.reviewsSubtitle;
+              });
+            }
+
+            // Redes sociales - actualizar enlaces
+            if (content.socialLinks) {
+              Object.keys(content.socialLinks).forEach(function(network) {
+                var url = content.socialLinks[network];
+                if (url) {
+                  document.querySelectorAll('[data-social="' + network + '"], .social-' + network + ' a').forEach(function(el) {
+                    if (el.tagName === 'A') {
+                      el.href = url;
+                    } else {
+                      var link = el.querySelector('a');
+                      if (link) link.href = url;
+                    }
+                  });
+                }
               });
             }
           }

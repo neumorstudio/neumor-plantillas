@@ -14,7 +14,7 @@ const hasLogo = Boolean(logo);
     <nav class="nav">
       <a href="/" class="logo" data-logo-display={logoDisplay} data-has-logo={hasLogo ? "true" : "false"}>
         {logo ? <img src={logo} alt={businessName} class="logo-img" /> : null}
-        <span class="logo-text">{businessName}</span>
+        <span class="logo-text" data-content="businessName">{businessName}</span>
       </a>
 
       <ul class="nav-links">

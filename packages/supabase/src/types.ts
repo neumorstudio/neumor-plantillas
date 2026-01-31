@@ -491,6 +491,11 @@ export interface WebsiteConfig {
   heroSubtitle?: string;
   heroImage?: string;
   heroImages?: string[]; // Galería de hasta 3 imágenes
+  heroCta?: string; // Texto del botón CTA (ej: "Reservar")
+
+  // === CONTENIDO REVIEWS/TESTIMONIOS ===
+  reviewsTitle?: string;
+  reviewsSubtitle?: string;
 
   // === VARIANTES DE COMPONENTES ===
   variants?: WebsiteVariants;

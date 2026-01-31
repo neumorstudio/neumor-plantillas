@@ -36,7 +36,7 @@ const currentYear = new Date().getFullYear();
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <h3 class="footer-logo">{businessName}</h3>
+        <h3 class="footer-logo" data-content="businessName">{businessName}</h3>
         <p class="footer-tagline">
           Una experiencia de belleza unica en el corazon de la ciudad.
         </p>
@@ -45,18 +45,18 @@ const currentYear = new Date().getFullYear();
       <div class="footer-contact">
         <h4>Contacto</h4>
         <ul>
-          <li>{address}</li>
-          <li><a href={`tel:${phone.replace(/\s/g, "")}`}>{phone}</a></li>
-          <li><a href={`mailto:${email}`}>{email}</a></li>
+          <li data-content="address">{address}</li>
+          <li><a href={`tel:${phone.replace(/\s/g, "")}`} data-content="phone">{phone}</a></li>
+          <li><a href={`mailto:${email}`} data-content="email">{email}</a></li>
         </ul>
       </div>
 
       <div class="footer-hours">
         <h4>Horario</h4>
         <ul>
-          {schedule.weekdays && <li>{schedule.weekdays}</li>}
-          {schedule.saturday && <li>{schedule.saturday}</li>}
-          {schedule.sunday && <li>{schedule.sunday}</li>}
+          {schedule.weekdays && <li data-content="schedule-weekdays">{schedule.weekdays}</li>}
+          {schedule.saturday && <li data-content="schedule-saturday">{schedule.saturday}</li>}
+          {schedule.sunday && <li data-content="schedule-sunday">{schedule.sunday}</li>}
         </ul>
       </div>
 

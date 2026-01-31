@@ -38,7 +38,7 @@ function renderStars(rating: number): string {
 <section id="reviews" class="reviews-minimal">
   <div class="container">
     <div class="reviews-header">
-      <h2 class="reviews-title">{title}</h2>
+      <h2 class="reviews-title" data-content="reviewsTitle">{title}</h2>
       <div class="google-rating neumor-inset">
         <span class="rating-number">{googleRating}</span>
         <div class="rating-stars" set:html={renderStars(Math.round(googleRating))} />

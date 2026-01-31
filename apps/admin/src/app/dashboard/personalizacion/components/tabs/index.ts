@@ -3,7 +3,6 @@
  */
 
 export { DesignTab } from "./DesignTab";
-export { ContentTab } from "./ContentTab";
-export { BusinessTab } from "./BusinessTab";
-export { LayoutTab } from "./LayoutTab";
+export { TextosTab } from "./TextosTab";
+export { MarcaTab } from "./MarcaTab";
 export { SectionsTab } from "./SectionsTab";
