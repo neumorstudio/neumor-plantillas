@@ -2,6 +2,8 @@
 
 > Plataforma SaaS multi-tenant para crear sitios web de negocios con panel de administración, reservas, pedidos online y automatizaciones.
 
+> **Actualizado (2026-01-31):** plantilla `unified`, mapeo business_type fitness/shop, migraciones 0001-0056.
+
 ## Arquitectura
 
 ```
@@ -221,6 +223,7 @@ Sitios web públicos para cada vertical:
 | gym | 4324 | Gimnasios, centros fitness |
 | store | 4325 | Tiendas, comercios |
 | repairs | 4326 | Reparaciones, reformas |
+| unified | n/a | Render multi-tenant (subdominios y dominios personalizados) |
 
 Cada template incluye:
 - Hero personalizable
@@ -229,6 +232,10 @@ Cada template incluye:
 - Menú/Carta (restaurant)
 - Pedidos online con Stripe (restaurant)
 - Integración con Google Business
+
+Notas:
+- El `business_type` usado en BD/admin es `fitness` (template `gym`) y `shop` (template `store`).
+- `apps/templates/unified` usa middleware para resolver tenant por subdominio o dominio personalizado.
 
 ## Packages
 
@@ -260,7 +267,7 @@ packages/supabase/
 ├── migrations/
 │   ├── 0001_initial_schema.sql
 │   ├── 0002_rls_policies.sql
-│   └── ... (17 migraciones)
+│   └── ... (56 migraciones)
 └── types/
     └── supabase.ts
 ```

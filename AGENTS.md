@@ -2,6 +2,8 @@
 
 Este archivo contiene reglas para cualquier agente de IA (Codex, Claude, etc.) que trabaje en NeumorStudio.
 
+> **Actualizado (2026-01-31):** estructura repo (template `unified`), notas del middleware/cache, seccion Personalizacion/Section Builder, alias business_type gym/store, migraciones 0001-0056.
+
 ## Estructura del Proyecto
 
 ```
@@ -24,7 +26,7 @@ neumor-plantillas/
 │   ├── logger/         # Logger compartido
 │   ├── n8n-templates/  # Automatizaciones
 │   └── supabase/       # Migraciones y tipos de BD
-│       └── migrations/ # Migraciones SQL (0001-0027)
+│       └── migrations/ # Migraciones SQL (0001-0056)
 └── supabase/           # Migraciones locales (Supabase CLI)
 └── docs/               # Documentacion
     └── DATABASE.md     # Schema completo de la BD
@@ -97,6 +99,8 @@ if (webhookUrl) {
 - La configuracion viene de Supabase via `@lib/supabase.ts`
 - **NO hardcodear datos** - todo debe venir de config o Supabase
 - Los formularios envian a webhooks/APIs, **NO directamente a Supabase**
+- `apps/templates/unified` renderiza multi-tenant y resuelve `subdomain`/`custom_domain` via middleware
+- La cache del middleware dura ~60s; en preview (`?preview=1`) se omite la cache
 
 ### Componentes que envian datos (CUIDADO)
 | Componente | Plantilla | Envia a |
@@ -114,6 +118,19 @@ if (webhookUrl) {
 - El sidebar se configura dinamicamente segun `business_type_config`
 - Acciones del servidor en `src/lib/actions.ts`
 - **APIs en `src/app/api/`** - SIEMPRE usar estas para operaciones de datos
+- Personalizacion guarda en `websites.config` (no crear config paralela)
+- Live preview usa `postMessage` + `data-content` en templates (no borrar esos atributos)
+
+### Personalizacion y Section Builder
+- `config.sectionsConfig` controla orden/visible/variant (ver `packages/supabase/src/sections-catalog.ts`)
+- Textos por seccion viven en `websites.config`:
+  - `reviewsTitle`, `reviewsSubtitle`
+  - `teamTitle`, `teamSubtitle`
+  - `galleryTitle`, `gallerySubtitle`, `galleryImages` (array de URLs)
+  - `faqTitle`, `faqSubtitle`
+  - `plansTitle`, `plansSubtitle`
+  - `contactTitle`, `contactSubtitle`
+- **Legacy:** algunos datos pueden existir en `config.content`. Las plantillas deben leer `config` + `config.content` (merge).
 
 ### APIs disponibles (usar estas desde templates)
 ```
@@ -186,6 +203,8 @@ export function Card({ title, children }: CardProps) {
 | `salon` | salon | reservas, profesionales, servicios, clientes |
 | `clinic` | clinic | reservas, newsletter, clientes |
 | `shop` | store | newsletter, clientes |
+
+**Nota:** la BD permite `gym` y `store` como alias, pero el admin y las configs usan `fitness` y `shop`.
 
 ## Comandos Utiles
 

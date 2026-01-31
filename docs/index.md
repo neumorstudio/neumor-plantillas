@@ -2,9 +2,12 @@
 title: NeumorStudio
 slug: /
 description: SaaS multi-tenant para sitios web de negocios con panel de administración y automatizaciones.
+last_updated: 2026-01-31
 ---
 
 NeumorStudio es una plataforma SaaS multi-tenant para crear sitios web de negocios y administrar operaciones como reservas, leads y automatizaciones. El repositorio reúne el panel de administración, las plantillas públicas y los paquetes compartidos que permiten operar múltiples verticales con un único backend.
+
+**Actualizado (2026-01-31):** listado de business_type y nota de template `unified`.
 
 ## Qué incluye el producto
 
@@ -21,9 +24,13 @@ NeumorStudio es una plataforma SaaS multi-tenant para crear sitios web de negoci
 | restaurant | `apps/templates/restaurant` | Reservas y menú |
 | salon | `apps/templates/salon` | Citas y servicios |
 | clinic | `apps/templates/clinic` | Citas y tratamientos |
-| gym | `apps/templates/gym` | Entrenamientos y portal de clientes |
-| store | `apps/templates/store` | Contacto y catálogo |
+| fitness | `apps/templates/gym` | Entrenamientos y portal de clientes |
+| shop | `apps/templates/store` | Contacto y catálogo |
 | repairs | `apps/templates/repairs` | Presupuestos y trabajos |
+
+Notas:
+- La BD permite aliases `gym` y `store`, pero el admin y las configs usan `fitness` y `shop`.
+- `apps/templates/unified` es el render multi-tenant (subdominios/dominios personalizados).
 
 ## Roles de usuario
 

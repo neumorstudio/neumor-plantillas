@@ -1,7 +1,10 @@
 ---
 title: Getting Started
 description: Instalación y primeros pasos para desarrollar en neumor-plantillas.
+last_updated: 2026-01-31
 ---
+
+**Actualizado (2026-01-31):** nota sobre business_type `fitness`/`shop` en BD/admin.
 
 ## Requisitos
 
@@ -77,5 +80,6 @@ pnpm create-client -- --vertical=restaurant
 - Las plantillas cargan configuración desde Supabase usando `PUBLIC_WEBSITE_ID` o el dominio.
 - En `gym`, el portal de clientes puede resolver el website por dominio automáticamente (y usar `PUBLIC_WEBSITE_ID` solo en local).
 - Para formularios públicos, configura `PUBLIC_ADMIN_URL` o el webhook correspondiente.
+- En BD/admin los tipos de negocio son `fitness` (template `gym`) y `shop` (template `store`).
 
 Siguiente paso: revisa [Architecture](architecture) para entender los componentes y flujos.

@@ -1,10 +1,14 @@
 # NeumorStudio - Documentacion de Base de Datos
 
-> **Ultima actualizacion:** 28 Enero 2026
+> **Ultima actualizacion:** 31 Enero 2026
 > **Motor:** PostgreSQL (Supabase)
 > **Proyecto Supabase:** neumor-plantillas (jekrqkdvgcwruhghtgkj)
-> **Migraciones:** 55 archivos en `packages/supabase/migrations/`
+> **Migraciones:** 56 archivos en `packages/supabase/migrations/`
 > **Tablas:** 37 tablas en schema public
+
+> **Cambios recientes (2026-01-31):**
+> - CHECK de `theme` expandido (migracion 0056).
+> - Estructura `websites.config` actualizada: sectionsConfig, variants, branding, galleryImages y campos de textos por seccion.
 
 ## Tabla de Contenidos
 
@@ -215,7 +219,7 @@ Cada cliente tiene un sitio web asociado.
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |
 | `updated_at` | TIMESTAMPTZ | DEFAULT now() | Ultima actualizacion |
 
-**theme CHECK:** `light`, `dark`, `colorful`, `rustic`, `elegant`
+**theme CHECK:** `light`, `dark`, `colorful`, `rustic`, `elegant`, `neuglass`, `neuglass-dark`, `christmas`, `summer`, `autumn`, `spring`, `ocean`, `sunset`, `forest`, `midnight`, `rose`, `lavender`, `coral`, `minimal`, `wellness`, `vintage`
 
 **Estructura de `config` (JSONB):**
 ```json
@@ -223,12 +227,27 @@ Cada cliente tiene un sitio web asociado.
   "businessName": "Nombre Visible",
   "businessType": "restaurant",
   "variants": {
-    "hero": "classic|modern|bold|minimal",
+    "hero": "classic|modern|bold|minimal|fullscreen|split",
     "menu": "tabs|grid|list|carousel",
+    "services": "tabs|grid|list|carousel",
     "features": "cards|icons|banner",
+    "reviews": "grid|carousel|minimal",
     "footer": "full|minimal|centered",
-    "openStatus": "pulse|morph|liquid|time",
     "reservation": "classic|wizard|modal|modern"
+  },
+  "sectionsConfig": {
+    "sections": [
+      { "id": "hero", "enabled": true, "variant": "classic", "order": 0 },
+      { "id": "features", "enabled": true, "variant": "cards", "order": 1 },
+      { "id": "services", "enabled": true, "variant": "tabs", "order": 2 },
+      { "id": "testimonials", "enabled": false, "variant": "carousel", "order": 3 },
+      { "id": "gallery", "enabled": false, "variant": "masonry", "order": 4 },
+      { "id": "faq", "enabled": false, "variant": "accordion", "order": 5 },
+      { "id": "plans", "enabled": false, "variant": "cards", "order": 6 },
+      { "id": "contact", "enabled": true, "variant": "form", "order": 7 },
+      { "id": "footer", "enabled": true, "variant": "full", "order": 8 }
+    ],
+    "updatedAt": "2026-01-31T00:00:00.000Z"
   },
   "openStatus": {
     "enabled": true,
@@ -242,12 +261,36 @@ Cada cliente tiene un sitio web asociado.
   "heroTitle": "Titulo del Hero",
   "heroSubtitle": "Subtitulo",
   "heroImage": "https://...",
+  "heroImages": ["https://..."],
+  "heroCta": "Reservar",
+  "reviewsTitle": "Lo que dicen de nosotros",
+  "reviewsSubtitle": "Opiniones reales",
+  "teamTitle": "Nuestro Equipo",
+  "teamSubtitle": "Profesionales dedicados",
+  "galleryTitle": "Nuestra Galeria",
+  "gallerySubtitle": "Descubre nuestro trabajo",
+  "galleryImages": ["https://..."],
+  "faqTitle": "Preguntas Frecuentes",
+  "faqSubtitle": "Resolvemos tus dudas",
+  "plansTitle": "Nuestros Planes",
+  "plansSubtitle": "Elige el plan ideal",
+  "contactTitle": "Contacto",
+  "contactSubtitle": "Estamos para ayudarte",
   "address": "Direccion",
   "phone": "+34 000 000 000",
   "email": "email@example.com",
-  "socialLinks": { "instagram": "#", "facebook": "#" }
+  "socialLinks": { "instagram": "#", "facebook": "#" },
+  "schedule": { "weekdays": "...", "saturday": "...", "sunday": "..." },
+  "features": { "title": "...", "subtitle": "...", "items": [ ... ] },
+  "colors": { "primary": "#...", "secondary": "#...", "accent": "#..." },
+  "typography": { "headingFont": "...", "bodyFont": "...", "baseFontSize": 16 },
+  "effects": { "shadowIntensity": 40, "borderRadius": 16, "glassmorphism": false, "blurIntensity": 16 },
+  "branding": { "logo": "https://...", "logoDisplay": "logo|name", "logoSize": "sm|md|lg" },
+  "logo": "https://..."
 }
 ```
+
+**Nota:** puede existir un objeto legado `config.content` con textos. Las plantillas y el admin deben mergear `config` + `config.content` al leer.
 
 ---
 
@@ -1126,6 +1169,7 @@ CREATE INDEX idx_newsletter_subscribers_email ON newsletter_subscribers(email);
 | 0053 | `public_clients_business_type.sql` | RLS lectura publica de business_type en clients |
 | 0054 | `website_domains_indexes.sql` | Indices para subdomain y custom_domain en websites |
 | 0055 | `clients_address.sql` | Columna address en tabla clients |
+| 0056 | `expand_theme_check.sql` | Expandir CHECK de temas en websites |
 
 ---
 
