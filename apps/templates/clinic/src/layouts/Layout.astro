@@ -18,12 +18,26 @@ const {
   customization = {},
 } = Astro.props;
 
+// === DEBUG LOGS ===
+console.log('[Layout.astro] ========== LAYOUT RENDER ==========');
+console.log('[Layout.astro] Received props - theme:', theme);
+console.log('[Layout.astro] Received customization:', JSON.stringify(customization, null, 2));
+
 // Aplicar parámetros de preview si existen
 const url = new URL(Astro.request.url);
+const isPreviewMode = url.searchParams.get('preview') === '1';
+console.log('[Layout.astro] URL:', url.toString());
+console.log('[Layout.astro] Is preview mode:', isPreviewMode);
+
 const finalCustomization = applyPreviewParams(customization, url);
+console.log('[Layout.astro] finalCustomization after applyPreviewParams:', JSON.stringify(finalCustomization, null, 2));
 
 // Compilar tokens a CSS
 const { cssVariables, inlineColorStyles, fontImports, favicon } = compileCustomization(finalCustomization);
+console.log('[Layout.astro] Compiled - cssVariables:', cssVariables ? 'has content' : 'empty');
+console.log('[Layout.astro] Compiled - inlineColorStyles:', inlineColorStyles);
+console.log('[Layout.astro] Compiled - fontImports:', fontImports);
+console.log('[Layout.astro] ========================================');
 
 // Determinar clase de tema
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
@@ -90,6 +104,23 @@ const defaultFonts = !fontImports
   </head>
   <body>
     <slot />
+
+    <!-- DEBUG PANEL - Solo visible en modo preview -->
+    {inlineColorStyles && (
+      <script is:inline define:vars={{ inlineColorStyles, cssVariables, theme }}>
+        console.log('[Layout HTML] Theme class:', document.documentElement.className);
+        console.log('[Layout HTML] Inline styles on html:', document.documentElement.getAttribute('style'));
+        console.log('[Layout HTML] inlineColorStyles variable:', inlineColorStyles);
+        console.log('[Layout HTML] Computed --accent:', getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+
+        // Log after a small delay to see final computed values
+        setTimeout(() => {
+          console.log('[Layout HTML] AFTER LOAD - Computed --accent:', getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+          console.log('[Layout HTML] AFTER LOAD - html classes:', document.documentElement.className);
+          console.log('[Layout HTML] AFTER LOAD - html style:', document.documentElement.getAttribute('style'));
+        }, 100);
+      </script>
+    )}
 
     <!-- Live Preview Script - Escucha cambios del admin via postMessage -->
     <script is:inline>

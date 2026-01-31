@@ -213,6 +213,16 @@ const customization = {
   logo: config.logo as string | undefined,
 };
 
+// === DEBUG LOGS ===
+console.log('[unified/salon.astro] ========== UNIFIED SALON ==========');
+console.log('[unified/salon.astro] tenant.id:', tenant.id);
+console.log('[unified/salon.astro] tenant.theme:', tenant.theme);
+console.log('[unified/salon.astro] tenant.config:', JSON.stringify(tenant.config, null, 2));
+console.log('[unified/salon.astro] Built customization:', JSON.stringify(customization, null, 2));
+console.log('[unified/salon.astro] config.colors:', config.colors);
+console.log('[unified/salon.astro] config.effects:', config.effects);
+console.log('[unified/salon.astro] =====================================');
+
 // Preview content params
 const previewContent = isPreview ? {
   heroTitle: url.searchParams.get("heroTitle"),

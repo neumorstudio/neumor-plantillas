@@ -152,6 +152,16 @@ async function resolveTenant(
     businessName: clientData?.business_name || "Mi Negocio",
   };
 
+  // === DEBUG: Log tenant config from Supabase ===
+  console.log('[Middleware] ========== TENANT DATA FROM SUPABASE ==========');
+  console.log('[Middleware] tenant.id:', tenant.id);
+  console.log('[Middleware] tenant.theme:', tenant.theme);
+  console.log('[Middleware] tenant.config:', JSON.stringify(tenant.config, null, 2));
+  console.log('[Middleware] tenant.config.colors:', (tenant.config as Record<string, unknown>).colors);
+  console.log('[Middleware] tenant.config.effects:', (tenant.config as Record<string, unknown>).effects);
+  console.log('[Middleware] skipCache (preview mode):', skipCache);
+  console.log('[Middleware] ================================================');
+
   // Update cache
   tenantCache.set(cacheKey, {
     data: tenant,
