@@ -1263,6 +1263,11 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
   };
 
+  const toIsoDate = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
+
   const bufferMinutes = 0;
 
   const getSelectedDuration = () => {
@@ -1466,6 +1471,48 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
   };
 
+  const getAvailableSlotsForDate = async (dateValue: string, professionalId: string) => {
+    if (!dateValue || !professionalId) {
+      return [] as string[];
+    }
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (dateValue < todayIso) {
+      return [];
+    }
+    const duration = getSelectedDuration();
+    const schedule = getDaySchedule(dateValue);
+    if (!schedule.is_open || !schedule.slots.length) {
+      return [];
+    }
+    const bookedSlots = await loadBookedSlots(dateValue, professionalId);
+    const slots: string[] = [];
+
+    schedule.slots.forEach((slotRange) => {
+      const startMinutes = timeToMinutes(slotRange.open_time);
+      let endMinutes = timeToMinutes(slotRange.close_time);
+      if (endMinutes <= startMinutes) {
+        endMinutes = 24 * 60;
+      }
+
+      for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
+        const slot = minutesToTime(minutes);
+        const slotEnd = minutes + duration;
+        const isPastTime =
+          dateValue === todayIso && minutes <= currentMinutes;
+        const isBlocked =
+          isPastTime ||
+          bookedSlots.some((booked: { start: number; end: number }) => minutes < booked.end && slotEnd > booked.start);
+        if (!isBlocked) {
+          slots.push(slot);
+        }
+      }
+    });
+
+    return slots;
+  };
+
   const renderCalendar = () => {
     if (!calendarGrid || !calendarLabel) {
       return;
@@ -1580,6 +1627,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
           button.disabled = true;
           button.setAttribute("aria-disabled", "true");
         } else {
+          if (timeInput?.value === slot) {
+            button.classList.add("is-selected");
+          }
           button.addEventListener("click", () => {
             if (!timeInput) {
               return;
@@ -1595,6 +1645,40 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         timeGrid.appendChild(button);
       }
     });
+  };
+
+  const autoSelectFirstAvailableSlot = async () => {
+    const professionalId = getSelectedProfessionalId();
+    if (!professionalId || !dateInput || !timeInput) {
+      return;
+    }
+
+    if (dateInput.value && timeInput.value) {
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const endDate = canMoveNextMonth
+      ? new Date(today.getFullYear(), today.getMonth() + 2, 0)
+      : lastDate;
+
+    for (let cursor = new Date(today); cursor <= endDate; cursor.setDate(cursor.getDate() + 1)) {
+      const dateValue = toIsoDate(cursor);
+      const slots = await getAvailableSlotsForDate(dateValue, professionalId);
+      if (slots.length) {
+        dateInput.value = dateValue;
+        timeInput.value = slots[0];
+        currentMonth.setFullYear(cursor.getFullYear(), cursor.getMonth(), 1);
+        renderCalendar();
+        await renderTimeSlots();
+        updateSummary();
+        return;
+      }
+    }
+
+    await renderTimeSlots();
   };
 
   const getSelectedServices = () => {
@@ -1695,12 +1779,16 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     updateSteps();
   });
 
-  nextBtn?.addEventListener("click", () => {
+  nextBtn?.addEventListener("click", async () => {
     if (!validateStep()) {
       return;
     }
     currentStep = Math.min(panels.length, currentStep + 1);
     updateSteps();
+    if (currentStep === 2) {
+      updateProfessionalAvailability();
+      await autoSelectFirstAvailableSlot();
+    }
   });
 
   const now = new Date();
