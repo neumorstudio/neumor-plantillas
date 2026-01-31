@@ -52,6 +52,7 @@ interface AppointmentData {
   total_duration_minutes?: number;
   profesional?: string;
   professional_id?: string;
+  customer_id?: string;
   fecha: string;
   hora: string;
   notas?: string;
@@ -68,6 +69,7 @@ const allowedAppointmentKeys = new Set([
   "total_duration_minutes",
   "profesional",
   "professional_id",
+  "customer_id",
   "fecha",
   "hora",
   "notas",
@@ -135,6 +137,8 @@ export async function POST(request: NextRequest) {
       (body.profesional && typeof body.profesional !== "string") ||
       (body.professional_id && typeof body.professional_id !== "string") ||
       (body.professional_id && !isValidUuid(body.professional_id)) ||
+      (body.customer_id && typeof body.customer_id !== "string") ||
+      (body.customer_id && !isValidUuid(body.customer_id)) ||
       (body.notas && typeof body.notas !== "string") ||
       (body.services && !Array.isArray(body.services)) ||
       (body.total_price_cents && typeof body.total_price_cents !== "number") ||
@@ -218,6 +222,25 @@ export async function POST(request: NextRequest) {
       notas ? `Notas: ${notas}` : "",
     ].filter(Boolean);
 
+    let customerId: string | null = body.customer_id || null;
+    if (customerId) {
+      const { data: customer, error: customerError } = await getSupabaseAdmin()
+        .from("customers")
+        .select("id, phone, email")
+        .eq("id", customerId)
+        .eq("website_id", body.website_id)
+        .single();
+
+      if (customerError || !customer) {
+        customerId = null;
+      } else if (telefono && telefono !== (customer.phone || "")) {
+        await getSupabaseAdmin()
+          .from("customers")
+          .update({ phone: telefono })
+          .eq("id", customer.id);
+      }
+    }
+
     const { data: booking, error: bookingError } = await getSupabaseAdmin()
       .from("bookings")
       .insert({
@@ -225,6 +248,7 @@ export async function POST(request: NextRequest) {
         customer_name: nombre,
         customer_email: email || null,
         customer_phone: telefono,
+        customer_id: customerId,
         booking_date: body.fecha,
         booking_time: body.hora,
         guests: 1,

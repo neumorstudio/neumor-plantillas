@@ -7,6 +7,7 @@ interface AuthUser {
   id: string;
   customerId: string | null;
   name?: string;
+  phone?: string;
 }
 
 interface Props {
@@ -1869,7 +1870,13 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   console.log("[Form] currentUserData from props:", currentUserData);
   if (currentUserData) {
     try {
-      const user = JSON.parse(currentUserData) as { email: string; id: string; customerId: string | null; name?: string };
+      const user = JSON.parse(currentUserData) as {
+        email: string;
+        id: string;
+        customerId: string | null;
+        name?: string;
+        phone?: string;
+      };
       console.log("[Form] User authenticated (SSR):", user.email, "customerId:", user.customerId);
       setAuthState(user.email, user.id, user.customerId);
 
@@ -1881,6 +1888,10 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       const nameInput = form.querySelector<HTMLInputElement>("#name");
       if (nameInput && !nameInput.value && user.name) {
         nameInput.value = user.name;
+      }
+      const phoneInput = form.querySelector<HTMLInputElement>("#phone");
+      if (phoneInput && !phoneInput.value && user.phone) {
+        phoneInput.value = user.phone;
       }
     } catch (e) {
       console.error("[Form] Error parsing currentUser:", e);
@@ -1993,6 +2004,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         total_duration_minutes: totalDuration,
         profesional: getSelectedProfessionalName() || undefined,
         professional_id: selectedProfessionalId || undefined,
+        customer_id: currentCustomerId || undefined,
         fecha: rawData.date,
         hora: rawData.time,
         notas: rawData.notes || undefined,

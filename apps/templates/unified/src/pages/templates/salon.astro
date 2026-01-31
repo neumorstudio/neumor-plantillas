@@ -37,7 +37,7 @@ const previewVariants = {
 };
 
 // Check if user is authenticated (SSR)
-let currentUser: { email: string; id: string; customerId: string | null; name?: string } | null = null;
+let currentUser: { email: string; id: string; customerId: string | null; name?: string; phone?: string | null } | null = null;
 try {
   const supabase = createPortalClient(Astro.cookies, Astro.request);
   const { data: { user } } = await supabase.auth.getUser();
@@ -48,7 +48,7 @@ try {
     // Get customer profile for this tenant
     const { data: customer, error: customerError } = await supabase
       .from("customers")
-      .select("id, name")
+      .select("id, name, phone")
       .eq("website_id", tenant.id)
       .eq("auth_user_id", user.id)
       .single();
@@ -61,6 +61,7 @@ try {
       id: user.id,
       customerId: customer?.id || null,
       name: customer?.name || user.user_metadata?.full_name || user.user_metadata?.name || "",
+      phone: customer?.phone || null,
     };
 
     console.log("[Salon] currentUser.customerId:", currentUser.customerId);
