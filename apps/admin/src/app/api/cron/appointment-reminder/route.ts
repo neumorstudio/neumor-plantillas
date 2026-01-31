@@ -85,10 +85,10 @@ export async function GET(request: Request) {
 
     const { data: bookings, error: bookingError } = await supabase
       .from("bookings")
-      .select("id, website_id, name, email, phone, date, time, status, notes, metadata, services, total_price")
-      .in("date", dateKeys)
+      .select("id, website_id, customer_name, customer_email, customer_phone, booking_date, booking_time, status, notes, metadata, services, total_price_cents")
+      .in("booking_date", dateKeys)
       .in("status", ["pending", "confirmed"])
-      .not("email", "is", null);
+      .not("customer_email", "is", null);
 
     if (bookingError) {
       throw bookingError;
@@ -119,11 +119,11 @@ export async function GET(request: Request) {
     let sentCount = 0;
 
     for (const booking of bookings) {
-      if (!booking.email || !booking.date || !booking.time) continue;
+      if (!booking.customer_email || !booking.booking_date || !booking.booking_time) continue;
       const metadata = (booking.metadata as Record<string, unknown>) || {};
       if (metadata.reminder_1h_sent_at) continue;
 
-      const bookingEpoch = parseBookingEpoch(booking.date, booking.time);
+      const bookingEpoch = parseBookingEpoch(booking.booking_date, booking.booking_time);
       const diffMinutes = Math.round((bookingEpoch - nowEpoch) / 60000);
       if (diffMinutes < 60 || diffMinutes >= 60 + REMINDER_WINDOW_MINUTES) continue;
 
@@ -142,16 +142,20 @@ export async function GET(request: Request) {
       const businessName = config.businessName || client.business_name || "Salon";
       const logoUrl = config.branding?.logo || config.logo || undefined;
 
+      const serviceNames = Array.isArray(booking.services)
+        ? booking.services.map((item: { name?: string }) => item?.name).filter(Boolean).join(", ")
+        : "";
+
       const emailData = {
         businessName,
-        customerName: booking.name,
-        date: booking.date,
-        time: booking.time,
-        service: (booking.services as string) || "",
+        customerName: booking.customer_name,
+        date: booking.booking_date,
+        time: booking.booking_time,
+        service: serviceNames,
         professional: undefined,
         notes: booking.notes || undefined,
-        phone: booking.phone || undefined,
-        email: booking.email || undefined,
+        phone: booking.customer_phone || undefined,
+        email: booking.customer_email || undefined,
         businessPhone: config.phone,
         businessAddress: config.address,
         logoUrl,
@@ -160,7 +164,7 @@ export async function GET(request: Request) {
       const html = getSalonAppointmentReminder1hEmail(emailData);
       const fromAddress = getFromAddress(businessName);
       const result = await sendEmail({
-        to: booking.email,
+        to: booking.customer_email,
         subject: `Recordatorio: tu cita es en 1 hora - ${businessName}`,
         html,
         from: fromAddress,
