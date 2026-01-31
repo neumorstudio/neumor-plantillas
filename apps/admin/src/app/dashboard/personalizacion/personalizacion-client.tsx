@@ -332,7 +332,7 @@ export function PersonalizacionClient({
       sectionsConfig.sections.map((section) => [section.id, section.variant])
     );
 
-    const getSectionVariant = (id: string, fallback?: string) => {
+    const getSectionVariant = (id: SectionId, fallback?: string) => {
       return sectionVariantMap.get(id) || fallback || "";
     };
 
