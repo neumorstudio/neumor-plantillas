@@ -8,6 +8,7 @@ interface Props {
   title: string;
   description?: string;
   theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark" | "christmas" | "summer" | "autumn" | "spring" | "ocean" | "sunset" | "forest" | "midnight" | "rose" | "lavender" | "coral" | "minimal" | "wellness" | "vintage";
+  skin?: "neumorphic" | "brutalist" | "3d" | "flat" | "glassmorphism";
   customization?: WebsiteCustomization;
 }
 
@@ -15,6 +16,7 @@ const {
   title,
   description = "Salon de belleza con estilo neumorfico",
   theme = "light",
+  skin,
   customization = {},
 } = Astro.props;
 
@@ -42,6 +44,13 @@ console.log('[Layout.astro] ========================================');
 // Determinar clase de tema
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
 
+// Determinar clase de skin (neumorphic es el default, no necesita clase)
+const skinClass = skin && skin !== "neumorphic" ? `skin-${skin}` : "";
+
+// Combinar clases
+const htmlClasses = [themeClass, skinClass].filter(Boolean).join(" ");
+console.log('[Layout.astro] skin:', skin, 'skinClass:', skinClass, 'htmlClasses:', htmlClasses);
+
 // Fuentes por defecto si no hay personalización
 const defaultFonts = !fontImports
   ? "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
@@ -49,7 +58,7 @@ const defaultFonts = !fontImports
 ---
 
 <!doctype html>
-<html lang="es" class={themeClass} style={inlineColorStyles || undefined}>
+<html lang="es" class={htmlClasses || undefined} style={inlineColorStyles || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
