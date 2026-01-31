@@ -15,6 +15,7 @@
  * Parametros de preview:
  * - theme: Tema a previsualizar
  * - v_hero, v_treatments, v_features, v_reviews, v_footer: Variantes individuales
+ * - v_team, v_gallery, v_faq, v_plans, v_contact: Variantes de secciones genericas
  */
 
 import Layout from "@layouts/Layout.astro";
@@ -46,6 +47,13 @@ const previewVariants = {
   features: url.searchParams.get("v_features"),
   reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
+};
+const previewSectionVariants = {
+  team: url.searchParams.get("v_team"),
+  gallery: url.searchParams.get("v_gallery"),
+  faq: url.searchParams.get("v_faq"),
+  plans: url.searchParams.get("v_plans"),
+  contact: url.searchParams.get("v_contact"),
 };
 
 // ============================================
@@ -340,25 +348,25 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
           case "team":
             return (
               <section data-section-id="team" style={style}>
-                <TeamSection />
+                <TeamSection variant={previewSectionVariants.team || sectionCfg?.variant || "grid"} />
               </section>
             );
           case "gallery":
             return (
               <section data-section-id="gallery" style={style}>
-                <GallerySection />
+                <GallerySection variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"} />
               </section>
             );
           case "faq":
             return (
               <section data-section-id="faq" style={style}>
-                <FAQSection />
+                <FAQSection variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"} />
               </section>
             );
           case "plans":
             return (
               <section data-section-id="plans" style={style}>
-                <PlansSection />
+                <PlansSection variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"} />
               </section>
             );
           case "contact":
@@ -368,6 +376,9 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
                   address={config.address}
                   phone={config.phone}
                   email={config.email}
+                  webhookUrl={config.webhookUrl}
+                  websiteId={currentWebsiteId}
+                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
                 />
               </section>
             );

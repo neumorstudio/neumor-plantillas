@@ -15,6 +15,7 @@
  * Parametros de preview:
  * - theme: Tema a previsualizar
  * - v_hero, v_products, v_features, v_reviews, v_footer: Variantes individuales
+ * - v_team, v_gallery, v_faq, v_plans, v_contact: Variantes de secciones genericas
  */
 
 import Layout from "@layouts/Layout.astro";
@@ -46,6 +47,13 @@ const previewVariants = {
   features: url.searchParams.get("v_features"),
   reviews: url.searchParams.get("v_reviews"),
   footer: url.searchParams.get("v_footer"),
+};
+const previewSectionVariants = {
+  team: url.searchParams.get("v_team"),
+  gallery: url.searchParams.get("v_gallery"),
+  faq: url.searchParams.get("v_faq"),
+  plans: url.searchParams.get("v_plans"),
+  contact: url.searchParams.get("v_contact"),
 };
 
 // ============================================
@@ -215,7 +223,7 @@ const defaultSections: SectionConfig[] = [
   { id: "hero", enabled: true, variant: "classic", order: 0 },
   { id: "features", enabled: true, variant: "cards", order: 1 },
   { id: "services", enabled: true, variant: "tabs", order: 2 },
-  { id: "contact", enabled: true, variant: "classic", order: 3 },
+  { id: "contact", enabled: true, variant: "form", order: 3 },
   { id: "footer", enabled: true, variant: "full", order: 4 },
 ];
 
@@ -305,31 +313,35 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
           case "team":
             return (
               <section data-section-id="team" style={style}>
-                <TeamSection />
+                <TeamSection variant={previewSectionVariants.team || sectionCfg?.variant || "grid"} />
               </section>
             );
           case "gallery":
             return (
               <section data-section-id="gallery" style={style}>
-                <GallerySection />
+                <GallerySection variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"} />
               </section>
             );
           case "faq":
             return (
               <section data-section-id="faq" style={style}>
-                <FAQSection />
+                <FAQSection variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"} />
               </section>
             );
           case "plans":
             return (
               <section data-section-id="plans" style={style}>
-                <PlansSection />
+                <PlansSection variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"} />
               </section>
             );
           case "contact":
             return (
               <section data-section-id="contact" style={style}>
-                <ContactForm webhookUrl={config.webhookUrl} websiteId={currentWebsiteId} />
+                <ContactForm
+                  webhookUrl={config.webhookUrl}
+                  websiteId={currentWebsiteId}
+                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
+                />
               </section>
             );
           default:

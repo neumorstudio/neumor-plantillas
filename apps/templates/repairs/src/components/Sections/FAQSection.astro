@@ -8,6 +8,7 @@ interface Props {
   title?: string;
   subtitle?: string;
   items?: FAQItem[];
+  variant?: "accordion" | "cards" | "simple";
 }
 
 const defaultItems: FAQItem[] = [
@@ -33,30 +34,53 @@ const {
   title = "Preguntas Frecuentes",
   subtitle = "Resolvemos tus dudas",
   items = defaultItems,
+  variant = "accordion",
 } = Astro.props;
 ---
 
-<section id="faq" class="section">
+<section id="faq" class={`section faq-variant-${variant}`}>
   <div class="container">
     <div class="faq-header">
       <h2>{title}</h2>
       <p>{subtitle}</p>
     </div>
-    <div class="faq-list">
-      {items.map((item, index) => (
-        <details class="faq-item neumor-card">
-          <summary class="faq-question">
-            <span>{item.question}</span>
-            <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </summary>
-          <div class="faq-answer">
+    {variant === "accordion" && (
+      <div class="faq-list">
+        {items.map((item) => (
+          <details class="faq-item neumor-card">
+            <summary class="faq-question">
+              <span>{item.question}</span>
+              <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-answer">
+              <p>{item.answer}</p>
+            </div>
+          </details>
+        ))}
+      </div>
+    )}
+    {variant === "cards" && (
+      <div class="faq-cards">
+        {items.map((item) => (
+          <div class="faq-card neumor-card">
+            <h3>{item.question}</h3>
             <p>{item.answer}</p>
           </div>
-        </details>
-      ))}
-    </div>
+        ))}
+      </div>
+    )}
+    {variant === "simple" && (
+      <div class="faq-simple">
+        {items.map((item) => (
+          <div class="faq-simple-item">
+            <h3>{item.question}</h3>
+            <p>{item.answer}</p>
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 </section>
 
@@ -129,5 +153,48 @@ const {
 
   .faq-answer p {
     margin: 0;
+  }
+
+  .faq-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .faq-card {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+
+  .faq-card h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+  }
+
+  .faq-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .faq-simple {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .faq-simple-item h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+  }
+
+  .faq-simple-item p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
   }
 </style>

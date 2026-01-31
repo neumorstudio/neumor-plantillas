@@ -11,8 +11,9 @@ import type {
   BrandingConfig,
   SectionConfig,
   SectionsConfig,
+  SectionId,
 } from "@neumorstudio/supabase";
-import { getDefaultSectionsConfig } from "@neumorstudio/supabase";
+import { getDefaultSectionsConfig, SECTIONS_CATALOG } from "@neumorstudio/supabase";
 
 // Types locales
 import type {
@@ -140,6 +141,33 @@ export function PersonalizacionClient({
     items: normalizeFeatureItems(initialConfig.features?.items as FeatureItemConfig[] | undefined),
   });
 
+  const normalizeSectionsOrder = useCallback((sections: SectionConfig[]): SectionConfig[] => {
+    const topFixed: SectionConfig[] = [];
+    const bottomFixed: SectionConfig[] = [];
+    const normal: SectionConfig[] = [];
+
+    sections.forEach((section) => {
+      const definition = SECTIONS_CATALOG[section.id as SectionId];
+      if (definition?.fixedPosition === "top") {
+        topFixed.push(section);
+      } else if (definition?.fixedPosition === "bottom") {
+        bottomFixed.push(section);
+      } else {
+        normal.push(section);
+      }
+    });
+
+    const sortByOrder = (a: SectionConfig, b: SectionConfig) => (a.order ?? 0) - (b.order ?? 0);
+    topFixed.sort(sortByOrder);
+    normal.sort(sortByOrder);
+    bottomFixed.sort(sortByOrder);
+
+    return [...topFixed, ...normal, ...bottomFixed].map((section, index) => ({
+      ...section,
+      order: index,
+    }));
+  }, []);
+
   const mergeSectionsConfig = useCallback((existing: SectionsConfig | undefined): SectionsConfig => {
     const defaults = getDefaultSectionsConfig(businessType);
     if (!existing?.sections || existing.sections.length === 0) {
@@ -165,10 +193,10 @@ export function PersonalizacionClient({
 
     return {
       ...existing,
-      sections: mergedSections,
+      sections: normalizeSectionsOrder(mergedSections),
       updatedAt: new Date().toISOString(),
     };
-  }, [businessType]);
+  }, [businessType, normalizeSectionsOrder]);
 
   // Estado para preset activo (null si personalización manual)
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -190,8 +218,11 @@ export function PersonalizacionClient({
 
   // Handler para cambios en secciones
   const handleSectionsChange = useCallback((sections: SectionConfig[]) => {
-    setSectionsConfig({ sections, updatedAt: new Date().toISOString() });
-  }, []);
+    setSectionsConfig({
+      sections: normalizeSectionsOrder(sections),
+      updatedAt: new Date().toISOString(),
+    });
+  }, [normalizeSectionsOrder]);
 
   // Mapeo de section IDs a keys de variants
   const sectionToVariantKey: Record<string, keyof Variants | null> = {
@@ -296,19 +327,44 @@ export function PersonalizacionClient({
   const previewUrl = useMemo(() => {
     const localPreview = process.env.NEXT_PUBLIC_PREVIEW_URL;
     const baseUrl = localPreview || `https://${domain}`;
-    // Usar services para salon/clinic/etc, menu para restaurant
-    const servicesVariant = variants.services || variants.menu;
+
+    const sectionVariantMap = new Map(
+      sectionsConfig.sections.map((section) => [section.id, section.variant])
+    );
+
+    const getSectionVariant = (id: string, fallback?: string) => {
+      return sectionVariantMap.get(id) || fallback || "";
+    };
+
+    const servicesVariant = getSectionVariant("services", variants.services || variants.menu);
+    const menuVariant = getSectionVariant("menu", variants.menu);
+    const reviewsVariant = getSectionVariant("testimonials", variants.reviews);
+    const reservationVariant = getSectionVariant("reservation", variants.reservation);
+
     const params = new URLSearchParams({
       preview: "1",
-      v_hero: variants.hero,
+      v_hero: getSectionVariant("hero", variants.hero),
+      v_features: getSectionVariant("features", variants.features),
+      v_footer: getSectionVariant("footer", variants.footer),
+      v_reviews: reviewsVariant,
+      v_menu: menuVariant,
+      v_reservation: reservationVariant,
+      // Variantes de "services" segun template
       v_services: servicesVariant,
-      v_menu: variants.menu, // Para restaurant
-      v_features: variants.features,
-      v_footer: variants.footer,
+      v_products: servicesVariant,
+      v_classes: servicesVariant,
+      v_treatments: servicesVariant,
+      // Variantes de secciones genericas
+      v_team: getSectionVariant("team"),
+      v_gallery: getSectionVariant("gallery"),
+      v_faq: getSectionVariant("faq"),
+      v_plans: getSectionVariant("plans"),
+      v_contact: getSectionVariant("contact"),
     });
+
     console.log("[Admin] Preview URL:", `${baseUrl}?${params.toString()}`);
     return `${baseUrl}?${params.toString()}`;
-  }, [domain, variants]);
+  }, [domain, variants, sectionsConfig]);
 
   // Preview dimensions
   const previewDimensions = useMemo(() => {

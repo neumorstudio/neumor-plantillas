@@ -129,7 +129,9 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   if (config.colors || config.primaryColor || config.secondaryColor) {
     // Colores van como inline styles para sobrescribir los temas
     colorVars.push(`--color-primary: ${primary}`);
+    colorVars.push(`--text-primary: ${primary}`);
     colorVars.push(`--color-secondary: ${secondary}`);
+    colorVars.push(`--text-secondary: ${secondary}`);
     colorVars.push(`--color-accent: ${accent}`);
     colorVars.push(`--accent: ${accent}`);
     colorVars.push(`--accent-hover: ${adjustLuminosity(accent, -10)}`);

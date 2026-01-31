@@ -35,6 +35,13 @@ const previewVariants = {
   features: url.searchParams.get("v_features"),
   footer: url.searchParams.get("v_footer"),
 };
+const previewSectionVariants = {
+  team: url.searchParams.get("v_team"),
+  gallery: url.searchParams.get("v_gallery"),
+  faq: url.searchParams.get("v_faq"),
+  plans: url.searchParams.get("v_plans"),
+  contact: url.searchParams.get("v_contact"),
+};
 
 // Check if user is authenticated (SSR)
 let currentUser: { email: string; id: string; customerId: string | null; name?: string; phone?: string | null } | null = null;
@@ -352,25 +359,25 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
           case "team":
             return (
               <section data-section-id="team" style={style}>
-                <TeamSection />
+                <TeamSection variant={previewSectionVariants.team || sectionCfg?.variant || "grid"} />
               </section>
             );
           case "gallery":
             return (
               <section data-section-id="gallery" style={style}>
-                <GallerySection />
+                <GallerySection variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"} />
               </section>
             );
           case "faq":
             return (
               <section data-section-id="faq" style={style}>
-                <FAQSection />
+                <FAQSection variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"} />
               </section>
             );
           case "plans":
             return (
               <section data-section-id="plans" style={style}>
-                <PlansSection />
+                <PlansSection variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"} />
               </section>
             );
           case "contact":
@@ -380,6 +387,9 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   address={config.address as string | undefined}
                   phone={config.phone as string | undefined}
                   email={config.email as string | undefined}
+                  webhookUrl={webhookUrl}
+                  websiteId={tenant.id}
+                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
                 />
               </section>
             );

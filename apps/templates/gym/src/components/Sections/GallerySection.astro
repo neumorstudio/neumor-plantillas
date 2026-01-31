@@ -3,6 +3,7 @@ interface Props {
   title?: string;
   subtitle?: string;
   images?: string[];
+  variant?: "masonry" | "grid" | "carousel";
 }
 
 const defaultImages = [
@@ -18,10 +19,11 @@ const {
   title = "Nuestra Galería",
   subtitle = "Descubre nuestro trabajo",
   images = defaultImages,
+  variant = "masonry",
 } = Astro.props;
 ---
 
-<section id="gallery" class="section">
+<section id="gallery" class={`section gallery-variant-${variant}`}>
   <div class="container">
     <div class="gallery-header">
       <h2>{title}</h2>
@@ -97,6 +99,45 @@ const {
     .gallery-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 1rem;
+    }
+  }
+
+  /* Variantes */
+  .gallery-variant-masonry .gallery-grid {
+    column-count: 3;
+    column-gap: 1.5rem;
+    display: block;
+  }
+
+  .gallery-variant-masonry .gallery-item {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+    aspect-ratio: auto;
+  }
+
+  .gallery-variant-carousel .gallery-grid {
+    display: flex;
+    gap: 1.25rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.5rem;
+  }
+
+  .gallery-variant-carousel .gallery-item {
+    min-width: 260px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  @media (max-width: 1024px) {
+    .gallery-variant-masonry .gallery-grid {
+      column-count: 2;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .gallery-variant-masonry .gallery-grid {
+      column-count: 1;
     }
   }
 </style>

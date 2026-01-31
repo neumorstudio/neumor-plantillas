@@ -10,6 +10,7 @@ interface Props {
   title?: string;
   subtitle?: string;
   members?: TeamMember[];
+  variant?: "grid" | "carousel" | "list";
 }
 
 const defaultMembers: TeamMember[] = [
@@ -34,10 +35,11 @@ const {
   title = "Nuestro Equipo",
   subtitle = "Profesionales dedicados a tu bienestar",
   members = defaultMembers,
+  variant = "grid",
 } = Astro.props;
 ---
 
-<section id="team" class="section">
+<section id="team" class={`section team-variant-${variant}`}>
   <div class="container">
     <div class="team-header">
       <h2>{title}</h2>
@@ -140,5 +142,43 @@ const {
     color: var(--text-secondary);
     line-height: 1.5;
     margin: 0;
+  }
+
+  /* Variantes */
+  .team-variant-carousel .team-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 1.5rem;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.5rem;
+  }
+
+  .team-variant-carousel .team-card {
+    min-width: 240px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  .team-variant-list .team-grid {
+    grid-template-columns: 1fr;
+    max-width: 760px;
+  }
+
+  .team-variant-list .team-card {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .team-variant-list .member-avatar {
+    margin: 0;
+    width: 84px;
+    height: 84px;
+  }
+
+  .team-variant-list .member-role {
+    margin-bottom: 0.25rem;
   }
 </style>

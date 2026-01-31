@@ -12,6 +12,7 @@ interface Props {
   title?: string;
   subtitle?: string;
   plans?: Plan[];
+  variant?: "cards" | "table" | "comparison";
 }
 
 const defaultPlans: Plan[] = [
@@ -59,42 +60,110 @@ const {
   title = "Nuestros Planes",
   subtitle = "Elige el plan que mejor se adapte a ti",
   plans = defaultPlans,
+  variant = "cards",
 } = Astro.props;
 ---
 
-<section id="plans" class="section">
+<section id="plans" class={`section plans-variant-${variant}`}>
   <div class="container">
     <div class="plans-header">
       <h2>{title}</h2>
       <p>{subtitle}</p>
     </div>
-    <div class="plans-grid">
-      {plans.map((plan) => (
-        <div class={`plan-card neumor-card ${plan.highlighted ? 'highlighted' : ''}`}>
-          {plan.highlighted && <span class="plan-badge">Popular</span>}
-          <h3 class="plan-name">{plan.name}</h3>
-          {plan.description && <p class="plan-description">{plan.description}</p>}
-          <div class="plan-price">
-            <span class="price-currency">€</span>
-            <span class="price-value">{plan.price}</span>
-            {plan.period && <span class="price-period">{plan.period}</span>}
+    {variant === "cards" && (
+      <div class="plans-grid">
+        {plans.map((plan) => (
+          <div class={`plan-card neumor-card ${plan.highlighted ? 'highlighted' : ''}`}>
+            {plan.highlighted && <span class="plan-badge">Popular</span>}
+            <h3 class="plan-name">{plan.name}</h3>
+            {plan.description && <p class="plan-description">{plan.description}</p>}
+            <div class="plan-price">
+              <span class="price-currency">€</span>
+              <span class="price-value">{plan.price}</span>
+              {plan.period && <span class="price-period">{plan.period}</span>}
+            </div>
+            <ul class="plan-features">
+              {plan.features.map((feature) => (
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <button class="plan-cta neumor-btn">
+              Elegir Plan
+            </button>
           </div>
-          <ul class="plan-features">
-            {plan.features.map((feature) => (
-              <li>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-          <button class="plan-cta neumor-btn">
-            Elegir Plan
-          </button>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    )}
+    {variant === "table" && (
+      <div class="plans-table neumor-card">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              {plans.map((plan) => (
+                <th class={plan.highlighted ? "is-highlighted" : ""}>{plan.name}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Precio</td>
+              {plans.map((plan) => (
+                <td>
+                  <span class="table-price">€{plan.price}</span>
+                  {plan.period && <span class="table-period">{plan.period}</span>}
+                </td>
+              ))}
+            </tr>
+            <tr>
+              <td>Descripción</td>
+              {plans.map((plan) => (
+                <td>{plan.description || "-"}</td>
+              ))}
+            </tr>
+            <tr>
+              <td>Incluye</td>
+              {plans.map((plan) => (
+                <td>
+                  <ul>
+                    {plan.features.map((feature) => (
+                      <li>{feature}</li>
+                    ))}
+                  </ul>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    )}
+    {variant === "comparison" && (
+      <div class="plans-comparison">
+        {plans.map((plan) => (
+          <div class={`comparison-card neumor-card ${plan.highlighted ? 'highlighted' : ''}`}>
+            <div class="comparison-header">
+              <h3>{plan.name}</h3>
+              <div class="comparison-price">
+                <span class="price-currency">€</span>
+                <span class="price-value">{plan.price}</span>
+                {plan.period && <span class="price-period">{plan.period}</span>}
+              </div>
+            </div>
+            {plan.description && <p class="comparison-desc">{plan.description}</p>}
+            <ul class="comparison-features">
+              {plan.features.map((feature) => (
+                <li>{feature}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 </section>
 
@@ -238,5 +307,99 @@ const {
     .plans-grid {
       gap: 1.5rem;
     }
+  }
+
+  /* Tabla */
+  .plans-table {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    overflow-x: auto;
+  }
+
+  .plans-table table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+  }
+
+  .plans-table th,
+  .plans-table td {
+    padding: 1rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .plans-table th.is-highlighted {
+    color: var(--accent);
+  }
+
+  .plans-table ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .plans-table li {
+    margin: 0.25rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .table-price {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-right: 0.25rem;
+  }
+
+  .table-period {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  /* Comparativa */
+  .plans-comparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .comparison-card {
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+  }
+
+  .comparison-card.highlighted {
+    border: 1px solid var(--accent);
+  }
+
+  .comparison-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .comparison-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .comparison-desc {
+    margin: 0 0 1rem;
+    color: var(--text-secondary);
+  }
+
+  .comparison-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
   }
 </style>

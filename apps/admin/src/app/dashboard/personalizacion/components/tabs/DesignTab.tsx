@@ -205,8 +205,8 @@ export function DesignTab({
         {/* Color de Acento - El más importante */}
         <div className="space-y-3">
           <ColorPicker
-            label="Color de Botones"
-            description="Botones de reservar, enlaces y elementos interactivos"
+            label="Acento (botones y enlaces)"
+            description="Botones, links, iconos activos y elementos destacados"
             value={colors.accent || defaultColors.accent!}
             onChange={(v) => onColorChange("accent", v)}
           />
@@ -229,20 +229,36 @@ export function DesignTab({
         {/* Colores de marca */}
         <div className="space-y-2">
           <p className="text-xs text-[var(--text-secondary)]">
-            Colores de marca para titulos y textos:
+            Colores para tipografia y jerarquia visual:
           </p>
           <ColorPicker
-            label="Titulos"
-            description="Color para titulos de secciones (h2)"
+            label="Texto principal"
+            description="Titulos, texto destacado y navegación"
             value={colors.primary || defaultColors.primary!}
             onChange={(v) => onColorChange("primary", v)}
           />
           <ColorPicker
-            label="Secundario"
-            description="Color secundario para subtitulos"
+            label="Texto secundario"
+            description="Subtitulos, descripciones y texto de apoyo"
             value={colors.secondary || defaultColors.secondary!}
             onChange={(v) => onColorChange("secondary", v)}
           />
+
+          {/* Preview tipográfico */}
+          <div className="mt-3 p-3 neumor-inset rounded-lg">
+            <p
+              className="text-sm font-semibold"
+              style={{ color: colors.primary || defaultColors.primary }}
+            >
+              Título de sección
+            </p>
+            <p
+              className="text-xs mt-1"
+              style={{ color: colors.secondary || defaultColors.secondary }}
+            >
+              Subtítulo de ejemplo para ver el contraste
+            </p>
+          </div>
         </div>
       </CollapsibleSection>
 

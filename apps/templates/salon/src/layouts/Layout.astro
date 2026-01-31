@@ -265,9 +265,11 @@ const defaultFonts = !fontImports
           // Aplicar colores
           if (colors) {
             if (colors.primary) {
+              root.style.setProperty('--text-primary', colors.primary);
               root.style.setProperty('--color-primary', colors.primary);
             }
             if (colors.secondary) {
+              root.style.setProperty('--text-secondary', colors.secondary);
               root.style.setProperty('--color-secondary', colors.secondary);
             }
             if (colors.accent) {

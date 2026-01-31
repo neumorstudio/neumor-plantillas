@@ -125,6 +125,7 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     icon: SECTION_ICONS.contact,
     variants: [
       { value: "form", label: "Formulario" },
+      { value: "info", label: "Info" },
     ],
     defaultVariant: "form",
     // Implementado en: todos los templates (formulario o info)
