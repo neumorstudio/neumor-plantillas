@@ -1573,6 +1573,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         button.classList.add("is-selected");
         updateSummary();
         renderTimeSlots();
+        applyAutoSelectFromDate(selected);
       });
       calendarGrid.appendChild(button);
     }
@@ -1647,6 +1648,47 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     });
   };
 
+  const getAutoSelectEndDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return canMoveNextMonth
+      ? new Date(today.getFullYear(), today.getMonth() + 2, 0)
+      : lastDate;
+  };
+
+  const applyAutoSelectFromDate = async (startDateValue: string) => {
+    const professionalId = getSelectedProfessionalId();
+    if (!professionalId || !dateInput || !timeInput) {
+      return false;
+    }
+
+    const startDate = new Date(startDateValue);
+    if (Number.isNaN(startDate.getTime())) {
+      return false;
+    }
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = getAutoSelectEndDate();
+
+    for (let cursor = new Date(startDate); cursor <= endDate; cursor.setDate(cursor.getDate() + 1)) {
+      const dateValue = toIsoDate(cursor);
+      const slots = await getAvailableSlotsForDate(dateValue, professionalId);
+      if (slots.length) {
+        dateInput.value = dateValue;
+        timeInput.value = slots[0];
+        currentMonth.setFullYear(cursor.getFullYear(), cursor.getMonth(), 1);
+        renderCalendar();
+        await renderTimeSlots();
+        updateSummary();
+        return true;
+      }
+    }
+
+    await renderTimeSlots();
+    return false;
+  };
+
   const autoSelectFirstAvailableSlot = async () => {
     const professionalId = getSelectedProfessionalId();
     if (!professionalId || !dateInput || !timeInput) {
@@ -1659,26 +1701,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const lastDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    const endDate = canMoveNextMonth
-      ? new Date(today.getFullYear(), today.getMonth() + 2, 0)
-      : lastDate;
-
-    for (let cursor = new Date(today); cursor <= endDate; cursor.setDate(cursor.getDate() + 1)) {
-      const dateValue = toIsoDate(cursor);
-      const slots = await getAvailableSlotsForDate(dateValue, professionalId);
-      if (slots.length) {
-        dateInput.value = dateValue;
-        timeInput.value = slots[0];
-        currentMonth.setFullYear(cursor.getFullYear(), cursor.getMonth(), 1);
-        renderCalendar();
-        await renderTimeSlots();
-        updateSummary();
-        return;
-      }
-    }
-
-    await renderTimeSlots();
+    await applyAutoSelectFromDate(toIsoDate(today));
   };
 
   const getSelectedServices = () => {
