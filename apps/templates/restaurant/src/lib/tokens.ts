@@ -175,21 +175,22 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   }
 
   // === EFECTOS ===
+  // Shadow intensity y glass-blur van como inline styles para máxima especificidad
   if (config.effects?.shadowIntensity !== undefined) {
     const intensity = config.effects.shadowIntensity / 100;
-    vars.push(`--shadow-intensity: ${intensity};`);
+    colorVars.push(`--shadow-intensity: ${intensity}`);
   }
 
   if (config.effects?.borderRadius) {
     const radiusValue = BORDER_RADIUS_MAP[config.effects.borderRadius] || '1rem';
-    vars.push(`--radius-base: ${radiusValue};`);
-    vars.push(`--radius-sm: calc(${radiusValue} * 0.5);`);
-    vars.push(`--radius-lg: calc(${radiusValue} * 1.5);`);
+    colorVars.push(`--radius-base: ${radiusValue}`);
+    colorVars.push(`--radius-sm: calc(${radiusValue} * 0.5)`);
+    colorVars.push(`--radius-lg: calc(${radiusValue} * 1.5)`);
   }
 
   if (config.effects?.glassmorphism) {
     const blur = config.effects.blurIntensity || 16;
-    vars.push(`--glass-blur: ${blur}px;`);
+    colorVars.push(`--glass-blur: ${blur}px`);
   }
 
   // === BRANDING ===
