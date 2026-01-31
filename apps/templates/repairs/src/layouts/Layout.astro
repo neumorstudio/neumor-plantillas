@@ -301,7 +301,25 @@ const defaultFonts = !fontImports
           if (content) {
             if (content.heroTitle) {
               const el = document.querySelector('.hero-title');
-              if (el) el.textContent = content.heroTitle;
+              if (el) {
+                // Check if hero uses structured title (HeroSplit, HeroFullscreen)
+                const titleLines = el.querySelectorAll('.title-line');
+                if (titleLines.length > 0) {
+                  // Update structured title - split by words
+                  const words = content.heroTitle.split(' ');
+                  titleLines.forEach(function(span, i) {
+                    if (words[i]) span.textContent = words[i];
+                  });
+                  // If more words than spans, append to last span
+                  if (words.length > titleLines.length) {
+                    var lastSpan = titleLines[titleLines.length - 1];
+                    lastSpan.textContent = words.slice(titleLines.length - 1).join(' ');
+                  }
+                } else {
+                  // Simple title (HeroClassic, HeroModern, etc)
+                  el.textContent = content.heroTitle;
+                }
+              }
             }
             if (content.heroSubtitle) {
               const el = document.querySelector('.hero-subtitle');

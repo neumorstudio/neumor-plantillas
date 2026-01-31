@@ -257,10 +257,13 @@ export function PersonalizacionClient({
   const previewUrl = useMemo(() => {
     const localPreview = process.env.NEXT_PUBLIC_PREVIEW_URL;
     const baseUrl = localPreview || `https://${domain}`;
+    // Usar services para salon/clinic/etc, menu para restaurant
+    const servicesVariant = variants.services || variants.menu;
     const params = new URLSearchParams({
       preview: "1",
       v_hero: variants.hero,
-      v_services: variants.menu,
+      v_services: servicesVariant,
+      v_menu: variants.menu, // Para restaurant
       v_features: variants.features,
       v_footer: variants.footer,
     });
