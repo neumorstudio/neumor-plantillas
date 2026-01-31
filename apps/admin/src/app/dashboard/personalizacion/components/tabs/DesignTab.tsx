@@ -313,16 +313,27 @@ export function DesignTab({
 
       {/* Efectos */}
       <CollapsibleSection title="Efectos" defaultOpen={false}>
-        <SliderControl
-          label="Sombras"
-          description="Intensidad del efecto neumorfico"
-          value={effects.shadowIntensity || 60}
-          onChange={(v) => onEffectsChange("shadowIntensity", v)}
-          min={0}
-          max={100}
-          step={5}
-          unit="%"
-        />
+        {/* Skins sin sombras: flat, outline */}
+        {(skin === "flat" || skin === "outline") ? (
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+            <p className="font-medium">Sombras no disponibles</p>
+            <p className="text-xs mt-1 opacity-80">
+              El estilo &quot;{skin === "flat" ? "Plano" : "Contorno"}&quot; no usa sombras neumórficas.
+              Selecciona otro estilo de componentes para ajustar las sombras.
+            </p>
+          </div>
+        ) : (
+          <SliderControl
+            label="Sombras"
+            description="Intensidad del efecto neumorfico"
+            value={effects.shadowIntensity || 60}
+            onChange={(v) => onEffectsChange("shadowIntensity", v)}
+            min={0}
+            max={100}
+            step={5}
+            unit="%"
+          />
+        )}
         <OptionSelector
           label="Bordes"
           value={effects.borderRadius || "rounded"}

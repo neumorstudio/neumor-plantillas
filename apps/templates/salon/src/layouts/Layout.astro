@@ -309,14 +309,20 @@ const defaultFonts = !fontImports
           }
 
           // Aplicar efectos
+          console.log('[Preview] Effects received:', effects);
           if (effects) {
+            console.log('[Preview] Applying effects - borderRadius:', effects.borderRadius, 'shadowIntensity:', effects.shadowIntensity);
             if (effects.borderRadius && RADIUS_MAP[effects.borderRadius]) {
+              console.log('[Preview] Setting --radius-base to:', RADIUS_MAP[effects.borderRadius]);
               root.style.setProperty('--radius-base', RADIUS_MAP[effects.borderRadius]);
             }
             if (effects.shadowIntensity !== undefined) {
               const intensity = effects.shadowIntensity / 100;
+              console.log('[Preview] Setting --shadow-intensity to:', intensity);
               root.style.setProperty('--shadow-intensity', intensity.toString());
             }
+          } else {
+            console.log('[Preview] No effects object in payload!');
           }
 
           // Aplicar branding

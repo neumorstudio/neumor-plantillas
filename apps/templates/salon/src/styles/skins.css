@@ -73,24 +73,24 @@
    ========================================== */
 .skin-glass .neumor-card {
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(calc(20px * var(--glass-blur-multiplier, 1))) saturate(180%);
+  -webkit-backdrop-filter: blur(calc(20px * var(--glass-blur-multiplier, 1))) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 calc(8px * var(--shadow-intensity, 1)) calc(32px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1);
 }
 
 .skin-glass .neumor-card:hover {
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 calc(12px * var(--shadow-intensity, 1)) calc(40px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.15);
   transform: translateY(-4px);
 }
 
 .skin-glass .neumor-card-sm {
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(calc(12px * var(--glass-blur-multiplier, 1))) saturate(180%);
+  -webkit-backdrop-filter: blur(calc(12px * var(--glass-blur-multiplier, 1))) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 calc(4px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.08);
 }
 
 .skin-glass .neumor-btn {
@@ -98,26 +98,26 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 calc(4px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1);
 }
 
 .skin-glass .neumor-btn:hover {
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 calc(6px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.15);
 }
 
 .skin-glass .neumor-btn:active {
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1);
 }
 
 .skin-glass .neumor-btn-accent {
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 40px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 calc(4px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.2), 0 0 calc(40px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .skin-glass .neumor-btn-accent:hover {
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25), 0 0 60px color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow: 0 calc(6px * var(--shadow-intensity, 1)) calc(24px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.25), 0 0 calc(60px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .skin-glass .neumor-input {
@@ -125,12 +125,12 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.05);
 }
 
 .skin-glass .neumor-input:focus {
   border-color: var(--accent);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05), 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: inset 0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.05), 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .skin-glass .neumor-inset {
@@ -138,7 +138,7 @@
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.08);
 }
 
 /* ==========================================
@@ -146,29 +146,29 @@
    ========================================== */
 .skin-material .neumor-card {
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.1),
-    0 8px 16px rgba(0, 0, 0, 0.1);
+    0 calc(2px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1),
+    0 calc(8px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1);
   border-radius: 0.5rem;
 }
 
 .skin-material .neumor-card:hover {
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.12),
-    0 16px 32px rgba(0, 0, 0, 0.12);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.12),
+    0 calc(16px * var(--shadow-intensity, 1)) calc(32px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.12);
   transform: translateY(-4px);
 }
 
 .skin-material .neumor-card-sm {
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.12),
-    0 4px 8px rgba(0, 0, 0, 0.08);
+    0 calc(1px * var(--shadow-intensity, 1)) calc(3px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.12),
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.08);
   border-radius: 0.375rem;
 }
 
 .skin-material .neumor-btn {
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.15),
-    0 4px 8px rgba(0, 0, 0, 0.1);
+    0 calc(2px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.15),
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1);
   border-radius: 0.375rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -177,28 +177,28 @@
 
 .skin-material .neumor-btn:hover {
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.2),
-    0 8px 16px rgba(0, 0, 0, 0.15);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.2),
+    0 calc(8px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.15);
 }
 
 .skin-material .neumor-btn:active {
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.1),
-    0 2px 4px rgba(0, 0, 0, 0.08);
+    0 calc(1px * var(--shadow-intensity, 1)) calc(2px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1),
+    0 calc(2px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.08);
 }
 
 .skin-material .neumor-btn-accent {
   background: var(--accent);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 4px 8px color-mix(in srgb, var(--accent) 30%, transparent);
+    0 calc(2px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.2),
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .skin-material .neumor-btn-accent:hover {
   background: var(--accent-hover);
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.25),
-    0 8px 16px color-mix(in srgb, var(--accent) 40%, transparent);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.25),
+    0 calc(8px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .skin-material .neumor-input {
@@ -217,7 +217,7 @@
 }
 
 .skin-material .neumor-inset {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 calc(1px * var(--shadow-intensity, 1)) calc(3px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.08);
   border-radius: 0.375rem;
 }
 
@@ -225,24 +225,24 @@
    SKIN: BRUTALIST - Bordes gruesos, contrastes
    ========================================== */
 .skin-brutalist .neumor-card {
-  box-shadow: 6px 6px 0 var(--text-primary);
+  box-shadow: calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   border: 3px solid var(--text-primary);
   border-radius: 0;
 }
 
 .skin-brutalist .neumor-card:hover {
-  box-shadow: 8px 8px 0 var(--text-primary);
+  box-shadow: calc(8px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   transform: translate(-2px, -2px);
 }
 
 .skin-brutalist .neumor-card-sm {
-  box-shadow: 4px 4px 0 var(--text-primary);
+  box-shadow: calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   border: 2px solid var(--text-primary);
   border-radius: 0;
 }
 
 .skin-brutalist .neumor-btn {
-  box-shadow: 4px 4px 0 var(--text-primary);
+  box-shadow: calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   border: 3px solid var(--text-primary);
   border-radius: 0;
   background: var(--neumor-bg);
@@ -251,38 +251,38 @@
 }
 
 .skin-brutalist .neumor-btn:hover {
-  box-shadow: 6px 6px 0 var(--text-primary);
+  box-shadow: calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   transform: translate(-2px, -2px);
 }
 
 .skin-brutalist .neumor-btn:active {
-  box-shadow: 2px 2px 0 var(--text-primary);
+  box-shadow: calc(2px * var(--shadow-intensity, 1)) calc(2px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   transform: translate(2px, 2px);
 }
 
 .skin-brutalist .neumor-btn-accent {
   background: var(--accent);
   border-color: var(--text-primary);
-  box-shadow: 4px 4px 0 var(--text-primary);
+  box-shadow: calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) 0 var(--text-primary);
 }
 
 .skin-brutalist .neumor-btn-accent:hover {
-  box-shadow: 6px 6px 0 var(--text-primary);
+  box-shadow: calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) 0 var(--text-primary);
 }
 
 .skin-brutalist .neumor-input {
-  box-shadow: inset 4px 4px 0 var(--shadow-dark);
+  box-shadow: inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) 0 var(--shadow-dark);
   border: 3px solid var(--text-primary);
   border-radius: 0;
 }
 
 .skin-brutalist .neumor-input:focus {
-  box-shadow: inset 4px 4px 0 var(--shadow-dark);
+  box-shadow: inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) 0 var(--shadow-dark);
   border-color: var(--accent);
 }
 
 .skin-brutalist .neumor-inset {
-  box-shadow: inset 4px 4px 0 var(--shadow-dark);
+  box-shadow: inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) 0 var(--shadow-dark);
   border: 2px solid var(--text-primary);
   border-radius: 0;
 }
@@ -292,57 +292,57 @@
    ========================================== */
 .skin-soft .neumor-card {
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.02);
+    0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.04),
+    0 calc(4px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.02);
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .skin-soft .neumor-card:hover {
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.06),
-    0 8px 24px rgba(0, 0, 0, 0.04);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.06),
+    0 calc(8px * var(--shadow-intensity, 1)) calc(24px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.04);
   transform: translateY(-2px);
 }
 
 .skin-soft .neumor-card-sm {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 calc(1px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .skin-soft .neumor-btn {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 calc(1px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .skin-soft .neumor-btn:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.08);
 }
 
 .skin-soft .neumor-btn:active {
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 calc(1px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.06);
 }
 
 .skin-soft .neumor-btn-accent {
   background: var(--accent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: 0 calc(2px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .skin-soft .neumor-btn-accent:hover {
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 calc(4px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .skin-soft .neumor-input {
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: inset 0 calc(1px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .skin-soft .neumor-input:focus {
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: inset 0 calc(1px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.04);
   border-color: var(--accent);
 }
 
 .skin-soft .neumor-inset {
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: inset 0 calc(1px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
@@ -353,7 +353,7 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
     0 -2px 0 rgba(0, 0, 0, 0.1) inset,
-    0 8px 20px rgba(0, 0, 0, 0.15);
+    0 calc(8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: linear-gradient(180deg, var(--neumor-bg) 0%, color-mix(in srgb, var(--neumor-bg) 95%, black) 100%);
 }
@@ -362,7 +362,7 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
     0 -2px 0 rgba(0, 0, 0, 0.1) inset,
-    0 12px 28px rgba(0, 0, 0, 0.2);
+    0 calc(12px * var(--shadow-intensity, 1)) calc(28px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.2);
   transform: translateY(-4px);
 }
 
@@ -370,7 +370,7 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.4) inset,
     0 -1px 0 rgba(0, 0, 0, 0.08) inset,
-    0 4px 12px rgba(0, 0, 0, 0.1);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1);
   background: linear-gradient(180deg, var(--neumor-bg) 0%, color-mix(in srgb, var(--neumor-bg) 97%, black) 100%);
 }
 
@@ -378,7 +378,7 @@
   box-shadow:
     0 2px 0 rgba(255, 255, 255, 0.6) inset,
     0 -3px 0 rgba(0, 0, 0, 0.15) inset,
-    0 4px 8px rgba(0, 0, 0, 0.2);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.2);
   background: linear-gradient(180deg, var(--neumor-bg) 0%, color-mix(in srgb, var(--neumor-bg) 92%, black) 100%);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
@@ -387,14 +387,14 @@
   box-shadow:
     0 2px 0 rgba(255, 255, 255, 0.7) inset,
     0 -3px 0 rgba(0, 0, 0, 0.12) inset,
-    0 6px 12px rgba(0, 0, 0, 0.25);
+    0 calc(6px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.25);
 }
 
 .skin-3d .neumor-btn:active {
   box-shadow:
     0 -1px 0 rgba(255, 255, 255, 0.3) inset,
     0 2px 0 rgba(0, 0, 0, 0.2) inset,
-    0 1px 2px rgba(0, 0, 0, 0.15);
+    0 calc(1px * var(--shadow-intensity, 1)) calc(2px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.15);
   transform: translateY(2px);
 }
 
@@ -403,20 +403,20 @@
   box-shadow:
     0 2px 0 rgba(255, 255, 255, 0.3) inset,
     0 -3px 0 rgba(0, 0, 0, 0.2) inset,
-    0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+    0 calc(4px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .skin-3d .neumor-btn-accent:hover {
   box-shadow:
     0 2px 0 rgba(255, 255, 255, 0.4) inset,
     0 -3px 0 rgba(0, 0, 0, 0.15) inset,
-    0 6px 16px color-mix(in srgb, var(--accent) 50%, transparent);
+    0 calc(6px * var(--shadow-intensity, 1)) calc(16px * var(--shadow-intensity, 1)) color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .skin-3d .neumor-input {
   box-shadow:
     0 -1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 2px 4px rgba(0, 0, 0, 0.1) inset;
+    0 calc(2px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1) inset;
   border: 1px solid rgba(0, 0, 0, 0.15);
   background: linear-gradient(180deg, color-mix(in srgb, var(--neumor-bg) 95%, black) 0%, var(--neumor-bg) 100%);
 }
@@ -424,14 +424,14 @@
 .skin-3d .neumor-input:focus {
   box-shadow:
     0 -1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 2px 4px rgba(0, 0, 0, 0.1) inset,
+    0 calc(2px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.1) inset,
     0 0 0 2px var(--accent);
 }
 
 .skin-3d .neumor-inset {
   box-shadow:
     0 -1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 3px 6px rgba(0, 0, 0, 0.12) inset;
+    0 calc(3px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) rgba(0, 0, 0, 0.12) inset;
   background: linear-gradient(180deg, color-mix(in srgb, var(--neumor-bg) 96%, black) 0%, var(--neumor-bg) 100%);
 }
 
@@ -523,7 +523,7 @@
 .theme-dark.skin-brutalist .neumor-card,
 .theme-midnight.skin-brutalist .neumor-card,
 .theme-neuglass-dark.skin-brutalist .neumor-card {
-  box-shadow: 6px 6px 0 var(--text-primary);
+  box-shadow: calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) 0 var(--text-primary);
   border-color: var(--text-primary);
 }
 

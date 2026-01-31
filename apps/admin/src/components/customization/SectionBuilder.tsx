@@ -122,55 +122,69 @@ function SortableSectionItem({
       ref={setNodeRef}
       style={style}
       className={`neumor-card p-3 mb-2 transition-all ${
-        !section.enabled ? "opacity-50" : ""
-      } ${isFixed ? "bg-[var(--shadow-light)]" : ""} ${
+        !section.enabled ? "opacity-60" : ""
+      } ${isFixed ? "bg-[var(--shadow-light)]/50" : ""} ${
         isDragging ? "shadow-lg scale-[1.02]" : ""
       }`}
     >
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Drag Handle */}
+      {/* Fila 1: Drag + Nombre + Toggle */}
+      <div className="flex items-center gap-2">
+        {/* Drag Handle o Lock */}
         {!isFixed ? (
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] touch-none"
+            className="cursor-grab active:cursor-grabbing p-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] touch-none flex-shrink-0"
             title="Arrastrar para reordenar"
           >
-            <GripVerticalIcon className="w-5 h-5" />
+            <GripVerticalIcon className="w-4 h-4" />
           </button>
         ) : (
-          <div className="p-1 text-[var(--text-secondary)]" title="Posicion fija">
-            <LockIcon className="w-5 h-5" />
+          <div className="p-0.5 text-[var(--text-secondary)] flex-shrink-0" title="Posición fija">
+            <LockIcon className="w-4 h-4" />
           </div>
         )}
 
-        {/* Icon */}
-        <div
-          className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-[var(--shadow-light)] text-[var(--accent)]"
-          dangerouslySetInnerHTML={{ __html: definition.icon }}
-        />
+        {/* Nombre completo */}
+        <span className="flex-1 font-medium text-sm">{definition.label}</span>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm truncate">{definition.label}</span>
-            {definition.required && (
-              <span className="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded bg-[var(--accent)] text-white">
-                Requerida
-              </span>
-            )}
-          </div>
-          <p className="hidden sm:block text-xs text-[var(--text-secondary)] truncate">
-            {definition.description}
-          </p>
-        </div>
+        {/* Toggle o Badge Requerida */}
+        {definition.required ? (
+          <span className="text-[9px] px-2 py-1 rounded bg-[var(--accent)] text-white flex-shrink-0">
+            Requerida
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={onToggle}
+            className="w-12 h-6 rounded-full transition-all relative flex-shrink-0"
+            style={{
+              background: section.enabled
+                ? 'var(--accent)'
+                : 'var(--shadow-light)',
+              boxShadow: section.enabled
+                ? 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                : 'inset 0 2px 4px var(--shadow-dark)',
+            }}
+            title={section.enabled ? "Desactivar sección" : "Activar sección"}
+          >
+            <span
+              className="absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-200 shadow-md"
+              style={{
+                left: section.enabled ? '28px' : '4px',
+              }}
+            />
+          </button>
+        )}
+      </div>
 
-        {/* Variant selector */}
-        {section.enabled && definition.variants.length > 1 && (
+      {/* Fila 2: Variante (solo si está activa y tiene variantes) */}
+      {section.enabled && definition.variants.length > 1 && (
+        <div className="mt-2 ml-6">
           <select
             value={section.variant}
             onChange={(e) => onVariantChange(e.target.value)}
-            className="neumor-input text-xs h-8 w-20 sm:w-24"
+            className="neumor-input text-xs h-7 px-2 w-full"
             onClick={(e) => e.stopPropagation()}
           >
             {definition.variants.map((v) => (
@@ -179,37 +193,8 @@ function SortableSectionItem({
               </option>
             ))}
           </select>
-        )}
-
-        {/* Toggle */}
-        {!definition.required && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="w-12 h-7 rounded-full transition-all relative flex-shrink-0"
-            style={{
-              background: section.enabled
-                ? 'var(--accent)'
-                : 'linear-gradient(145deg, var(--neumor-bg), var(--shadow-light))',
-              boxShadow: section.enabled
-                ? 'inset 2px 2px 4px rgba(0,0,0,0.2)'
-                : 'inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light)',
-            }}
-            title={section.enabled ? "Desactivar seccion" : "Activar seccion"}
-          >
-            <span
-              className={`absolute top-1 w-5 h-5 rounded-full transition-all duration-200 ${
-                section.enabled ? "translate-x-6 bg-white" : "translate-x-1 bg-[var(--text-secondary)]"
-              }`}
-              style={{
-                boxShadow: section.enabled
-                  ? '0 2px 4px rgba(0,0,0,0.2)'
-                  : '2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light)',
-              }}
-            />
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -339,7 +324,7 @@ export function SectionBuilder({
     <div className="space-y-4">
       {/* Secciones activas */}
       <div>
-        <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+        <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5 text-[var(--text-primary)]">
           <CheckCircleIcon className="w-4 h-4 text-green-500" />
           Secciones Activas ({enabledSections.length})
         </h4>
@@ -372,9 +357,9 @@ export function SectionBuilder({
       {/* Secciones disponibles (no activas) */}
       {disabledSections.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-            <PlusCircleIcon className="w-4 h-4 text-[var(--text-secondary)]" />
-            Secciones Disponibles ({disabledSections.length})
+          <h4 className="text-xs font-semibold mb-2 flex items-center gap-1.5 text-[var(--text-secondary)]">
+            <PlusCircleIcon className="w-4 h-4" />
+            Disponibles ({disabledSections.length})
           </h4>
           <div className="space-y-2">
             {disabledSections.map((section) => {
@@ -395,19 +380,17 @@ export function SectionBuilder({
       )}
 
       {/* Mensaje de ayuda y botón de regenerar */}
-      <div className="pt-2 border-t border-[var(--shadow-dark)]">
-        <p className="text-xs text-[var(--text-secondary)] text-center mb-3">
-          Arrastra las secciones para cambiar su orden en la web.
-          <br />
-          Las secciones marcadas con candado tienen posicion fija.
+      <div className="pt-3 border-t border-[var(--shadow-dark)]/50">
+        <p className="text-xs text-[var(--text-secondary)] text-center mb-2">
+          Arrastra para reordenar las secciones
         </p>
         <button
           type="button"
           onClick={handleRegenerateSections}
-          className="w-full text-xs text-[var(--text-secondary)] hover:text-[var(--accent)] py-2 flex items-center justify-center gap-1 transition-colors"
+          className="w-full text-xs text-[var(--text-secondary)] hover:text-[var(--accent)] py-2 flex items-center justify-center gap-1.5 transition-colors"
         >
-          <RefreshIcon className="w-3 h-3" />
-          Restaurar secciones por defecto
+          <RefreshIcon className="w-3.5 h-3.5" />
+          Restaurar por defecto
         </button>
       </div>
     </div>

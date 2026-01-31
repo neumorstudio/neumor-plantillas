@@ -18,6 +18,7 @@ interface PreviewPanelProps {
   onIframeLoad: () => void;
   onSetPreviewMode: (mode: "desktop" | "tablet" | "mobile") => void;
   domain: string;
+  className?: string;
 }
 
 export function PreviewPanel({
@@ -28,17 +29,20 @@ export function PreviewPanel({
   onIframeLoad,
   onSetPreviewMode,
   domain,
+  className = "",
 }: PreviewPanelProps) {
   return (
-    <div className="xl:col-span-7 neumor-card p-4 flex flex-col min-h-[400px]">
-      <div className="flex items-center justify-between mb-3">
+    <section className={`neumor-card p-4 flex flex-col h-full ${className}`}>
+      {/* Header con controles */}
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <h2 className="text-lg font-semibold">Vista Previa</h2>
         <div className="flex items-center gap-2">
+          {/* Device Toggles */}
           <div className="flex neumor-inset rounded-lg p-1">
             <button
               onClick={() => onSetPreviewMode("desktop")}
               className={`p-2 rounded-lg transition-all ${
-                previewMode === "desktop" ? "bg-[var(--accent)] text-white" : ""
+                previewMode === "desktop" ? "bg-[var(--accent)] text-white shadow-sm" : "hover:bg-[var(--shadow-light)]"
               }`}
               title="Desktop"
             >
@@ -47,7 +51,7 @@ export function PreviewPanel({
             <button
               onClick={() => onSetPreviewMode("tablet")}
               className={`p-2 rounded-lg transition-all ${
-                previewMode === "tablet" ? "bg-[var(--accent)] text-white" : ""
+                previewMode === "tablet" ? "bg-[var(--accent)] text-white shadow-sm" : "hover:bg-[var(--shadow-light)]"
               }`}
               title="Tablet"
             >
@@ -56,18 +60,19 @@ export function PreviewPanel({
             <button
               onClick={() => onSetPreviewMode("mobile")}
               className={`p-2 rounded-lg transition-all ${
-                previewMode === "mobile" ? "bg-[var(--accent)] text-white" : ""
+                previewMode === "mobile" ? "bg-[var(--accent)] text-white shadow-sm" : "hover:bg-[var(--shadow-light)]"
               }`}
               title="Mobile"
             >
               <MobileIcon />
             </button>
           </div>
+          {/* External Link */}
           <a
             href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="neumor-btn p-2 text-[var(--accent)]"
+            className="neumor-btn p-2 text-[var(--accent)] hover:bg-[var(--shadow-light)]"
             title="Abrir en nueva pestana"
           >
             <ExternalLinkIcon />
@@ -75,12 +80,14 @@ export function PreviewPanel({
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center bg-[var(--shadow-dark)] rounded-xl overflow-hidden">
+      {/* Preview Container - flex-1 para ocupar todo el espacio disponible */}
+      <div className="flex-1 flex items-stretch justify-center bg-[var(--shadow-dark)]/50 rounded-xl overflow-hidden min-h-0">
         <div
-          className="bg-white h-full transition-all duration-300"
+          className="bg-white transition-all duration-300 shadow-lg"
           style={{
             width: previewDimensions.width,
             maxWidth: "100%",
+            height: "100%",
           }}
         >
           <iframe
@@ -94,9 +101,10 @@ export function PreviewPanel({
         </div>
       </div>
 
-      <p className="text-xs text-[var(--text-secondary)] mt-2 text-center">
+      {/* Domain footer */}
+      <p className="text-xs text-[var(--text-secondary)] mt-2 text-center flex-shrink-0">
         {domain}
       </p>
-    </div>
+    </section>
   );
 }

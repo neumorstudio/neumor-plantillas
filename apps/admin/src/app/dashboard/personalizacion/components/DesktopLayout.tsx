@@ -1,6 +1,8 @@
 /**
  * Layout desktop para personalizacion.
  * Componente presentacional extraido de personalizacion-client.tsx.
+ *
+ * Layout optimizado: Preview protagonista (~75%), Panel lateral (~25%)
  */
 
 import type { ReactNode, RefObject } from "react";
@@ -58,78 +60,82 @@ export function DesktopLayout({
   message,
 }: DesktopLayoutProps) {
   return (
-    <div className="h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-heading font-bold mb-1">Personalizacion</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Personaliza el aspecto de tu web en tiempo real
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onReset}
-            className="neumor-btn px-4 py-2 text-sm flex items-center gap-2"
-            title="Restaurar valores por defecto"
-          >
-            <ResetIcon />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="neumor-btn neumor-btn-accent px-6 py-2"
-          >
-            {saving ? "Guardando..." : "Guardar"}
-          </button>
-        </div>
-      </div>
-
-      {/* Message */}
-      {message && (
-        <div
-          className={`mb-4 p-3 rounded-lg text-sm ${
-            message.type === "success"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-red-100 text-red-800 border border-red-200"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-[calc(100vh-180px)]">
-        {/* Left Panel - Tabs */}
-        <div className="xl:col-span-1 flex xl:flex-col gap-2 overflow-x-auto xl:overflow-x-visible pb-2 xl:pb-0">
-          {tabs.map((tab) => (
+    <div className="h-full flex flex-col">
+      {/* Header Sticky */}
+      <header className="sticky top-0 z-30 bg-[var(--neumor-bg)] pb-3 mb-3 border-b border-[var(--shadow-dark)]/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-heading font-bold">Personalizacion</h1>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Personaliza el aspecto de tu web en tiempo real
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
             <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`flex items-center xl:flex-col gap-2 xl:gap-1 p-3 xl:py-4 rounded-xl transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-[var(--accent)] text-white shadow-lg"
-                  : "neumor-btn hover:bg-[var(--shadow-light)]"
-              }`}
-              title={tab.label}
+              onClick={onReset}
+              className="neumor-btn px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-[var(--shadow-light)]"
+              title="Restaurar valores por defecto"
             >
-              {tab.icon}
-              <span className="text-xs font-medium xl:hidden">{tab.label}</span>
+              <ResetIcon />
+              <span>Reset</span>
             </button>
-          ))}
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className="neumor-btn neumor-btn-accent px-6 py-2.5 font-semibold min-w-[120px]"
+            >
+              {saving ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
         </div>
 
-        {/* Center Panel - Controls */}
-        <div className="xl:col-span-4 neumor-card p-5 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            {tabs.find(t => t.id === activeTab)?.icon}
-            {tabs.find(t => t.id === activeTab)?.label}
-          </h2>
-          {tabContent}
-        </div>
+        {/* Message Toast */}
+        {message && (
+          <div
+            className={`mt-3 p-3 rounded-lg text-sm font-medium ${
+              message.type === "success"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : "bg-red-100 text-red-800 border border-red-200"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+      </header>
 
-        {/* Right Panel - Preview */}
+      {/* Main Layout - Flex row: Panel fijo + Preview resto */}
+      <div className="flex gap-4 items-stretch" style={{ height: 'calc(100vh - 160px)' }}>
+        {/* Left Panel - Tabs + Controls (w-80 = ~320px fijo) */}
+        <aside className="w-80 flex-shrink-0 flex flex-col gap-3 h-full">
+          {/* Tabs Navigation - Horizontal con texto */}
+          <nav className="flex flex-wrap gap-1.5 p-1.5 neumor-inset rounded-xl flex-shrink-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  activeTab === tab.id
+                    ? "bg-[var(--accent)] text-white shadow-md"
+                    : "hover:bg-[var(--shadow-light)] text-[var(--text-secondary)]"
+                }`}
+              >
+                <span className="w-4 h-4">{tab.icon}</span>
+                <span>{tab.shortLabel}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* Controls Panel - scroll interno */}
+          <div className="flex-1 neumor-card p-4 overflow-y-auto min-h-0">
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2 text-[var(--text-primary)]">
+              {tabs.find(t => t.id === activeTab)?.icon}
+              {tabs.find(t => t.id === activeTab)?.label}
+            </h2>
+            {tabContent}
+          </div>
+        </aside>
+
+        {/* Right Panel - Preview (flex-1 = resto del espacio, h-full para altura completa) */}
         <PreviewPanel
           previewUrl={previewUrl}
           previewMode={previewMode}
@@ -138,6 +144,7 @@ export function DesktopLayout({
           onIframeLoad={onIframeLoad}
           onSetPreviewMode={onSetPreviewMode}
           domain={domain}
+          className="flex-1 min-w-0 h-full"
         />
       </div>
     </div>

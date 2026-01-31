@@ -235,7 +235,12 @@ export function PersonalizacionClient({
   }, []);
 
   const handleEffectsChange = useCallback((key: keyof EffectsConfig, value: number | string | boolean) => {
-    setEffects(prev => ({ ...prev, [key]: value }));
+    console.log('[PersonalizacionClient] handleEffectsChange:', key, value);
+    setEffects(prev => {
+      const newEffects = { ...prev, [key]: value };
+      console.log('[PersonalizacionClient] New effects state:', newEffects);
+      return newEffects;
+    });
     setActivePreset(null);
   }, []);
 

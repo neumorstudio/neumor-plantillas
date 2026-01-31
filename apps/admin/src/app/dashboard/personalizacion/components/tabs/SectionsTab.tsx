@@ -18,13 +18,7 @@ export function SectionsTab({
   onSectionsChange,
 }: SectionsTabProps) {
   return (
-    <div className="space-y-4">
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold mb-1">Constructor de Secciones</h3>
-        <p className="text-xs text-[var(--text-secondary)]">
-          Arrastra para reordenar las secciones de tu web. Activa o desactiva las que necesites.
-        </p>
-      </div>
+    <div>
       <SectionBuilder
         businessType={businessType}
         sections={sections}
