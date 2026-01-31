@@ -85,7 +85,7 @@ export async function GET(request: Request) {
 
     const { data: bookings, error: bookingError } = await supabase
       .from("bookings")
-      .select("id, website_id, customer_name, customer_email, customer_phone, booking_date, booking_time, status, notes, metadata, services, total_price_cents")
+      .select("id, website_id, customer_name, customer_email, customer_phone, booking_date, booking_time, status, notes, services, total_price_cents")
       .in("booking_date", dateKeys)
       .in("status", ["pending", "confirmed"])
       .not("customer_email", "is", null);
@@ -120,9 +120,6 @@ export async function GET(request: Request) {
 
     for (const booking of bookings) {
       if (!booking.customer_email || !booking.booking_date || !booking.booking_time) continue;
-      const metadata = (booking.metadata as Record<string, unknown>) || {};
-      if (metadata.reminder_1h_sent_at) continue;
-
       const bookingEpoch = parseBookingEpoch(booking.booking_date, booking.booking_time);
       const diffMinutes = Math.round((bookingEpoch - nowEpoch) / 60000);
       if (diffMinutes < 60 || diffMinutes >= 60 + REMINDER_WINDOW_MINUTES) continue;
@@ -130,6 +127,18 @@ export async function GET(request: Request) {
       const website = websiteMap.get(booking.website_id);
       const client = website ? clientMap.get(website.client_id) : null;
       if (!client || client.business_type !== "salon") continue;
+
+      const { data: existingReminder } = await supabase
+        .from("activity_log")
+        .select("id")
+        .eq("client_id", client.id)
+        .eq("action", "booking_reminder_1h")
+        .eq("details->>booking_id", booking.id)
+        .maybeSingle();
+
+      if (existingReminder) {
+        continue;
+      }
 
       const config = (website?.config || {}) as {
         businessName?: string;
@@ -173,9 +182,17 @@ export async function GET(request: Request) {
 
       if (result.success) {
         sentCount += 1;
-        metadata.reminder_1h_sent_at = new Date().toISOString();
-        metadata.reminder_1h_minutes_before = 60;
-        await supabase.from("bookings").update({ metadata }).eq("id", booking.id);
+        await supabase.from("activity_log").insert({
+          client_id: client.id,
+          action: "booking_reminder_1h",
+          details: {
+            booking_id: booking.id,
+            booking_date: booking.booking_date,
+            booking_time: booking.booking_time,
+            reminder_minutes_before: 60,
+            customer_email: booking.customer_email,
+          },
+        });
       }
     }
 
