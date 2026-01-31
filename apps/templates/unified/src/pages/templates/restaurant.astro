@@ -142,6 +142,7 @@ const customization = {
 
 // Build page config (preview overrides config values)
 const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
+const activeSkin = config.skin as "neumorphic" | "brutalist" | "3d" | "flat" | "glassmorphism" | undefined;
 const pageConfig = {
   restaurantName: tenant.businessName,
   theme: activeTheme as "light" | "dark" | "auto",
@@ -172,6 +173,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
   theme={pageConfig.theme === "auto" ? "light" : pageConfig.theme}
+  skin={activeSkin}
   customization={customization}
 >
   <Header

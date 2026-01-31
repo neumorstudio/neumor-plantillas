@@ -75,6 +75,7 @@ const customization = {
 
 // Build page config (preview overrides config values)
 const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
+const activeSkin = config.skin as "neumorphic" | "brutalist" | "3d" | "flat" | "glassmorphism" | undefined;
 const pageConfig = {
   storeName: tenant.businessName,
   theme: activeTheme as "light" | "dark" | "auto",
@@ -101,6 +102,7 @@ const pageConfig = {
   title={pageConfig.siteTitle}
   description={pageConfig.siteDescription}
   theme={pageConfig.theme === "auto" ? "light" : pageConfig.theme}
+  skin={activeSkin}
   customization={customization}
 >
   <Header
