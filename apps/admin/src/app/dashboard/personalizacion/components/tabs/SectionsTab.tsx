@@ -10,12 +10,14 @@ interface SectionsTabProps {
   sections: SectionConfig[];
   businessType: BusinessType;
   onSectionsChange: (sections: SectionConfig[]) => void;
+  onSectionVariantChange?: (sectionId: string, variant: string) => void;
 }
 
 export function SectionsTab({
   sections,
   businessType,
   onSectionsChange,
+  onSectionVariantChange,
 }: SectionsTabProps) {
   return (
     <div>
@@ -23,6 +25,7 @@ export function SectionsTab({
         businessType={businessType}
         sections={sections}
         onChange={onSectionsChange}
+        onVariantChange={onSectionVariantChange}
       />
     </div>
   );

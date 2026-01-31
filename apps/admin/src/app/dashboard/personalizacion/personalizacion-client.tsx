@@ -154,6 +154,45 @@ export function PersonalizacionClient({
     setSectionsConfig({ sections, updatedAt: new Date().toISOString() });
   }, []);
 
+  // Mapeo de section IDs a keys de variants
+  const sectionToVariantKey: Record<string, keyof Variants | null> = {
+    hero: "hero",
+    services: "services", // salon, clinic, fitness, shop, repairs
+    menu: "menu", // restaurant
+    features: "features",
+    footer: "footer",
+    testimonials: "reviews",
+    reservation: "reservation",
+    // Secciones sin variante correspondiente en Variants
+    booking: null,
+    contact: null,
+    orders: null,
+  };
+
+  // Handler para sincronizar cambio de variante de sección con estado variants
+  const handleSectionVariantChange = useCallback((sectionId: string, variant: string) => {
+    const variantKey = sectionToVariantKey[sectionId];
+    if (variantKey) {
+      setVariants(prev => ({
+        ...prev,
+        [variantKey]: variant,
+      }));
+      // Limpiar preset activo ya que estamos personalizando manualmente
+      setActivePreset(null);
+    }
+  }, []);
+
+  // Mapeo inverso: variant key a section ID
+  const variantKeyToSectionId: Record<string, string> = {
+    hero: "hero",
+    menu: "menu", // restaurant
+    services: "services", // salon, clinic, fitness, shop, repairs
+    features: "features",
+    footer: "footer",
+    reviews: "testimonials",
+    reservation: "reservation",
+  };
+
   // Función para aplicar un preset completo
   const applyPreset = useCallback((preset: TemplatePreset) => {
     setTheme(preset.theme);
@@ -163,7 +202,22 @@ export function PersonalizacionClient({
     setEffects(preset.effects);
     setVariants(preset.variants);
     setActivePreset(preset.id);
-  }, []);
+
+    // Sincronizar variantes del preset con sectionsConfig
+    setSectionsConfig(prev => ({
+      ...prev,
+      sections: prev.sections.map(section => {
+        // Buscar si hay una variante del preset para esta sección
+        for (const [variantKey, sectionId] of Object.entries(variantKeyToSectionId)) {
+          if (sectionId === section.id && preset.variants[variantKey as keyof typeof preset.variants]) {
+            return { ...section, variant: preset.variants[variantKey as keyof typeof preset.variants] };
+          }
+        }
+        return section;
+      }),
+      updatedAt: new Date().toISOString(),
+    }));
+  }, [businessType]);
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -523,6 +577,7 @@ export function PersonalizacionClient({
             sections={sectionsConfig.sections}
             businessType={businessType}
             onSectionsChange={handleSectionsChange}
+            onSectionVariantChange={handleSectionVariantChange}
           />
         );
 

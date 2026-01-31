@@ -12,6 +12,7 @@ import type { Theme, WebsiteConfig, BusinessType } from "@neumorstudio/supabase"
 export interface Variants {
   hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   menu: "tabs" | "grid" | "list" | "carousel";
+  services: "tabs" | "grid" | "list" | "carousel"; // salon, clinic, fitness, shop, repairs
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";
   footer: "full" | "minimal" | "centered";

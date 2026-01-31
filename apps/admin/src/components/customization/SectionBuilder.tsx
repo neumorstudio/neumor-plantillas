@@ -207,12 +207,14 @@ interface SectionBuilderProps {
   businessType: BusinessType;
   sections: SectionConfig[];
   onChange: (sections: SectionConfig[]) => void;
+  onVariantChange?: (sectionId: string, variant: string) => void;
 }
 
 export function SectionBuilder({
   businessType,
   sections,
   onChange,
+  onVariantChange,
 }: SectionBuilderProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -272,8 +274,10 @@ export function SectionBuilder({
         s.id === sectionId ? { ...s, variant } : s
       );
       onChange(newSections);
+      // Sincronizar con el estado principal de variants
+      onVariantChange?.(sectionId, variant);
     },
-    [sections, onChange]
+    [sections, onChange, onVariantChange]
   );
 
   // Filtrar solo secciones que existen en el catalogo para este tipo de negocio

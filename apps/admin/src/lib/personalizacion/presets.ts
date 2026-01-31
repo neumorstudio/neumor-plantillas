@@ -23,6 +23,7 @@ export interface TemplatePreset {
   variants: {
     hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
     menu: "tabs" | "grid" | "list" | "carousel";
+    services: "tabs" | "grid" | "list" | "carousel";
     features: "cards" | "icons" | "banner";
     reviews: "grid" | "carousel" | "minimal";
     footer: "full" | "minimal" | "centered";
@@ -61,6 +62,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "bold",
       menu: "list",
+      services: "list",
       features: "banner",
       reviews: "minimal",
       footer: "minimal",
@@ -98,6 +100,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "fullscreen",
       menu: "list",
+      services: "list",
       features: "cards",
       reviews: "carousel",
       footer: "centered",
@@ -135,6 +138,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "bold",
       menu: "carousel",
+      services: "carousel",
       features: "icons",
       reviews: "grid",
       footer: "full",
@@ -172,6 +176,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "modern",
       menu: "grid",
+      services: "grid",
       features: "cards",
       reviews: "grid",
       footer: "full",
@@ -209,6 +214,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "classic",
       menu: "tabs",
+      services: "tabs",
       features: "cards",
       reviews: "carousel",
       footer: "full",
@@ -246,6 +252,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "fullscreen",
       menu: "grid",
+      services: "grid",
       features: "icons",
       reviews: "carousel",
       footer: "minimal",
@@ -283,6 +290,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "minimal",
       menu: "list",
+      services: "list",
       features: "cards",
       reviews: "minimal",
       footer: "centered",
@@ -320,6 +328,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "split",
       menu: "list",
+      services: "list",
       features: "banner",
       reviews: "minimal",
       footer: "minimal",
@@ -357,6 +366,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "bold",
       menu: "carousel",
+      services: "carousel",
       features: "icons",
       reviews: "carousel",
       footer: "centered",
@@ -394,6 +404,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "split",
       menu: "grid",
+      services: "grid",
       features: "icons",
       reviews: "minimal",
       footer: "minimal",
@@ -431,6 +442,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "fullscreen",
       menu: "list",
+      services: "list",
       features: "icons",
       reviews: "minimal",
       footer: "centered",
@@ -468,6 +480,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "split",
       menu: "grid",
+      services: "grid",
       features: "banner",
       reviews: "grid",
       footer: "minimal",
@@ -505,6 +518,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "minimal",
       menu: "list",
+      services: "list",
       features: "icons",
       reviews: "minimal",
       footer: "minimal",
@@ -542,6 +556,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "split",
       menu: "list",
+      services: "list",
       features: "banner",
       reviews: "minimal",
       footer: "minimal",
@@ -579,6 +594,7 @@ export const templatePresets: TemplatePreset[] = [
     variants: {
       hero: "classic",
       menu: "carousel",
+      services: "carousel",
       features: "cards",
       reviews: "carousel",
       footer: "centered",

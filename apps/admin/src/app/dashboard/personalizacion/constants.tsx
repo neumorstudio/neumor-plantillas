@@ -14,6 +14,7 @@ import { PaletteIcon, TextIcon } from "@/components/icons";
 export const defaultVariants: Variants = {
   hero: "classic",
   menu: "tabs",
+  services: "tabs",
   features: "cards",
   reviews: "grid",
   footer: "full",
