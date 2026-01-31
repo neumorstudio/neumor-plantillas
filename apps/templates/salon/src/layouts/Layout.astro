@@ -555,6 +555,20 @@ const defaultFonts = !fontImports
               });
             }
 
+            if (Array.isArray(content.galleryImages) && content.galleryImages.length > 0) {
+              const galleryItems = document.querySelectorAll('[data-section-id="gallery"] .gallery-item');
+              galleryItems.forEach(function(item, index) {
+                const img = item.querySelector('img');
+                if (!img) return;
+                if (content.galleryImages[index]) {
+                  img.src = content.galleryImages[index];
+                  item.style.removeProperty('display');
+                } else {
+                  item.style.display = 'none';
+                }
+              });
+            }
+
             // Redes sociales - actualizar enlaces
             if (content.socialLinks) {
               Object.keys(content.socialLinks).forEach(function(network) {

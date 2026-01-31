@@ -172,13 +172,21 @@ const customization = websiteData?.config ? {
   branding: websiteData.config.branding,
   logo: websiteData.config.logo,
 } : {};
-const reviewsConfig = websiteData?.config as Record<string, unknown> | undefined;
+const rawConfig = websiteData?.config as Record<string, unknown> | undefined;
+const nestedContent = rawConfig && typeof rawConfig === "object" && rawConfig.content && typeof rawConfig.content === "object"
+  ? (rawConfig.content as Record<string, unknown>)
+  : undefined;
+const reviewsConfig = nestedContent ? { ...rawConfig, ...nestedContent } : rawConfig;
 const contentConfig = reviewsConfig;
 const getContentText = (key: string) => {
   const value = contentConfig?.[key];
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+};
+const getContentArray = (key: string) => {
+  const value = contentConfig?.[key];
+  return Array.isArray(value) && value.length > 0 ? value : undefined;
 };
 
 // ============================================
@@ -333,6 +341,7 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
                 <GallerySection
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
+                  images={getContentArray("galleryImages")}
                   variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
                 />
               </section>

@@ -73,6 +73,23 @@ export async function GET() {
         heroTitle: config.heroTitle,
         heroSubtitle: config.heroSubtitle,
         heroImage: config.heroImage,
+        heroImages: config.heroImages,
+        heroCta: config.heroCta,
+
+        // Textos secciones
+        reviewsTitle: config.reviewsTitle,
+        reviewsSubtitle: config.reviewsSubtitle,
+        teamTitle: config.teamTitle,
+        teamSubtitle: config.teamSubtitle,
+        galleryTitle: config.galleryTitle,
+        gallerySubtitle: config.gallerySubtitle,
+        galleryImages: config.galleryImages,
+        faqTitle: config.faqTitle,
+        faqSubtitle: config.faqSubtitle,
+        plansTitle: config.plansTitle,
+        plansSubtitle: config.plansSubtitle,
+        contactTitle: config.contactTitle,
+        contactSubtitle: config.contactSubtitle,
 
         // Colores
         colors: config.colors,

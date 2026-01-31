@@ -94,6 +94,9 @@ export function PersonalizacionClient({
   // Inicializar heroImages: si hay heroImage existente, incluirlo en el array
   const initialHeroImages = (initialConfig.heroImages as string[] | undefined) ||
     (initialConfig.heroImage ? [initialConfig.heroImage] : []);
+  const initialGalleryImages = Array.isArray((initialConfig as Record<string, unknown>).galleryImages)
+    ? ((initialConfig as Record<string, unknown>).galleryImages as string[])
+    : [];
 
   const [content, setContent] = useState<ContentConfig>({
     // Informacion del negocio
@@ -104,6 +107,7 @@ export function PersonalizacionClient({
     heroImage: initialConfig.heroImage || "",
     heroImages: initialHeroImages,
     heroCta: (initialConfig as Record<string, unknown>).heroCta as string || "",
+    galleryImages: initialGalleryImages,
     // Contacto
     address: initialConfig.address || "",
     phone: initialConfig.phone || "",
@@ -304,7 +308,7 @@ export function PersonalizacionClient({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Hook para manejar uploads de archivos
-  const { uploading, uploadingHero, handleLogoUpload, handleHeroImageUpload } = useFileUpload({
+  const { uploading, uploadingHero, uploadingGallery, handleLogoUpload, handleHeroImageUpload, handleGalleryImageUpload } = useFileUpload({
     setBranding,
     setContent,
     setMessage,
@@ -437,6 +441,13 @@ export function PersonalizacionClient({
     });
   }, []);
 
+  const handleRemoveGalleryImage = useCallback((url: string) => {
+    setContent(prev => ({
+      ...prev,
+      galleryImages: (prev.galleryImages || []).filter(img => img !== url),
+    }));
+  }, []);
+
   const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => {
     setContent(prev => ({ ...prev, [key]: value }));
   }, []);
@@ -502,6 +513,9 @@ export function PersonalizacionClient({
         heroImages: (initialConfig.heroImages as string[] | undefined) ||
           (initialConfig.heroImage ? [initialConfig.heroImage] : []),
         heroCta: (initialConfig as Record<string, unknown>).heroCta as string || "",
+        galleryImages: Array.isArray((initialConfig as Record<string, unknown>).galleryImages)
+          ? ((initialConfig as Record<string, unknown>).galleryImages as string[])
+          : [],
         address: initialConfig.address || "",
         phone: initialConfig.phone || "",
         email: initialConfig.email || "",
@@ -670,14 +684,18 @@ export function PersonalizacionClient({
           <MarcaTab
             branding={branding}
             content={content}
+            sections={sectionsConfig.sections}
             uploading={uploading}
             uploadingHero={uploadingHero}
+            uploadingGallery={uploadingGallery}
             isMobile={isMobile}
             onBrandingChange={handleBrandingChange}
             onLogoUpload={handleLogoUpload}
             onSelectHeroImage={handleSelectHeroImage}
             onRemoveHeroImage={handleRemoveHeroImage}
             onHeroImageUpload={handleHeroImageUpload}
+            onGalleryImageUpload={handleGalleryImageUpload}
+            onRemoveGalleryImage={handleRemoveGalleryImage}
           />
         );
 

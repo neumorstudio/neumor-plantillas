@@ -3,7 +3,7 @@
  * Incluye Logo e Imagenes Hero.
  */
 
-import type { BrandingConfig } from "@neumorstudio/supabase";
+import type { BrandingConfig, SectionConfig, SectionId } from "@neumorstudio/supabase";
 import { OptionSelector } from "@/components/customization";
 import { CollapsibleSection } from "@/components/ui";
 import type { ContentConfig } from "../../types";
@@ -11,28 +11,41 @@ import type { ContentConfig } from "../../types";
 interface MarcaTabProps {
   branding: BrandingConfig;
   content: ContentConfig;
+  sections: SectionConfig[];
   uploading: boolean;
   uploadingHero: boolean;
+  uploadingGallery: boolean;
   isMobile: boolean;
   onBrandingChange: (key: keyof BrandingConfig, value: string) => void;
   onLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectHeroImage: (url: string) => void;
   onRemoveHeroImage: (url: string) => void;
   onHeroImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onGalleryImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveGalleryImage: (url: string) => void;
 }
 
 export function MarcaTab({
   branding,
   content,
+  sections,
   uploading,
   uploadingHero,
+  uploadingGallery,
   isMobile,
   onBrandingChange,
   onLogoUpload,
   onSelectHeroImage,
   onRemoveHeroImage,
   onHeroImageUpload,
+  onGalleryImageUpload,
+  onRemoveGalleryImage,
 }: MarcaTabProps) {
+  const sectionsMap = new Map(sections.map((section) => [section.id, section]));
+  const isSectionEnabled = (id: SectionId) => sectionsMap.get(id)?.enabled ?? false;
+  const showGallerySection = isSectionEnabled("gallery");
+  const maxGalleryImages = 6;
+
   return (
     <div className="space-y-6">
       {/* Logo */}
@@ -187,6 +200,80 @@ export function MarcaTab({
           )}
         </div>
       </CollapsibleSection>
+
+      {showGallerySection && (
+        <CollapsibleSection title="Imagenes de la Seccion Galeria" defaultOpen={!isMobile}>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Galeria de Imagenes
+              <span className="text-xs text-[var(--text-secondary)] ml-2">
+                ({content.galleryImages?.length || 0}/{maxGalleryImages})
+              </span>
+            </label>
+            <p className="text-xs text-[var(--text-secondary)] mb-3">
+              Estas imagenes se muestran en la seccion <strong>Galeria</strong> de tu web.
+            </p>
+
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {(content.galleryImages || []).map((imgUrl, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-video rounded-xl overflow-hidden neumor-inset group"
+                >
+                  <img
+                    src={imgUrl}
+                    alt={`Galeria ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 15l6-6 4 4 8-8'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3C/svg%3E";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onRemoveGalleryImage(imgUrl)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+
+              {(content.galleryImages?.length || 0) < maxGalleryImages && (
+                <label className={`aspect-video rounded-xl border-2 border-dashed border-[var(--shadow-dark)] flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploadingGallery ? "opacity-50 pointer-events-none" : ""}`}>
+                  {uploadingGallery ? (
+                    <svg className="w-6 h-6 animate-spin text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span className="text-xs text-[var(--text-secondary)] mt-1">Subir</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onGalleryImageUpload}
+                    disabled={uploadingGallery}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {(content.galleryImages?.length || 0) === 0 && (
+              <p className="text-xs text-[var(--text-secondary)] text-center">
+                Sube hasta {maxGalleryImages} imagenes para tu galeria
+              </p>
+            )}
+          </div>
+        </CollapsibleSection>
+      )}
     </div>
   );
 }

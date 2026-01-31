@@ -502,6 +502,7 @@ export interface WebsiteConfig {
   teamSubtitle?: string;
   galleryTitle?: string;
   gallerySubtitle?: string;
+  galleryImages?: string[];
   faqTitle?: string;
   faqSubtitle?: string;
   plansTitle?: string;

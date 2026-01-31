@@ -16,8 +16,10 @@ interface UseFileUploadParams {
 interface UseFileUploadReturn {
   uploading: boolean;
   uploadingHero: boolean;
+  uploadingGallery: boolean;
   handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleHeroImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleGalleryImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
 export function useFileUpload({
@@ -27,6 +29,8 @@ export function useFileUpload({
 }: UseFileUploadParams): UseFileUploadReturn {
   const [uploading, setUploading] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const maxGalleryImages = 6;
 
   const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,10 +120,64 @@ export function useFileUpload({
     }
   }, [setContent, setMessage]);
 
+  const handleGalleryImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setContent(prev => {
+      if ((prev.galleryImages?.length || 0) >= maxGalleryImages) {
+        setMessage({ type: "error", text: `Maximo ${maxGalleryImages} imagenes. Elimina una para subir otra.` });
+        return prev;
+      }
+      return prev;
+    });
+
+    setUploadingGallery(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "gallery");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        setContent(prev => {
+          const currentImages = prev.galleryImages || [];
+          if (currentImages.length >= maxGalleryImages) {
+            return prev;
+          }
+          const newImages = [...currentImages, data.url];
+          return {
+            ...prev,
+            galleryImages: newImages,
+          };
+        });
+        setMessage({ type: "success", text: "Imagen subida correctamente" });
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({ type: "error", text: data.error || "Error al subir la imagen" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Error de conexion al subir la imagen" });
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
+    }
+  }, [setContent, setMessage, maxGalleryImages]);
+
   return {
     uploading,
     uploadingHero,
+    uploadingGallery,
     handleLogoUpload,
     handleHeroImageUpload,
+    handleGalleryImageUpload,
   };
 }

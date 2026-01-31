@@ -71,6 +71,7 @@ export interface ContentConfig {
   teamSubtitle?: string;
   galleryTitle?: string;
   gallerySubtitle?: string;
+  galleryImages?: string[];
   faqTitle?: string;
   faqSubtitle?: string;
   plansTitle?: string;
