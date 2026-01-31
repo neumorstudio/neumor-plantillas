@@ -14,6 +14,13 @@
   --text-secondary: oklch(0.45 0.02 250);
   --accent: oklch(0.55 0.12 250);
   --accent-hover: oklch(0.5 0.14 250);
+
+  /* Colores de marca personalizables - heredan de defaults si no se definen */
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+
+  /* Shadow intensity - controlable desde personalización (0-1) */
+  --shadow-intensity: 1;
 }
 
 /* Dark theme */
@@ -60,6 +67,173 @@
   --accent-hover: oklch(0.5 0.13 25);
 }
 
+/* ==========================================
+   TEMAS ESTACIONALES / FESTIVOS
+   ========================================== */
+
+/* Christmas theme - Festivo rojo y verde */
+.theme-christmas {
+  --neumor-bg: oklch(0.95 0.015 30);
+  --shadow-dark: oklch(0.82 0.02 30);
+  --shadow-light: oklch(1 0 0);
+  --text-primary: oklch(0.25 0.05 25);
+  --text-secondary: oklch(0.45 0.04 25);
+  --accent: oklch(0.5 0.2 25);
+  --accent-hover: oklch(0.45 0.22 25);
+  --accent-secondary: oklch(0.5 0.15 145);
+}
+
+/* Summer theme - Playa y sol */
+.theme-summer {
+  --neumor-bg: oklch(0.96 0.025 85);
+  --shadow-dark: oklch(0.84 0.03 200);
+  --shadow-light: oklch(1 0.01 85);
+  --text-primary: oklch(0.25 0.06 220);
+  --text-secondary: oklch(0.45 0.05 200);
+  --accent: oklch(0.7 0.18 40);
+  --accent-hover: oklch(0.65 0.2 40);
+}
+
+/* Autumn theme - Otoño cálido */
+.theme-autumn {
+  --neumor-bg: oklch(0.9 0.04 55);
+  --shadow-dark: oklch(0.75 0.05 55);
+  --shadow-light: oklch(0.97 0.02 55);
+  --text-primary: oklch(0.25 0.06 30);
+  --text-secondary: oklch(0.45 0.05 35);
+  --accent: oklch(0.55 0.16 45);
+  --accent-hover: oklch(0.5 0.18 45);
+}
+
+/* Spring theme - Primavera fresca */
+.theme-spring {
+  --neumor-bg: oklch(0.96 0.02 140);
+  --shadow-dark: oklch(0.84 0.025 140);
+  --shadow-light: oklch(1 0.01 140);
+  --text-primary: oklch(0.25 0.05 145);
+  --text-secondary: oklch(0.45 0.04 145);
+  --accent: oklch(0.7 0.15 350);
+  --accent-hover: oklch(0.65 0.17 350);
+}
+
+/* ==========================================
+   TEMAS DE ESTILO / MOOD
+   ========================================== */
+
+/* Ocean theme - Profundo y calmado */
+.theme-ocean {
+  --neumor-bg: oklch(0.92 0.03 220);
+  --shadow-dark: oklch(0.78 0.04 220);
+  --shadow-light: oklch(0.98 0.015 220);
+  --text-primary: oklch(0.2 0.05 230);
+  --text-secondary: oklch(0.4 0.04 220);
+  --accent: oklch(0.6 0.15 195);
+  --accent-hover: oklch(0.55 0.17 195);
+}
+
+/* Sunset theme - Atardecer cálido */
+.theme-sunset {
+  --neumor-bg: oklch(0.93 0.035 35);
+  --shadow-dark: oklch(0.8 0.045 35);
+  --shadow-light: oklch(0.99 0.015 35);
+  --text-primary: oklch(0.25 0.05 15);
+  --text-secondary: oklch(0.45 0.04 20);
+  --accent: oklch(0.65 0.2 25);
+  --accent-hover: oklch(0.6 0.22 20);
+}
+
+/* Forest theme - Naturaleza profunda */
+.theme-forest {
+  --neumor-bg: oklch(0.9 0.035 145);
+  --shadow-dark: oklch(0.75 0.045 145);
+  --shadow-light: oklch(0.97 0.02 145);
+  --text-primary: oklch(0.22 0.05 145);
+  --text-secondary: oklch(0.42 0.04 145);
+  --accent: oklch(0.5 0.14 155);
+  --accent-hover: oklch(0.45 0.16 155);
+}
+
+/* Midnight theme - Noche elegante */
+.theme-midnight {
+  --neumor-bg: oklch(0.2 0.04 260);
+  --shadow-dark: oklch(0.1 0.04 260);
+  --shadow-light: oklch(0.3 0.04 260);
+  --text-primary: oklch(0.92 0.02 250);
+  --text-secondary: oklch(0.7 0.02 260);
+  --accent: oklch(0.7 0.12 280);
+  --accent-hover: oklch(0.75 0.14 280);
+}
+
+/* Rose theme - Romántico y suave */
+.theme-rose {
+  --neumor-bg: oklch(0.94 0.025 10);
+  --shadow-dark: oklch(0.82 0.035 10);
+  --shadow-light: oklch(0.99 0.01 10);
+  --text-primary: oklch(0.3 0.05 350);
+  --text-secondary: oklch(0.5 0.04 350);
+  --accent: oklch(0.65 0.15 5);
+  --accent-hover: oklch(0.6 0.17 5);
+}
+
+/* Lavender theme - Calma y serenidad */
+.theme-lavender {
+  --neumor-bg: oklch(0.94 0.025 290);
+  --shadow-dark: oklch(0.82 0.03 290);
+  --shadow-light: oklch(0.99 0.01 290);
+  --text-primary: oklch(0.28 0.04 285);
+  --text-secondary: oklch(0.48 0.035 285);
+  --accent: oklch(0.6 0.14 295);
+  --accent-hover: oklch(0.55 0.16 295);
+}
+
+/* Coral theme - Moderno y trendy */
+.theme-coral {
+  --neumor-bg: oklch(0.95 0.02 30);
+  --shadow-dark: oklch(0.83 0.025 30);
+  --shadow-light: oklch(1 0.01 30);
+  --text-primary: oklch(0.28 0.04 20);
+  --text-secondary: oklch(0.48 0.035 20);
+  --accent: oklch(0.7 0.16 25);
+  --accent-hover: oklch(0.65 0.18 25);
+}
+
+/* Minimal theme - Ultra limpio */
+.theme-minimal {
+  --neumor-bg: oklch(0.97 0 0);
+  --shadow-dark: oklch(0.85 0 0);
+  --shadow-light: oklch(1 0 0);
+  --text-primary: oklch(0.15 0 0);
+  --text-secondary: oklch(0.45 0 0);
+  --accent: oklch(0.35 0 0);
+  --accent-hover: oklch(0.25 0 0);
+}
+
+/* ==========================================
+   TEMAS ESPECÍFICOS DE INDUSTRIA
+   ========================================== */
+
+/* Wellness theme - Spa y bienestar */
+.theme-wellness {
+  --neumor-bg: oklch(0.94 0.025 175);
+  --shadow-dark: oklch(0.82 0.03 175);
+  --shadow-light: oklch(0.99 0.01 175);
+  --text-primary: oklch(0.25 0.04 175);
+  --text-secondary: oklch(0.45 0.035 175);
+  --accent: oklch(0.55 0.12 175);
+  --accent-hover: oklch(0.5 0.14 175);
+}
+
+/* Vintage theme - Retro nostálgico */
+.theme-vintage {
+  --neumor-bg: oklch(0.9 0.04 70);
+  --shadow-dark: oklch(0.76 0.05 70);
+  --shadow-light: oklch(0.97 0.02 70);
+  --text-primary: oklch(0.3 0.05 50);
+  --text-secondary: oklch(0.5 0.04 55);
+  --accent: oklch(0.5 0.1 50);
+  --accent-hover: oklch(0.45 0.12 50);
+}
+
 /* ==============================================
    NeuGlass theme - Neumorphism + Glassmorphism
    Premium hybrid style with glass effects
@@ -74,11 +248,10 @@
   --accent: #6366f1;
   --accent-hover: #4f46e5;
 
-  /* Glass-specific variables */
+  /* Glass-specific variables - glass-blur is customizable via inline styles */
   --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-bg-strong: rgba(255, 255, 255, 0.45);
   --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-blur: 16px;
   --glass-shadow: rgba(31, 38, 135, 0.15);
   --accent-glow: rgba(99, 102, 241, 0.4);
 }
@@ -105,28 +278,28 @@
 .theme-neuglass .neumor-card,
 .theme-neuglass-dark .neumor-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow:
-    8px 8px 24px var(--shadow-dark),
-    -8px -8px 24px var(--shadow-light),
-    0 8px 32px var(--glass-shadow);
+    calc(8px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) calc(24px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-8px * var(--shadow-intensity, 1)) calc(-8px * var(--shadow-intensity, 1)) calc(24px * var(--shadow-intensity, 1)) var(--shadow-light),
+    0 calc(8px * var(--shadow-intensity, 1)) calc(32px * var(--shadow-intensity, 1)) var(--glass-shadow);
 }
 
 .theme-neuglass .neumor-card:hover,
 .theme-neuglass-dark .neumor-card:hover {
   box-shadow:
-    12px 12px 32px var(--shadow-dark),
-    -12px -12px 32px var(--shadow-light),
-    0 16px 48px var(--glass-shadow);
+    calc(12px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) calc(32px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-12px * var(--shadow-intensity, 1)) calc(-12px * var(--shadow-intensity, 1)) calc(32px * var(--shadow-intensity, 1)) var(--shadow-light),
+    0 calc(16px * var(--shadow-intensity, 1)) calc(48px * var(--shadow-intensity, 1)) var(--glass-shadow);
 }
 
 .theme-neuglass .neumor-btn,
 .theme-neuglass-dark .neumor-btn {
   background: var(--glass-bg);
-  backdrop-filter: blur(8px) saturate(180%);
-  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(180%);
   border: 1px solid var(--glass-border);
 }
 
@@ -134,32 +307,32 @@
 .theme-neuglass-dark .neumor-btn-accent {
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   box-shadow:
-    6px 6px 14px var(--shadow-dark),
-    -6px -6px 14px var(--shadow-light),
-    0 4px 20px var(--accent-glow);
+    calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light),
+    0 calc(4px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--accent-glow);
 }
 
 .theme-neuglass .neumor-btn-accent:hover,
 .theme-neuglass-dark .neumor-btn-accent:hover {
   box-shadow:
-    8px 8px 20px var(--shadow-dark),
-    -8px -8px 20px var(--shadow-light),
-    0 8px 32px var(--accent-glow);
+    calc(8px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-8px * var(--shadow-intensity, 1)) calc(-8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--shadow-light),
+    0 calc(8px * var(--shadow-intensity, 1)) calc(32px * var(--shadow-intensity, 1)) var(--accent-glow);
 }
 
 .theme-neuglass .neumor-input,
 .theme-neuglass-dark .neumor-input {
   background: var(--glass-bg);
-  backdrop-filter: blur(8px) saturate(180%);
-  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(180%);
   border: 1px solid var(--glass-border);
 }
 
 .theme-neuglass .neumor-input:focus,
 .theme-neuglass-dark .neumor-input:focus {
   box-shadow:
-    inset 4px 4px 12px var(--shadow-dark),
-    inset -4px -4px 12px var(--shadow-light),
+    inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    inset calc(-4px * var(--shadow-intensity, 1)) calc(-4px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) var(--shadow-light),
     0 0 0 3px var(--accent-glow);
 }
 
@@ -184,9 +357,12 @@ body {
   min-height: 100vh;
 }
 
+main {
+  padding-top: 0;
+}
+
 /* Tipografia */
 h1,
-h2,
 h3,
 h4,
 h5,
@@ -194,6 +370,13 @@ h6 {
   margin: 0;
   line-height: 1.2;
   color: var(--text-primary);
+}
+
+/* Títulos de sección (h2) usan color de marca principal */
+h2 {
+  margin: 0;
+  line-height: 1.2;
+  color: var(--color-primary);
 }
 
 p {
@@ -221,16 +404,16 @@ a:hover {
   border-radius: 1.5rem;
   padding: 1.5rem;
   box-shadow:
-    8px 8px 20px var(--shadow-dark),
-    -8px -8px 20px var(--shadow-light);
+    calc(8px * var(--shadow-intensity, 1)) calc(8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-8px * var(--shadow-intensity, 1)) calc(-8px * var(--shadow-intensity, 1)) calc(20px * var(--shadow-intensity, 1)) var(--shadow-light);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .neumor-card:hover {
   transform: translateY(-4px);
   box-shadow:
-    12px 12px 24px var(--shadow-dark),
-    -12px -12px 24px var(--shadow-light);
+    calc(12px * var(--shadow-intensity, 1)) calc(12px * var(--shadow-intensity, 1)) calc(24px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-12px * var(--shadow-intensity, 1)) calc(-12px * var(--shadow-intensity, 1)) calc(24px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 /* Card pequena */
@@ -239,8 +422,8 @@ a:hover {
   border-radius: 1rem;
   padding: 1rem;
   box-shadow:
-    6px 6px 14px var(--shadow-dark),
-    -6px -6px 14px var(--shadow-light);
+    calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 /* Boton primario */
@@ -259,20 +442,20 @@ a:hover {
   cursor: pointer;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   box-shadow:
-    6px 6px 14px var(--shadow-dark),
-    -6px -6px 14px var(--shadow-light);
+    calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 .neumor-btn:hover {
   box-shadow:
-    4px 4px 10px var(--shadow-dark),
-    -4px -4px 10px var(--shadow-light);
+    calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-4px * var(--shadow-intensity, 1)) calc(-4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 .neumor-btn:active {
   box-shadow:
-    inset 4px 4px 10px var(--shadow-dark),
-    inset -4px -4px 10px var(--shadow-light);
+    inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    inset calc(-4px * var(--shadow-intensity, 1)) calc(-4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 /* Boton con acento */
@@ -280,15 +463,15 @@ a:hover {
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   box-shadow:
-    6px 6px 14px var(--shadow-dark),
-    -6px -6px 14px var(--shadow-light),
+    calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light),
     inset 0 0 0 transparent;
 }
 
 .neumor-btn-accent:hover {
   box-shadow:
-    4px 4px 10px var(--shadow-dark),
-    -4px -4px 10px var(--shadow-light);
+    calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    calc(-4px * var(--shadow-intensity, 1)) calc(-4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-light);
   transform: translateY(-2px);
 }
 
@@ -303,8 +486,8 @@ a:hover {
   font-size: 1rem;
   outline: none;
   box-shadow:
-    inset 4px 4px 10px var(--shadow-dark),
-    inset -4px -4px 10px var(--shadow-light);
+    inset calc(4px * var(--shadow-intensity, 1)) calc(4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    inset calc(-4px * var(--shadow-intensity, 1)) calc(-4px * var(--shadow-intensity, 1)) calc(10px * var(--shadow-intensity, 1)) var(--shadow-light);
   transition: box-shadow 0.2s ease;
 }
 
@@ -315,8 +498,8 @@ a:hover {
 
 .neumor-input:focus {
   box-shadow:
-    inset 6px 6px 14px var(--shadow-dark),
-    inset -6px -6px 14px var(--shadow-light);
+    inset calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    inset calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 /* Contenedor inset */
@@ -325,8 +508,8 @@ a:hover {
   border-radius: 1rem;
   padding: 1rem;
   box-shadow:
-    inset 6px 6px 14px var(--shadow-dark),
-    inset -6px -6px 14px var(--shadow-light);
+    inset calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+    inset calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light);
 }
 
 /* ========================================

@@ -23,7 +23,7 @@ const url = new URL(Astro.request.url);
 const finalCustomization = applyPreviewParams(customization, url);
 
 // Compilar tokens a CSS
-const { cssVariables, fontImports, favicon } = compileCustomization(finalCustomization);
+const { cssVariables, inlineColorStyles, fontImports, favicon } = compileCustomization(finalCustomization);
 
 // Determinar clase de tema
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
@@ -35,7 +35,7 @@ const defaultFonts = !fontImports
 ---
 
 <!doctype html>
-<html lang="es" class={themeClass}>
+<html lang="es" class={themeClass} style={inlineColorStyles || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
