@@ -16,7 +16,11 @@ import { getBusinessHours } from "@gym/lib/supabase";
 
 // Get tenant from middleware
 const tenant = Astro.locals.tenant as TenantData;
-const config = tenant.config as Record<string, unknown>;
+const rawConfig = tenant.config as Record<string, unknown>;
+const nestedContent = rawConfig && typeof rawConfig === "object" && rawConfig.content && typeof rawConfig.content === "object"
+  ? (rawConfig.content as Record<string, unknown>)
+  : undefined;
+const config = (nestedContent ? { ...rawConfig, ...nestedContent } : rawConfig) as Record<string, unknown>;
 
 // Preview mode params
 const url = new URL(Astro.request.url);
