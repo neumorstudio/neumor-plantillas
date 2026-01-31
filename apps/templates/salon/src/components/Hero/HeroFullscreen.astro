@@ -1,0 +1,330 @@
+---
+/**
+ * HeroFullscreen - Máximo impacto visual, pantalla completa
+ * Ideal para: Luxury, Premium, Dark Elegance
+ *
+ * Características:
+ * - Imagen 100vh con overlay muy oscuro
+ * - Tipografía GIGANTE centrada
+ * - Efecto parallax sutil en imagen
+ * - Sin elementos decorativos, máximo impacto
+ */
+interface Props {
+  title: string;
+  subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string;
+  logoUrl?: string;
+}
+
+const {
+  title,
+  subtitle,
+  ctaText = "Reservar",
+  ctaLink = "#appointment",
+  backgroundImage,
+  logoUrl,
+} = Astro.props;
+---
+
+<section class="hero-fullscreen">
+  {backgroundImage && (
+    <div class="hero-bg" data-parallax>
+      <img src={backgroundImage} alt="" class="hero-bg-image" loading="eager" />
+      <div class="hero-overlay"></div>
+    </div>
+  )}
+
+  <div class="hero-content">
+    {logoUrl && (
+      <img src={logoUrl} alt="" class="hero-logo animate-scale-in" />
+    )}
+
+    <h1 class="hero-title animate-reveal">
+      {title.split(' ').map((word, i) => (
+        <span class="title-word" style={`animation-delay: ${0.1 + i * 0.1}s`}>{word}</span>
+      ))}
+    </h1>
+
+    <p class="hero-subtitle animate-fade-in">{subtitle}</p>
+
+    <a href={ctaLink} class="hero-cta animate-fade-in animation-delay-400">
+      <span>{ctaText}</span>
+    </a>
+  </div>
+
+  <!-- Scroll indicator animado -->
+  <div class="scroll-indicator">
+    <div class="scroll-mouse">
+      <div class="scroll-wheel"></div>
+    </div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<style>
+  .hero-fullscreen {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--neumor-bg);
+  }
+
+  /* Background con parallax */
+  .hero-bg {
+    position: absolute;
+    inset: -10%;
+    z-index: 0;
+  }
+
+  .hero-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+    transition: transform 0.1s ease-out;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.7) 50%,
+      rgba(0, 0, 0, 0.85) 100%
+    );
+  }
+
+  /* Content */
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 1000px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .hero-logo {
+    width: auto;
+    height: 80px;
+    max-width: 200px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 12vw, 8rem);
+    font-weight: 300;
+    color: white;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 0.3em;
+  }
+
+  .title-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: revealWord 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+    line-height: 1.6;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    margin-top: 1rem;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 3.5rem;
+    margin-top: 2rem;
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hero-cta:hover {
+    background: white;
+    color: black;
+    border-color: white;
+    transform: scale(1.05);
+  }
+
+  /* Scroll indicator */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: rgba(255, 255, 255, 0.5);
+    animation: fadeIn 1s ease-out 1.5s forwards;
+    opacity: 0;
+  }
+
+  .scroll-mouse {
+    width: 24px;
+    height: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    position: relative;
+  }
+
+  .scroll-wheel {
+    width: 4px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scrollWheel 2s ease-in-out infinite;
+  }
+
+  .scroll-text {
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  /* Animations */
+  @keyframes revealWord {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scrollWheel {
+    0%, 100% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    50% {
+      opacity: 0.3;
+      transform: translateX(-50%) translateY(12px);
+    }
+  }
+
+  .animate-scale-in {
+    opacity: 0;
+    transform: scale(0.8);
+    animation: scaleIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes scaleIn {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 0.8s;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-content {
+      padding: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 15vw, 4rem);
+    }
+
+    .hero-cta {
+      padding: 1rem 2.5rem;
+    }
+
+    .scroll-indicator {
+      bottom: 2rem;
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .title-word,
+    .animate-scale-in,
+    .animate-fade-in,
+    .scroll-indicator {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .scroll-wheel {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  // Parallax effect on scroll
+  const hero = document.querySelector('.hero-fullscreen');
+  const bg = hero?.querySelector('.hero-bg') as HTMLElement;
+
+  if (bg && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    let ticking = false;
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrolled = window.scrollY;
+          const rate = scrolled * 0.3;
+          bg.style.transform = `translateY(${rate}px)`;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+  }
+</script>

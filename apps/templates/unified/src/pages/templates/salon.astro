@@ -9,7 +9,7 @@ import type { TenantData } from "../../middleware";
 import Layout from "@salon/layouts/Layout.astro";
 import Header from "@salon/components/Header.astro";
 import AppointmentForm from "@salon/components/AppointmentForm.astro";
-import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@salon/components/Hero";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@salon/components/Hero";
 import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@salon/components/Services";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@salon/components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@salon/components/Footer";
@@ -73,7 +73,7 @@ try {
 
 // Component mapping
 const componentMap = {
-  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal, fullscreen: HeroFullscreen, split: HeroSplit },
   services: { tabs: ServicesTabs, grid: ServicesGrid, list: ServicesList, carousel: ServicesCarousel },
   features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
   footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },

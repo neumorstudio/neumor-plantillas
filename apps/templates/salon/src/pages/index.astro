@@ -22,7 +22,7 @@ import Header from "@components/Header.astro";
 import AppointmentForm from "@components/AppointmentForm.astro";
 
 // Importar TODAS las variantes de componentes
-import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@components/Hero";
 import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@components/Services";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
@@ -54,6 +54,8 @@ const componentMap = {
     modern: HeroModern,
     bold: HeroBold,
     minimal: HeroMinimal,
+    fullscreen: HeroFullscreen,
+    split: HeroSplit,
   },
   services: {
     tabs: ServicesTabs,

@@ -6,7 +6,8 @@ import type {
 } from "@neumorstudio/supabase";
 
 // ============================================
-// TEMPLATE PRESETS - Combinaciones completas
+// TEMPLATE PRESETS - Plantillas con identidad única
+// Cada plantilla debe sentirse como una web diferente
 // ============================================
 
 export interface TemplatePreset {
@@ -20,7 +21,7 @@ export interface TemplatePreset {
   typography: TypographyConfig;
   effects: EffectsConfig;
   variants: {
-    hero: "classic" | "modern" | "bold" | "minimal";
+    hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
     menu: "tabs" | "grid" | "list" | "carousel";
     features: "cards" | "icons" | "banner";
     reviews: "grid" | "carousel" | "minimal";
@@ -30,125 +31,559 @@ export interface TemplatePreset {
 }
 
 export const templatePresets: TemplatePreset[] = [
+  // ============================================
+  // 1. BRUTALIST - Punk, Underground, Raw
+  // ============================================
   {
-    id: "moderno",
-    name: "Moderno",
-    description: "Limpio y contemporáneo",
-    preview: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #3b82f6 100%)",
+    id: "brutalist",
+    name: "Brutalist",
+    description: "Raw, audaz y sin filtros",
+    preview: "linear-gradient(135deg, #ffffff 0%, #000000 50%, #ff0000 100%)",
     theme: "minimal",
-    skin: "flat",
-    colors: { primary: "#3b82f6", secondary: "#64748b", accent: "#3b82f6" },
-    typography: { headingFont: "Inter", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 40, borderRadius: "soft", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "modern", menu: "grid", features: "icons", reviews: "minimal", footer: "minimal", reservation: "modern" },
+    skin: "brutalist",
+    colors: {
+      primary: "#000000",
+      secondary: "#000000",
+      accent: "#ff0000"
+    },
+    typography: {
+      headingFont: "Space Mono",
+      bodyFont: "Space Mono",
+      baseFontSize: 16,
+      scale: 1.333
+    },
+    effects: {
+      shadowIntensity: 100,
+      borderRadius: "sharp",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "bold",
+      menu: "list",
+      features: "banner",
+      reviews: "minimal",
+      footer: "minimal",
+      reservation: "classic"
+    },
   },
+
+  // ============================================
+  // 2. LUXURY - Hotel 5 estrellas, Premium
+  // ============================================
   {
-    id: "elegante",
-    name: "Elegante",
-    description: "Sofisticado y lujoso",
-    preview: "linear-gradient(135deg, #faf5f0 0%, #d4a574 50%, #8b6914 100%)",
-    theme: "elegant",
-    skin: "soft",
-    colors: { primary: "#8b6914", secondary: "#d4a574", accent: "#c9a96e" },
-    typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.333 },
-    effects: { shadowIntensity: 50, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "modern", menu: "list", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
+    id: "luxury",
+    name: "Luxury",
+    description: "Elegancia y exclusividad",
+    preview: "linear-gradient(135deg, #1a1a2e 0%, #c9a227 50%, #0d0d0d 100%)",
+    theme: "midnight",
+    skin: "glass",
+    colors: {
+      primary: "#c9a227",
+      secondary: "#d4af37",
+      accent: "#c9a227"
+    },
+    typography: {
+      headingFont: "Playfair Display",
+      bodyFont: "Cormorant Garamond",
+      baseFontSize: 18,
+      scale: 1.414
+    },
+    effects: {
+      shadowIntensity: 40,
+      borderRadius: "soft",
+      glassmorphism: true,
+      blurIntensity: 20
+    },
+    variants: {
+      hero: "fullscreen",
+      menu: "list",
+      features: "cards",
+      reviews: "carousel",
+      footer: "centered",
+      reservation: "wizard"
+    },
   },
+
+  // ============================================
+  // 3. PLAYFUL - Cafetería trendy, Divertido
+  // ============================================
   {
-    id: "llamativo",
-    name: "Llamativo",
-    description: "Vibrante y atrevido",
-    preview: "linear-gradient(135deg, #fef3c7 0%, #fbbf24 50%, #10b981 100%)",
+    id: "playful",
+    name: "Playful",
+    description: "Colorido y lleno de vida",
+    preview: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 33%, #a8e6cf 66%, #dcedc1 100%)",
     theme: "colorful",
     skin: "3d",
-    colors: { primary: "#f59e0b", secondary: "#10b981", accent: "#f59e0b" },
-    typography: { headingFont: "Poppins", bodyFont: "Poppins", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 70, borderRadius: "pill", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "grid", footer: "full", reservation: "modal" },
+    colors: {
+      primary: "#ff6b6b",
+      secondary: "#4ecdc4",
+      accent: "#ffe66d"
+    },
+    typography: {
+      headingFont: "Fredoka One",
+      bodyFont: "Nunito",
+      baseFontSize: 17,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 80,
+      borderRadius: "pill",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "bold",
+      menu: "carousel",
+      features: "icons",
+      reviews: "grid",
+      footer: "full",
+      reservation: "modal"
+    },
   },
+
+  // ============================================
+  // 4. CORPORATE - Empresa seria, Profesional
+  // ============================================
   {
-    id: "minimalista",
-    name: "Minimalista",
-    description: "Ultra limpio y simple",
-    preview: "linear-gradient(135deg, #ffffff 0%, #f1f1f1 50%, #333333 100%)",
-    theme: "minimal",
-    skin: "outline",
-    colors: { primary: "#171717", secondary: "#525252", accent: "#171717" },
-    typography: { headingFont: "system", bodyFont: "system", baseFontSize: 15, scale: 1.2 },
-    effects: { shadowIntensity: 20, borderRadius: "sharp", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "minimal", menu: "list", features: "icons", reviews: "minimal", footer: "minimal", reservation: "classic" },
+    id: "corporate",
+    name: "Corporate",
+    description: "Profesional y confiable",
+    preview: "linear-gradient(135deg, #f8fafc 0%, #1e3a5f 50%, #0f172a 100%)",
+    theme: "light",
+    skin: "material",
+    colors: {
+      primary: "#1e3a5f",
+      secondary: "#475569",
+      accent: "#0066cc"
+    },
+    typography: {
+      headingFont: "Roboto",
+      bodyFont: "Open Sans",
+      baseFontSize: 16,
+      scale: 1.2
+    },
+    effects: {
+      shadowIntensity: 50,
+      borderRadius: "soft",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "modern",
+      menu: "grid",
+      features: "cards",
+      reviews: "grid",
+      footer: "full",
+      reservation: "wizard"
+    },
   },
+
+  // ============================================
+  // 5. RETRO - Años 70, Vintage, Nostálgico
+  // ============================================
   {
-    id: "acogedor",
-    name: "Acogedor",
-    description: "Cálido y familiar",
-    preview: "linear-gradient(135deg, #fef3c7 0%, #d4a574 50%, #78350f 100%)",
+    id: "retro",
+    name: "Retro",
+    description: "Nostalgia y calidez vintage",
+    preview: "linear-gradient(135deg, #f4e4ba 0%, #e07b39 50%, #8b4513 100%)",
     theme: "rustic",
     skin: "neumorphic",
-    colors: { primary: "#78350f", secondary: "#a16207", accent: "#b45309" },
-    typography: { headingFont: "Merriweather", bodyFont: "Source Sans Pro", baseFontSize: 17, scale: 1.25 },
-    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "classic" },
+    colors: {
+      primary: "#c65d07",
+      secondary: "#8b4513",
+      accent: "#e07b39"
+    },
+    typography: {
+      headingFont: "Abril Fatface",
+      bodyFont: "Libre Baskerville",
+      baseFontSize: 17,
+      scale: 1.333
+    },
+    effects: {
+      shadowIntensity: 65,
+      borderRadius: "rounded",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "classic",
+      menu: "tabs",
+      features: "cards",
+      reviews: "carousel",
+      footer: "full",
+      reservation: "classic"
+    },
   },
+
+  // ============================================
+  // 6. NEON - Club nocturno, Cyberpunk
+  // ============================================
   {
-    id: "premium",
-    name: "Premium Glass",
-    description: "Glassmorfismo elegante",
-    preview: "linear-gradient(135deg, #e8ecf1 0%, #6366f1 50%, #4f46e5 100%)",
-    theme: "neuglass",
+    id: "neon",
+    name: "Neon",
+    description: "Vibrante y futurista",
+    preview: "linear-gradient(135deg, #0a0a0a 0%, #ff00ff 33%, #00ffff 66%, #0a0a0a 100%)",
+    theme: "dark",
     skin: "glass",
-    colors: { primary: "#6366f1", secondary: "#8b5cf6", accent: "#6366f1" },
-    typography: { headingFont: "DM Sans", bodyFont: "DM Sans", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 60, borderRadius: "rounded", glassmorphism: true, blurIntensity: 16 },
-    variants: { hero: "modern", menu: "grid", features: "cards", reviews: "carousel", footer: "centered", reservation: "wizard" },
+    colors: {
+      primary: "#ff00ff",
+      secondary: "#00ffff",
+      accent: "#39ff14"
+    },
+    typography: {
+      headingFont: "Orbitron",
+      bodyFont: "Exo 2",
+      baseFontSize: 16,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 30,
+      borderRadius: "soft",
+      glassmorphism: true,
+      blurIntensity: 24
+    },
+    variants: {
+      hero: "fullscreen",
+      menu: "grid",
+      features: "icons",
+      reviews: "carousel",
+      footer: "minimal",
+      reservation: "modern"
+    },
   },
+
+  // ============================================
+  // 7. NATURE - Spa, Wellness, Orgánico
+  // ============================================
   {
-    id: "nocturno",
-    name: "Nocturno",
-    description: "Elegancia oscura",
-    preview: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #6366f1 100%)",
-    theme: "midnight",
-    skin: "material",
-    colors: { primary: "#818cf8", secondary: "#a78bfa", accent: "#818cf8" },
-    typography: { headingFont: "Space Grotesk", bodyFont: "Inter", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 45, borderRadius: "soft", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "bold", menu: "grid", features: "icons", reviews: "carousel", footer: "minimal", reservation: "modern" },
-  },
-  {
-    id: "fresco",
-    name: "Fresco",
-    description: "Ligero y natural",
-    preview: "linear-gradient(135deg, #ecfdf5 0%, #6ee7b7 50%, #059669 100%)",
+    id: "nature",
+    name: "Nature",
+    description: "Serenidad y bienestar",
+    preview: "linear-gradient(135deg, #f5f5dc 0%, #8fbc8f 50%, #2f4f2f 100%)",
     theme: "spring",
     skin: "soft",
-    colors: { primary: "#059669", secondary: "#34d399", accent: "#10b981" },
-    typography: { headingFont: "Quicksand", bodyFont: "Nunito", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 45, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "classic", menu: "carousel", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
+    colors: {
+      primary: "#2f4f2f",
+      secondary: "#6b8e6b",
+      accent: "#8fbc8f"
+    },
+    typography: {
+      headingFont: "Marcellus",
+      bodyFont: "Lato",
+      baseFontSize: 17,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 30,
+      borderRadius: "rounded",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "minimal",
+      menu: "list",
+      features: "cards",
+      reviews: "minimal",
+      footer: "centered",
+      reservation: "wizard"
+    },
   },
+
+  // ============================================
+  // 8. MAGAZINE - Editorial, Alto contraste
+  // ============================================
   {
-    id: "verano",
-    name: "Verano",
-    description: "Playa y sol",
-    preview: "linear-gradient(135deg, #fef3c7 0%, #38bdf8 50%, #f97316 100%)",
+    id: "magazine",
+    name: "Magazine",
+    description: "Editorial y sofisticado",
+    preview: "linear-gradient(135deg, #ffffff 0%, #1a1a1a 50%, #e63946 100%)",
+    theme: "minimal",
+    skin: "flat",
+    colors: {
+      primary: "#1a1a1a",
+      secondary: "#666666",
+      accent: "#e63946"
+    },
+    typography: {
+      headingFont: "Playfair Display",
+      bodyFont: "Source Serif Pro",
+      baseFontSize: 18,
+      scale: 1.414
+    },
+    effects: {
+      shadowIntensity: 0,
+      borderRadius: "sharp",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "split",
+      menu: "list",
+      features: "banner",
+      reviews: "minimal",
+      footer: "minimal",
+      reservation: "modern"
+    },
+  },
+
+  // ============================================
+  // 9. TROPICAL - Beach bar, Veraniego
+  // ============================================
+  {
+    id: "tropical",
+    name: "Tropical",
+    description: "Alegre y veraniego",
+    preview: "linear-gradient(135deg, #fff5e6 0%, #ff7f50 33%, #40e0d0 66%, #ffd700 100%)",
     theme: "summer",
     skin: "3d",
-    colors: { primary: "#0891b2", secondary: "#f97316", accent: "#f97316" },
-    typography: { headingFont: "Pacifico", bodyFont: "Open Sans", baseFontSize: 16, scale: 1.25 },
-    effects: { shadowIntensity: 50, borderRadius: "pill", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "bold", menu: "carousel", features: "banner", reviews: "carousel", footer: "centered", reservation: "modal" },
+    colors: {
+      primary: "#ff7f50",
+      secondary: "#40e0d0",
+      accent: "#ff6b35"
+    },
+    typography: {
+      headingFont: "Pacifico",
+      bodyFont: "Poppins",
+      baseFontSize: 16,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 60,
+      borderRadius: "pill",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "bold",
+      menu: "carousel",
+      features: "icons",
+      reviews: "carousel",
+      footer: "centered",
+      reservation: "modal"
+    },
   },
+
+  // ============================================
+  // 10. NORDIC - Escandinavo, Minimalismo zen
+  // ============================================
   {
-    id: "navidad",
-    name: "Navidad",
-    description: "Festivo y acogedor",
-    preview: "linear-gradient(135deg, #fef2f2 0%, #dc2626 50%, #16a34a 100%)",
-    theme: "christmas",
-    skin: "neumorphic",
-    colors: { primary: "#dc2626", secondary: "#16a34a", accent: "#dc2626" },
-    typography: { headingFont: "Playfair Display", bodyFont: "Lora", baseFontSize: 17, scale: 1.25 },
-    effects: { shadowIntensity: 55, borderRadius: "rounded", glassmorphism: false, blurIntensity: 16 },
-    variants: { hero: "classic", menu: "tabs", features: "cards", reviews: "grid", footer: "full", reservation: "wizard" },
+    id: "nordic",
+    name: "Nordic",
+    description: "Minimalismo escandinavo",
+    preview: "linear-gradient(135deg, #fafafa 0%, #e8e8e8 50%, #87ceeb 100%)",
+    theme: "minimal",
+    skin: "outline",
+    colors: {
+      primary: "#2c3e50",
+      secondary: "#7f8c8d",
+      accent: "#5dade2"
+    },
+    typography: {
+      headingFont: "Montserrat",
+      bodyFont: "Raleway",
+      baseFontSize: 16,
+      scale: 1.2
+    },
+    effects: {
+      shadowIntensity: 0,
+      borderRadius: "soft",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "split",
+      menu: "grid",
+      features: "icons",
+      reviews: "minimal",
+      footer: "minimal",
+      reservation: "modern"
+    },
+  },
+
+  // ============================================
+  // 11. DARK ELEGANCE - Lujo nocturno (USA FULLSCREEN)
+  // ============================================
+  {
+    id: "dark-elegance",
+    name: "Dark Elegance",
+    description: "Lujo y exclusividad nocturna",
+    preview: "linear-gradient(135deg, #0d0d0d 0%, #c9a227 30%, #1a1a2e 70%, #000000 100%)",
+    theme: "midnight",
+    skin: "glass",
+    colors: {
+      primary: "#c9a227",
+      secondary: "#d4af37",
+      accent: "#c9a227"
+    },
+    typography: {
+      headingFont: "Playfair Display",
+      bodyFont: "Cormorant Garamond",
+      baseFontSize: 18,
+      scale: 1.5
+    },
+    effects: {
+      shadowIntensity: 40,
+      borderRadius: "soft",
+      glassmorphism: true,
+      blurIntensity: 20
+    },
+    variants: {
+      hero: "fullscreen",
+      menu: "list",
+      features: "icons",
+      reviews: "minimal",
+      footer: "centered",
+      reservation: "wizard"
+    },
+  },
+
+  // ============================================
+  // 12. BOLD ENERGY - Gym/Fitness (USA SPLIT)
+  // ============================================
+  {
+    id: "bold-energy",
+    name: "Bold Energy",
+    description: "Potencia y energia",
+    preview: "linear-gradient(135deg, #0a0a0a 0%, #84cc16 40%, #1a1a1a 100%)",
+    theme: "dark",
+    skin: "brutalist",
+    colors: {
+      primary: "#84cc16",
+      secondary: "#a3e635",
+      accent: "#84cc16"
+    },
+    typography: {
+      headingFont: "Oswald",
+      bodyFont: "Inter",
+      baseFontSize: 16,
+      scale: 1.414
+    },
+    effects: {
+      shadowIntensity: 100,
+      borderRadius: "sharp",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "split",
+      menu: "grid",
+      features: "banner",
+      reviews: "grid",
+      footer: "minimal",
+      reservation: "modern"
+    },
+  },
+
+  // ============================================
+  // 13. PURE MINIMAL - Spa zen (USA MINIMAL)
+  // ============================================
+  {
+    id: "pure-minimal",
+    name: "Pure Minimal",
+    description: "Zen y serenidad absoluta",
+    preview: "linear-gradient(135deg, #ffffff 0%, #f5f5f5 50%, #e0e0e0 100%)",
+    theme: "minimal",
+    skin: "outline",
+    colors: {
+      primary: "#1a1a1a",
+      secondary: "#666666",
+      accent: "#1a1a1a"
+    },
+    typography: {
+      headingFont: "Jost",
+      bodyFont: "Jost",
+      baseFontSize: 16,
+      scale: 1.125
+    },
+    effects: {
+      shadowIntensity: 0,
+      borderRadius: "soft",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "minimal",
+      menu: "list",
+      features: "icons",
+      reviews: "minimal",
+      footer: "minimal",
+      reservation: "wizard"
+    },
+  },
+
+  // ============================================
+  // 14. MAGAZINE EDITORIAL - Moda (USA SPLIT)
+  // ============================================
+  {
+    id: "magazine-editorial",
+    name: "Magazine Editorial",
+    description: "Estilo revista de moda",
+    preview: "linear-gradient(135deg, #ffffff 0%, #000000 45%, #e63946 100%)",
+    theme: "minimal",
+    skin: "flat",
+    colors: {
+      primary: "#000000",
+      secondary: "#333333",
+      accent: "#e63946"
+    },
+    typography: {
+      headingFont: "Playfair Display",
+      bodyFont: "Source Serif Pro",
+      baseFontSize: 18,
+      scale: 1.618
+    },
+    effects: {
+      shadowIntensity: 0,
+      borderRadius: "sharp",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "split",
+      menu: "list",
+      features: "banner",
+      reviews: "minimal",
+      footer: "minimal",
+      reservation: "modern"
+    },
+  },
+
+  // ============================================
+  // 15. TROPICAL PARADISE - Beach (USA CLASSIC CON PARALLAX)
+  // ============================================
+  {
+    id: "tropical-paradise",
+    name: "Tropical Paradise",
+    description: "Playa y relax total",
+    preview: "linear-gradient(135deg, #f5deb3 0%, #ff6b6b 25%, #40e0d0 75%, #ffecd2 100%)",
+    theme: "summer",
+    skin: "3d",
+    colors: {
+      primary: "#ff6b6b",
+      secondary: "#40e0d0",
+      accent: "#ff6b6b"
+    },
+    typography: {
+      headingFont: "Pacifico",
+      bodyFont: "Poppins",
+      baseFontSize: 17,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 80,
+      borderRadius: "pill",
+      glassmorphism: false,
+      blurIntensity: 8
+    },
+    variants: {
+      hero: "classic",
+      menu: "carousel",
+      features: "cards",
+      reviews: "carousel",
+      footer: "centered",
+      reservation: "modal"
+    },
   },
 ];
 

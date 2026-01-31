@@ -1,0 +1,386 @@
+---
+/**
+ * HeroSplit - Pantalla dividida 50/50 estilo editorial
+ * Ideal para: Magazine, Corporate, Bold Energy
+ *
+ * Características:
+ * - Mitad izquierda: imagen de fondo
+ * - Mitad derecha: contenido con fondo sólido
+ * - Tipografía muy grande y bold
+ * - Diseño asimétrico y moderno
+ */
+interface Props {
+  title: string;
+  subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string;
+  eyebrow?: string;
+}
+
+const {
+  title,
+  subtitle,
+  ctaText = "Reservar Ahora",
+  ctaLink = "#appointment",
+  backgroundImage,
+  eyebrow,
+} = Astro.props;
+
+// Dividir título en líneas para animación
+const titleWords = title.split(' ');
+---
+
+<section class="hero-split">
+  <!-- Lado izquierdo: Imagen -->
+  <div class="hero-image-side">
+    {backgroundImage && (
+      <img src={backgroundImage} alt="" class="hero-image" loading="eager" />
+    )}
+    <div class="image-overlay"></div>
+
+    <!-- Elemento decorativo -->
+    <div class="deco-line deco-line-1"></div>
+    <div class="deco-line deco-line-2"></div>
+  </div>
+
+  <!-- Lado derecho: Contenido -->
+  <div class="hero-content-side">
+    <div class="hero-content">
+      {eyebrow && (
+        <span class="hero-eyebrow animate-slide-right">{eyebrow}</span>
+      )}
+
+      <h1 class="hero-title">
+        {titleWords.map((word, i) => (
+          <span
+            class="title-line animate-slide-right"
+            style={`animation-delay: ${0.2 + i * 0.15}s`}
+          >
+            {word}
+          </span>
+        ))}
+      </h1>
+
+      <p class="hero-subtitle animate-fade-in">{subtitle}</p>
+
+      <a href={ctaLink} class="hero-cta animate-fade-in animation-delay-600">
+        <span class="cta-text">{ctaText}</span>
+        <span class="cta-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </span>
+      </a>
+    </div>
+
+    <!-- Scroll indicator en el lado del contenido -->
+    <div class="scroll-hint">
+      <span class="scroll-line"></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Lado de imagen */
+  .hero-image-side {
+    position: relative;
+    overflow: hidden;
+    background: var(--shadow-dark);
+  }
+
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1);
+    transition: transform 8s ease-out;
+  }
+
+  .hero-split:hover .hero-image {
+    transform: scale(1);
+  }
+
+  .image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+  }
+
+  /* Líneas decorativas */
+  .deco-line {
+    position: absolute;
+    background: var(--accent);
+    opacity: 0.8;
+  }
+
+  .deco-line-1 {
+    width: 60%;
+    height: 3px;
+    bottom: 20%;
+    right: 0;
+    transform: translateX(50%);
+  }
+
+  .deco-line-2 {
+    width: 3px;
+    height: 40%;
+    top: 10%;
+    right: 20%;
+  }
+
+  /* Lado de contenido */
+  .hero-content-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 4rem;
+    background: var(--neumor-bg);
+    position: relative;
+  }
+
+  .hero-content {
+    max-width: 600px;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2rem;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 40px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .hero-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 2rem;
+  }
+
+  .title-line {
+    display: block;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+
+  /* Alternar colores en líneas del título */
+  .title-line:nth-child(even) {
+    color: var(--accent);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 450px;
+    margin-bottom: 3rem;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 2rem;
+    background: var(--accent);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-cta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--text-primary);
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hero-cta:hover::before {
+    transform: translateX(0);
+  }
+
+  .cta-text,
+  .cta-arrow {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-arrow svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  .hero-cta:hover .cta-arrow svg {
+    transform: translateX(5px);
+  }
+
+  /* Scroll hint */
+  .scroll-hint {
+    position: absolute;
+    bottom: 3rem;
+    left: 4rem;
+  }
+
+  .scroll-line {
+    display: block;
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--text-secondary), transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollLine {
+    0%, 100% {
+      transform: scaleY(1);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scaleY(0.5);
+      opacity: 1;
+    }
+  }
+
+  /* Animations */
+  .animate-slide-right {
+    opacity: 0;
+    transform: translateX(-50px);
+    animation: slideRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes slideRight {
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s ease-out forwards;
+    animation-delay: 0.5s;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 0.8s;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .hero-split {
+      grid-template-columns: 1fr;
+      grid-template-rows: 50vh auto;
+    }
+
+    .hero-image-side {
+      order: 1;
+    }
+
+    .hero-content-side {
+      order: 2;
+      padding: 3rem 2rem;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hero-content {
+      max-width: 100%;
+    }
+
+    .hero-eyebrow::before {
+      display: none;
+    }
+
+    .hero-title {
+      align-items: center;
+    }
+
+    .hero-subtitle {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .deco-line {
+      display: none;
+    }
+
+    .scroll-hint {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero-split {
+      grid-template-rows: 40vh auto;
+    }
+
+    .hero-content-side {
+      padding: 2rem 1.5rem;
+    }
+
+    .title-line {
+      font-size: clamp(2rem, 10vw, 3rem);
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-image {
+      transform: none;
+      transition: none;
+    }
+
+    .animate-slide-right,
+    .animate-fade-in {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .scroll-line {
+      animation: none;
+    }
+  }
+</style>
