@@ -67,8 +67,8 @@ const {
 <section id="plans" class={`section plans-variant-${variant}`}>
   <div class="container">
     <div class="plans-header">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+      <h2 data-content="plansTitle">{title}</h2>
+      <p data-content="plansSubtitle">{subtitle}</p>
     </div>
     {variant === "cards" && (
       <div class="plans-grid">

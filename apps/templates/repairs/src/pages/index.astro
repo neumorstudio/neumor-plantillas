@@ -173,6 +173,13 @@ const customization = websiteData?.config ? {
   logo: websiteData.config.logo,
 } : {};
 const reviewsConfig = websiteData?.config as Record<string, unknown> | undefined;
+const contentConfig = reviewsConfig;
+const getContentText = (key: string) => {
+  const value = contentConfig?.[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
 
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
@@ -313,31 +320,49 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
           case "team":
             return (
               <section data-section-id="team" style={style}>
-                <TeamSection variant={previewSectionVariants.team || sectionCfg?.variant || "grid"} />
+                <TeamSection
+                  title={getContentText("teamTitle")}
+                  subtitle={getContentText("teamSubtitle")}
+                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                />
               </section>
             );
           case "gallery":
             return (
               <section data-section-id="gallery" style={style}>
-                <GallerySection variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"} />
+                <GallerySection
+                  title={getContentText("galleryTitle")}
+                  subtitle={getContentText("gallerySubtitle")}
+                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                />
               </section>
             );
           case "faq":
             return (
               <section data-section-id="faq" style={style}>
-                <FAQSection variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"} />
+                <FAQSection
+                  title={getContentText("faqTitle")}
+                  subtitle={getContentText("faqSubtitle")}
+                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                />
               </section>
             );
           case "plans":
             return (
               <section data-section-id="plans" style={style}>
-                <PlansSection variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"} />
+                <PlansSection
+                  title={getContentText("plansTitle")}
+                  subtitle={getContentText("plansSubtitle")}
+                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                />
               </section>
             );
           case "contact":
             return (
               <section data-section-id="contact" style={style}>
                 <ContactForm
+                  title={getContentText("contactTitle")}
+                  subtitle={getContentText("contactSubtitle")}
                   webhookUrl={config.webhookUrl}
                   websiteId={currentWebsiteId}
                   variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}

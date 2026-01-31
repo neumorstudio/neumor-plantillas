@@ -26,8 +26,8 @@ const {
 <section id="gallery" class={`section gallery-variant-${variant}`}>
   <div class="container">
     <div class="gallery-header">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+      <h2 data-content="galleryTitle">{title}</h2>
+      <p data-content="gallerySubtitle">{subtitle}</p>
     </div>
     <div class="gallery-grid">
       {images.map((image, index) => (

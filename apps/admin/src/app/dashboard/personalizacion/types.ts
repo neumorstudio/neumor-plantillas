@@ -65,6 +65,18 @@ export interface ContentConfig {
   // Seccion Reviews/Testimonios
   reviewsTitle?: string;
   reviewsSubtitle?: string;
+
+  // Secciones genericas
+  teamTitle?: string;
+  teamSubtitle?: string;
+  galleryTitle?: string;
+  gallerySubtitle?: string;
+  faqTitle?: string;
+  faqSubtitle?: string;
+  plansTitle?: string;
+  plansSubtitle?: string;
+  contactTitle?: string;
+  contactSubtitle?: string;
 }
 
 export interface FeatureItemConfig {

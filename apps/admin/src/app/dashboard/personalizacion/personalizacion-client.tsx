@@ -119,6 +119,17 @@ export function PersonalizacionClient({
     // Seccion Reviews
     reviewsTitle: (initialConfig as Record<string, unknown>).reviewsTitle as string || "",
     reviewsSubtitle: (initialConfig as Record<string, unknown>).reviewsSubtitle as string || "",
+    // Secciones genericas
+    teamTitle: (initialConfig as Record<string, unknown>).teamTitle as string || "",
+    teamSubtitle: (initialConfig as Record<string, unknown>).teamSubtitle as string || "",
+    galleryTitle: (initialConfig as Record<string, unknown>).galleryTitle as string || "",
+    gallerySubtitle: (initialConfig as Record<string, unknown>).gallerySubtitle as string || "",
+    faqTitle: (initialConfig as Record<string, unknown>).faqTitle as string || "",
+    faqSubtitle: (initialConfig as Record<string, unknown>).faqSubtitle as string || "",
+    plansTitle: (initialConfig as Record<string, unknown>).plansTitle as string || "",
+    plansSubtitle: (initialConfig as Record<string, unknown>).plansSubtitle as string || "",
+    contactTitle: (initialConfig as Record<string, unknown>).contactTitle as string || "",
+    contactSubtitle: (initialConfig as Record<string, unknown>).contactSubtitle as string || "",
   });
 
   const defaultFeatureItems: FeatureItemConfig[] = [
@@ -502,6 +513,16 @@ export function PersonalizacionClient({
         },
         reviewsTitle: (initialConfig as Record<string, unknown>).reviewsTitle as string || "",
         reviewsSubtitle: (initialConfig as Record<string, unknown>).reviewsSubtitle as string || "",
+        teamTitle: (initialConfig as Record<string, unknown>).teamTitle as string || "",
+        teamSubtitle: (initialConfig as Record<string, unknown>).teamSubtitle as string || "",
+        galleryTitle: (initialConfig as Record<string, unknown>).galleryTitle as string || "",
+        gallerySubtitle: (initialConfig as Record<string, unknown>).gallerySubtitle as string || "",
+        faqTitle: (initialConfig as Record<string, unknown>).faqTitle as string || "",
+        faqSubtitle: (initialConfig as Record<string, unknown>).faqSubtitle as string || "",
+        plansTitle: (initialConfig as Record<string, unknown>).plansTitle as string || "",
+        plansSubtitle: (initialConfig as Record<string, unknown>).plansSubtitle as string || "",
+        contactTitle: (initialConfig as Record<string, unknown>).contactTitle as string || "",
+        contactSubtitle: (initialConfig as Record<string, unknown>).contactSubtitle as string || "",
       });
       setFeatures({
         title: initialConfig.features?.title || "Nuestros Servicios",
@@ -632,6 +653,7 @@ export function PersonalizacionClient({
             features={features}
             businessType={businessType}
             isMobile={isMobile}
+            sections={sectionsConfig.sections}
             onContentChange={handleContentChange}
             onFeaturesTitleChange={handleFeaturesTitleChange}
             onFeatureItemChange={handleFeatureItemChange}

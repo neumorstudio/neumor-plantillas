@@ -497,6 +497,18 @@ export interface WebsiteConfig {
   reviewsTitle?: string;
   reviewsSubtitle?: string;
 
+  // === CONTENIDO SECCIONES GENERICAS ===
+  teamTitle?: string;
+  teamSubtitle?: string;
+  galleryTitle?: string;
+  gallerySubtitle?: string;
+  faqTitle?: string;
+  faqSubtitle?: string;
+  plansTitle?: string;
+  plansSubtitle?: string;
+  contactTitle?: string;
+  contactSubtitle?: string;
+
   // === VARIANTES DE COMPONENTES ===
   variants?: WebsiteVariants;
 

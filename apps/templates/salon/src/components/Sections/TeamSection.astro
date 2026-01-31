@@ -42,8 +42,8 @@ const {
 <section id="team" class={`section team-variant-${variant}`}>
   <div class="container">
     <div class="team-header">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+      <h2 data-content="teamTitle">{title}</h2>
+      <p data-content="teamSubtitle">{subtitle}</p>
     </div>
     <div class="team-grid">
       {members.map((member) => (

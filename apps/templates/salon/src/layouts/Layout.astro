@@ -504,6 +504,57 @@ const defaultFonts = !fontImports
               });
             }
 
+            if (content.teamTitle) {
+              document.querySelectorAll('[data-content="teamTitle"]').forEach(function(el) {
+                el.textContent = content.teamTitle;
+              });
+            }
+            if (content.teamSubtitle) {
+              document.querySelectorAll('[data-content="teamSubtitle"]').forEach(function(el) {
+                el.textContent = content.teamSubtitle;
+              });
+            }
+            if (content.galleryTitle) {
+              document.querySelectorAll('[data-content="galleryTitle"]').forEach(function(el) {
+                el.textContent = content.galleryTitle;
+              });
+            }
+            if (content.gallerySubtitle) {
+              document.querySelectorAll('[data-content="gallerySubtitle"]').forEach(function(el) {
+                el.textContent = content.gallerySubtitle;
+              });
+            }
+            if (content.faqTitle) {
+              document.querySelectorAll('[data-content="faqTitle"]').forEach(function(el) {
+                el.textContent = content.faqTitle;
+              });
+            }
+            if (content.faqSubtitle) {
+              document.querySelectorAll('[data-content="faqSubtitle"]').forEach(function(el) {
+                el.textContent = content.faqSubtitle;
+              });
+            }
+            if (content.plansTitle) {
+              document.querySelectorAll('[data-content="plansTitle"]').forEach(function(el) {
+                el.textContent = content.plansTitle;
+              });
+            }
+            if (content.plansSubtitle) {
+              document.querySelectorAll('[data-content="plansSubtitle"]').forEach(function(el) {
+                el.textContent = content.plansSubtitle;
+              });
+            }
+            if (content.contactTitle) {
+              document.querySelectorAll('[data-content="contactTitle"]').forEach(function(el) {
+                el.textContent = content.contactTitle;
+              });
+            }
+            if (content.contactSubtitle) {
+              document.querySelectorAll('[data-content="contactSubtitle"]').forEach(function(el) {
+                el.textContent = content.contactSubtitle;
+              });
+            }
+
             // Redes sociales - actualizar enlaces
             if (content.socialLinks) {
               Object.keys(content.socialLinks).forEach(function(network) {

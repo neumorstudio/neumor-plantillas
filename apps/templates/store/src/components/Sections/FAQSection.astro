@@ -41,8 +41,8 @@ const {
 <section id="faq" class={`section faq-variant-${variant}`}>
   <div class="container">
     <div class="faq-header">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
+      <h2 data-content="faqTitle">{title}</h2>
+      <p data-content="faqSubtitle">{subtitle}</p>
     </div>
     {variant === "accordion" && (
       <div class="faq-list">

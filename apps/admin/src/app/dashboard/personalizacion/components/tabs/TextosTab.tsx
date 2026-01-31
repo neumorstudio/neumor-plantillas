@@ -3,7 +3,7 @@
  * Todos los textos editables de la plantilla en un solo lugar.
  */
 
-import type { BusinessType } from "@neumorstudio/supabase";
+import type { BusinessType, SectionConfig, SectionId } from "@neumorstudio/supabase";
 import { CollapsibleSection } from "@/components/ui";
 import { FEATURE_ICONS } from "@/lib/personalizacion";
 import type { ContentConfig, FeaturesConfig, FeatureItemConfig } from "../../types";
@@ -13,6 +13,7 @@ interface TextosTabProps {
   features: FeaturesConfig;
   businessType: BusinessType;
   isMobile: boolean;
+  sections: SectionConfig[];
   onContentChange: (key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => void;
   onFeaturesTitleChange: (key: "title" | "subtitle", value: string) => void;
   onFeatureItemChange: (id: string, key: keyof FeatureItemConfig, value: string) => void;
@@ -25,12 +26,25 @@ export function TextosTab({
   features,
   businessType,
   isMobile,
+  sections,
   onContentChange,
   onFeaturesTitleChange,
   onFeatureItemChange,
   onAddFeatureItem,
   onRemoveFeatureItem,
 }: TextosTabProps) {
+  const sectionsMap = new Map(sections.map((section) => [section.id, section]));
+  const isSectionEnabled = (id: SectionId) => sectionsMap.get(id)?.enabled ?? false;
+  const showServicesBlock = businessType === "salon" || businessType === "clinic"
+    ? isSectionEnabled("services") || isSectionEnabled("features")
+    : isSectionEnabled("features");
+  const showTestimonials = isSectionEnabled("testimonials");
+  const showTeam = isSectionEnabled("team");
+  const showGallery = isSectionEnabled("gallery");
+  const showFaq = isSectionEnabled("faq");
+  const showPlans = isSectionEnabled("plans");
+  const showContactSection = isSectionEnabled("contact");
+
   return (
     <div className="space-y-6">
       {/* Informacion del Negocio */}
@@ -88,7 +102,7 @@ export function TextosTab({
       </CollapsibleSection>
 
       {/* Seccion Servicios/Caracteristicas */}
-      {businessType === "salon" || businessType === "clinic" ? (
+      {showServicesBlock && (businessType === "salon" || businessType === "clinic" ? (
         <CollapsibleSection title="Seccion Servicios" defaultOpen={false}>
           <div className="neumor-inset p-4 rounded-xl text-center">
             <svg className="w-8 h-8 mx-auto mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -194,34 +208,160 @@ export function TextosTab({
             ))}
           </div>
         </CollapsibleSection>
-      )}
+      ))}
 
       {/* Seccion Reviews/Testimonios */}
-      <CollapsibleSection title="Seccion Opiniones" defaultOpen={false}>
-        <div>
-          <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
-          <input
-            type="text"
-            value={content.reviewsTitle || ""}
-            onChange={(e) => onContentChange("reviewsTitle", e.target.value)}
-            placeholder="Lo Que Dicen De Nosotros"
-            className="neumor-input w-full h-12"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2">Subtitulo</label>
-          <input
-            type="text"
-            value={content.reviewsSubtitle || ""}
-            onChange={(e) => onContentChange("reviewsSubtitle", e.target.value)}
-            placeholder="Opiniones reales de nuestros clientes"
-            className="neumor-input w-full h-12"
-          />
-        </div>
-      </CollapsibleSection>
+      {showTestimonials && (
+        <CollapsibleSection title="Seccion Opiniones" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.reviewsTitle || ""}
+              onChange={(e) => onContentChange("reviewsTitle", e.target.value)}
+              placeholder="Lo Que Dicen De Nosotros"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.reviewsSubtitle || ""}
+              onChange={(e) => onContentChange("reviewsSubtitle", e.target.value)}
+              placeholder="Opiniones reales de nuestros clientes"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {showTeam && (
+        <CollapsibleSection title="Seccion Equipo" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.teamTitle || ""}
+              onChange={(e) => onContentChange("teamTitle", e.target.value)}
+              placeholder="Nuestro Equipo"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.teamSubtitle || ""}
+              onChange={(e) => onContentChange("teamSubtitle", e.target.value)}
+              placeholder="Profesionales dedicados a tu bienestar"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {showGallery && (
+        <CollapsibleSection title="Seccion Galeria" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.galleryTitle || ""}
+              onChange={(e) => onContentChange("galleryTitle", e.target.value)}
+              placeholder="Nuestra Galeria"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.gallerySubtitle || ""}
+              onChange={(e) => onContentChange("gallerySubtitle", e.target.value)}
+              placeholder="Descubre nuestro trabajo"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {showFaq && (
+        <CollapsibleSection title="Seccion Preguntas Frecuentes" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.faqTitle || ""}
+              onChange={(e) => onContentChange("faqTitle", e.target.value)}
+              placeholder="Preguntas Frecuentes"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.faqSubtitle || ""}
+              onChange={(e) => onContentChange("faqSubtitle", e.target.value)}
+              placeholder="Resolvemos tus dudas"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {showPlans && (
+        <CollapsibleSection title="Seccion Planes" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.plansTitle || ""}
+              onChange={(e) => onContentChange("plansTitle", e.target.value)}
+              placeholder="Nuestros Planes"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.plansSubtitle || ""}
+              onChange={(e) => onContentChange("plansSubtitle", e.target.value)}
+              placeholder="Elige el plan que mejor se adapte a ti"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Contacto */}
       <CollapsibleSection title="Contacto" defaultOpen={false}>
+        {showContactSection && (
+          <>
+            <div>
+              <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+              <input
+                type="text"
+                value={content.contactTitle || ""}
+                onChange={(e) => onContentChange("contactTitle", e.target.value)}
+                placeholder="Contacto"
+                className="neumor-input w-full h-12"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Subtitulo</label>
+              <input
+                type="text"
+                value={content.contactSubtitle || ""}
+                onChange={(e) => onContentChange("contactSubtitle", e.target.value)}
+                placeholder="Estamos aqui para ayudarte"
+                className="neumor-input w-full h-12"
+              />
+            </div>
+          </>
+        )}
         <div>
           <label className="block text-sm font-medium mb-2">Direccion</label>
           <input
