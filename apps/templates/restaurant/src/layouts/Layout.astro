@@ -1,18 +1,19 @@
 ---
 import "../styles/global.css";
 import "../styles/neuglass.css";
+import "../styles/skins.css";
 import { compileCustomization, applyPreviewParams, type WebsiteCustomization } from "@lib/tokens";
 
 interface Props {
   title: string;
   description?: string;
-  theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
+  theme?: "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark" | "christmas" | "summer" | "autumn" | "spring" | "ocean" | "sunset" | "forest" | "midnight" | "rose" | "lavender" | "coral" | "minimal" | "wellness" | "vintage";
   customization?: WebsiteCustomization;
 }
 
 const {
   title,
-  description = "Restaurante con estilo neumorfico",
+  description = "Salon de belleza con estilo neumorfico",
   theme = "light",
   customization = {},
 } = Astro.props;
@@ -31,9 +32,6 @@ const themeClass = theme === "light" ? "" : `theme-${theme}`;
 const defaultFonts = !fontImports
   ? "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
   : fontImports;
-
-// Logo para branding
-const logo = finalCustomization.branding?.logo || finalCustomization.logo;
 ---
 
 <!doctype html>
@@ -43,6 +41,11 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- Critical CSS - Colores personalizados con maxima prioridad para evitar FOUC -->
+    {inlineColorStyles && (
+      <style set:html={`html{${inlineColorStyles}}`}></style>
+    )}
 
     <!-- Favicon -->
     {favicon ? (
@@ -67,7 +70,6 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
     )}
 
     <style is:global>
-      /* Fuentes del restaurante - valores por defecto */
       :root {
         --font-heading: "Playfair Display", serif;
         --font-body: "Inter", system-ui, sans-serif;
@@ -77,21 +79,12 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
         font-family: var(--font-body);
       }
 
-      h1,
-      h2,
-      h3 {
+      h1, h2, h3 {
         font-family: var(--font-heading);
       }
 
-      /* Aplicar border radius personalizado */
-      .neumor-card,
-      .neumor-btn,
-      .neumor-input {
+      .neumor-card, .neumor-btn, .neumor-input {
         border-radius: var(--radius-base, 1rem);
-      }
-
-      .neumor-card-sm {
-        border-radius: var(--radius-sm, 0.5rem);
       }
     </style>
   </head>
@@ -135,8 +128,46 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
           if (!event.data || event.data.source !== 'neumorstudio-admin') return;
           if (event.data.type !== 'update-styles') return;
 
-          const { colors, typography, effects, branding } = event.data.payload;
+          console.log('[Preview] Received postMessage:', event.data.type);
+          console.log('[Preview] Theme value:', event.data.payload.theme);
+
+          const { theme, skin, colors, typography, effects, branding } = event.data.payload;
           const root = document.documentElement;
+
+          // Aplicar tema (cambiar clase en html)
+          if (theme) {
+            console.log('[Preview] Applying theme:', theme, 'Current classes:', root.className);
+            // Lista completa de todos los temas disponibles
+            var allThemes = [
+              'dark', 'colorful', 'rustic', 'elegant', 'neuglass', 'neuglass-dark',
+              'christmas', 'summer', 'autumn', 'spring',
+              'ocean', 'sunset', 'forest', 'midnight', 'rose', 'lavender', 'coral', 'minimal',
+              'wellness', 'vintage'
+            ];
+            // Remover todas las clases de tema existentes
+            allThemes.forEach(function(t) {
+              root.classList.remove('theme-' + t);
+            });
+            // Añadir la nueva clase de tema (light no tiene clase)
+            if (theme !== 'light') {
+              root.classList.add('theme-' + theme);
+            }
+            console.log('[Preview] New classes:', root.className);
+          }
+
+          // Aplicar skin (estilo visual de componentes)
+          if (skin !== undefined) {
+            console.log('[Preview] Applying skin:', skin);
+            var allSkins = ['flat', 'glass', 'material', 'brutalist', 'soft', '3d', 'outline'];
+            // Remover todas las clases de skin existentes
+            allSkins.forEach(function(s) {
+              root.classList.remove('skin-' + s);
+            });
+            // Añadir la nueva clase de skin (neumorphic/default no tiene clase)
+            if (skin && skin !== 'neumorphic') {
+              root.classList.add('skin-' + skin);
+            }
+          }
 
           // Aplicar colores
           if (colors) {
@@ -147,6 +178,8 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
               root.style.setProperty('--color-secondary', colors.secondary);
             }
             if (colors.accent) {
+              // IMPORTANTE: Actualizar --accent que es la variable que usa el CSS
+              root.style.setProperty('--accent', colors.accent);
               root.style.setProperty('--color-accent', colors.accent);
               root.style.setProperty('--accent-hover', adjustLuminosity(colors.accent, -10));
               root.style.setProperty('--accent-light', hexToRgba(colors.accent, 0.1));
@@ -194,13 +227,38 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
           }
 
           // Aplicar branding
-          if (branding && branding.logoSize) {
-            const sizeMap = { sm: '2rem', md: '3rem', lg: '4rem' };
-            root.style.setProperty('--logo-size', sizeMap[branding.logoSize] || '3rem');
+          if (branding) {
+            if (branding.logoSize) {
+              const sizeMap = { sm: '2rem', md: '3rem', lg: '4rem' };
+              root.style.setProperty('--logo-size', sizeMap[branding.logoSize] || '3rem');
+              root.style.setProperty('--logo-height', sizeMap[branding.logoSize] || '3rem');
+            }
+            // Actualizar logo en tiempo real
+            if (branding.logo) {
+              const logoImages = document.querySelectorAll('.logo-img, .nav-logo img, .navbar-logo img, [data-logo]');
+              logoImages.forEach(function(img) {
+                if (img.tagName === 'IMG') {
+                  img.src = branding.logo;
+                }
+              });
+              // Marcar que hay logo disponible
+              const logoContainers = document.querySelectorAll('.logo, [data-logo-display]');
+              logoContainers.forEach(function(el) {
+                el.setAttribute('data-has-logo', 'true');
+              });
+            }
+            // Actualizar modo de visualizacion (logo vs nombre)
+            if (branding.logoDisplay) {
+              const logoContainers = document.querySelectorAll('.logo, [data-logo-display]');
+              logoContainers.forEach(function(el) {
+                el.setAttribute('data-logo-display', branding.logoDisplay);
+              });
+            }
           }
 
           // Aplicar contenido de texto
           const { content } = event.data.payload;
+          console.log('[Preview] Content received:', content ? 'yes' : 'no', 'heroImage:', content?.heroImage);
           if (content) {
             if (content.heroTitle) {
               const el = document.querySelector('.hero-title');
@@ -209,6 +267,56 @@ const logo = finalCustomization.branding?.logo || finalCustomization.logo;
             if (content.heroSubtitle) {
               const el = document.querySelector('.hero-subtitle');
               if (el) el.textContent = content.heroSubtitle;
+            }
+            // Siempre intentar actualizar heroImage si existe en el contenido
+            if (content.heroImage) {
+              console.log('[Preview] Attempting to update hero image to:', content.heroImage);
+              var imageUpdated = false;
+
+              // 1. Buscar .hero-image (HeroClassic, HeroBold)
+              var heroImg = document.querySelector('.hero-image');
+              if (heroImg && heroImg.tagName === 'IMG') {
+                console.log('[Preview] Updating .hero-image');
+                heroImg.src = content.heroImage;
+                imageUpdated = true;
+              }
+
+              // 2. Buscar .hero-bg-image (HeroModern - imagen fullscreen)
+              var heroBgImg = document.querySelector('.hero-bg-image');
+              if (heroBgImg && heroBgImg.tagName === 'IMG') {
+                console.log('[Preview] Updating .hero-bg-image (HeroModern)');
+                heroBgImg.src = content.heroImage;
+                imageUpdated = true;
+              }
+
+              // 3. Buscar elementos con data-hero-image
+              var dataHeroImg = document.querySelector('[data-hero-image]');
+              if (dataHeroImg && dataHeroImg.tagName === 'IMG') {
+                console.log('[Preview] Updating [data-hero-image]');
+                dataHeroImg.src = content.heroImage;
+                imageUpdated = true;
+              }
+
+              // 4. Buscar background-image CSS (fallback)
+              var heroSection = document.querySelector('[data-hero-bg]');
+              if (heroSection) {
+                console.log('[Preview] Updating hero section background');
+                heroSection.style.backgroundImage = 'url(' + content.heroImage + ')';
+                imageUpdated = true;
+              }
+
+              if (!imageUpdated) {
+                console.log('[Preview] WARNING: No hero image element found. Looking for any img in hero...');
+                // Fallback: buscar cualquier img dentro de un section.hero*
+                var heroSection = document.querySelector('section[class*="hero"]');
+                if (heroSection) {
+                  var anyImg = heroSection.querySelector('img');
+                  if (anyImg) {
+                    console.log('[Preview] Found fallback img in hero section');
+                    anyImg.src = content.heroImage;
+                  }
+                }
+              }
             }
             if (content.address) {
               document.querySelectorAll('[data-content="address"], .footer-address, .contact-address').forEach(function(el) {

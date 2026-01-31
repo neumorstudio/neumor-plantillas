@@ -42,6 +42,11 @@ const defaultFonts = !fontImports
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
 
+    <!-- Critical CSS - Colores personalizados con maxima prioridad para evitar FOUC -->
+    {inlineColorStyles && (
+      <style set:html={`html{${inlineColorStyles}}`}></style>
+    )}
+
     <!-- Favicon -->
     {favicon ? (
       <link rel="icon" type="image/png" href={favicon} />
