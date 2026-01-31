@@ -20,8 +20,6 @@ export interface TemplatePreset {
   colors: ColorsConfig;
   typography: TypographyConfig;
   effects: EffectsConfig;
-  /** Variación visual de un preset base (para agrupar y evitar duplicados en UI) */
-  variantOf?: string;
   variants: {
     hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
     menu: "tabs" | "grid" | "list" | "carousel";
@@ -420,11 +418,10 @@ export const templatePresets: TemplatePreset[] = [
   {
     id: "dark-elegance",
     name: "Dark Elegance",
-    description: "Variante nocturna de Luxury",
+    description: "Lujo y exclusividad nocturna",
     preview: "linear-gradient(135deg, #0d0d0d 0%, #c9a227 30%, #1a1a2e 70%, #000000 100%)",
     theme: "midnight",
     skin: "glass",
-    variantOf: "luxury",
     colors: {
       primary: "#c9a227",
       secondary: "#d4af37",
@@ -529,83 +526,6 @@ export const templatePresets: TemplatePreset[] = [
     },
   },
 
-  // ============================================
-  // 14. MAGAZINE EDITORIAL - Moda (USA SPLIT)
-  // ============================================
-  {
-    id: "magazine-editorial",
-    name: "Magazine Editorial",
-    description: "Variante de Magazine con contraste editorial",
-    preview: "linear-gradient(135deg, #ffffff 0%, #000000 45%, #e63946 100%)",
-    theme: "minimal",
-    skin: "flat",
-    variantOf: "magazine",
-    colors: {
-      primary: "#000000",
-      secondary: "#333333",
-      accent: "#e63946"
-    },
-    typography: {
-      headingFont: "Playfair Display",
-      bodyFont: "Source Serif Pro",
-      baseFontSize: 18,
-      scale: 1.618
-    },
-    effects: {
-      shadowIntensity: 0,
-      borderRadius: "sharp",
-      glassmorphism: false,
-      blurIntensity: 8
-    },
-    variants: {
-      hero: "split",
-      menu: "list",
-      services: "list",
-      features: "banner",
-      reviews: "minimal",
-      footer: "minimal",
-      reservation: "modern"
-    },
-  },
-
-  // ============================================
-  // 15. TROPICAL PARADISE - Beach (USA CLASSIC CON PARALLAX)
-  // ============================================
-  {
-    id: "tropical-paradise",
-    name: "Tropical Paradise",
-    description: "Variante suave de Tropical",
-    preview: "linear-gradient(135deg, #f5deb3 0%, #ff6b6b 25%, #40e0d0 75%, #ffecd2 100%)",
-    theme: "summer",
-    skin: "3d",
-    variantOf: "tropical",
-    colors: {
-      primary: "#ff6b6b",
-      secondary: "#40e0d0",
-      accent: "#ff6b6b"
-    },
-    typography: {
-      headingFont: "Pacifico",
-      bodyFont: "Poppins",
-      baseFontSize: 17,
-      scale: 1.25
-    },
-    effects: {
-      shadowIntensity: 80,
-      borderRadius: "pill",
-      glassmorphism: false,
-      blurIntensity: 8
-    },
-    variants: {
-      hero: "classic",
-      menu: "carousel",
-      services: "carousel",
-      features: "cards",
-      reviews: "carousel",
-      footer: "centered",
-      reservation: "modal"
-    },
-  },
 ];
 
 // Helper to get preset by id
