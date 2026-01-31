@@ -22,7 +22,11 @@ import { createPortalClient } from "../../lib/supabase-portal";
 
 // Get tenant from middleware
 const tenant = Astro.locals.tenant as TenantData;
-const config = tenant.config as Record<string, unknown>;
+const rawConfig = tenant.config as Record<string, unknown>;
+const nestedContent = rawConfig && typeof rawConfig === "object" && rawConfig.content && typeof rawConfig.content === "object"
+  ? (rawConfig.content as Record<string, unknown>)
+  : undefined;
+const config = (nestedContent ? { ...rawConfig, ...nestedContent } : rawConfig) as Record<string, unknown>;
 
 // Preview mode: permite probar variantes via URL params
 // Ejemplo: ?preview=1&v_hero=modern&v_services=grid&theme=dark
@@ -221,6 +225,18 @@ const customization = {
   logo: config.logo as string | undefined,
 };
 
+const getContentText = (key: string) => {
+  const value = config?.[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const getContentArray = (key: string) => {
+  const value = config?.[key];
+  return Array.isArray(value) && value.length > 0 ? value : undefined;
+};
+
 // === DEBUG LOGS ===
 console.log('[unified/salon.astro] ========== UNIFIED SALON ==========');
 console.log('[unified/salon.astro] tenant.id:', tenant.id);
@@ -349,8 +365,8 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
             return (
               <section data-section-id="testimonials" style={style}>
                 <Testimonials
-                  title={config.reviewsTitle as string | undefined}
-                  subtitle={config.reviewsSubtitle as string | undefined}
+                  title={getContentText("reviewsTitle")}
+                  subtitle={getContentText("reviewsSubtitle")}
                   googleRating={config.googleRating as number | undefined}
                   totalReviews={config.totalReviews as number | undefined}
                 />
@@ -359,31 +375,50 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
           case "team":
             return (
               <section data-section-id="team" style={style}>
-                <TeamSection variant={previewSectionVariants.team || sectionCfg?.variant || "grid"} />
+                <TeamSection
+                  title={getContentText("teamTitle")}
+                  subtitle={getContentText("teamSubtitle")}
+                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                />
               </section>
             );
           case "gallery":
             return (
               <section data-section-id="gallery" style={style}>
-                <GallerySection variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"} />
+                <GallerySection
+                  title={getContentText("galleryTitle")}
+                  subtitle={getContentText("gallerySubtitle")}
+                  images={getContentArray("galleryImages")}
+                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                />
               </section>
             );
           case "faq":
             return (
               <section data-section-id="faq" style={style}>
-                <FAQSection variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"} />
+                <FAQSection
+                  title={getContentText("faqTitle")}
+                  subtitle={getContentText("faqSubtitle")}
+                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                />
               </section>
             );
           case "plans":
             return (
               <section data-section-id="plans" style={style}>
-                <PlansSection variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"} />
+                <PlansSection
+                  title={getContentText("plansTitle")}
+                  subtitle={getContentText("plansSubtitle")}
+                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                />
               </section>
             );
           case "contact":
             return (
               <section data-section-id="contact" style={style}>
                 <ContactSection
+                  title={getContentText("contactTitle")}
+                  subtitle={getContentText("contactSubtitle")}
                   address={config.address as string | undefined}
                   phone={config.phone as string | undefined}
                   email={config.email as string | undefined}
