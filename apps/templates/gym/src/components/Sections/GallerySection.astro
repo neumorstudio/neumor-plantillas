@@ -117,11 +117,12 @@ const {
 
   .gallery-variant-carousel .gallery-grid {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     padding-bottom: 0.25rem;
+    padding-inline: 0.25rem;
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
@@ -131,11 +132,13 @@ const {
   }
 
   .gallery-variant-carousel .gallery-item {
-    min-width: 220px;
-    max-width: 260px;
+    min-width: clamp(160px, 32vw, 210px);
+    max-width: 220px;
+    height: clamp(110px, 20vw, 150px);
     flex: 0 0 auto;
     scroll-snap-align: start;
-    aspect-ratio: 4/3;
+    aspect-ratio: auto;
+    border-radius: 0.75rem;
   }
 
   .gallery-variant-carousel .gallery-item img {
