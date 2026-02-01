@@ -764,9 +764,8 @@ const defaultFonts = !fontImports
 
             if (Array.isArray(content.faqItems) && content.faqItems.length > 0) {
               const faqSection = document.querySelector('[data-section-id="faq"]');
-              const faqInner = faqSection ? faqSection.querySelector('#faq') : null;
-              if (faqInner) {
-                const variantClass = Array.from(faqInner.classList).find(function(cls) {
+              if (faqSection) {
+                const variantClass = Array.from(faqSection.classList).find(function(cls) {
                   return cls.indexOf('faq-variant-') === 0;
                 });
                 const variant = variantClass ? variantClass.replace('faq-variant-', '') : 'accordion';
@@ -781,47 +780,6 @@ const defaultFonts = !fontImports
                       </div>
                     `;
                   }
-                  if (variant === 'simple') {
-                    return `
-                      <div class="faq-simple-item">
-                        <h3>${title}</h3>
-                        <p>${text}</p>
-                      </div>
-                    `;
-                  }
-                  return `
-                    <details class="faq-item neumor-card">
-                      <summary class="faq-question">
-                        <span>${title}</span>
-                        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </summary>
-                      <div class="faq-answer">
-                        <p>${text}</p>
-                      </div>
-                    </details>
-                  `;
-                }).join('');
-
-                if (variant === 'cards') {
-                  const cards = faqInner.querySelector('.faq-cards');
-                  if (cards) {
-                    cards.innerHTML = itemsHtml;
-                  }
-                } else if (variant === 'simple') {
-                  const simple = faqInner.querySelector('.faq-simple');
-                  if (simple) {
-                    simple.innerHTML = itemsHtml;
-                  }
-                } else {
-                  const list = faqInner.querySelector('.faq-list');
-                  if (list) {
-                    list.innerHTML = itemsHtml;
-                  }
-                }
-              }
-            }
                   if (variant === 'simple') {
                     return `
                       <div class="faq-simple-item">
