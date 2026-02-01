@@ -24,7 +24,7 @@ const hasLogos = loopLogos.length > 0;
       <div class="brands-marquee" aria-label="Carrusel de marcas">
         <div class="brands-track" style={`--brands-count: ${loopLogos.length};`}>
           {loopLogos.map((logo, index) => (
-            <div class="brand-item neumor-card" data-brand-logo={index % safeLogos.length}>
+            <div class="brand-item" data-brand-logo={index % safeLogos.length}>
               <img src={logo} alt={`Logo ${index % safeLogos.length + 1}`} loading="lazy" />
             </div>
           ))}
