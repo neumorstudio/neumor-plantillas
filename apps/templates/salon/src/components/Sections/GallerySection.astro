@@ -68,7 +68,14 @@ const {
           const prevBtn = section.querySelector("[data-gallery-prev]");
           const nextBtn = section.querySelector("[data-gallery-next]");
           if (root && track && prevBtn && nextBtn) {
-            const scrollByAmount = () => Math.max(240, track.clientWidth * 0.8);
+            const getStep = () => {
+              const firstItem = track.querySelector(".gallery-item");
+              if (!firstItem) return Math.max(240, track.clientWidth * 0.8);
+              const trackStyles = window.getComputedStyle(track);
+              const itemWidth = firstItem.getBoundingClientRect().width;
+              const gap = parseFloat(trackStyles.columnGap || trackStyles.gap || "0") || 0;
+              return itemWidth + gap;
+            };
             const updateNav = () => {
               const max = track.scrollWidth - track.clientWidth;
               prevBtn.disabled = track.scrollLeft <= 0;
@@ -80,10 +87,10 @@ const {
               track.scrollTo({ left: next, behavior: "smooth" });
             };
             prevBtn.addEventListener("click", () => {
-              scrollToPos(-scrollByAmount());
+              scrollToPos(-getStep());
             });
             nextBtn.addEventListener("click", () => {
-              scrollToPos(scrollByAmount());
+              scrollToPos(getStep());
             });
             track.addEventListener("scroll", updateNav);
             window.addEventListener("resize", updateNav);
