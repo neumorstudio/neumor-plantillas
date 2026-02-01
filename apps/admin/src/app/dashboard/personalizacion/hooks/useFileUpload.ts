@@ -32,12 +32,38 @@ export function useFileUpload({
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const maxGalleryImages = 6;
 
+  const checkPwaLogoCompatibility = useCallback((file: File) => {
+    return new Promise<boolean | null>((resolve) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        URL.revokeObjectURL(objectUrl);
+        if (!width || !height) {
+          resolve(null);
+          return;
+        }
+        const ratioDiff = Math.abs(width - height) / Math.max(width, height);
+        const isSquare = ratioDiff <= 0.1;
+        const minSizeOk = Math.min(width, height) >= 192;
+        resolve(isSquare && minSizeOk);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(null);
+      };
+      img.src = objectUrl;
+    });
+  }, []);
+
   const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
     setMessage(null);
+    const pwaCompatible = await checkPwaLogoCompatibility(file);
 
     try {
       const formData = new FormData();
@@ -52,8 +78,16 @@ export function useFileUpload({
       const data = await response.json();
 
       if (response.ok && data.url) {
-        setBranding(prev => ({ ...prev, logo: data.url }));
-        setMessage({ type: "success", text: "Logo subido correctamente" });
+        setBranding(prev => ({
+          ...prev,
+          logo: data.url,
+          pwaLogoCompatible: pwaCompatible ?? prev.pwaLogoCompatible,
+        }));
+        const warning =
+          pwaCompatible === false
+            ? " Aviso: el logo no es cuadrado o es menor a 192px. En PWA se usara el icono por defecto."
+            : "";
+        setMessage({ type: "success", text: `Logo subido correctamente.${warning}` });
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ type: "error", text: data.error || "Error al subir el logo" });
@@ -64,7 +98,7 @@ export function useFileUpload({
       setUploading(false);
       e.target.value = "";
     }
-  }, [setBranding, setMessage]);
+  }, [setBranding, setMessage, checkPwaLogoCompatibility]);
 
   const handleHeroImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

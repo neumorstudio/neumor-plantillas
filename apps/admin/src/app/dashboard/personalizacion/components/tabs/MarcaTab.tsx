@@ -67,6 +67,14 @@ export function MarcaTab({
               {uploading ? "Subiendo..." : "Toca para subir"}
             </span>
           </label>
+          <p className="text-xs text-[var(--text-secondary)] mt-2">
+            Para PWA se recomienda un logo cuadrado de al menos 192px. Si no cumple, en movil se usara el icono por defecto.
+          </p>
+          {branding.logo && branding.pwaLogoCompatible === false && (
+            <p className="text-xs text-amber-600 mt-2">
+              Logo no compatible con PWA. En movil se mostrara el icono por defecto.
+            </p>
+          )}
         </div>
         {branding.logo && (
           <div className="space-y-2">

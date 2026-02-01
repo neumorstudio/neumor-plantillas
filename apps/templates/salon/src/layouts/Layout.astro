@@ -41,6 +41,25 @@ console.log('[Layout.astro] Compiled - inlineColorStyles:', inlineColorStyles);
 console.log('[Layout.astro] Compiled - fontImports:', fontImports);
 console.log('[Layout.astro] ========================================');
 
+const pwaBranding = finalCustomization.branding as Record<string, unknown> | undefined;
+const pwaLogoCandidate =
+  (typeof pwaBranding?.logo === "string" ? pwaBranding.logo : undefined) ||
+  (typeof finalCustomization.logo === "string" ? finalCustomization.logo : undefined);
+const pwaFallbackIcon =
+  (typeof pwaBranding?.favicon === "string" ? pwaBranding.favicon : undefined) ||
+  "/favicon.svg";
+const pwaLogoCompatible = pwaBranding?.pwaLogoCompatible !== false;
+const pwaIcon = pwaLogoCandidate && pwaLogoCompatible ? pwaLogoCandidate : pwaFallbackIcon;
+const pwaThemeColor =
+  (typeof finalCustomization.colors?.accent === "string"
+    ? finalCustomization.colors?.accent
+    : undefined) ||
+  (typeof finalCustomization.primaryColor === "string"
+    ? finalCustomization.primaryColor
+    : undefined) ||
+  "#6366f1";
+const pwaShortName = title.split("|")[0].trim() || title;
+
 // Determinar clase de tema
 const themeClass = theme === "light" ? "" : `theme-${theme}`;
 
@@ -148,6 +167,12 @@ const defaultFonts = !fontImports
     ) : (
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     )}
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href={pwaIcon} />
+    <meta name="theme-color" content={pwaThemeColor} />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content={pwaShortName} />
+    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -163,9 +188,129 @@ const defaultFonts = !fontImports
     {cssVariables && (
       <style set:html={cssVariables}></style>
     )}
+
+    <style is:inline>
+      .pwa-install-banner {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--neumor-bg);
+        color: var(--text-primary);
+        border-radius: 16px;
+        box-shadow:
+          calc(6px * var(--shadow-intensity, 1)) calc(6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-dark),
+          calc(-6px * var(--shadow-intensity, 1)) calc(-6px * var(--shadow-intensity, 1)) calc(14px * var(--shadow-intensity, 1)) var(--shadow-light);
+        z-index: 9999;
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .pwa-install-banner.show {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .pwa-install-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--shadow-light);
+        flex-shrink: 0;
+      }
+
+      .pwa-install-text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .pwa-install-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .pwa-install-subtitle,
+      .pwa-install-ios {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+      }
+
+      .pwa-install-ios {
+        display: none;
+        margin-top: 2px;
+      }
+
+      .pwa-install-banner.ios .pwa-install-action {
+        display: none;
+      }
+
+      .pwa-install-banner.ios .pwa-install-ios {
+        display: block;
+      }
+
+      .pwa-install-action {
+        border: none;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: #fff;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
+      .pwa-install-close {
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+      }
+
+      @media (min-width: 769px) {
+        .pwa-install-banner {
+          display: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <slot />
+
+    <div
+      id="pwa-install-banner"
+      class="pwa-install-banner"
+      aria-hidden="true"
+    >
+      <img class="pwa-install-logo" src={pwaIcon} alt={pwaShortName} loading="lazy" />
+      <div class="pwa-install-text">
+        <div class="pwa-install-title">Instalar {pwaShortName}</div>
+        <div class="pwa-install-subtitle">Acceso rapido desde tu movil.</div>
+        <div class="pwa-install-ios">En iOS: compartir y "Anadir a pantalla de inicio".</div>
+      </div>
+      <button id="pwa-install-action" class="pwa-install-action" type="button">Instalar</button>
+      <button id="pwa-install-close" class="pwa-install-close" type="button" aria-label="Cerrar">x</button>
+    </div>
+
+    <script is:inline>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {});
+        });
+      }
+    </script>
 
     <!-- DEBUG PANEL - Solo visible en modo preview -->
     {inlineColorStyles && (
@@ -183,6 +328,63 @@ const defaultFonts = !fontImports
         }, 100);
       </script>
     )}
+
+    <script is:inline>
+      (function () {
+        if (window.location.search.includes("preview=1")) return;
+        if (!window.matchMedia("(max-width: 768px)").matches) return;
+        if (window.matchMedia("(display-mode: standalone)").matches) return;
+        if (window.navigator.standalone) return;
+
+        const banner = document.getElementById("pwa-install-banner");
+        const actionBtn = document.getElementById("pwa-install-action");
+        const closeBtn = document.getElementById("pwa-install-close");
+        if (!banner) return;
+
+        if (localStorage.getItem("pwaInstallDismissed") === "1") return;
+
+        const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+        let deferredPrompt = null;
+
+        const showBanner = () => {
+          banner.classList.add("show");
+          banner.setAttribute("aria-hidden", "false");
+        };
+
+        const hideBanner = () => {
+          banner.classList.remove("show");
+          banner.setAttribute("aria-hidden", "true");
+          localStorage.setItem("pwaInstallDismissed", "1");
+        };
+
+        closeBtn?.addEventListener("click", hideBanner);
+
+        if (isIos) {
+          banner.classList.add("ios");
+          showBanner();
+          return;
+        }
+
+        window.addEventListener("beforeinstallprompt", (event) => {
+          event.preventDefault();
+          deferredPrompt = event;
+          showBanner();
+        });
+
+        window.addEventListener("appinstalled", hideBanner);
+
+        actionBtn?.addEventListener("click", async () => {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          try {
+            await deferredPrompt.userChoice;
+          } finally {
+            hideBanner();
+            deferredPrompt = null;
+          }
+        });
+      })();
+    </script>
 
     <!-- Live Preview Script - Escucha cambios del admin via postMessage -->
     <script is:inline>

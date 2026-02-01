@@ -51,7 +51,11 @@ export interface WebsiteConfig {
   effects?: Record<string, unknown>;
   branding?: {
     logo?: string;
+    logoDark?: string;
+    favicon?: string;
+    logoSize?: "sm" | "md" | "lg";
     logoDisplay?: "logo" | "name";
+    pwaLogoCompatible?: boolean;
   };
   logo?: string;
   // Section Builder config

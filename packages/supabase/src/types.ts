@@ -356,6 +356,7 @@ export interface BrandingConfig {
   favicon?: string;        // URL del favicon
   logoSize?: 'sm' | 'md' | 'lg';  // Tamaño del logo, default 'md'
   logoDisplay?: 'logo' | 'name';  // Mostrar logo o nombre, default 'name'
+  pwaLogoCompatible?: boolean;   // Logo cuadrado y >=192px para PWA
 }
 
 /** Configuración de colores personalizados */
