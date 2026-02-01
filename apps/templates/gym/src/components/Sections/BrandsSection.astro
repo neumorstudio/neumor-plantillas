@@ -7,10 +7,7 @@ const {
 } = Astro.props;
 
 const safeLogos = Array.isArray(logos) ? logos.filter(Boolean) : [];
-const loopLogos = safeLogos.length > 0
-  ? [...safeLogos, ...safeLogos, ...safeLogos]
-  : [];
-const hasLogos = loopLogos.length > 0;
+const hasLogos = safeLogos.length > 0;
 ---
 
 <section id="brands" class={`section brands-section brands-variant-${variant}`} data-section-id="brands">
@@ -22,12 +19,21 @@ const hasLogos = loopLogos.length > 0;
 
     {hasLogos ? (
       <div class="brands-marquee" aria-label="Carrusel de marcas">
-        <div class="brands-track" style={`--brands-count: ${loopLogos.length};`}>
-          {loopLogos.map((logo, index) => (
-            <div class="brand-item" data-brand-logo={index % safeLogos.length}>
-              <img src={logo} alt={`Logo ${index % safeLogos.length + 1}`} loading="lazy" />
-            </div>
-          ))}
+        <div class="brands-scroll" style={`--brands-count: ${safeLogos.length};`}>
+          <div class="brands-track">
+            {safeLogos.map((logo, index) => (
+              <div class="brand-item" data-brand-logo={index}>
+                <img src={logo} alt={`Logo ${index + 1}`} loading="lazy" />
+              </div>
+            ))}
+          </div>
+          <div class="brands-track" aria-hidden="true">
+            {safeLogos.map((logo, index) => (
+              <div class="brand-item" data-brand-logo={index + safeLogos.length}>
+                <img src={logo} alt="" loading="lazy" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     ) : (
@@ -76,17 +82,23 @@ const hasLogos = loopLogos.length > 0;
     mask-image: none;
   }
 
+  .brands-scroll {
+    display: flex;
+    width: max-content;
+    animation: brands-scroll 16s linear infinite;
+  }
+
+  .brands-scroll:hover {
+    animation-play-state: paused;
+  }
+
   .brands-track {
     display: flex;
     align-items: center;
     gap: 2.5rem;
     width: max-content;
     padding: 0 2.5rem;
-    animation: brands-scroll 18s linear infinite;
-  }
-
-  .brands-track:hover {
-    animation-play-state: paused;
+    flex-shrink: 0;
   }
 
   .brand-item {
@@ -135,7 +147,7 @@ const hasLogos = loopLogos.length > 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .brands-track {
+    .brands-scroll {
       animation: none;
     }
     .brands-marquee {
