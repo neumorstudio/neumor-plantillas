@@ -8,6 +8,11 @@ const {
 
 const safeLogos = Array.isArray(logos) ? logos.filter(Boolean) : [];
 const hasLogos = safeLogos.length > 0;
+const minVisibleLogos = 10;
+const repeatTimes = hasLogos ? Math.ceil(minVisibleLogos / safeLogos.length) : 0;
+const repeatedLogos = hasLogos
+  ? Array.from({ length: repeatTimes }, () => safeLogos).flat()
+  : [];
 ---
 
 <section id="brands" class={`section brands-section brands-variant-${variant}`} data-section-id="brands">
@@ -19,17 +24,17 @@ const hasLogos = safeLogos.length > 0;
 
     {hasLogos ? (
       <div class="brands-marquee" aria-label="Carrusel de marcas">
-        <div class="brands-scroll" style={`--brands-count: ${safeLogos.length};`}>
+        <div class="brands-scroll" style={`--brands-count: ${repeatedLogos.length};`}>
           <div class="brands-track">
-            {safeLogos.map((logo, index) => (
+            {repeatedLogos.map((logo, index) => (
               <div class="brand-item" data-brand-logo={index}>
                 <img src={logo} alt={`Logo ${index + 1}`} loading="lazy" />
               </div>
             ))}
           </div>
           <div class="brands-track" aria-hidden="true">
-            {safeLogos.map((logo, index) => (
-              <div class="brand-item" data-brand-logo={index + safeLogos.length}>
+            {repeatedLogos.map((logo, index) => (
+              <div class="brand-item" data-brand-logo={index + repeatedLogos.length}>
                 <img src={logo} alt="" loading="lazy" />
               </div>
             ))}
