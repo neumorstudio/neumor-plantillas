@@ -364,6 +364,7 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
                 <FAQSection
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
+                    items={getContentArray("faqItems")}
                   variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
                 />
               </section>

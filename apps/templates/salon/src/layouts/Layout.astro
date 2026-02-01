@@ -761,6 +761,17 @@ const defaultFonts = !fontImports
                 el.textContent = content.faqSubtitle;
               });
             }
+            if (Array.isArray(content.faqItems) && content.faqItems.length > 0) {
+              const faqItems = document.querySelectorAll('[data-section-id="faq"] .faq-item, [data-section-id="faq"] .faq-card, [data-section-id="faq"] .faq-simple-item');
+              faqItems.forEach(function(el, index) {
+                const item = content.faqItems[index % content.faqItems.length];
+                if (!item) return;
+                const questionEl = el.querySelector('.faq-question span') || el.querySelector('h3');
+                const answerEl = el.querySelector('.faq-answer p') || el.querySelector('p');
+                if (questionEl && item.title) questionEl.textContent = item.title;
+                if (answerEl && item.text) answerEl.textContent = item.text;
+              });
+            }
             if (content.plansTitle) {
               document.querySelectorAll('[data-content="plansTitle"]').forEach(function(el) {
                 el.textContent = content.plansTitle;

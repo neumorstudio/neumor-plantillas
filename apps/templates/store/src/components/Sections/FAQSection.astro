@@ -4,6 +4,11 @@ interface FAQItem {
   answer: string;
 }
 
+interface FAQConfigItem {
+  title: string;
+  text: string;
+}
+
 interface Props {
   title?: string;
   subtitle?: string;
@@ -33,9 +38,23 @@ const defaultItems: FAQItem[] = [
 const {
   title = "Preguntas Frecuentes",
   subtitle = "Resolvemos tus dudas",
-  items = defaultItems,
+  items,
   variant = "accordion",
 } = Astro.props;
+
+const mappedItems = Array.isArray(items)
+  ? items.map((item) => {
+      if (typeof item?.question === "string" && typeof item?.answer === "string") {
+        return { question: item.question, answer: item.answer };
+      }
+      if (typeof (item as FAQConfigItem)?.title === "string" && typeof (item as FAQConfigItem)?.text === "string") {
+        return { question: (item as FAQConfigItem).title, answer: (item as FAQConfigItem).text };
+      }
+      return null;
+    }).filter((item): item is FAQItem => Boolean(item))
+  : [];
+
+const resolvedItems = mappedItems.length > 0 ? mappedItems : defaultItems;
 ---
 
 <section id="faq" class={`section faq-variant-${variant}`}>
@@ -46,7 +65,7 @@ const {
     </div>
     {variant === "accordion" && (
       <div class="faq-list">
-        {items.map((item) => (
+        {resolvedItems.map((item) => (
           <details class="faq-item neumor-card">
             <summary class="faq-question">
               <span>{item.question}</span>
@@ -63,7 +82,7 @@ const {
     )}
     {variant === "cards" && (
       <div class="faq-cards">
-        {items.map((item) => (
+        {resolvedItems.map((item) => (
           <div class="faq-card neumor-card">
             <h3>{item.question}</h3>
             <p>{item.answer}</p>
@@ -73,7 +92,7 @@ const {
     )}
     {variant === "simple" && (
       <div class="faq-simple">
-        {items.map((item) => (
+        {resolvedItems.map((item) => (
           <div class="faq-simple-item">
             <h3>{item.question}</h3>
             <p>{item.answer}</p>

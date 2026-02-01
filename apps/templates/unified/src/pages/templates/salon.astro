@@ -443,6 +443,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                 <FAQSection
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
+                    items={getContentArray("faqItems")}
                   variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
                 />
               </section>

@@ -92,6 +92,7 @@ export async function GET() {
         brandsLogos: config.brandsLogos,
         faqTitle: config.faqTitle,
         faqSubtitle: config.faqSubtitle,
+        faqItems: config.faqItems,
         plansTitle: config.plansTitle,
         plansSubtitle: config.plansSubtitle,
         contactTitle: config.contactTitle,

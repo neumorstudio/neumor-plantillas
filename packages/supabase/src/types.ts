@@ -514,6 +514,7 @@ export interface WebsiteConfig {
   brandsLogos?: string[];
   faqTitle?: string;
   faqSubtitle?: string;
+  faqItems?: Array<{ title: string; text: string }>;
   plansTitle?: string;
   plansSubtitle?: string;
   contactTitle?: string;
