@@ -264,6 +264,9 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     icon: SECTION_ICONS.brands,
     variants: [
       { value: "carousel", label: "Carrusel" },
+      { value: "minimal", label: "Minimal" },
+      { value: "grid", label: "Grid" },
+      { value: "cards", label: "Tarjetas" },
     ],
     defaultVariant: "carousel",
     // Implementado en: restaurant, salon, clinic, fitness (gym), shop (store), repairs
