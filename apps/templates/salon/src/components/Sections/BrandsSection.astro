@@ -32,13 +32,15 @@ const repeatedLogos = hasLogos
               </div>
             ))}
           </div>
-          <div class="brands-track" aria-hidden="true">
-            {repeatedLogos.map((logo, index) => (
-              <div class="brand-item" data-brand-logo={index + repeatedLogos.length}>
-                <img src={logo} alt="" loading="lazy" />
-              </div>
-            ))}
-          </div>
+          {variant !== "grid" && (
+            <div class="brands-track" aria-hidden="true">
+              {repeatedLogos.map((logo, index) => (
+                <div class="brand-item" data-brand-logo={index + repeatedLogos.length}>
+                  <img src={logo} alt="" loading="lazy" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     ) : (
