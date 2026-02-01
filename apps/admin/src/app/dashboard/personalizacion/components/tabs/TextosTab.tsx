@@ -105,6 +105,39 @@ export function TextosTab({
       {/* Seccion Servicios/Caracteristicas */}
       {showServicesBlock && (businessType === "salon" || businessType === "clinic" ? (
         <CollapsibleSection title="Seccion Servicios" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Etiqueta superior</label>
+            <input
+              type="text"
+              value={content.servicesLabel || ""}
+              onChange={(e) => onContentChange("servicesLabel", e.target.value)}
+              placeholder="SERVICIOS"
+              className="neumor-input w-full h-12"
+            />
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
+              Texto pequeño encima del titulo (ej: SERVICIOS)
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.servicesTitle || ""}
+              onChange={(e) => onContentChange("servicesTitle", e.target.value)}
+              placeholder="Nuestros Servicios"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.servicesSubtitle || ""}
+              onChange={(e) => onContentChange("servicesSubtitle", e.target.value)}
+              placeholder="Cortes, color y tratamientos a tu medida"
+              className="neumor-input w-full h-12"
+            />
+          </div>
           <div className="neumor-inset p-4 rounded-xl text-center">
             <svg className="w-8 h-8 mx-auto mb-2 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

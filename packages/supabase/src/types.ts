@@ -505,6 +505,10 @@ export interface WebsiteConfig {
   galleryTitle?: string;
   gallerySubtitle?: string;
   galleryImages?: string[];
+  servicesLabel?: string;
+  servicesTitle?: string;
+  servicesSubtitle?: string;
+
   brandsTitle?: string;
   brandsSubtitle?: string;
   brandsLogos?: string[];

@@ -444,7 +444,7 @@ const serviceCategories = serviceCatalog.length
           case "services":
             return (
               <section data-section-id="services" style={style}>
-                <Services categories={serviceCategories} />
+                <Services label={getContentText("servicesLabel")} title={getContentText("servicesTitle")} subtitle={getContentText("servicesSubtitle")} categories={serviceCategories} />
               </section>
             );
           case "testimonials":

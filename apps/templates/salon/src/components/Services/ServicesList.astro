@@ -18,12 +18,14 @@ interface MenuCategory {
 }
 
 interface Props {
+  label?: string;
   title?: string;
   subtitle?: string;
   categories?: MenuCategory[];
 }
 
 const {
+  label = "Servicios",
   title = "Nuestros Servicios",
   subtitle = "Cortes, color y tratamientos a tu medida",
   categories = [],
@@ -36,9 +38,9 @@ const hasServices = categories && categories.length > 0;
   <div class="container">
     <!-- Section Header -->
     <div class="section-header">
-      <span class="section-label">Servicios</span>
-      <h2 class="section-title">{title}</h2>
-      <p class="section-subtitle">{subtitle}</p>
+      <span class="section-label" data-content="servicesLabel">{label}</span>
+      <h2 class="section-title" data-content="servicesTitle">{title}</h2>
+      <p class="section-subtitle" data-content="servicesSubtitle">{subtitle}</p>
     </div>
 
     {hasServices ? (

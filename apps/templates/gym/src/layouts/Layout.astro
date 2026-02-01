@@ -609,6 +609,21 @@ const defaultFonts = !fontImports
                 el.textContent = content.gallerySubtitle;
               });
             }
+            if (content.servicesLabel) {
+              document.querySelectorAll('[data-content="servicesLabel"]').forEach(function(el) {
+                el.textContent = content.servicesLabel;
+              });
+            }
+            if (content.servicesTitle) {
+              document.querySelectorAll('[data-content="servicesTitle"]').forEach(function(el) {
+                el.textContent = content.servicesTitle;
+              });
+            }
+            if (content.servicesSubtitle) {
+              document.querySelectorAll('[data-content="servicesSubtitle"]').forEach(function(el) {
+                el.textContent = content.servicesSubtitle;
+              });
+            }
             if (content.brandsTitle) {
               document.querySelectorAll('[data-content="brandsTitle"]').forEach(function(el) {
                 el.textContent = content.brandsTitle;
