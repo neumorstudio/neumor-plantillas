@@ -33,7 +33,15 @@ const getStatusBadge = (status: string) => {
 };
 
 const now = new Date();
-now.setHours(0, 0, 0, 0); // Compare dates only, not time
+
+const getBookingDateTime = (booking: CustomerBooking) => {
+  const date = new Date(booking.booking_date);
+  if (booking.booking_time) {
+    const [hour, minute, second] = booking.booking_time.split(":").map((part) => Number(part));
+    date.setHours(hour || 0, minute || 0, second || 0, 0);
+  }
+  return date;
+};
 
 // Helper to extract service name (handles both string and object formats)
 const getServiceName = (service: unknown): string => {
@@ -46,12 +54,12 @@ const getServiceName = (service: unknown): string => {
 
 // Upcoming appointments
 const upcomingAppointments = bookings.filter(
-  (b) => new Date(b.booking_date) >= now && b.status !== "cancelled"
+  (b) => getBookingDateTime(b) >= now && b.status !== "cancelled"
 );
 
 // Total visits: past appointments that were not cancelled
 const totalVisits = bookings.filter(
-  (b) => new Date(b.booking_date) < now && b.status !== "cancelled"
+  (b) => getBookingDateTime(b) < now && b.status !== "cancelled"
 ).length;
 
 // Top services - extract names from service objects
