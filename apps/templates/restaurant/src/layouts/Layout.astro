@@ -644,65 +644,16 @@ const defaultFonts = !fontImports
                 el.textContent = content.faqSubtitle;
               });
             }
-
             if (Array.isArray(content.faqItems) && content.faqItems.length > 0) {
-              const faqSection = document.querySelector('[data-section-id="faq"]');
-              if (faqSection) {
-                const variantClass = Array.from(faqSection.classList).find(function(cls) {
-                  return cls.indexOf('faq-variant-') === 0;
-                });
-                const variant = variantClass ? variantClass.replace('faq-variant-', '') : 'accordion';
-                const itemsHtml = content.faqItems.map(function(item) {
-                  const title = item.title || '';
-                  const text = item.text || '';
-                  if (variant === 'cards') {
-                    return `
-                      <div class="faq-card neumor-card">
-                        <h3>${title}</h3>
-                        <p>${text}</p>
-                      </div>
-                    `;
-                  }
-                  if (variant === 'simple') {
-                    return `
-                      <div class="faq-simple-item">
-                        <h3>${title}</h3>
-                        <p>${text}</p>
-                      </div>
-                    `;
-                  }
-                  return `
-                    <details class="faq-item neumor-card">
-                      <summary class="faq-question">
-                        <span>${title}</span>
-                        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </summary>
-                      <div class="faq-answer">
-                        <p>${text}</p>
-                      </div>
-                    </details>
-                  `;
-                }).join('');
-
-                if (variant === 'cards') {
-                  const cards = faqSection.querySelector('.faq-cards');
-                  if (cards) {
-                    cards.innerHTML = itemsHtml;
-                  }
-                } else if (variant === 'simple') {
-                  const simple = faqSection.querySelector('.faq-simple');
-                  if (simple) {
-                    simple.innerHTML = itemsHtml;
-                  }
-                } else {
-                  const list = faqSection.querySelector('.faq-list');
-                  if (list) {
-                    list.innerHTML = itemsHtml;
-                  }
-                }
-              }
+              const faqItems = document.querySelectorAll('[data-section-id="faq"] .faq-item, [data-section-id="faq"] .faq-card, [data-section-id="faq"] .faq-simple-item');
+              faqItems.forEach(function(el, index) {
+                const item = content.faqItems[index % content.faqItems.length];
+                if (!item) return;
+                const questionEl = el.querySelector('.faq-question span') || el.querySelector('h3');
+                const answerEl = el.querySelector('.faq-answer p') || el.querySelector('p');
+                if (questionEl && item.title) questionEl.textContent = item.title;
+                if (answerEl && item.text) answerEl.textContent = item.text;
+              });
             }
             if (content.plansTitle) {
               document.querySelectorAll('[data-content="plansTitle"]').forEach(function(el) {
