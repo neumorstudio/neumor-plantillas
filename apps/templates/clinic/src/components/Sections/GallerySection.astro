@@ -117,16 +117,29 @@ const {
 
   .gallery-variant-carousel .gallery-grid {
     display: flex;
-    gap: 1.25rem;
+    gap: 1rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    padding-bottom: 0.5rem;
+    scroll-behavior: smooth;
+    padding-bottom: 0.25rem;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .gallery-variant-carousel .gallery-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .gallery-variant-carousel .gallery-item {
-    min-width: 260px;
+    min-width: 220px;
+    max-width: 260px;
     flex: 0 0 auto;
     scroll-snap-align: start;
+    aspect-ratio: 4/3;
+  }
+
+  .gallery-variant-carousel .gallery-item img {
+    object-fit: cover;
   }
 
   @media (max-width: 1024px) {
