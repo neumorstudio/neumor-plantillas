@@ -609,6 +609,16 @@ const defaultFonts = !fontImports
                 el.textContent = content.gallerySubtitle;
               });
             }
+            if (content.brandsTitle) {
+              document.querySelectorAll('[data-content="brandsTitle"]').forEach(function(el) {
+                el.textContent = content.brandsTitle;
+              });
+            }
+            if (content.brandsSubtitle) {
+              document.querySelectorAll('[data-content="brandsSubtitle"]').forEach(function(el) {
+                el.textContent = content.brandsSubtitle;
+              });
+            }
             if (content.faqTitle) {
               document.querySelectorAll('[data-content="faqTitle"]').forEach(function(el) {
                 el.textContent = content.faqTitle;
@@ -650,6 +660,18 @@ const defaultFonts = !fontImports
                   item.style.removeProperty('display');
                 } else {
                   item.style.display = 'none';
+                }
+              });
+            }
+
+            if (Array.isArray(content.brandsLogos) && content.brandsLogos.length > 0) {
+              const brandItems = document.querySelectorAll('[data-section-id="brands"] .brand-item');
+              brandItems.forEach(function(item, index) {
+                const img = item.querySelector('img');
+                if (!img) return;
+                const logoIndex = index % content.brandsLogos.length;
+                if (content.brandsLogos[logoIndex]) {
+                  img.src = content.brandsLogos[logoIndex];
                 }
               });
             }

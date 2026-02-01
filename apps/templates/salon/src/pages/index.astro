@@ -28,7 +28,7 @@ import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@com
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
-import { FAQSection, ContactSection, TeamSection, GallerySection, PlansSection } from "@components/Sections";
+import { FAQSection, ContactSection, TeamSection, GallerySection, BrandsSection, PlansSection } from "@components/Sections";
 
 // Importar cliente Supabase
 import { getBusinessHours, getProfessionalCategories, getProfessionals, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig, type SectionId } from "@lib/supabase";
@@ -51,6 +51,7 @@ const previewVariants = {
 const previewSectionVariants = {
   team: url.searchParams.get("v_team"),
   gallery: url.searchParams.get("v_gallery"),
+  brands: url.searchParams.get("v_brands"),
   faq: url.searchParams.get("v_faq"),
   plans: url.searchParams.get("v_plans"),
   contact: url.searchParams.get("v_contact"),
@@ -397,7 +398,8 @@ const serviceCategories = serviceCatalog.length
         "services",
         "testimonials",
         "team",
-        "gallery",
+  "gallery",
+  "brands",
         "faq",
         "plans",
         "contact",
@@ -475,6 +477,17 @@ const serviceCategories = serviceCatalog.length
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
                   variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                />
+              </section>
+            );
+          case "brands":
+            return (
+              <section data-section-id="brands" style={style}>
+                <BrandsSection
+                  title={getContentText("brandsTitle")}
+                  subtitle={getContentText("brandsSubtitle")}
+                  logos={getContentArray("brandsLogos")}
+                  variant={previewSectionVariants.brands || sectionCfg?.variant || "carousel"}
                 />
               </section>
             );

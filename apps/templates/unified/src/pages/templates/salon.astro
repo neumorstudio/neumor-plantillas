@@ -14,7 +14,7 @@ import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@sal
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@salon/components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@salon/components/Footer";
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@salon/components/Reviews";
-import { FAQSection, ContactSection, OpenStatusSection, TeamSection, GallerySection, PlansSection } from "@salon/components/Sections";
+import { FAQSection, ContactSection, OpenStatusSection, TeamSection, GallerySection, BrandsSection, PlansSection } from "@salon/components/Sections";
 
 // Import Supabase helpers
 import { getBusinessHours, getProfessionalCategories, getProfessionals, getServiceCatalog } from "@salon/lib/supabase";
@@ -42,6 +42,7 @@ const previewVariants = {
 const previewSectionVariants = {
   team: url.searchParams.get("v_team"),
   gallery: url.searchParams.get("v_gallery"),
+  brands: url.searchParams.get("v_brands"),
   faq: url.searchParams.get("v_faq"),
   plans: url.searchParams.get("v_plans"),
   contact: url.searchParams.get("v_contact"),
@@ -344,7 +345,8 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
         "services",
         "testimonials",
         "team",
-        "gallery",
+  "gallery",
+  "brands",
         "faq",
         "plans",
         "contact",
@@ -421,6 +423,17 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
                   variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                />
+              </section>
+            );
+          case "brands":
+            return (
+              <section data-section-id="brands" style={style}>
+                <BrandsSection
+                  title={getContentText("brandsTitle")}
+                  subtitle={getContentText("brandsSubtitle")}
+                  logos={getContentArray("brandsLogos")}
+                  variant={previewSectionVariants.brands || sectionCfg?.variant || "carousel"}
                 />
               </section>
             );

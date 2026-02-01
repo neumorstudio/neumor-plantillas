@@ -41,6 +41,7 @@ export function TextosTab({
   const showTestimonials = isSectionEnabled("testimonials");
   const showTeam = isSectionEnabled("team");
   const showGallery = isSectionEnabled("gallery");
+  const showBrands = isSectionEnabled("brands");
   const showFaq = isSectionEnabled("faq");
   const showPlans = isSectionEnabled("plans");
   const showContactSection = isSectionEnabled("contact");
@@ -280,6 +281,31 @@ export function TextosTab({
               value={content.gallerySubtitle || ""}
               onChange={(e) => onContentChange("gallerySubtitle", e.target.value)}
               placeholder="Descubre nuestro trabajo"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {showBrands && (
+        <CollapsibleSection title="Seccion Marcas" defaultOpen={false}>
+          <div>
+            <label className="block text-sm font-medium mb-2">Titulo de Seccion</label>
+            <input
+              type="text"
+              value={content.brandsTitle || ""}
+              onChange={(e) => onContentChange("brandsTitle", e.target.value)}
+              placeholder="Nuestras marcas de confianza"
+              className="neumor-input w-full h-12"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Subtitulo</label>
+            <input
+              type="text"
+              value={content.brandsSubtitle || ""}
+              onChange={(e) => onContentChange("brandsSubtitle", e.target.value)}
+              placeholder="Trabajamos con marcas premium"
               className="neumor-input w-full h-12"
             />
           </div>

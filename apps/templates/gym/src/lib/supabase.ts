@@ -38,6 +38,9 @@ export interface WebsiteConfig {
   galleryTitle?: string;
   gallerySubtitle?: string;
   galleryImages?: string[];
+  brandsTitle?: string;
+  brandsSubtitle?: string;
+  brandsLogos?: string[];
   faqTitle?: string;
   faqSubtitle?: string;
   plansTitle?: string;

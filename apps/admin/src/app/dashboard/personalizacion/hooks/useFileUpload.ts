@@ -17,9 +17,11 @@ interface UseFileUploadReturn {
   uploading: boolean;
   uploadingHero: boolean;
   uploadingGallery: boolean;
+  uploadingBrands: boolean;
   handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleHeroImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleGalleryImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleBrandsLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
 export function useFileUpload({
@@ -30,7 +32,9 @@ export function useFileUpload({
   const [uploading, setUploading] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingBrands, setUploadingBrands] = useState(false);
   const maxGalleryImages = 6;
+  const maxBrandLogos = 10;
 
   const checkPwaLogoCompatibility = useCallback((file: File) => {
     return new Promise<boolean | null>((resolve) => {
@@ -206,12 +210,66 @@ export function useFileUpload({
     }
   }, [setContent, setMessage, maxGalleryImages]);
 
+  const handleBrandsLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setContent(prev => {
+      if ((prev.brandsLogos?.length || 0) >= maxBrandLogos) {
+        setMessage({ type: "error", text: `Maximo ${maxBrandLogos} logos. Elimina uno para subir otro.` });
+        return prev;
+      }
+      return prev;
+    });
+
+    setUploadingBrands(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "brands");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        setContent(prev => {
+          const currentLogos = prev.brandsLogos || [];
+          if (currentLogos.length >= maxBrandLogos) {
+            return prev;
+          }
+          const newLogos = [...currentLogos, data.url];
+          return {
+            ...prev,
+            brandsLogos: newLogos,
+          };
+        });
+        setMessage({ type: "success", text: "Logo subido correctamente" });
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage({ type: "error", text: data.error || "Error al subir el logo" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Error de conexion al subir el logo" });
+    } finally {
+      setUploadingBrands(false);
+      e.target.value = "";
+    }
+  }, [setContent, setMessage, maxBrandLogos]);
+
   return {
     uploading,
     uploadingHero,
     uploadingGallery,
+    uploadingBrands,
     handleLogoUpload,
     handleHeroImageUpload,
     handleGalleryImageUpload,
+    handleBrandsLogoUpload,
   };
 }

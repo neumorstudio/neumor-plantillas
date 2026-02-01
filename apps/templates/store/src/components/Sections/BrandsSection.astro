@@ -1,0 +1,157 @@
+---
+const {
+  title = "Nuestras marcas de confianza",
+  subtitle = "Trabajamos con marcas premium",
+  logos = [],
+  variant = "carousel",
+} = Astro.props;
+
+const safeLogos = Array.isArray(logos) ? logos.filter(Boolean) : [];
+const loopLogos = safeLogos.length > 0 ? [...safeLogos, ...safeLogos] : [];
+const hasLogos = loopLogos.length > 0;
+---
+
+<section id="brands" class={`section brands-section brands-variant-${variant}`} data-section-id="brands">
+  <div class="brands-inner">
+    <div class="brands-header">
+      <h2 data-content="brandsTitle">{title}</h2>
+      <p data-content="brandsSubtitle">{subtitle}</p>
+    </div>
+
+    {hasLogos ? (
+      <div class="brands-marquee" aria-label="Carrusel de marcas">
+        <div class="brands-track" style={`--brands-count: ${loopLogos.length};`}>
+          {loopLogos.map((logo, index) => (
+            <div class="brand-item neumor-card" data-brand-logo={index % safeLogos.length}>
+              <img src={logo} alt={`Logo ${index % safeLogos.length + 1}`} loading="lazy" />
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : (
+      <div class="brands-empty neumor-inset">
+        <p>Anade logos desde Personalizacion.</p>
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .brands-section {
+    padding: 4rem 0;
+  }
+
+  .brands-inner {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .brands-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .brands-header h2 {
+    font-size: clamp(1.6rem, 2vw, 2.4rem);
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .brands-header p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .brands-marquee {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 1.25rem 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.25));
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  .brands-track {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    width: max-content;
+    padding: 0 2.5rem;
+    animation: brands-scroll 28s linear infinite;
+  }
+
+  .brands-track:hover {
+    animation-play-state: paused;
+  }
+
+  .brand-item {
+    flex: 0 0 auto;
+    min-width: 140px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.7);
+  }
+
+  .brand-item img {
+    max-height: 44px;
+    max-width: 120px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: grayscale(1);
+    opacity: 0.85;
+    transition: filter 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  .brand-item:hover img {
+    filter: grayscale(0);
+    opacity: 1;
+    transform: scale(1.04);
+  }
+
+  .brands-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    border-radius: 16px;
+    font-size: 0.95rem;
+  }
+
+  @keyframes brands-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brands-track {
+      animation: none;
+    }
+    .brands-marquee {
+      overflow-x: auto;
+      mask-image: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .brand-item {
+      min-width: 120px;
+      height: 64px;
+    }
+
+    .brand-item img {
+      max-height: 38px;
+      max-width: 100px;
+    }
+  }
+</style>

@@ -15,6 +15,7 @@ interface MarcaTabProps {
   uploading: boolean;
   uploadingHero: boolean;
   uploadingGallery: boolean;
+  uploadingBrands: boolean;
   isMobile: boolean;
   onBrandingChange: (key: keyof BrandingConfig, value: string) => void;
   onLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -23,6 +24,8 @@ interface MarcaTabProps {
   onHeroImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGalleryImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveGalleryImage: (url: string) => void;
+  onBrandsLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveBrandsLogo: (url: string) => void;
 }
 
 export function MarcaTab({
@@ -32,6 +35,7 @@ export function MarcaTab({
   uploading,
   uploadingHero,
   uploadingGallery,
+  uploadingBrands,
   isMobile,
   onBrandingChange,
   onLogoUpload,
@@ -40,11 +44,15 @@ export function MarcaTab({
   onHeroImageUpload,
   onGalleryImageUpload,
   onRemoveGalleryImage,
+  onBrandsLogoUpload,
+  onRemoveBrandsLogo,
 }: MarcaTabProps) {
   const sectionsMap = new Map(sections.map((section) => [section.id, section]));
   const isSectionEnabled = (id: SectionId) => sectionsMap.get(id)?.enabled ?? false;
   const showGallerySection = isSectionEnabled("gallery");
+  const showBrandsSection = isSectionEnabled("brands");
   const maxGalleryImages = 6;
+  const maxBrandLogos = 10;
 
   return (
     <div className="space-y-6">
@@ -277,6 +285,80 @@ export function MarcaTab({
             {(content.galleryImages?.length || 0) === 0 && (
               <p className="text-xs text-[var(--text-secondary)] text-center">
                 Sube hasta {maxGalleryImages} imagenes para tu galeria
+              </p>
+            )}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {showBrandsSection && (
+        <CollapsibleSection title="Logos de Marcas" defaultOpen={!isMobile}>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Logos de Marcas
+              <span className="text-xs text-[var(--text-secondary)] ml-2">
+                ({content.brandsLogos?.length || 0}/{maxBrandLogos})
+              </span>
+            </label>
+            <p className="text-xs text-[var(--text-secondary)] mb-3">
+              Estos logos se muestran en el carrusel de marcas.
+            </p>
+
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {(content.brandsLogos || []).map((logoUrl, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-video rounded-xl overflow-hidden neumor-inset group bg-white/60"
+                >
+                  <img
+                    src={logoUrl}
+                    alt={`Marca ${index + 1}`}
+                    className="w-full h-full object-contain p-2"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 15l6-6 4 4 8-8'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3C/svg%3E";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onRemoveBrandsLogo(logoUrl)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+
+              {(content.brandsLogos?.length || 0) < maxBrandLogos && (
+                <label className={`aspect-video rounded-xl border-2 border-dashed border-[var(--shadow-dark)] flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploadingBrands ? "opacity-50 pointer-events-none" : ""}`}>
+                  {uploadingBrands ? (
+                    <svg className="w-6 h-6 animate-spin text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span className="text-xs text-[var(--text-secondary)] mt-1">Subir</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onBrandsLogoUpload}
+                    disabled={uploadingBrands}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {(content.brandsLogos?.length || 0) === 0 && (
+              <p className="text-xs text-[var(--text-secondary)] text-center">
+                Sube hasta {maxBrandLogos} logos para tu carrusel de marcas
               </p>
             )}
           </div>

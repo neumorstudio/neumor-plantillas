@@ -27,7 +27,7 @@ import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Reviews";
-import { FAQSection, ContactSection, TeamSection, GallerySection, PlansSection } from "@components/Sections";
+import { FAQSection, ContactSection, TeamSection, GallerySection, BrandsSection, PlansSection } from "@components/Sections";
 import { StatusPulse, StatusMorph, StatusLiquid, StatusTime } from "@components/OpenStatus";
 import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@components/ReservationForm";
 
@@ -72,6 +72,7 @@ const previewVariants = {
 const previewSectionVariants = {
   team: url.searchParams.get("v_team"),
   gallery: url.searchParams.get("v_gallery"),
+  brands: url.searchParams.get("v_brands"),
   faq: url.searchParams.get("v_faq"),
   plans: url.searchParams.get("v_plans"),
   contact: url.searchParams.get("v_contact"),
@@ -458,7 +459,8 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
         "menu",
         "testimonials",
         "team",
-        "gallery",
+  "gallery",
+  "brands",
         "faq",
         "plans",
         "contact",
@@ -529,6 +531,17 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
                   variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                />
+              </section>
+            );
+          case "brands":
+            return (
+              <section data-section-id="brands" style={style}>
+                <BrandsSection
+                  title={getContentText("brandsTitle")}
+                  subtitle={getContentText("brandsSubtitle")}
+                  logos={getContentArray("brandsLogos")}
+                  variant={previewSectionVariants.brands || sectionCfg?.variant || "carousel"}
                 />
               </section>
             );

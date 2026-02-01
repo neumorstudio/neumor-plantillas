@@ -97,6 +97,9 @@ export function PersonalizacionClient({
   const initialGalleryImages = Array.isArray((initialConfig as Record<string, unknown>).galleryImages)
     ? ((initialConfig as Record<string, unknown>).galleryImages as string[])
     : [];
+  const initialBrandsLogos = Array.isArray((initialConfig as Record<string, unknown>).brandsLogos)
+    ? ((initialConfig as Record<string, unknown>).brandsLogos as string[])
+    : [];
 
   const [content, setContent] = useState<ContentConfig>({
     // Informacion del negocio
@@ -108,6 +111,7 @@ export function PersonalizacionClient({
     heroImages: initialHeroImages,
     heroCta: (initialConfig as Record<string, unknown>).heroCta as string || "",
     galleryImages: initialGalleryImages,
+    brandsLogos: initialBrandsLogos,
     // Contacto
     address: initialConfig.address || "",
     phone: initialConfig.phone || "",
@@ -128,6 +132,8 @@ export function PersonalizacionClient({
     teamSubtitle: (initialConfig as Record<string, unknown>).teamSubtitle as string || "",
     galleryTitle: (initialConfig as Record<string, unknown>).galleryTitle as string || "",
     gallerySubtitle: (initialConfig as Record<string, unknown>).gallerySubtitle as string || "",
+    brandsTitle: (initialConfig as Record<string, unknown>).brandsTitle as string || "",
+    brandsSubtitle: (initialConfig as Record<string, unknown>).brandsSubtitle as string || "",
     faqTitle: (initialConfig as Record<string, unknown>).faqTitle as string || "",
     faqSubtitle: (initialConfig as Record<string, unknown>).faqSubtitle as string || "",
     plansTitle: (initialConfig as Record<string, unknown>).plansTitle as string || "",
@@ -308,7 +314,7 @@ export function PersonalizacionClient({
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Hook para manejar uploads de archivos
-  const { uploading, uploadingHero, uploadingGallery, handleLogoUpload, handleHeroImageUpload, handleGalleryImageUpload } = useFileUpload({
+  const { uploading, uploadingHero, uploadingGallery, uploadingBrands, handleLogoUpload, handleHeroImageUpload, handleGalleryImageUpload, handleBrandsLogoUpload } = useFileUpload({
     setBranding,
     setContent,
     setMessage,
@@ -372,6 +378,7 @@ export function PersonalizacionClient({
       // Variantes de secciones genericas
       v_team: getSectionVariant("team"),
       v_gallery: getSectionVariant("gallery"),
+      v_brands: getSectionVariant("brands"),
       v_faq: getSectionVariant("faq"),
       v_plans: getSectionVariant("plans"),
       v_contact: getSectionVariant("contact"),
@@ -448,6 +455,13 @@ export function PersonalizacionClient({
     }));
   }, []);
 
+  const handleRemoveBrandsLogo = useCallback((url: string) => {
+    setContent(prev => ({
+      ...prev,
+      brandsLogos: (prev.brandsLogos || []).filter(logo => logo !== url),
+    }));
+  }, []);
+
   const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => {
     setContent(prev => ({ ...prev, [key]: value }));
   }, []);
@@ -516,6 +530,9 @@ export function PersonalizacionClient({
         galleryImages: Array.isArray((initialConfig as Record<string, unknown>).galleryImages)
           ? ((initialConfig as Record<string, unknown>).galleryImages as string[])
           : [],
+        brandsLogos: Array.isArray((initialConfig as Record<string, unknown>).brandsLogos)
+          ? ((initialConfig as Record<string, unknown>).brandsLogos as string[])
+          : [],
         address: initialConfig.address || "",
         phone: initialConfig.phone || "",
         email: initialConfig.email || "",
@@ -531,6 +548,8 @@ export function PersonalizacionClient({
         teamSubtitle: (initialConfig as Record<string, unknown>).teamSubtitle as string || "",
         galleryTitle: (initialConfig as Record<string, unknown>).galleryTitle as string || "",
         gallerySubtitle: (initialConfig as Record<string, unknown>).gallerySubtitle as string || "",
+        brandsTitle: (initialConfig as Record<string, unknown>).brandsTitle as string || "",
+        brandsSubtitle: (initialConfig as Record<string, unknown>).brandsSubtitle as string || "",
         faqTitle: (initialConfig as Record<string, unknown>).faqTitle as string || "",
         faqSubtitle: (initialConfig as Record<string, unknown>).faqSubtitle as string || "",
         plansTitle: (initialConfig as Record<string, unknown>).plansTitle as string || "",
@@ -688,6 +707,7 @@ export function PersonalizacionClient({
             uploading={uploading}
             uploadingHero={uploadingHero}
             uploadingGallery={uploadingGallery}
+            uploadingBrands={uploadingBrands}
             isMobile={isMobile}
             onBrandingChange={handleBrandingChange}
             onLogoUpload={handleLogoUpload}
@@ -696,6 +716,8 @@ export function PersonalizacionClient({
             onHeroImageUpload={handleHeroImageUpload}
             onGalleryImageUpload={handleGalleryImageUpload}
             onRemoveGalleryImage={handleRemoveGalleryImage}
+            onBrandsLogoUpload={handleBrandsLogoUpload}
+            onRemoveBrandsLogo={handleRemoveBrandsLogo}
           />
         );
 
