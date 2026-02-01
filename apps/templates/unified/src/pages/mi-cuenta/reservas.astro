@@ -66,6 +66,20 @@ const emptyText =
       ? "Aun no tienes ninguna sesion registrada."
       : "Aun no tienes ninguna cita registrada.";
 
+const getBookingDateTime = (booking: CustomerBooking) => {
+  const datePart = booking.booking_date;
+  const timePart = booking.booking_time || "00:00";
+  const dt = new Date(`${datePart}T${timePart}`);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
+const getEffectiveStatus = (booking: CustomerBooking) => {
+  if (booking.status === "cancelled") return "cancelled";
+  const dt = getBookingDateTime(booking);
+  if (dt && dt < new Date()) return "completed";
+  return booking.status;
+};
+
 // Helper to extract service name (handles both string and object formats)
 const getServiceName = (service: unknown): string => {
   if (typeof service === "string") return service;
@@ -82,7 +96,7 @@ const getServiceName = (service: unknown): string => {
   {bookings.length > 0 ? (
     <div class="portal-list">
       {bookings.map((booking) => {
-        const badge = getStatusBadge(booking.status);
+        const badge = getStatusBadge(getEffectiveStatus(booking));
         return (
           <div class="portal-list-item">
             <div class="portal-list-item-header">
