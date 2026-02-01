@@ -185,10 +185,15 @@ const {
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     padding-bottom: 0.5rem;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    flex-wrap: nowrap;
+    min-width: 0;
   }
 
   .gallery-variant-carousel .gallery-item {
-    min-width: 260px;
+    min-width: min(80vw, 320px);
     flex: 0 0 auto;
     scroll-snap-align: start;
   }
@@ -258,6 +263,12 @@ const {
 
     .gallery-nav-next {
       right: -8px;
+    }
+
+    .gallery-variant-carousel .gallery-grid {
+      max-width: 100%;
+      padding-left: 6px;
+      padding-right: 6px;
     }
   }
 </style>
