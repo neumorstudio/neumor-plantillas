@@ -30,7 +30,7 @@ const {
       <p data-content="gallerySubtitle">{subtitle}</p>
     </div>
     {variant === "carousel" ? (
-      <div class="gallery-carousel">
+      <div class="gallery-carousel" data-gallery-carousel>
         <button class="gallery-nav gallery-nav-prev" type="button" aria-label="Anterior" data-gallery-prev>
           &lsaquo;
         </button>
@@ -63,25 +63,31 @@ const {
       {`
         const section = document.getElementById("gallery");
         if (section) {
+          const root = section.querySelector("[data-gallery-carousel]");
           const track = section.querySelector("[data-gallery-track]");
           const prevBtn = section.querySelector("[data-gallery-prev]");
           const nextBtn = section.querySelector("[data-gallery-next]");
-          if (track && prevBtn && nextBtn) {
+          if (root && track && prevBtn && nextBtn) {
             const scrollByAmount = () => Math.max(240, track.clientWidth * 0.8);
             const updateNav = () => {
               const max = track.scrollWidth - track.clientWidth;
               prevBtn.disabled = track.scrollLeft <= 0;
               nextBtn.disabled = track.scrollLeft >= max - 1;
             };
+            const scrollToPos = (delta) => {
+              const max = track.scrollWidth - track.clientWidth;
+              const next = Math.max(0, Math.min(max, track.scrollLeft + delta));
+              track.scrollTo({ left: next, behavior: "smooth" });
+            };
             prevBtn.addEventListener("click", () => {
-              track.scrollBy({ left: -scrollByAmount(), behavior: "smooth" });
+              scrollToPos(-scrollByAmount());
             });
             nextBtn.addEventListener("click", () => {
-              track.scrollBy({ left: scrollByAmount(), behavior: "smooth" });
+              scrollToPos(scrollByAmount());
             });
             track.addEventListener("scroll", updateNav);
             window.addEventListener("resize", updateNav);
-            updateNav();
+            requestAnimationFrame(updateNav);
           }
         }
       `}
@@ -170,6 +176,7 @@ const {
     gap: 1.25rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
     padding-bottom: 0.5rem;
   }
 
