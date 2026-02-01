@@ -49,8 +49,10 @@ const upcomingAppointments = bookings.filter(
   (b) => new Date(b.booking_date) >= now && b.status !== "cancelled"
 );
 
-// Completed count
-const completedCount = bookings.filter((b) => b.status === "completed").length;
+// Total visits: past appointments that were not cancelled
+const totalVisits = bookings.filter(
+  (b) => new Date(b.booking_date) < now && b.status !== "cancelled"
+).length;
 
 // Top services - extract names from service objects
 const allServices = bookings.flatMap((b) => (b.services || []).map(getServiceName));
@@ -88,7 +90,7 @@ const topServices = Object.entries(serviceCount)
           <polyline points="22 4 12 14.01 9 11.01"></polyline>
         </svg>
       </div>
-      <div class="portal-stat-value">{completedCount}</div>
+      <div class="portal-stat-value">{totalVisits}</div>
       <div class="portal-stat-label">Visitas totales</div>
     </div>
   </div>

@@ -29,14 +29,17 @@ const getStatusBadge = (status: string) => {
 };
 
 const now = new Date();
+now.setHours(0, 0, 0, 0);
 
 // Upcoming reservations
 const upcomingReservations = bookings.filter(
   (b) => new Date(b.booking_date) >= now && b.status !== "cancelled"
 );
 
-// Total visits
-const totalVisits = bookings.filter((b) => b.status === "completed").length;
+// Total visits: past reservations that were not cancelled
+const totalVisits = bookings.filter(
+  (b) => new Date(b.booking_date) < now && b.status !== "cancelled"
+).length;
 ---
 
 <div class="restaurant-theme">
