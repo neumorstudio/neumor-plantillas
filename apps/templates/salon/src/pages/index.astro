@@ -31,7 +31,7 @@ import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Review
 import { FAQSection, ContactSection, TeamSection, GallerySection, PlansSection } from "@components/Sections";
 
 // Importar cliente Supabase
-import { getBusinessHours, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig, type SectionId } from "@lib/supabase";
+import { getBusinessHours, getProfessionalCategories, getProfessionals, getServiceCatalog, getWebsiteConfig, type Theme, type WebsiteVariants, type SectionConfig, type SectionsConfig, type SectionId } from "@lib/supabase";
 
 // ============================================
 // PREVIEW MODE - Leer parametros de URL
@@ -273,6 +273,36 @@ const FooterComponent = componentMap.footer[selectedVariants.footer] || FooterFu
 const currentWebsiteId = websiteData?.id || websiteId || "";
 const serviceCatalog = await getServiceCatalog(currentWebsiteId);
 const businessHours = await getBusinessHours(currentWebsiteId);
+const professionals = await getProfessionals(currentWebsiteId);
+const professionalCategories = await getProfessionalCategories(currentWebsiteId);
+const categoryInfo = new Map(
+  serviceCatalog.map((category, index) => [
+    category.id,
+    {
+      name: category.name,
+      order: typeof category.sort_order === "number" ? category.sort_order : index,
+    },
+  ])
+);
+const professionalCategoryMap = new Map<string, string[]>();
+professionalCategories.forEach((item) => {
+  if (!professionalCategoryMap.has(item.professional_id)) {
+    professionalCategoryMap.set(item.professional_id, []);
+  }
+  professionalCategoryMap.get(item.professional_id)?.push(item.category_id);
+});
+const teamMembers = professionals.map((professional) => {
+  const categoryIds = professionalCategoryMap.get(professional.id) || [];
+  const primaryCategory = categoryIds
+    .map((id) => categoryInfo.get(id))
+    .filter((item): item is { name: string; order: number } => Boolean(item))
+    .sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name, "es"))
+    .map((item) => item.name)[0];
+  return {
+    name: professional.name,
+    role: primaryCategory,
+  };
+});
 const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
   const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
   if (!openDay) return "Cerrado";
@@ -432,6 +462,7 @@ const serviceCategories = serviceCatalog.length
                 <TeamSection
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
+                  members={teamMembers}
                   variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
                 />
               </section>

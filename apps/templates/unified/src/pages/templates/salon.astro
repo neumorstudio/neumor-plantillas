@@ -17,7 +17,7 @@ import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@salon/components/
 import { FAQSection, ContactSection, OpenStatusSection, TeamSection, GallerySection, PlansSection } from "@salon/components/Sections";
 
 // Import Supabase helpers
-import { getBusinessHours, getServiceCatalog } from "@salon/lib/supabase";
+import { getBusinessHours, getProfessionalCategories, getProfessionals, getServiceCatalog } from "@salon/lib/supabase";
 import { createPortalClient } from "../../lib/supabase-portal";
 
 // Get tenant from middleware
@@ -117,6 +117,36 @@ const Testimonials = componentMap.testimonials[(configVariants as Record<string,
 // Get service catalog from Supabase
 const serviceCatalog = await getServiceCatalog(tenant.id);
 const businessHours = await getBusinessHours(tenant.id);
+const professionals = await getProfessionals(tenant.id);
+const professionalCategories = await getProfessionalCategories(tenant.id);
+const categoryInfo = new Map(
+  serviceCatalog.map((category, index) => [
+    category.id,
+    {
+      name: category.name,
+      order: typeof category.sort_order === "number" ? category.sort_order : index,
+    },
+  ])
+);
+const professionalCategoryMap = new Map<string, string[]>();
+professionalCategories.forEach((item) => {
+  if (!professionalCategoryMap.has(item.professional_id)) {
+    professionalCategoryMap.set(item.professional_id, []);
+  }
+  professionalCategoryMap.get(item.professional_id)?.push(item.category_id);
+});
+const teamMembers = professionals.map((professional) => {
+  const categoryIds = professionalCategoryMap.get(professional.id) || [];
+  const primaryCategory = categoryIds
+    .map((id) => categoryInfo.get(id))
+    .filter((item): item is { name: string; order: number } => Boolean(item))
+    .sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name, "es"))
+    .map((item) => item.name)[0];
+  return {
+    name: professional.name,
+    role: primaryCategory,
+  };
+});
 const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
   const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
   if (!openDay) return "Cerrado";
@@ -378,6 +408,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                 <TeamSection
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
+                  members={teamMembers}
                   variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
                 />
               </section>
