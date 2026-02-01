@@ -463,7 +463,10 @@ export function PersonalizacionClient({
     }));
   }, []);
 
-  const handleContentChange = useCallback((key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => {
+  const handleContentChange = useCallback(function handleContentChange<K extends keyof ContentConfig>(
+    key: K,
+    value: ContentConfig[K]
+  ) {
     setContent(prev => ({ ...prev, [key]: value }));
   }, []);
 

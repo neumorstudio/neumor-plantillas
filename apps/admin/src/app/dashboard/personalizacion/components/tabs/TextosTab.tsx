@@ -14,7 +14,7 @@ interface TextosTabProps {
   businessType: BusinessType;
   isMobile: boolean;
   sections: SectionConfig[];
-  onContentChange: (key: keyof ContentConfig, value: string | ContentConfig["socialLinks"] | ContentConfig["schedule"]) => void;
+  onContentChange: <K extends keyof ContentConfig>(key: K, value: ContentConfig[K]) => void;
   onFeaturesTitleChange: (key: "title" | "subtitle", value: string) => void;
   onFeatureItemChange: (id: string, key: keyof FeatureItemConfig, value: string) => void;
   onAddFeatureItem: () => void;
