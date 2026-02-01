@@ -29,15 +29,65 @@ const {
       <h2 data-content="galleryTitle">{title}</h2>
       <p data-content="gallerySubtitle">{subtitle}</p>
     </div>
-    <div class="gallery-grid">
-      {images.map((image, index) => (
-        <div class="gallery-item neumor-card" style={`animation-delay: ${index * 100}ms`}>
-          <img src={image} alt={`Galería imagen ${index + 1}`} loading="lazy" />
+    {variant === "carousel" ? (
+      <div class="gallery-carousel">
+        <button class="gallery-nav gallery-nav-prev" type="button" aria-label="Anterior" data-gallery-prev>
+          &lsaquo;
+        </button>
+        <div class="gallery-grid" data-gallery-track>
+          {images.map((image, index) => (
+            <div class="gallery-item neumor-card" style={`animation-delay: ${index * 100}ms`}>
+              <img src={image} alt={`Galeria imagen ${index + 1}`} loading="lazy" />
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+        <button class="gallery-nav gallery-nav-next" type="button" aria-label="Siguiente" data-gallery-next>
+          &rsaquo;
+        </button>
+      </div>
+    ) : (
+      <div class="gallery-grid">
+        {images.map((image, index) => (
+          <div class="gallery-item neumor-card" style={`animation-delay: ${index * 100}ms`}>
+            <img src={image} alt={`Galeria imagen ${index + 1}`} loading="lazy" />
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 </section>
+
+{
+  variant === "carousel" && (
+    <script>
+      {`
+        const section = document.getElementById("gallery");
+        if (section) {
+          const track = section.querySelector("[data-gallery-track]");
+          const prevBtn = section.querySelector("[data-gallery-prev]");
+          const nextBtn = section.querySelector("[data-gallery-next]");
+          if (track && prevBtn && nextBtn) {
+            const scrollByAmount = () => Math.max(240, track.clientWidth * 0.8);
+            const updateNav = () => {
+              const max = track.scrollWidth - track.clientWidth;
+              prevBtn.disabled = track.scrollLeft <= 0;
+              nextBtn.disabled = track.scrollLeft >= max - 1;
+            };
+            prevBtn.addEventListener("click", () => {
+              track.scrollBy({ left: -scrollByAmount(), behavior: "smooth" });
+            });
+            nextBtn.addEventListener("click", () => {
+              track.scrollBy({ left: scrollByAmount(), behavior: "smooth" });
+            });
+            track.addEventListener("scroll", updateNav);
+            window.addEventListener("resize", updateNav);
+            updateNav();
+          }
+        }
+      `}
+    </script>
+  )
+}
 
 <style>
   .gallery-header {
@@ -129,6 +179,48 @@ const {
     scroll-snap-align: start;
   }
 
+  .gallery-carousel {
+    position: relative;
+  }
+
+  .gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text-primary);
+    font-size: 24px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    z-index: 2;
+  }
+
+  .gallery-nav:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .gallery-nav:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .gallery-nav-prev {
+    left: -12px;
+  }
+
+  .gallery-nav-next {
+    right: -12px;
+  }
+
   @media (max-width: 1024px) {
     .gallery-variant-masonry .gallery-grid {
       column-count: 2;
@@ -138,6 +230,20 @@ const {
   @media (max-width: 640px) {
     .gallery-variant-masonry .gallery-grid {
       column-count: 1;
+    }
+
+    .gallery-nav {
+      width: 34px;
+      height: 34px;
+      font-size: 20px;
+    }
+
+    .gallery-nav-prev {
+      left: -8px;
+    }
+
+    .gallery-nav-next {
+      right: -8px;
     }
   }
 </style>
