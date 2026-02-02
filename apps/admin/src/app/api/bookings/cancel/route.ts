@@ -101,9 +101,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (origin) {
-      const websiteDomain = Array.isArray(booking.website)
-        ? booking.website[0]?.domain
-        : booking.website?.domain;
+      const websiteRelation = (booking as unknown as {
+        website?: { domain?: string | null } | { domain?: string | null }[] | null;
+      }).website;
+      const websiteDomain = Array.isArray(websiteRelation)
+        ? websiteRelation[0]?.domain
+        : websiteRelation?.domain;
       if (!websiteDomain || !isAllowedOrigin(origin, websiteDomain)) {
         return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
       }
