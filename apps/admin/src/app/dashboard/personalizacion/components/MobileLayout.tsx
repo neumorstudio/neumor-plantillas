@@ -59,7 +59,7 @@ export function MobileLayout({
   message,
 }: MobileLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col pb-20">
+    <div className="h-screen flex flex-col pb-20 overflow-hidden">
       {/* Mobile Header */}
       <div className="sticky top-0 z-40 bg-[var(--neumor-bg)] px-4 py-3 border-b border-[var(--shadow-dark)]">
         <div className="flex items-center justify-between">
@@ -77,20 +77,18 @@ export function MobileLayout({
       {/* Toast Message */}
       {message && (
         <div
-          className={`fixed top-16 left-4 right-4 z-50 p-3 rounded-lg text-sm shadow-lg ${
-            message.type === "success"
+          className={`fixed top-16 left-4 right-4 z-50 p-3 rounded-lg text-sm shadow-lg ${message.type === "success"
               ? "bg-green-500 text-white"
               : "bg-red-500 text-white"
-          }`}
+            }`}
         >
           {message.text}
         </div>
       )}
 
       {/* Collapsible Preview */}
-      <div className={`relative transition-all duration-300 bg-[var(--shadow-dark)] ${
-        previewExpanded ? 'h-[60vh]' : 'h-[30vh]'
-      }`}>
+      <div className={`relative transition-all duration-300 bg-[var(--shadow-dark)] ${previewExpanded ? 'h-[60vh]' : 'h-[30vh]'
+        }`}>
         <iframe
           key={previewUrl}
           ref={iframeMobileRef}
@@ -141,11 +139,10 @@ export function MobileLayout({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center p-2 min-w-[48px] transition-colors ${
-                activeTab === tab.id
+              className={`flex flex-col items-center p-2 min-w-[48px] transition-colors ${activeTab === tab.id
                   ? 'text-[var(--accent)]'
                   : 'text-[var(--text-secondary)]'
-              }`}
+                }`}
             >
               {tab.icon}
               <span className="text-[10px] mt-0.5 font-medium">{tab.shortLabel}</span>
@@ -158,11 +155,10 @@ export function MobileLayout({
       <button
         onClick={onSave}
         disabled={saving}
-        className={`fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
-          saving
+        className={`fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${saving
             ? 'bg-gray-400'
             : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:scale-95'
-        }`}
+          }`}
         style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}
       >
         {saving ? (
