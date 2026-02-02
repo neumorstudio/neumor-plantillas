@@ -551,7 +551,7 @@ const serviceCategories = serviceCatalog.length
     {(() => {
       const footerCfg = sectionConfigMap.get("footer");
       const isFooterEnabled = footerCfg?.enabled ?? true;
-      const footerOrder = footerCfg?.order ?? 9999;
+      const footerOrder = footerCfg?.order ?? 999999;
       const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
 
       return (

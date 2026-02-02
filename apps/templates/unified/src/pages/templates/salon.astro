@@ -477,7 +477,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
             );
           case "booking":
             return (
-              <section data-section-id="booking" style={style}>
+              <div data-section-id="booking" style={style}>
                 <AppointmentForm
                   webhookUrl={webhookUrl}
                   websiteId={tenant.id}
@@ -486,33 +486,32 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   phone={pageConfig.phone}
                   email={pageConfig.email}
                 />
-              </section>
+              </div>
             );
           default:
             return null;
         }
       });
     })()}
+    {/* Footer - siempre renderizado para live preview */}
+    {(() => {
+      const footerCfg = sectionsConfig.sections.find((s) => s.id === "footer");
+      const isFooterEnabled = footerCfg?.enabled ?? true;
+      const footerOrder = footerCfg?.order ?? 999999;
+      const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+      return (
+        <div data-section-id="footer" style={footerStyle}>
+          <FooterComponent
+            businessName={pageConfig.businessName}
+            address={pageConfig.address}
+            phone={pageConfig.phone}
+            email={pageConfig.email}
+            schedule={pageConfig.schedule}
+            socialLinks={pageConfig.socialLinks}
+          />
+        </div>
+      );
+    })()}
   </main>
-
-  {/* Footer - siempre renderizado para live preview */}
-  {(() => {
-    const footerCfg = sectionsConfig.sections.find((s) => s.id === "footer");
-    const isFooterEnabled = footerCfg?.enabled ?? true;
-    const footerOrder = footerCfg?.order ?? 100;
-    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
-
-    return (
-      <div data-section-id="footer" style={footerStyle}>
-        <FooterComponent
-          businessName={pageConfig.businessName}
-          address={pageConfig.address}
-          phone={pageConfig.phone}
-          email={pageConfig.email}
-          schedule={pageConfig.schedule}
-          socialLinks={pageConfig.socialLinks}
-        />
-      </div>
-    );
-  })()}
 </Layout>
