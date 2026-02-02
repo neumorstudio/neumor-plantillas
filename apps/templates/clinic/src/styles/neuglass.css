@@ -1250,3 +1250,13 @@
     border-width: 2px;
   }
 }
+
+
+/* ==================== DISABLE FLOATING HERO PANELS ==================== */
+.floating-elements,
+.floating-element,
+.floating-badge,
+.floating-tag,
+.hero-badge {
+  display: none !important;
+}
