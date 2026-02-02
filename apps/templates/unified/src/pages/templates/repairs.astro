@@ -88,6 +88,7 @@ const pageConfig = {
   heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Reparaciones de Confianza",
   heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Profesionales a tu servicio",
   heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+  heroCta: config.heroCta as string | undefined,
   address: previewContent?.address || (config.address as string) || "",
   phone: previewContent?.phone || (config.phone as string) || "",
   email: previewContent?.email || (config.email as string) || "",
@@ -119,6 +120,7 @@ const pageConfig = {
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
+      ctaText={pageConfig.heroCta}
       backgroundImage={pageConfig.heroImage}
       scheduleLabel={scheduleLabel}
       address={pageConfig.address}

@@ -155,6 +155,7 @@ const pageConfig = {
   heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Bienvenidos a Nuestro Restaurante",
   heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Una experiencia culinaria unica",
   heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+  heroCta: config.heroCta as string | undefined,
   address: previewContent?.address || (config.address as string) || "",
   phone: previewContent?.phone || (config.phone as string) || "",
   email: previewContent?.email || (config.email as string) || "",
@@ -190,6 +191,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
+      ctaText={pageConfig.heroCta}
       backgroundImage={pageConfig.heroImage}
       scheduleLabel={scheduleLabel}
       address={pageConfig.address}

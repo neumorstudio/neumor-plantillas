@@ -88,6 +88,7 @@ const pageConfig = {
   heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Transforma Tu Cuerpo",
   heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Entrena con los mejores profesionales",
   heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
+  heroCta: config.heroCta as string | undefined,
   address: previewContent?.address || (config.address as string) || "",
   phone: previewContent?.phone || (config.phone as string) || "",
   email: previewContent?.email || (config.email as string) || "",
@@ -119,6 +120,7 @@ const pageConfig = {
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
+      ctaText={pageConfig.heroCta}
       backgroundImage={pageConfig.heroImage}
       scheduleLabel={scheduleLabel}
       address={pageConfig.address}

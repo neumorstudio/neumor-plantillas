@@ -88,6 +88,7 @@ const pageConfig = {
   heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Bienvenido a Nuestra Tienda",
   heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Los mejores productos al mejor precio",
   heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80",
+  heroCta: config.heroCta as string | undefined,
   address: previewContent?.address || (config.address as string) || "",
   phone: previewContent?.phone || (config.phone as string) || "",
   email: previewContent?.email || (config.email as string) || "",
@@ -119,6 +120,7 @@ const pageConfig = {
     <Hero
       title={pageConfig.heroTitle}
       subtitle={pageConfig.heroSubtitle}
+      ctaText={pageConfig.heroCta}
       backgroundImage={pageConfig.heroImage}
       scheduleLabel={scheduleLabel}
       address={pageConfig.address}

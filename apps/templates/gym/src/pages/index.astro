@@ -296,6 +296,7 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
                 <Hero
                   title={config.heroTitle}
                   subtitle={config.heroSubtitle}
+                  ctaText={getContentText("heroCta")}
                   backgroundImage={config.heroImage}
                   scheduleLabel={scheduleLabel}
                   address={config.address}
