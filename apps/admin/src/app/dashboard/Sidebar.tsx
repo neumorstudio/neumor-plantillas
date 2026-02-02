@@ -179,7 +179,7 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
       baseSections.push("profesionales");
     }
     resolvedSections = baseSections.filter(
-      (section) => !["reservas", "clientes", "newsletter"].includes(section)
+      (section) => !["reservas", "clientes"].includes(section)
     );
   }
 
