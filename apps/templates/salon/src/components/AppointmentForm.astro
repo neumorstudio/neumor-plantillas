@@ -1117,16 +1117,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
   const syncStepPanelHeight = () => {
     if (!stepPanels) return;
-    if (window.innerWidth < 900) {
-      stepPanels.style.minHeight = "";
-      return;
-    }
+    // Always clear minHeight to let content flow naturally
+    // This prevents the empty space issue when service catalog has many items
     stepPanels.style.minHeight = "";
-    const activePanel = stepPanels.querySelector<HTMLElement>(".step-panel.is-active");
-    if (!activePanel) return;
-    requestAnimationFrame(() => {
-      stepPanels.style.minHeight = `${Math.max(0, activePanel.offsetHeight)}px`;
-    });
   };
 
   const setAuthState = (email?: string | null, userId?: string | null, customerId?: string | null) => {
