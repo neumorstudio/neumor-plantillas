@@ -398,24 +398,24 @@ export function NewsletterClient({
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold mb-2">Newsletter</h1>
+        <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-2">Newsletter</h1>
         <p className="text-[var(--text-secondary)]">
           Envia emails a tus clientes para mantenerlos informados
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="neumor-card p-4 text-center">
-          <p className="text-3xl font-bold text-[var(--accent)]">{subscriberCount}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-[var(--accent)]">{subscriberCount}</p>
           <p className="text-sm text-[var(--text-secondary)]">Suscriptores</p>
         </div>
         <div className="neumor-card p-4 text-center">
-          <p className="text-3xl font-bold">{templates.length}</p>
+          <p className="text-2xl sm:text-3xl font-bold">{templates.length}</p>
           <p className="text-sm text-[var(--text-secondary)]">Plantillas</p>
         </div>
         <div className="neumor-card p-4 text-center">
-          <p className="text-3xl font-bold">{campaigns.length}</p>
+          <p className="text-2xl sm:text-3xl font-bold">{campaigns.length}</p>
           <p className="text-sm text-[var(--text-secondary)]">Campañas</p>
         </div>
       </div>
@@ -434,10 +434,10 @@ export function NewsletterClient({
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap sm:flex-nowrap overflow-x-auto pb-1">
         <button
           onClick={() => setActiveTab("templates")}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base whitespace-nowrap ${
             activeTab === "templates"
               ? "bg-[var(--accent)] text-white"
               : "neumor-btn"
@@ -447,7 +447,7 @@ export function NewsletterClient({
         </button>
         <button
           onClick={() => setActiveTab("campaigns")}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base whitespace-nowrap ${
             activeTab === "campaigns"
               ? "bg-[var(--accent)] text-white"
               : "neumor-btn"
@@ -467,7 +467,7 @@ export function NewsletterClient({
               html_content: defaultEmailTemplate,
             });
           }}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base whitespace-nowrap ${
             activeTab === "editor"
               ? "bg-[var(--accent)] text-white"
               : "neumor-btn"
@@ -477,7 +477,7 @@ export function NewsletterClient({
         </button>
         <button
           onClick={() => setActiveTab("automation")}
-          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm sm:text-base whitespace-nowrap ${
             activeTab === "automation"
               ? "bg-[var(--accent)] text-white"
               : "neumor-btn"
@@ -506,7 +506,7 @@ export function NewsletterClient({
           ) : (
             templates.map((template) => (
               <div key={template.id} className="neumor-card p-4">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{template.name}</h3>
                     <p className="text-sm text-[var(--text-secondary)]">
@@ -516,25 +516,25 @@ export function NewsletterClient({
                       Creada: {new Date(template.created_at).toLocaleDateString("es-ES")}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
                     <button
                       onClick={() => {
                         setSelectedTemplate(template);
                         setShowCampaignModal(true);
                       }}
-                      className="neumor-btn neumor-btn-accent text-sm px-3 py-1"
+                      className="neumor-btn neumor-btn-accent text-sm px-3 py-1 w-full sm:w-auto"
                     >
                       Enviar
                     </button>
                     <button
                       onClick={() => handleEditTemplate(template)}
-                      className="neumor-btn text-sm px-3 py-1"
+                      className="neumor-btn text-sm px-3 py-1 w-full sm:w-auto"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="neumor-btn text-sm px-3 py-1 text-red-600"
+                      className="neumor-btn text-sm px-3 py-1 text-red-600 w-full sm:w-auto"
                     >
                       Eliminar
                     </button>
@@ -556,9 +556,9 @@ export function NewsletterClient({
           ) : (
             campaigns.map((campaign) => (
               <div key={campaign.id} className="neumor-card p-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <h3 className="font-semibold">{campaign.name}</h3>
                       {getStatusBadge(campaign.status)}
                     </div>
@@ -566,7 +566,7 @@ export function NewsletterClient({
                       {campaign.subject}
                     </p>
                   </div>
-                  <div className="text-right text-sm">
+                  <div className="text-sm sm:text-right">
                     <p className="text-[var(--text-secondary)]">
                       {campaign.recipients_count} enviados
                     </p>
@@ -588,17 +588,17 @@ export function NewsletterClient({
 
       {/* Editor Tab */}
       {activeTab === "editor" && (
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form */}
           <div className="space-y-4">
             <div className="neumor-card p-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <h3 className="font-semibold">
                   {editorMode === "edit" ? "Editar Plantilla" : "Nueva Plantilla"}
                 </h3>
                 <button
                   onClick={() => setShowAIModal(true)}
-                  className="neumor-btn flex items-center gap-2 text-sm px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                  className="neumor-btn w-full sm:w-auto flex items-center justify-center gap-2 text-sm px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -643,19 +643,6 @@ export function NewsletterClient({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Contenido HTML</label>
-                  <textarea
-                    value={templateForm.html_content}
-                    onChange={(e) => setTemplateForm({ ...templateForm, html_content: e.target.value })}
-                    rows={15}
-                    className="neumor-input w-full font-mono text-sm"
-                  />
-                  <p className="text-xs text-[var(--text-secondary)] mt-1">
-                    Variables: {"{{restaurantName}}"}, {"{{title}}"}, {"{{content}}"}, {"{{ctaText}}"}, {"{{ctaLink}}"}
-                  </p>
-                </div>
-
                 <button
                   onClick={handleSaveTemplate}
                   disabled={saving}
@@ -670,7 +657,7 @@ export function NewsletterClient({
           {/* Preview */}
           <div className="neumor-card p-4">
             <h3 className="font-semibold mb-4">Vista Previa</h3>
-            <div className="bg-gray-100 rounded-lg p-4 overflow-auto" style={{ maxHeight: "600px" }}>
+            <div className="bg-gray-100 rounded-lg p-4 overflow-auto max-h-[420px] sm:max-h-[600px]">
               <iframe
                 srcDoc={templateForm.html_content
                   .replace(/\{\{restaurantName\}\}/g, "Tu Restaurante")
@@ -874,36 +861,36 @@ export function NewsletterClient({
               <h3 className="font-semibold mb-4">Resumen de Automatizacion</h3>
 
               <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-[var(--border)]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">
                   <span className="text-[var(--text-secondary)]">Estado</span>
                   <span className={`font-medium ${automation.is_enabled ? "text-green-600" : "text-gray-500"}`}>
                     {automation.is_enabled ? "Activo" : "Inactivo"}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-[var(--border)]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">
                   <span className="text-[var(--text-secondary)]">Frecuencia</span>
                   <span className="font-medium">{getFrequencyLabel(automation.frequency)}</span>
                 </div>
                 {automation.frequency === "weekly" || automation.frequency === "biweekly" ? (
-                  <div className="flex justify-between py-2 border-b border-[var(--border)]">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">
                     <span className="text-[var(--text-secondary)]">Dia</span>
                     <span className="font-medium">{getDayName(automation.day_of_week)}</span>
                   </div>
                 ) : automation.frequency === "monthly" ? (
-                  <div className="flex justify-between py-2 border-b border-[var(--border)]">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">
                     <span className="text-[var(--text-secondary)]">Dia del mes</span>
                     <span className="font-medium">{automation.day_of_month}</span>
                   </div>
                 ) : null}
-                <div className="flex justify-between py-2 border-b border-[var(--border)]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">
                   <span className="text-[var(--text-secondary)]">Hora</span>
                   <span className="font-medium">{automation.send_time}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-[var(--border)]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">
                   <span className="text-[var(--text-secondary)]">Audiencia</span>
                   <span className="font-medium">{getAudienceLabel(automation.auto_audience)}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2">
                   <span className="text-[var(--text-secondary)]">Campanyas enviadas</span>
                   <span className="font-medium">{automation.total_campaigns_sent}</span>
                 </div>
@@ -947,7 +934,7 @@ export function NewsletterClient({
       {/* Campaign Modal */}
       {showCampaignModal && selectedTemplate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="neumor-card p-6 max-w-md w-full mx-4">
+          <div className="neumor-card p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-semibold mb-4">Enviar Campana</h3>
 
             <div className="space-y-4">
@@ -979,7 +966,7 @@ export function NewsletterClient({
                 </select>
               </div>
 
-              <div className="flex gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row gap-2 mt-6">
                 <button
                   onClick={() => {
                     setShowCampaignModal(false);
@@ -1005,7 +992,7 @@ export function NewsletterClient({
       {/* AI Generation Modal */}
       {showAIModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="neumor-card p-6 max-w-lg w-full mx-4">
+          <div className="neumor-card p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1045,7 +1032,7 @@ export function NewsletterClient({
                 </ul>
               </div>
 
-              <div className="flex gap-2 mt-6">
+              <div className="flex flex-col sm:flex-row gap-2 mt-6">
                 <button
                   onClick={() => {
                     setShowAIModal(false);
