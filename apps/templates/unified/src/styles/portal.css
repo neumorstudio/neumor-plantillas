@@ -6,10 +6,13 @@
 /* Portal Body */
 .portal-body {
   font-family: "Inter", system-ui, sans-serif;
-  background-color: var(--ng-surface);
+  background: var(--ng-gradient-surface);
   color: var(--ng-text-primary);
   min-height: 100vh;
   padding-bottom: 80px; /* Space for bottom nav */
+  --ng-shadow-raised: 8px 8px 16px var(--ng-shadow-dark), -8px -8px 16px var(--ng-shadow-light);
+  --ng-shadow-inset: inset 6px 6px 12px var(--ng-shadow-dark), inset -6px -6px 12px var(--ng-shadow-light);
+  --ng-shadow-soft: 4px 4px 10px var(--ng-shadow-dark), -4px -4px 10px var(--ng-shadow-light);
 }
 
 /* Portal Header */
@@ -19,13 +22,14 @@
   left: 0;
   right: 0;
   height: 60px;
-  background-color: var(--ng-surface);
+  background: var(--ng-gradient-surface);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
   z-index: 100;
-  box-shadow: 0 2px 10px var(--ng-shadow-dark);
+  box-shadow: var(--ng-shadow-raised);
+  border-bottom: 1px solid var(--ng-glass-border);
 }
 
 .portal-header-logo {
@@ -65,6 +69,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
+  box-shadow: var(--ng-shadow-soft);
 }
 
 .portal-logout-btn {
@@ -73,7 +78,7 @@
   border-radius: 0.5rem;
   background: var(--ng-surface);
   box-shadow: var(--ng-shadow-raised);
-  border: none;
+  border: 1px solid var(--ng-glass-border);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -117,14 +122,15 @@
   left: 0;
   right: 0;
   height: 72px;
-  background-color: var(--ng-surface);
+  background: var(--ng-gradient-surface);
   display: flex;
   align-items: center;
   justify-content: space-around;
   padding: 0 0.5rem;
   padding-bottom: env(safe-area-inset-bottom, 0);
   z-index: 100;
-  box-shadow: 0 -2px 20px var(--ng-shadow-dark);
+  box-shadow: var(--ng-shadow-raised);
+  border-top: 1px solid var(--ng-glass-border);
 }
 
 .portal-nav-item {
@@ -152,11 +158,14 @@
 
 .portal-nav-item.active {
   color: var(--ng-accent);
-  background: rgba(var(--ng-accent-rgb, 99, 102, 241), 0.1);
+  background: var(--ng-surface);
+  box-shadow: var(--ng-shadow-inset);
 }
 
 .portal-nav-item:not(.active):hover {
   color: var(--ng-accent);
+  background: var(--ng-surface);
+  box-shadow: var(--ng-shadow-soft);
 }
 
 /* Page Title */
@@ -169,11 +178,12 @@
 
 /* Portal Cards */
 .portal-card {
-  background-color: var(--ng-surface);
+  background: var(--ng-surface);
   border-radius: 1rem;
   padding: 1rem;
   margin-bottom: 1rem;
   box-shadow: var(--ng-shadow-raised);
+  border: 1px solid var(--ng-glass-border);
 }
 
 .portal-card-header {
@@ -218,11 +228,12 @@
 }
 
 .portal-stat-card {
-  background-color: var(--ng-surface);
+  background: var(--ng-surface);
   border-radius: 1rem;
   padding: 1rem;
   text-align: center;
   box-shadow: var(--ng-shadow-raised);
+  border: 1px solid var(--ng-glass-border);
 }
 
 .portal-stat-icon {
@@ -235,6 +246,7 @@
   align-items: center;
   justify-content: center;
   color: white;
+  box-shadow: var(--ng-shadow-soft);
 }
 
 .portal-stat-icon svg {
@@ -261,10 +273,11 @@
 }
 
 .portal-list-item {
-  background-color: var(--ng-surface);
+  background: var(--ng-surface);
   border-radius: 1rem;
   padding: 1rem;
   box-shadow: var(--ng-shadow-raised);
+  border: 1px solid var(--ng-glass-border);
 }
 
 .portal-list-item-header {
@@ -328,13 +341,14 @@
 }
 
 .portal-login-card {
-  background-color: var(--ng-surface);
+  background: var(--ng-surface);
   border-radius: 1.5rem;
   padding: 2rem;
   width: 100%;
   max-width: 400px;
   text-align: center;
   box-shadow: var(--ng-shadow-raised);
+  border: 1px solid var(--ng-glass-border);
 }
 
 .portal-login-logo {
@@ -375,7 +389,7 @@
   gap: 0.75rem;
   width: 100%;
   padding: 0.875rem 1.5rem;
-  background-color: var(--ng-surface);
+  background: var(--ng-surface);
   border: none;
   border-radius: 0.875rem;
   font-size: 1rem;
@@ -384,6 +398,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: var(--ng-shadow-raised);
+  border: 1px solid var(--ng-glass-border);
 }
 
 .portal-google-btn:hover {
@@ -416,13 +431,14 @@
 .portal-form-input {
   width: 100%;
   padding: 0.875rem 1rem;
-  background-color: var(--ng-surface);
+  background: var(--ng-surface-sunken);
   border: none;
   border-radius: 0.75rem;
   font-size: 1rem;
   color: var(--ng-text-primary);
   outline: none;
   box-shadow: var(--ng-shadow-inset);
+  border: 1px solid var(--ng-glass-border);
   transition: box-shadow 0.2s ease;
 }
 
