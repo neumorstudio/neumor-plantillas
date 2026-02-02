@@ -506,17 +506,23 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   }
 
   .service-catalog {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 1.25rem;
-    max-height: 460px;
+    max-height: 480px;
     overflow-y: auto;
-    padding-right: 0.4rem;
-    scrollbar-width: none;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
   }
 
   .service-catalog::-webkit-scrollbar {
-    width: 0;
-    height: 0;
+    width: 6px;
+  }
+
+  .service-catalog::-webkit-scrollbar-thumb {
+    background-color: var(--accent);
+    border-radius: 10px;
   }
 
   .service-category {
