@@ -388,7 +388,7 @@ export function TextosTab({
               </button>
             </div>
             {(content.faqItems || []).map((item, index) => (
-              <div key={`${item.title}-${index}`} className="neumor-inset p-3 rounded-xl space-y-2">
+              <div key={`faq-item-${index}`} className="neumor-inset p-3 rounded-xl space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[var(--text-secondary)]">Pregunta {index + 1}</span>
                   <button
