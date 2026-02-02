@@ -269,6 +269,7 @@ export async function getBookingsForMonth(year: number, month: number) {
     .from("bookings")
     .select("id, customer_name, customer_email, customer_phone, booking_date, booking_time, professional_id, services, status, notes, total_price_cents, total_duration_minutes, created_at")
     .eq("website_id", websiteId)
+    .neq("status", "cancelled")
     .gte("booking_date", start)
     .lte("booking_date", end)
     .order("booking_date", { ascending: true })
