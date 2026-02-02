@@ -576,6 +576,7 @@ const defaultFonts = !fontImports
               if (el) {
                 // Check if hero uses structured title (HeroSplit, HeroFullscreen)
                 const titleLines = el.querySelectorAll('.title-line');
+                const titleWords = el.querySelectorAll('.title-word');
                 if (titleLines.length > 0) {
                   // Update structured title - split by words
                   const words = content.heroTitle.split(' ');
@@ -586,6 +587,16 @@ const defaultFonts = !fontImports
                   if (words.length > titleLines.length) {
                     var lastSpan = titleLines[titleLines.length - 1];
                     lastSpan.textContent = words.slice(titleLines.length - 1).join(' ');
+                  }
+                } else if (titleWords.length > 0) {
+                  // Update HeroBold/HeroFullscreen split words
+                  const words = content.heroTitle.split(' ');
+                  titleWords.forEach(function(span, i) {
+                    if (words[i]) span.textContent = words[i];
+                  });
+                  if (words.length > titleWords.length) {
+                    var lastSpan = titleWords[titleWords.length - 1];
+                    lastSpan.textContent = words.slice(titleWords.length - 1).join(' ');
                   }
                 } else {
                   // Simple title (HeroClassic, HeroModern, etc)
