@@ -1,9 +1,21 @@
 ---
+import { getBusinessHourSlots, getBusinessHours, getProfessionals, getProfessionalCategories, getServiceCatalog, getSpecialDays, getSpecialDaySlots } from "@lib/supabase";
+
+// User info passed from server (SSR auth check)
+interface AuthUser {
+  email: string;
+  id: string;
+  customerId: string | null;
+  name?: string;
+  phone?: string;
+}
+
 interface Props {
   title?: string;
   subtitle?: string;
   webhookUrl?: string;
   websiteId?: string;
+  currentUser?: AuthUser | null;
   address?: string;
   phone?: string;
   email?: string;
@@ -11,13 +23,78 @@ interface Props {
 
 const {
   title = "Reserva tu Cita",
-  subtitle = "Completa el formulario y nos pondremos en contacto contigo para confirmar tu cita.",
+  subtitle = "Elige el servicio, luego fecha y hora. Confirmamos tu cita al instante.",
   webhookUrl = "",
   websiteId = "",
+  currentUser = null,
   address = "Calle Principal 123",
   phone = "+34 912 345 678",
-  email = "contacto@tuclinica.com",
+  email = "contacto@tusalon.com",
 } = Astro.props;
+
+const serviceCatalog = await getServiceCatalog(websiteId);
+const hasServiceCatalog = serviceCatalog.length > 0;
+const businessHours = await getBusinessHours(websiteId);
+const businessHourSlots = await getBusinessHourSlots(websiteId);
+const specialDays = await getSpecialDays(websiteId);
+const specialDaySlots = await getSpecialDaySlots(websiteId);
+const professionals = await getProfessionals(websiteId);
+const professionalCategories = await getProfessionalCategories(websiteId);
+
+// Supabase config for booking API calls (not auth)
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+const fallbackCategories = [
+  {
+    id: "cortes",
+    name: "Cortes",
+    items: [
+      {
+        id: "corte-caballero",
+        name: "Corte Caballero",
+        price_cents: 1800,
+        duration_minutes: 30,
+        notes: "Corte clasico o moderno.",
+      },
+      {
+        id: "corte-senora",
+        name: "Corte Senora",
+        price_cents: 2500,
+        duration_minutes: 45,
+        notes: "Corte personalizado segun tu estilo.",
+      },
+      {
+        id: "corte-infantil",
+        name: "Corte Infantil",
+        price_cents: 1200,
+        duration_minutes: 20,
+        notes: "Para ninos hasta 12 anos.",
+      },
+    ],
+  },
+  {
+    id: "barba",
+    name: "Barba",
+    items: [
+      {
+        id: "corte-barba",
+        name: "Corte + Barba",
+        price_cents: 2800,
+        duration_minutes: 45,
+        notes: "Combo completo con perfilado.",
+      },
+    ],
+  },
+];
+
+const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
+const hoursPayload = JSON.stringify(businessHours);
+const slotsPayload = JSON.stringify(businessHourSlots);
+const specialDaysPayload = JSON.stringify(specialDays);
+const specialDaySlotsPayload = JSON.stringify(specialDaySlots);
+const professionalsPayload = JSON.stringify(professionals);
+const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 ---
 
 <section id="appointment" class="section">
@@ -69,91 +146,224 @@ const {
         </div>
       </div>
 
-      <form class="appointment-form neumor-card" data-webhook={webhookUrl} data-website-id={websiteId}>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name">Nombre</label>
-            <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+      <form
+        class="appointment-form neumor-card"
+        data-webhook={webhookUrl}
+        data-website-id={websiteId}
+        data-has-services={categories.length > 0 ? "true" : "false"}
+        data-supabase-url={supabaseUrl}
+        data-supabase-key={supabaseAnonKey}
+        data-business-hours={hoursPayload}
+        data-business-hour-slots={slotsPayload}
+        data-special-days={specialDaysPayload}
+        data-special-day-slots={specialDaySlotsPayload}
+        data-professionals={professionalsPayload}
+        data-professional-categories={professionalCategoriesPayload}
+        data-current-user={currentUser ? JSON.stringify(currentUser) : ""}
+      >
+        <header class="appointment-header">
+          <h3>Reserva tu cita</h3>
+          <p>Completa los pasos para confirmar tu visita.</p>
+        </header>
+
+        <ol class="stepper">
+          <li class="stepper-item is-active" data-step-dot="1">
+            <span class="stepper-circle">1</span>
+            <span class="stepper-label">Servicios</span>
+          </li>
+          <li class="stepper-item" data-step-dot="2">
+            <span class="stepper-circle">2</span>
+            <span class="stepper-label">Fecha y hora</span>
+          </li>
+          <li class="stepper-item" data-step-dot="3">
+            <span class="stepper-circle">3</span>
+            <span class="stepper-label">Contacto</span>
+          </li>
+        </ol>
+
+        <div class="step-panels">
+          <div class="step-panel is-active" data-step="1">
+            <div class="panel-header">
+              <h4>Selecciona servicios</h4>
+              <p>Elige uno o varios servicios para tu cita.</p>
+            </div>
+            <div class="auth-block neumor-inset" data-auth-block>
+              <div class="auth-content">
+                <div class="auth-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <div>
+                  <h5>Inicia sesion para reservar</h5>
+                  <p>Necesitas iniciar sesion con Google para continuar con tu reserva.</p>
+                </div>
+              </div>
+              <div class="auth-actions">
+                <button type="button" class="neumor-btn neumor-btn-accent" data-auth-google>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  Continuar con Google
+                </button>
+                <span class="auth-user" data-auth-user hidden></span>
+              </div>
+            </div>
+            <div class="service-catalog">
+              {categories.map((category) => (
+                <div class="service-category">
+                  <div class="service-category-title">{category.name}</div>
+                  <div class="service-grid">
+                    {category.items.map((item) => (
+                      <label class="service-card">
+                        <input
+                          type="checkbox"
+                          name="services"
+                          value={item.id}
+                          data-category-id={(item as { category_id?: string }).category_id ?? ""}
+                          data-name={item.name}
+                          data-price={item.price_cents}
+                          data-duration={item.duration_minutes}
+                        />
+                        <span class="service-card-title">{item.name}</span>
+                        {item.notes ? <span class="service-card-note">{item.notes}</span> : null}
+                        <span class="service-card-meta">
+                          {(item.price_cents / 100).toFixed(2)} EUR | {item.duration_minutes} min
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div class="form-group">
-            <label for="phone">Telefono</label>
-            <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+
+          <div class="step-panel" data-step="2">
+            <div class="panel-header">
+              <h4>Elige fecha y hora</h4>
+              <p>Selecciona un dia y una franja horaria disponible.</p>
+            </div>
+            <div class="professional-select">
+              <h5>Selecciona profesional</h5>
+              {professionals.length ? (
+                <div class="professional-list">
+                  {professionals.map((professional) => (
+                    <label class="professional-chip">
+                      <input
+                        type="radio"
+                        name="professional_id"
+                        value={professional.id}
+                        required
+                      />
+                      <span>{professional.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p class="professional-empty">
+                  No hay profesionales disponibles.
+                </p>
+              )}
+              <p class="professional-empty" data-professional-warning hidden>
+                No hay profesionales que cubran esos servicios.
+              </p>
+            </div>
+            <div class="calendar-wrapper">
+              <div class="calendar-card neumor-inset">
+                <div class="calendar-header">
+                  <button type="button" class="calendar-nav" data-calendar-prev aria-label="Mes anterior">
+                    &lt;
+                  </button>
+                  <div class="calendar-month" data-calendar-label></div>
+                  <button type="button" class="calendar-nav" data-calendar-next aria-label="Mes siguiente">
+                    &gt;
+                  </button>
+                </div>
+                <div class="calendar-weekdays">
+                  <span>Lu</span>
+                  <span>Ma</span>
+                  <span>Mi</span>
+                  <span>Ju</span>
+                  <span>Vi</span>
+                  <span>Sa</span>
+                  <span>Do</span>
+                </div>
+                <div class="calendar-grid" data-calendar-grid></div>
+              </div>
+              <div class="time-card neumor-inset">
+                <div class="time-grid" data-time-grid></div>
+              </div>
+            </div>
+            <input type="hidden" name="date" data-selected-date />
+            <input type="hidden" name="time" data-selected-time />
+          </div>
+
+          <div class="step-panel" data-step="3">
+            <div class="panel-header">
+              <h4>Completa tus datos</h4>
+              <p>Revisamos tu reserva y la confirmamos contigo.</p>
+            </div>
+            <div class="summary-card neumor-inset">
+              <div class="summary-row">
+                <span>Servicios</span>
+                <span data-summary-services>Sin seleccionar</span>
+              </div>
+              <div class="summary-row">
+                <span>Fecha y hora</span>
+                <span data-summary-datetime>Sin seleccionar</span>
+              </div>
+              <div class="summary-row">
+                <span>Total</span>
+                <span data-summary-total>0.00 EUR</span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Nombre</label>
+                <input type="text" id="name" name="name" class="neumor-input" placeholder="Tu nombre" required />
+              </div>
+              <div class="form-group">
+                <label for="phone">Telefono</label>
+                <input type="tel" id="phone" name="phone" class="neumor-input" placeholder="+34 600 000 000" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email (opcional)</label>
+              <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" />
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notas adicionales</label>
+              <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Describe lo que buscas, referencias, etc."></textarea>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="email">Email (opcional)</label>
-          <input type="email" id="email" name="email" class="neumor-input" placeholder="tu@email.com" />
+        <div class="step-actions">
+          <button type="button" class="neumor-btn" data-step-prev>Anterior</button>
+          <button type="button" class="neumor-btn neumor-btn-accent" data-step-next>Continuar</button>
+          <button type="submit" class="neumor-btn neumor-btn-accent" data-step-submit style="display: none;">
+            Confirmar reserva
+          </button>
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="service">Servicio</label>
-            <select id="service" name="service" class="neumor-input" required>
-              <option value="">Selecciona un servicio</option>
-              <option value="corte-caballero">Corte Caballero</option>
-              <option value="corte-senora">Corte Senora</option>
-              <option value="corte-barba">Corte + Barba</option>
-              <option value="tinte">Tinte Completo</option>
-              <option value="mechas">Mechas/Balayage</option>
-              <option value="keratina">Keratina</option>
-              <option value="botox">Botox Capilar</option>
-              <option value="peinado">Peinado Evento</option>
-              <option value="otro">Otro (especificar en notas)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="stylist">Profesional</label>
-            <select id="stylist" name="stylist" class="neumor-input">
-              <option value="">Sin preferencia</option>
-              <option value="maria">Maria</option>
-              <option value="carlos">Carlos</option>
-              <option value="laura">Laura</option>
-              <option value="antonio">Antonio</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="date">Fecha preferida</label>
-            <input type="date" id="date" name="date" class="neumor-input" required />
-          </div>
-          <div class="form-group">
-            <label for="time">Hora preferida</label>
-            <select id="time" name="time" class="neumor-input" required>
-              <option value="">Selecciona hora</option>
-              <option value="10:00">10:00</option>
-              <option value="10:30">10:30</option>
-              <option value="11:00">11:00</option>
-              <option value="11:30">11:30</option>
-              <option value="12:00">12:00</option>
-              <option value="12:30">12:30</option>
-              <option value="13:00">13:00</option>
-              <option value="16:00">16:00</option>
-              <option value="16:30">16:30</option>
-              <option value="17:00">17:00</option>
-              <option value="17:30">17:30</option>
-              <option value="18:00">18:00</option>
-              <option value="18:30">18:30</option>
-              <option value="19:00">19:00</option>
-              <option value="19:30">19:30</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="notes">Notas adicionales</label>
-          <textarea id="notes" name="notes" class="neumor-input" rows="3" placeholder="Describe lo que buscas, referencias, etc."></textarea>
-        </div>
-
-        <button type="submit" class="neumor-btn neumor-btn-accent submit-btn">
-          Solicitar Cita
-        </button>
 
         <p class="form-disclaimer">
           Te confirmaremos la cita por email.
         </p>
+
+        <!-- Toast notification -->
+        <div class="toast-container" data-toast-container>
+          <div class="toast" data-toast>
+            <span class="toast-icon" data-toast-icon></span>
+            <span class="toast-message" data-toast-message></span>
+          </div>
+        </div>
       </form>
     </div>
   </div>
@@ -162,9 +372,9 @@ const {
 <style>
   .appointment-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 3rem;
+    align-items: stretch;
   }
 
   .appointment-title {
@@ -175,7 +385,7 @@ const {
   .appointment-subtitle {
     font-size: 1.1rem;
     margin-bottom: 2rem;
-    max-width: 400px;
+    max-width: 420px;
   }
 
   .contact-info {
@@ -203,16 +413,481 @@ const {
 
   .appointment-form {
     padding: 2rem;
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .appointment-form {
+    --appointment-accent: var(--accent);
+  }
+
+  .appointment-header h3 {
+    margin: 0;
+  }
+
+  .appointment-header p {
+    margin: 0.35rem 0 0;
+    color: var(--text-secondary);
+  }
+
+  .stepper {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .stepper-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-size: 0.85rem;
+    gap: 0.4rem;
+    color: var(--text-secondary);
+  }
+
+  .stepper-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--shadow-light);
+    box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.08),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+  }
+
+  .stepper-item.is-active,
+  .stepper-item.is-complete {
+    color: var(--text-primary);
+  }
+
+  .stepper-item.is-active .stepper-circle,
+  .stepper-item.is-complete .stepper-circle {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .step-panels {
+    display: grid;
+    gap: 1.5rem;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .step-panel {
+    display: none;
+    gap: 1rem;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+    min-height: inherit;
+    align-content: start;
+  }
+
+  .step-panel.is-active {
+    display: grid;
+  }
+
+  .panel-header h4 {
+    margin: 0;
+  }
+
+  .panel-header p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+  }
+
+  .service-catalog {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-height: min(60vh, 480px);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
+
+  .service-catalog::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .service-catalog::-webkit-scrollbar-thumb {
+    background-color: var(--accent);
+    border-radius: 10px;
+  }
+
+  .service-category {
+    padding: 1rem;
+    border-radius: 1rem;
+    background: var(--shadow-light);
+  }
+
+  .service-category-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .service-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .service-card {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.85rem;
+    background: #fff;
+    box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.08),
+      -6px -6px 14px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+  }
+
+  .service-card input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .service-card-title {
+    font-weight: 600;
+  }
+
+  .service-card-note {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .service-card-meta {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .service-card:has(input:checked) {
+    border: 2px solid var(--accent);
+  }
+
+  .professional-select {
+    margin-bottom: 1.25rem;
+  }
+
+  .professional-select h5 {
+    margin: 0 0 0.75rem;
+    font-weight: 600;
+  }
+
+  .professional-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .professional-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08),
+      -4px -4px 10px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+
+  .professional-chip input {
+    accent-color: var(--accent);
+  }
+
+  .professional-chip:has(input:checked) {
+    border: 2px solid var(--accent);
+  }
+
+  .professional-chip.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .professional-empty {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .calendar-wrapper {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) 190px;
+    gap: 1.25rem;
+    width: 100%;
+    align-items: start;
+  }
+
+  .calendar-card,
+  .time-card,
+  .summary-card {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    background: var(--shadow-light);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendar-card {
+    min-width: 260px;
+  }
+
+  .time-card {
+    max-height: 360px;
+    overflow: hidden;
+    position: relative;
+    min-width: 0;
+  }
+
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .calendar-nav {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08),
+      -4px -4px 10px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+  }
+
+  .calendar-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .calendar-month {
+    font-weight: 600;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.35rem;
+    pointer-events: auto;
+    justify-items: center;
+  }
+
+  .calendar-weekdays span {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    width: 100%;
+  }
+
+  :global(.calendar-day) {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    font-size: 0.8rem;
+  }
+
+  :global(.calendar-day.is-selected) {
+    background: var(--appointment-accent);
+    color: #fff;
+    box-shadow: none;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+  }
+
+  :global(.calendar-spacer) {
+    width: 28px;
+    height: 28px;
+  }
+
+  .time-header {
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .time-grid {
+    display: grid;
+    gap: 0.65rem;
+    overflow-y: auto;
+    max-height: 300px;
+    padding-right: 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  :global(.time-grid::-webkit-scrollbar) {
+    width: 0;
+    height: 0;
+  }
+
+  :global(.time-slot) {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0.55rem 0.65rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: center;
+    min-height: 34px;
+  }
+
+  :global(.time-slot.is-selected) {
+    background: var(--appointment-accent);
+    color: #fff;
+    box-shadow: none;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+  }
+
+  :global(.time-slot.is-disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  :global(.calendar-day:focus-visible),
+  :global(.time-slot:focus-visible) {
+    outline: 2px solid var(--appointment-accent);
+    outline-offset: 2px;
+  }
+
+  :global(.calendar-day.is-disabled) {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .summary-card {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .auth-block {
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 99, 102, 241), 0.08), rgba(var(--accent-rgb, 99, 102, 241), 0.02));
+    border: 1px solid rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+  }
+
+  .auth-block.is-authenticated {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .auth-content {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .auth-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background: var(--accent);
+    color: white;
+  }
+
+  .auth-block.is-authenticated .auth-icon {
+    background: #10b981;
+  }
+
+  .auth-block h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .auth-block p {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .auth-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .auth-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .auth-actions button svg {
+    flex-shrink: 0;
+  }
+
+  .auth-user {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .auth-block.is-authenticated .auth-actions button {
+    display: none;
+  }
+
+  .auth-block:not(.is-authenticated) .auth-user {
+    display: none !important;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .summary-row span:last-child {
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
-  }
-
-  .form-group {
-    margin-bottom: 1.25rem;
   }
 
   .form-group label {
@@ -232,70 +907,1095 @@ const {
     cursor: pointer;
   }
 
-  .submit-btn {
-    width: 100%;
-    margin-top: 0.5rem;
+  .step-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .form-disclaimer {
     text-align: center;
     font-size: 0.85rem;
-    margin-top: 1rem;
+    margin: 0;
     color: var(--text-secondary);
   }
 
-  @media (max-width: 968px) {
+  @media (max-width: 1024px) {
     .appointment-wrapper {
       grid-template-columns: 1fr;
-      gap: 2rem;
     }
 
-    .appointment-info {
-      text-align: center;
-    }
-
-    .appointment-subtitle {
-      max-width: 100%;
-    }
-
-    .contact-info {
-      align-items: center;
+    .calendar-wrapper {
+      grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 1280px) {
+    .calendar-wrapper {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
     .form-row {
       grid-template-columns: 1fr;
+    }
+
+    .step-actions {
+      justify-content: center;
+    }
+
+    .step-panels {
+      min-height: 0;
+    }
+
+    .calendar-card {
+      padding: 1rem;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      gap: 0.3rem;
+      grid-template-columns: repeat(7, 26px);
+      justify-content: center;
+      justify-items: center;
+    }
+
+    .calendar-weekdays span {
+      width: 26px;
+    }
+
+    .calendar-weekdays span {
+      font-size: 0.7rem;
+    }
+
+    :global(.calendar-day),
+    :global(.calendar-spacer) {
+      width: 26px;
+      height: 26px;
+    }
+
+    .service-catalog {
+      max-height: min(52vh, 420px);
+    }
+  }
+
+  /* Toast notification */
+  .toast-container {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+  }
+
+  .toast {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    background: var(--neumor-bg, #e8e8e8);
+    box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.15),
+      -8px -8px 20px rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+    animation: toastIn 0.3s ease;
+    max-width: 90vw;
+    pointer-events: auto;
+  }
+
+  .toast.is-visible {
+    display: flex;
+  }
+
+  .toast.is-error {
+    border-left: 4px solid #ef4444;
+  }
+
+  .toast.is-success {
+    border-left: 4px solid #10b981;
+  }
+
+  .toast.is-warning {
+    border-left: 4px solid #f59e0b;
+  }
+
+  .toast-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .toast.is-error .toast-icon::before {
+    content: "⚠️";
+  }
+
+  .toast.is-success .toast-icon::before {
+    content: "✅";
+  }
+
+  .toast.is-warning .toast-icon::before {
+    content: "⚡";
+  }
+
+  @keyframes toastIn {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes toastOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+  }
+
+  .toast.is-hiding {
+    animation: toastOut 0.25s ease forwards;
+  }
+
+  @media (max-width: 640px) {
+    .toast-container {
+      bottom: 1.5rem;
+      left: 1rem;
+      right: 1rem;
+      transform: none;
+    }
+
+    .toast {
+      width: 100%;
+      justify-content: center;
     }
   }
 </style>
 
 <script>
-  const form = document.querySelector(".appointment-form") as HTMLFormElement;
-  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
-  const submitLabel = submitBtn?.textContent?.trim() || "Enviar";
+  const form = document.querySelector(".appointment-form") as HTMLFormElement | null;
+  if (!form) {
+    console.warn("Appointment form not found");
+  } else {
+  const panels = Array.from(form.querySelectorAll<HTMLElement>(".step-panel"));
+  const stepDots = Array.from(form.querySelectorAll<HTMLElement>(".stepper-item"));
+  const prevBtn = form.querySelector<HTMLButtonElement>("[data-step-prev]");
+  const nextBtn = form.querySelector<HTMLButtonElement>("[data-step-next]");
+  const submitBtn = form.querySelector<HTMLButtonElement>("[data-step-submit]");
+  const summaryServices = form.querySelector<HTMLElement>("[data-summary-services]");
+  const summaryDatetime = form.querySelector<HTMLElement>("[data-summary-datetime]");
+  const summaryTotal = form.querySelector<HTMLElement>("[data-summary-total]");
+  const dateInput = form.querySelector<HTMLInputElement>("[data-selected-date]");
+  const timeInput = form.querySelector<HTMLInputElement>("[data-selected-time]");
+  const calendarLabel = form.querySelector<HTMLElement>("[data-calendar-label]");
+  const calendarGrid = form.querySelector<HTMLElement>("[data-calendar-grid]");
+  const timeGrid = form.querySelector<HTMLElement>("[data-time-grid]");
+  const prevMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-prev]");
+  const nextMonthBtn = form.querySelector<HTMLButtonElement>("[data-calendar-next]");
+  const stepPanels = form.querySelector<HTMLElement>(".step-panels");
+  const authButton = form.querySelector<HTMLButtonElement>("[data-auth-google]");
+  const authUser = form.querySelector<HTMLElement>("[data-auth-user]");
+  const authBlock = form.querySelector<HTMLElement>("[data-auth-block]");
+  let currentUserId: string | null = null;
+  let currentCustomerId: string | null = null;
+  const serviceInputs = Array.from(
+    form.querySelectorAll<HTMLInputElement>("input[name='services']")
+  );
+  const professionalInputs = Array.from(
+    form.querySelectorAll<HTMLInputElement>("input[name='professional_id']")
+  );
+  const professionalWarning = form.querySelector<HTMLElement>("[data-professional-warning]");
+  const toastEl = form.querySelector<HTMLElement>("[data-toast]");
+  const toastMessage = form.querySelector<HTMLElement>("[data-toast-message]");
+  const submitLabel = submitBtn?.textContent?.trim() || "Confirmar reserva";
   let isSubmitting = false;
 
-  form?.addEventListener("submit", async (e) => {
+  let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  const syncStepPanelHeight = () => {
+    if (!stepPanels) return;
+    // Always clear minHeight to let content flow naturally
+    // This prevents the empty space issue when service catalog has many items
+    stepPanels.style.minHeight = "";
+  };
+
+  const setAuthState = (email?: string | null, userId?: string | null, customerId?: string | null) => {
+    currentUserId = userId || null;
+    currentCustomerId = customerId || null;
+    if (authUser) {
+      if (email) {
+        authUser.textContent = `Conectado como ${email}`;
+        authUser.hidden = false;
+      } else {
+        authUser.textContent = "";
+        authUser.hidden = true;
+      }
+    }
+    if (submitBtn) {
+      submitBtn.disabled = !email || isSubmitting;
+      console.log("[setAuthState] submitBtn.disabled set to:", !email || isSubmitting);
+    }
+    if (authBlock) {
+      authBlock.classList.toggle("is-authenticated", Boolean(email));
+      const h5 = authBlock.querySelector("h5");
+      const p = authBlock.querySelector("p");
+      if (email && h5 && p) {
+        h5.textContent = "Sesion iniciada";
+        p.textContent = "Ya puedes continuar con tu reserva.";
+      } else if (h5 && p) {
+        h5.textContent = "Inicia sesion para reservar";
+        p.textContent = "Necesitas iniciar sesion con Google para continuar con tu reserva.";
+      }
+    }
+  };
+
+  const showToast = (message: string, type: "error" | "success" | "warning" = "error", duration = 3500) => {
+    if (!toastEl || !toastMessage) return;
+
+    if (toastTimeout) {
+      clearTimeout(toastTimeout);
+      toastEl.classList.remove("is-visible", "is-hiding", "is-error", "is-success", "is-warning");
+    }
+
+    toastMessage.textContent = message;
+    toastEl.classList.remove("is-error", "is-success", "is-warning");
+    toastEl.classList.add("is-visible", `is-${type}`);
+
+    toastTimeout = setTimeout(() => {
+      toastEl.classList.add("is-hiding");
+      setTimeout(() => {
+        toastEl.classList.remove("is-visible", "is-hiding", "is-error", "is-success", "is-warning");
+      }, 250);
+    }, duration);
+  };
+
+  const hasServices = form.dataset.hasServices === "true";
+  const websiteId = form.dataset.websiteId || "";
+  const supabaseUrl = form.dataset.supabaseUrl || "";
+  const supabaseKey = form.dataset.supabaseKey || "";
+  const businessHoursRaw = form.dataset.businessHours || "[]";
+  const businessHourSlotsRaw = form.dataset.businessHourSlots || "[]";
+  const specialDaysRaw = form.dataset.specialDays || "[]";
+  const specialDaySlotsRaw = form.dataset.specialDaySlots || "[]";
+  const professionalCategoriesRaw = form.dataset.professionalCategories || "[]";
+  const parsedBusinessHours = JSON.parse(businessHoursRaw) as {
+    day_of_week: number;
+    is_open: boolean;
+    open_time: string;
+    close_time: string;
+  }[] | null;
+  const businessHours = Array.isArray(parsedBusinessHours) ? parsedBusinessHours : [];
+  const parsedBusinessHourSlots = JSON.parse(businessHourSlotsRaw) as {
+    day_of_week: number;
+    open_time: string;
+    close_time: string;
+    sort_order?: number;
+  }[] | null;
+  const businessHourSlots = Array.isArray(parsedBusinessHourSlots)
+    ? parsedBusinessHourSlots
+    : [];
+  const parsedSpecialDays = JSON.parse(specialDaysRaw) as {
+    id?: string;
+    date: string;
+    is_open: boolean;
+    open_time: string;
+    close_time: string;
+  }[] | null;
+  const specialDays = Array.isArray(parsedSpecialDays) ? parsedSpecialDays : [];
+  const parsedSpecialDaySlots = JSON.parse(specialDaySlotsRaw) as {
+    special_day_id: string;
+    open_time: string;
+    close_time: string;
+    sort_order?: number;
+  }[] | null;
+  const specialDaySlots = Array.isArray(parsedSpecialDaySlots) ? parsedSpecialDaySlots : [];
+  const parsedProfessionalCategories = JSON.parse(professionalCategoriesRaw) as {
+    professional_id: string;
+    category_id: string;
+  }[] | null;
+  const professionalCategories = Array.isArray(parsedProfessionalCategories)
+    ? parsedProfessionalCategories
+    : [];
+  const monthNames = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+
+  const slotStepMinutes = 15;
+  const bookingsCache = new Map<
+    string,
+    { slots: { start: number; end: number }[]; fetchedAt: number }
+  >();
+  const cacheTtlMs = 0;
+
+  let currentStep = 1;
+  const currentMonth = new Date();
+  currentMonth.setDate(1);
+  currentMonth.setHours(0, 0, 0, 0);
+
+  const timeToMinutes = (value: string) => {
+    const parts = value.split(":").map(Number);
+    const hours = parts[0] || 0;
+    const minutes = parts[1] || 0;
+    return hours * 60 + minutes;
+  };
+
+  const minutesToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+  };
+
+  const toIsoDate = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
+
+  const bufferMinutes = 0;
+
+  const getSelectedDuration = () => {
+    const services = getSelectedServices();
+    const totalDuration = services.reduce((sum, service) => sum + service.duration_minutes, 0);
+    const baseDuration = totalDuration > 0 ? totalDuration : 30;
+    return baseDuration + bufferMinutes;
+  };
+
+  const professionalCategoryMap = new Map<string, Set<string>>();
+  professionalCategories.forEach((item) => {
+    const existing = professionalCategoryMap.get(item.professional_id) || new Set<string>();
+    existing.add(item.category_id);
+    professionalCategoryMap.set(item.professional_id, existing);
+  });
+
+  const getSelectedCategoryIds = () => {
+    const selected = Array.from(
+      form.querySelectorAll<HTMLInputElement>("input[name='services']:checked")
+    );
+    return Array.from(
+      new Set(
+        selected
+          .map((input) => input.dataset.categoryId || "")
+          .filter((value) => value.length > 0)
+      )
+    );
+  };
+
+  const updateProfessionalAvailability = () => {
+    const requiredCategoryIds = getSelectedCategoryIds();
+    let hasAvailable = false;
+    let selectedAvailable = false;
+    let firstAvailable: HTMLInputElement | null = null;
+
+    professionalInputs.forEach((input) => {
+      const label = input.closest(".professional-chip") as HTMLElement | null;
+      const categories = professionalCategoryMap.get(input.value) || new Set<string>();
+      const isAvailable =
+        requiredCategoryIds.length === 0 ||
+        requiredCategoryIds.every((categoryId) => categories.has(categoryId));
+
+      if (label) {
+        label.classList.toggle("is-disabled", !isAvailable);
+      }
+      input.disabled = !isAvailable;
+      if (isAvailable) {
+        hasAvailable = true;
+        if (!firstAvailable) {
+          firstAvailable = input;
+        }
+        if (input.checked) {
+          selectedAvailable = true;
+        }
+      } else if (input.checked) {
+        input.checked = false;
+      }
+    });
+
+    if (!selectedAvailable && firstAvailable) {
+      (firstAvailable as HTMLInputElement).checked = true;
+      if (timeInput) {
+        timeInput.value = "";
+      }
+      renderTimeSlots();
+      updateSummary();
+    }
+
+    if (professionalWarning) {
+      professionalWarning.hidden = hasAvailable;
+    }
+  };
+
+  const defaultSchedule = { is_open: true, open_time: "09:00", close_time: "19:00" };
+
+  const getDaySchedule = (dateValue: string) => {
+    const special = specialDays.find((item) => item.date === dateValue);
+    if (special) {
+      if (!special.is_open) {
+        return { is_open: false, slots: [] };
+      }
+      const daySlots = specialDaySlots
+        .filter((slot) => slot.special_day_id === special.id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      if (daySlots.length) {
+        return {
+          is_open: true,
+          slots: daySlots.map((slot) => ({
+            open_time: slot.open_time,
+            close_time: slot.close_time,
+          })),
+        };
+      }
+      return {
+        is_open: true,
+        slots: [
+          {
+            open_time: special.open_time || defaultSchedule.open_time,
+            close_time: special.close_time || defaultSchedule.close_time,
+          },
+        ],
+      };
+    }
+
+    const date = new Date(dateValue);
+    const dayIndex = (date.getDay() + 6) % 7;
+    const slotMatches = businessHourSlots
+      .filter((slot) => slot.day_of_week === dayIndex)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    if (slotMatches.length) {
+      return {
+        is_open: true,
+        slots: slotMatches.map((slot) => ({
+          open_time: slot.open_time || defaultSchedule.open_time,
+          close_time: slot.close_time || defaultSchedule.close_time,
+        })),
+      };
+    }
+
+    const day = businessHours.find((item) => item.day_of_week === dayIndex);
+    if (!day) {
+      return { is_open: true, slots: [{ open_time: defaultSchedule.open_time, close_time: defaultSchedule.close_time }] };
+    }
+    if (!day.is_open) {
+      return { is_open: false, slots: [] };
+    }
+    return {
+      is_open: true,
+      slots: [
+        {
+          open_time: day.open_time || defaultSchedule.open_time,
+          close_time: day.close_time || defaultSchedule.close_time,
+        },
+      ],
+    };
+  };
+
+  const getSelectedProfessionalId = () =>
+    professionalInputs.find((input) => input.checked)?.value || "";
+
+  const getSelectedProfessionalName = () => {
+    const checkedInput = professionalInputs.find((input) => input.checked);
+    if (!checkedInput) return "";
+    const label = checkedInput.closest("label");
+    return label?.querySelector("span")?.textContent || "";
+  };
+
+  const getCacheKey = (dateValue: string, professionalId: string) =>
+    `${dateValue}:${professionalId}`;
+
+  const loadBookedSlots = async (dateValue: string, professionalId: string) => {
+    if (!professionalId) {
+      return [];
+    }
+    const cacheKey = getCacheKey(dateValue, professionalId);
+    const cached = bookingsCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < cacheTtlMs) {
+      return cached.slots;
+    }
+
+    if (!supabaseUrl || !supabaseKey || !websiteId) {
+      bookingsCache.set(cacheKey, { slots: [], fetchedAt: Date.now() });
+      return [];
+    }
+
+    try {
+      const url = `${supabaseUrl}/rest/v1/bookings?select=booking_time,total_duration_minutes,services,status&website_id=eq.${websiteId}&booking_date=eq.${dateValue}&professional_id=eq.${professionalId}&status=in.(pending,confirmed)`;
+      const response = await fetch(url, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        bookingsCache.set(cacheKey, { slots: [], fetchedAt: Date.now() });
+        return [];
+      }
+
+      const data = await response.json();
+      const slots = (data || [])
+        .filter((item: { booking_time?: string | null }) => item.booking_time)
+        .map((item: {
+          booking_time: string;
+          total_duration_minutes?: number | null;
+          services?: { duration_minutes?: number }[] | null;
+        }) => {
+          const durationFromServices = Array.isArray(item.services)
+            ? item.services.reduce((sum, service) => sum + (service.duration_minutes || 0), 0)
+            : 0;
+          const duration = item.total_duration_minutes || durationFromServices || 30;
+          const start = timeToMinutes(item.booking_time);
+          return { start, end: start + duration };
+        });
+
+      bookingsCache.set(cacheKey, { slots, fetchedAt: Date.now() });
+      return slots;
+    } catch {
+      bookingsCache.set(cacheKey, { slots: [], fetchedAt: Date.now() });
+      return [];
+    }
+  };
+
+  const getAvailableSlotsForDate = async (dateValue: string, professionalId: string) => {
+    if (!dateValue || !professionalId) {
+      return [] as string[];
+    }
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (dateValue < todayIso) {
+      return [];
+    }
+    const duration = getSelectedDuration();
+    const schedule = getDaySchedule(dateValue);
+    if (!schedule.is_open || !schedule.slots.length) {
+      return [];
+    }
+    const bookedSlots = await loadBookedSlots(dateValue, professionalId);
+    const slots: string[] = [];
+
+    schedule.slots.forEach((slotRange) => {
+      const startMinutes = timeToMinutes(slotRange.open_time);
+      let endMinutes = timeToMinutes(slotRange.close_time);
+      if (endMinutes <= startMinutes) {
+        endMinutes = 24 * 60;
+      }
+
+      for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
+        const slot = minutesToTime(minutes);
+        const slotEnd = minutes + duration;
+        const isPastTime =
+          dateValue === todayIso && minutes <= currentMinutes;
+        const isBlocked =
+          isPastTime ||
+          bookedSlots.some((booked: { start: number; end: number }) => minutes < booked.end && slotEnd > booked.start);
+        if (!isBlocked) {
+          slots.push(slot);
+        }
+      }
+    });
+
+    return slots;
+  };
+
+  const renderCalendar = () => {
+    if (!calendarGrid || !calendarLabel) {
+      return;
+    }
+
+    calendarGrid.innerHTML = "";
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    calendarLabel.textContent = `${monthNames[month]} ${year}`;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+
+    for (let i = 0; i < startOffset; i += 1) {
+      const spacer = document.createElement("div");
+      spacer.className = "calendar-spacer";
+      calendarGrid.appendChild(spacer);
+    }
+
+    const dateInputValue = dateInput?.value || "";
+    const todayIso = `${year}-${String(month + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    for (let day = 1; day <= lastDay.getDate(); day += 1) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "calendar-day";
+      button.textContent = String(day);
+      const dateValue = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      button.dataset.date = dateValue;
+      const dateObj = new Date(year, month, day);
+      const schedule = getDaySchedule(dateValue);
+      if (dateObj < today || !schedule.is_open) {
+        button.classList.add("is-disabled");
+        button.disabled = true;
+      }
+      if (dateInputValue === dateValue) {
+        button.classList.add("is-selected");
+      }
+      if (!dateInputValue && dateValue === todayIso && !button.disabled && dateInput) {
+        dateInput.value = dateValue;
+        button.classList.add("is-selected");
+      }
+      button.addEventListener("click", () => {
+        const selected = button.dataset.date;
+        if (!selected || !dateInput) {
+          return;
+        }
+        dateInput.value = selected;
+        if (timeInput) {
+          timeInput.value = "";
+        }
+        calendarGrid.querySelectorAll(".calendar-day").forEach((item) => {
+          item.classList.remove("is-selected");
+        });
+        button.classList.add("is-selected");
+        updateSummary();
+        renderTimeSlots();
+        applyAutoSelectFromDate(selected);
+      });
+      calendarGrid.appendChild(button);
+    }
+  };
+
+  const renderTimeSlots = async () => {
+    if (!timeGrid) {
+      return;
+    }
+    timeGrid.innerHTML = "";
+    const dateValue = dateInput?.value || "";
+    if (!dateValue) {
+      return;
+    }
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (dateValue < todayIso) {
+      return;
+    }
+    const professionalId = getSelectedProfessionalId();
+    if (!professionalId) {
+      return;
+    }
+    const duration = getSelectedDuration();
+    const schedule = getDaySchedule(dateValue);
+    if (!schedule.is_open || !schedule.slots.length) {
+      return;
+    }
+    const bookedSlots = dateValue ? await loadBookedSlots(dateValue, professionalId) : [];
+    schedule.slots.forEach((slotRange) => {
+      const startMinutes = timeToMinutes(slotRange.open_time);
+      let endMinutes = timeToMinutes(slotRange.close_time);
+      if (endMinutes <= startMinutes) {
+        endMinutes = 24 * 60;
+      }
+
+      for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += slotStepMinutes) {
+        const slot = minutesToTime(minutes);
+        const slotEnd = minutes + duration;
+        const isPastTime =
+          dateValue === todayIso && minutes <= currentMinutes;
+        const isBlocked =
+          isPastTime ||
+          bookedSlots.some((booked: { start: number; end: number }) => minutes < booked.end && slotEnd > booked.start);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `time-slot${isBlocked ? " is-disabled" : ""}`;
+        button.textContent = slot;
+        button.dataset.time = slot;
+        if (isBlocked) {
+          button.disabled = true;
+          button.setAttribute("aria-disabled", "true");
+        } else {
+          if (timeInput?.value === slot) {
+            button.classList.add("is-selected");
+          }
+          button.addEventListener("click", () => {
+            if (!timeInput) {
+              return;
+            }
+            timeInput.value = slot;
+            timeGrid.querySelectorAll(".time-slot").forEach((item) => {
+              item.classList.remove("is-selected");
+            });
+            button.classList.add("is-selected");
+            updateSummary();
+          });
+        }
+        timeGrid.appendChild(button);
+      }
+    });
+  };
+
+  const getAutoSelectEndDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return canMoveNextMonth
+      ? new Date(today.getFullYear(), today.getMonth() + 2, 0)
+      : lastDate;
+  };
+
+  const applyAutoSelectFromDate = async (startDateValue: string) => {
+    const professionalId = getSelectedProfessionalId();
+    if (!professionalId || !dateInput || !timeInput) {
+      return false;
+    }
+
+    const startDate = new Date(startDateValue);
+    if (Number.isNaN(startDate.getTime())) {
+      return false;
+    }
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = getAutoSelectEndDate();
+
+    for (let cursor = new Date(startDate); cursor <= endDate; cursor.setDate(cursor.getDate() + 1)) {
+      const dateValue = toIsoDate(cursor);
+      const slots = await getAvailableSlotsForDate(dateValue, professionalId);
+      if (slots.length) {
+        dateInput.value = dateValue;
+        timeInput.value = slots[0];
+        currentMonth.setFullYear(cursor.getFullYear(), cursor.getMonth(), 1);
+        renderCalendar();
+        await renderTimeSlots();
+        updateSummary();
+        return true;
+      }
+    }
+
+    await renderTimeSlots();
+    return false;
+  };
+
+  const autoSelectFirstAvailableSlot = async () => {
+    const professionalId = getSelectedProfessionalId();
+    if (!professionalId || !dateInput || !timeInput) {
+      return;
+    }
+
+    if (dateInput.value && timeInput.value) {
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    await applyAutoSelectFromDate(toIsoDate(today));
+  };
+
+  const getSelectedServices = () => {
+    const selected = Array.from(
+      form.querySelectorAll<HTMLInputElement>("input[name='services']:checked")
+    );
+    return selected.map((input) => ({
+      id: input.value,
+      name: input.dataset.name || "",
+      price_cents: Number(input.dataset.price || 0),
+      duration_minutes: Number(input.dataset.duration || 0),
+    }));
+  };
+
+  const updateSummary = () => {
+    const services = getSelectedServices();
+    const totalPrice = services.reduce((sum, service) => sum + service.price_cents, 0);
+    const dateValue = dateInput?.value || "";
+    const timeValue = timeInput?.value || "";
+
+    if (summaryServices) {
+      summaryServices.textContent =
+        services.length > 0 ? services.map((service) => service.name).join(", ") : "Sin seleccionar";
+    }
+    if (summaryDatetime) {
+      summaryDatetime.textContent =
+        dateValue && timeValue ? `${dateValue} - ${timeValue}` : "Sin seleccionar";
+    }
+    if (summaryTotal) {
+      summaryTotal.textContent = `${(totalPrice / 100).toFixed(2)} EUR`;
+    }
+  };
+
+  const updateSteps = () => {
+    panels.forEach((panel) => {
+      panel.classList.toggle("is-active", Number(panel.dataset.step) === currentStep);
+    });
+
+    stepDots.forEach((dot, index) => {
+      const stepIndex = index + 1;
+      dot.classList.toggle("is-active", stepIndex === currentStep);
+      dot.classList.toggle("is-complete", stepIndex < currentStep);
+    });
+
+    if (prevBtn) {
+      const isFirst = currentStep === 1;
+      prevBtn.disabled = isFirst;
+      prevBtn.style.display = isFirst ? "none" : "inline-flex";
+    }
+
+    if (nextBtn && submitBtn) {
+      nextBtn.style.display = currentStep === panels.length ? "none" : "inline-flex";
+      submitBtn.style.display = currentStep === panels.length ? "inline-flex" : "none";
+      if (currentStep === panels.length) {
+        // On last step: enable if user is authenticated
+        submitBtn.disabled = !currentUserId;
+      } else {
+        submitBtn.disabled = true;
+      }
+    }
+
+    updateSummary();
+    syncStepPanelHeight();
+  };
+
+  const validateStep = () => {
+    if (currentStep === 1) {
+      const selectedServices = getSelectedServices();
+      if (hasServices && selectedServices.length === 0) {
+        showToast("Selecciona al menos un servicio.", "warning");
+        return false;
+      }
+      if (!currentUserId) {
+        showToast("Debes iniciar sesion con Google para continuar.", "warning");
+        authBlock?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return false;
+      }
+    }
+    if (currentStep === 2) {
+      if (!getSelectedProfessionalId()) {
+        showToast("Selecciona un profesional.", "warning");
+        return false;
+      }
+      if (!dateInput?.value) {
+        showToast("Selecciona una fecha.", "warning");
+        return false;
+      }
+      if (!timeInput?.value) {
+        showToast("Selecciona una hora.", "warning");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  prevBtn?.addEventListener("click", () => {
+    currentStep = Math.max(1, currentStep - 1);
+    updateSteps();
+  });
+
+  nextBtn?.addEventListener("click", async () => {
+    if (!validateStep()) {
+      return;
+    }
+    currentStep = Math.min(panels.length, currentStep + 1);
+    updateSteps();
+    if (currentStep === 2) {
+      updateProfessionalAvailability();
+      await autoSelectFirstAvailableSlot();
+    }
+  });
+
+  const now = new Date();
+  const baseMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const daysUntilEnd = Math.ceil(
+    (lastDayOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const canMoveNextMonth = daysUntilEnd <= 7;
+
+  const updateMonthNav = () => {
+    if (prevMonthBtn) {
+      prevMonthBtn.disabled =
+        currentMonth.getFullYear() === baseMonth.getFullYear() &&
+        currentMonth.getMonth() === baseMonth.getMonth();
+    }
+    if (nextMonthBtn) {
+      const isAtBase =
+        currentMonth.getFullYear() === baseMonth.getFullYear() &&
+        currentMonth.getMonth() === baseMonth.getMonth();
+      nextMonthBtn.disabled = !(canMoveNextMonth && isAtBase);
+    }
+  };
+
+  prevMonthBtn?.addEventListener("click", () => {
+    if (prevMonthBtn?.disabled) {
+      return;
+    }
+    currentMonth.setMonth(currentMonth.getMonth() - 1);
+    renderCalendar();
+    updateMonthNav();
+  });
+
+  nextMonthBtn?.addEventListener("click", () => {
+    if (nextMonthBtn?.disabled) {
+      return;
+    }
+    currentMonth.setMonth(currentMonth.getMonth() + 1);
+    renderCalendar();
+    updateMonthNav();
+  });
+
+  renderCalendar();
+  renderTimeSlots();
+  updateSteps();
+  window.addEventListener("resize", () => {
+    syncStepPanelHeight();
+  });
+  updateMonthNav();
+  updateProfessionalAvailability();
+
+  // Initialize auth state from server-side props (SSR)
+  // This is passed from the server after checking cookies
+  const currentUserData = form.dataset.currentUser;
+  console.log("[Form] currentUserData from props:", currentUserData);
+  if (currentUserData) {
+    try {
+      const user = JSON.parse(currentUserData) as {
+        email: string;
+        id: string;
+        customerId: string | null;
+        name?: string;
+        phone?: string;
+      };
+      console.log("[Form] User authenticated (SSR):", user.email, "customerId:", user.customerId);
+      setAuthState(user.email, user.id, user.customerId);
+
+      // Pre-fill form fields
+      const emailInput = form.querySelector<HTMLInputElement>("#email");
+      if (emailInput && !emailInput.value && user.email) {
+        emailInput.value = user.email;
+      }
+      const nameInput = form.querySelector<HTMLInputElement>("#name");
+      if (nameInput && !nameInput.value && user.name) {
+        nameInput.value = user.name;
+      }
+      const phoneInput = form.querySelector<HTMLInputElement>("#phone");
+      if (phoneInput && !phoneInput.value && user.phone) {
+        phoneInput.value = user.phone;
+      }
+    } catch (e) {
+      console.error("[Form] Error parsing currentUser:", e);
+      setAuthState(null, null, null);
+    }
+  } else {
+    console.log("[Form] No authenticated user");
+    setAuthState(null, null, null);
+  }
+
+  // Login button - redirect to SSR OAuth flow
+  authButton?.addEventListener("click", () => {
+    const returnUrl = encodeURIComponent(window.location.href);
+    window.location.href = `/mi-cuenta/auth/google?return_url=${returnUrl}`;
+  });
+
+  serviceInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      updateProfessionalAvailability();
+      if (timeInput) {
+        timeInput.value = "";
+      }
+      renderTimeSlots();
+      updateSummary();
+    });
+  });
+
+  professionalInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      if (timeInput) {
+        timeInput.value = "";
+      }
+      renderTimeSlots();
+      updateSummary();
+    });
+  });
+
+  // Debug: direct click listener on submit button
+  submitBtn?.addEventListener("click", () => {
+    console.log("[Submit] Button clicked, disabled:", submitBtn?.disabled);
+  });
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting) {
+      console.log("[Submit] Ignored: submission already in progress");
+      return;
+    }
+    console.log("[Submit] Form submitted");
+    console.log("[Submit] currentUserId:", currentUserId);
+    console.log("[Submit] currentCustomerId:", currentCustomerId);
+
+    if (!validateStep()) {
+      console.log("[Submit] Validation failed");
+      return;
+    }
+
+    // Check auth from SSR props (currentUserId and currentCustomerId set in setAuthState)
+    if (!currentUserId || !currentCustomerId) {
+      console.log("[Submit] Auth check failed - missing userId or customerId");
+      showToast("Debes iniciar sesion con Google para confirmar.", "warning");
+      return;
+    }
 
     const webhookUrl = form.dataset.webhook;
-    const websiteId = form.dataset.websiteId;
+    console.log("[Submit] Proceeding with booking, webhookUrl:", webhookUrl);
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
+    const selectedServices = getSelectedServices();
+    const selectedProfessionalId = getSelectedProfessionalId();
+    const totalPrice = selectedServices.reduce((sum, service) => sum + service.price_cents, 0);
+    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0);
 
     const data = {
       website_id: websiteId,
-      nombre: rawData.name,
-      email: rawData.email || "",
-      telefono: rawData.phone,
-      servicio: rawData.service,
-      profesional: rawData.stylist || "sin preferencia",
-      fecha: rawData.date,
-      hora: rawData.time,
-      notas: rawData.notes || "",
+      customer_id: currentCustomerId,
+      customer_name: rawData.name,
+      customer_email: rawData.email || null,
+      customer_phone: rawData.phone,
+      booking_date: rawData.date,
+      booking_time: rawData.time,
+      professional_id: selectedProfessionalId || null,
+      guests: 1,
+      notes: rawData.notes || null,
+      status: "confirmed",
+      source: "website",
+      services: selectedServices,
+      total_price_cents: totalPrice,
+      total_duration_minutes: totalDuration,
     };
+
+    if (!websiteId) {
+      showToast("No se pudo identificar el website. Revisa la configuracion.", "error");
+      return;
+    }
+    if (!selectedProfessionalId) {
+      showToast("Selecciona un profesional.", "warning");
+      return;
+    }
 
     isSubmitting = true;
     if (submitBtn) {
@@ -304,32 +2004,76 @@ const {
       submitBtn.textContent = "Enviando...";
     }
 
+    let bookingSuccess = false;
+    let lastError = "";
+
     try {
       if (webhookUrl) {
-        const response = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        if (response.ok) {
-          alert("Cita solicitada correctamente. Te contactaremos para confirmar.");
-          form.reset();
-        } else {
-          throw new Error("Error en respuesta");
+        // Datos con formato esperado por la API /api/citas
+        const webhookData = {
+          website_id: websiteId,
+          nombre: rawData.name,
+          email: rawData.email || undefined,
+          telefono: rawData.phone,
+          servicio: selectedServices.map(s => s.name).join(", "),
+          services: selectedServices,
+          total_price_cents: totalPrice,
+          total_duration_minutes: totalDuration,
+          profesional: getSelectedProfessionalName() || undefined,
+          professional_id: selectedProfessionalId || undefined,
+          customer_id: currentCustomerId || undefined,
+          fecha: rawData.date,
+          hora: rawData.time,
+          notas: rawData.notes || undefined,
+        };
+        try {
+          const response = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(webhookData),
+          });
+          if (response.ok) {
+            bookingSuccess = true;
+          } else {
+            const errorText = await response.text();
+            lastError = errorText || `Error ${response.status}`;
+          }
+        } catch {
+          lastError = "Error de red al enviar la solicitud.";
         }
       } else {
-        alert("Cita solicitada correctamente. Te contactaremos pronto.");
-        form.reset();
+        lastError = "No hay endpoint configurado para enviar la cita.";
       }
-    } catch {
-      alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+
+      if (bookingSuccess) {
+        const bookedDate = typeof rawData.date === "string" ? rawData.date : "";
+        const bookedTime = typeof rawData.time === "string" ? rawData.time : "";
+        if (bookedDate && bookedTime && selectedProfessionalId) {
+          const duration = getSelectedDuration();
+          const start = timeToMinutes(bookedTime);
+          const end = start + duration;
+          const cacheKey = getCacheKey(bookedDate, selectedProfessionalId);
+          const existing = bookingsCache.get(cacheKey);
+          const slots = existing?.slots || [];
+          bookingsCache.set(cacheKey, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
+        }
+
+        showToast("Cita solicitada correctamente. Te contactaremos para confirmar.", "success", 5000);
+        form.reset();
+        updateSummary();
+        currentStep = 1;
+        updateSteps();
+      } else {
+        showToast(`Error al enviar. ${lastError || "Por favor, llamanos directamente."}`, "error", 5000);
+      }
     } finally {
-      isSubmitting = false;
       if (submitBtn) {
-        submitBtn.disabled = false;
+        submitBtn.disabled = !currentUserId;
         submitBtn.setAttribute("aria-busy", "false");
         submitBtn.textContent = submitLabel;
       }
+      isSubmitting = false;
     }
   });
+  }
 </script>
