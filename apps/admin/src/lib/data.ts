@@ -518,7 +518,7 @@ export async function getWebsitePersonalizationConfig() {
 
   const { data: website } = await supabase
     .from("websites")
-    .select("id, domain, theme, config")
+    .select("id, domain, theme, config, clients!inner ( business_name )")
     .eq("id", websiteId)
     .single();
 
@@ -526,11 +526,17 @@ export async function getWebsitePersonalizationConfig() {
     return null;
   }
 
+  const clientBusinessName = (website.clients as { business_name?: string } | null)?.business_name;
+  const mergedConfig = {
+    ...(website.config || {}),
+    ...(clientBusinessName ? { businessName: clientBusinessName } : {}),
+  } as WebsiteConfig;
+
   return {
     websiteId: website.id,
     domain: website.domain as string,
     theme: (website.theme || "light") as Theme,
-    config: (website.config || {}) as WebsiteConfig,
+    config: mergedConfig,
   };
 }
 
