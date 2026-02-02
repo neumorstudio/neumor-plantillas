@@ -330,6 +330,38 @@
   color: #991b1b;
 }
 
+/* Actions */
+.portal-action-row {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.portal-action-btn {
+  border: 1px solid var(--ng-glass-border);
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--ng-surface);
+  color: var(--ng-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--ng-shadow-soft);
+  transition: all 0.2s ease;
+}
+
+.portal-action-btn:hover {
+  color: var(--ng-text-primary);
+}
+
+.portal-action-btn:active {
+  box-shadow: var(--ng-shadow-inset);
+}
+
+.portal-action-btn-danger {
+  color: #b91c1c;
+}
+
 /* Login Page */
 .portal-login-container {
   min-height: 100vh;

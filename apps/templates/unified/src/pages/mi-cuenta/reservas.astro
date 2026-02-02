@@ -80,6 +80,24 @@ const getEffectiveStatus = (booking: CustomerBooking) => {
   return booking.status;
 };
 
+const canCancelBooking = (booking: CustomerBooking) => {
+  const status = getEffectiveStatus(booking);
+  if (status === "cancelled" || status === "completed") return false;
+  const dt = getBookingDateTime(booking);
+  return dt ? dt > new Date() : false;
+};
+
+const getCancelLabel = () => {
+  switch (tenant.businessType) {
+    case "restaurant":
+      return "Cancelar reserva";
+    case "gym":
+      return "Cancelar sesion";
+    default:
+      return "Cancelar cita";
+  }
+};
+
 // Helper to extract service name (handles both string and object formats)
 const getServiceName = (service: unknown): string => {
   if (typeof service === "string") return service;
@@ -128,6 +146,18 @@ const getServiceName = (service: unknown): string => {
               <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--ng-text-secondary);">
                 {booking.notes}
               </div>
+            )}
+            {canCancelBooking(booking) && (
+              <form class="portal-action-row" method="POST" action="/mi-cuenta/cancelar">
+                <input type="hidden" name="booking_id" value={booking.id} />
+                <button
+                  type="submit"
+                  class="portal-action-btn portal-action-btn-danger"
+                  onclick="return confirm('¿Seguro que quieres cancelar esta cita?');"
+                >
+                  {getCancelLabel()}
+                </button>
+              </form>
             )}
           </div>
         );
