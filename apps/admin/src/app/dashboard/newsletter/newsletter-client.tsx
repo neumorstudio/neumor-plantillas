@@ -643,19 +643,6 @@ export function NewsletterClient({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Contenido HTML</label>
-                  <textarea
-                    value={templateForm.html_content}
-                    onChange={(e) => setTemplateForm({ ...templateForm, html_content: e.target.value })}
-                    rows={15}
-                    className="neumor-input w-full font-mono text-sm"
-                  />
-                  <p className="text-xs text-[var(--text-secondary)] mt-1">
-                    Variables: {"{{restaurantName}}"}, {"{{title}}"}, {"{{content}}"}, {"{{ctaText}}"}, {"{{ctaLink}}"}
-                  </p>
-                </div>
-
                 <button
                   onClick={handleSaveTemplate}
                   disabled={saving}
