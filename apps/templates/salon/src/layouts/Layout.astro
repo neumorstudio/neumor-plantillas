@@ -613,9 +613,28 @@ const defaultFonts = !fontImports
 
             // Hero CTA button text
             if (content.heroCta) {
-              document.querySelectorAll('.hero-cta, .hero-btn, [data-content="heroCta"]').forEach(function(el) {
-                el.textContent = content.heroCta;
-              });
+              const ctaTextNodes = document.querySelectorAll('[data-content="heroCta"], .cta-text');
+              if (ctaTextNodes.length > 0) {
+                ctaTextNodes.forEach(function(el) {
+                  el.textContent = content.heroCta;
+                });
+              } else {
+                document.querySelectorAll('.hero-cta, .hero-btn, .hero-cta-primary').forEach(function(el) {
+                  var textNode = null;
+                  for (var i = 0; i < el.childNodes.length; i++) {
+                    var node = el.childNodes[i];
+                    if (node.nodeType == 3 && node.textContent && node.textContent.trim() !== '') {
+                      textNode = node;
+                      break;
+                    }
+                  }
+                  if (textNode) {
+                    textNode.textContent = content.heroCta;
+                  } else {
+                    el.textContent = content.heroCta;
+                  }
+                });
+              }
             }
 
             // Siempre intentar actualizar heroImage si existe en el contenido
