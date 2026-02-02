@@ -531,7 +531,7 @@ const serviceCategories = serviceCatalog.length
             );
           case "booking":
             return (
-              <section data-section-id="booking" style={style}>
+              <div data-section-id="booking" style={style}>
                 <AppointmentForm
                   webhookUrl={config.webhookUrl}
                   websiteId={currentWebsiteId}
@@ -539,32 +539,34 @@ const serviceCategories = serviceCatalog.length
                   phone={config.phone}
                   email={config.email}
                 />
-              </section>
+              </div>
             );
           default:
             return null;
         }
       });
     })()}
+
+    {/* Footer - siempre renderizado para live preview, oculto si no está habilitado */}
+    {(() => {
+      const footerCfg = sectionConfigMap.get("footer");
+      const isFooterEnabled = footerCfg?.enabled ?? true;
+      const footerOrder = footerCfg?.order ?? 100;
+      const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+      return (
+        <div data-section-id="footer" style={footerStyle}>
+          <FooterComponent
+            businessName={config.businessName}
+            address={config.address}
+            phone={config.phone}
+            email={config.email}
+            socialLinks={config.socialLinks}
+          />
+        </div>
+      );
+    })()}
   </main>
 
-  {/* Footer - siempre renderizado para live preview, oculto si no está habilitado */}
-  {(() => {
-    const footerCfg = sectionConfigMap.get("footer");
-    const isFooterEnabled = footerCfg?.enabled ?? true;
-    const footerOrder = footerCfg?.order ?? 100;
-    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
 
-    return (
-      <div data-section-id="footer" style={footerStyle}>
-        <FooterComponent
-          businessName={config.businessName}
-          address={config.address}
-          phone={config.phone}
-          email={config.email}
-          socialLinks={config.socialLinks}
-        />
-      </div>
-    );
-  })()}
 </Layout>
