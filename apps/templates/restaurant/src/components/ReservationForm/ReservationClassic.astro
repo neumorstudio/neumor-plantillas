@@ -222,9 +222,14 @@ const {
 
 <script>
   const form = document.querySelector(".reservation-form") as HTMLFormElement;
+  const submitBtn = form?.querySelector(".submit-btn") as HTMLButtonElement | null;
+  let isSubmitting = false;
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+    submitBtn?.setAttribute("disabled", "true");
 
     const webhookUrl = form.dataset.webhook;
     const websiteId = form.dataset.websiteId;
@@ -242,25 +247,27 @@ const {
       notas: rawData.notes || "",
     };
 
-    if (webhookUrl) {
-      try {
+    try {
+      if (webhookUrl) {
         const response = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        if (response.ok) {
-          alert("Reserva enviada correctamente. Recibiras un email de confirmacion.");
-          form.reset();
-        } else {
+        if (!response.ok) {
           throw new Error("Error en respuesta");
         }
-      } catch {
-        alert("Error al enviar la reserva. Por favor, llamanos directamente.");
+        alert("Reserva enviada correctamente. Recibiras un email de confirmacion.");
+        form.reset();
+      } else {
+        alert("Reserva enviada correctamente. Te contactaremos pronto.");
+        form.reset();
       }
-    } else {
-      alert("Reserva enviada correctamente. Te contactaremos pronto.");
-      form.reset();
+    } catch {
+      alert("Error al enviar la reserva. Por favor, llamanos directamente.");
+    } finally {
+      isSubmitting = false;
+      submitBtn?.removeAttribute("disabled");
     }
   });
 </script>

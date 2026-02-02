@@ -1203,11 +1203,15 @@ for (let h = 13; h <= 22; h++) {
   const wizardSuccess = document.querySelector('.wizard-success') as HTMLElement;
   const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
   const newReservationBtn = document.querySelector('.new-reservation');
+  let isSubmitting = false;
 
   wizardForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
+    isSubmitting = true;
     submitBtn?.classList.add('loading');
+    submitBtn?.setAttribute('disabled', 'true');
 
     const webhookUrl = wizardForm.dataset.webhook;
     const websiteId = wizardForm.dataset.websiteId;
@@ -1230,29 +1234,29 @@ for (let h = 13; h <= 22; h++) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (webhookUrl) {
-      try {
+    try {
+      if (webhookUrl) {
         const response = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error("Error");
-      } catch {
-        submitBtn?.classList.remove('loading');
-        alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
-        return;
       }
+
+      // Show success
+      wizardSteps.forEach(s => s.classList.remove('active'));
+      wizardSuccess.style.display = 'block';
+
+      // Confetti animation
+      createConfetti();
+    } catch {
+      alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
+    } finally {
+      submitBtn?.classList.remove('loading');
+      submitBtn?.removeAttribute('disabled');
+      isSubmitting = false;
     }
-
-    submitBtn?.classList.remove('loading');
-
-    // Show success
-    wizardSteps.forEach(s => s.classList.remove('active'));
-    wizardSuccess.style.display = 'block';
-
-    // Confetti animation
-    createConfetti();
   });
 
   function createConfetti() {

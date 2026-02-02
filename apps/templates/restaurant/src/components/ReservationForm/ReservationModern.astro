@@ -797,6 +797,7 @@ const {
     const form = document.querySelector('.reservation-modern .reservation-grid');
     const successMessage = document.querySelector('.reservation-modern .success-message');
     const newReservationBtn = document.querySelector('.reservation-modern .new-reservation');
+    let isSubmitting = false;
     const submitBtn = document.querySelector('.reservation-modern .submit-btn');
 
     if (!form) return;
@@ -1147,12 +1148,15 @@ const {
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (isSubmitting) return;
       if (!selectedDateInput?.value || !selectedTimeInput?.value) {
         setStep('date');
         return;
       }
 
+      isSubmitting = true;
       submitBtn?.classList.add('loading');
+      submitBtn?.setAttribute('disabled', 'true');
 
       const webhookUrl = form.dataset.webhook;
       const websiteId = form.dataset.websiteId;
@@ -1176,6 +1180,8 @@ const {
 
       if (!webhookUrl) {
         submitBtn?.classList.remove('loading');
+        submitBtn?.removeAttribute('disabled');
+        isSubmitting = false;
         return;
       }
 
@@ -1209,8 +1215,11 @@ const {
         if (successMessage) successMessage.style.display = 'block';
       } catch (error) {
         console.error(error);
-        submitBtn?.classList.remove('loading');
         alert('Error al enviar la reserva. Por favor, inténtalo de nuevo.');
+      } finally {
+        submitBtn?.classList.remove('loading');
+        submitBtn?.removeAttribute('disabled');
+        isSubmitting = false;
       }
     });
 
@@ -1219,6 +1228,9 @@ const {
       if (successMessage) successMessage.style.display = 'none';
       form.dataset.step = 'date';
       form.reset();
+      submitBtn?.classList.remove('loading');
+      submitBtn?.removeAttribute('disabled');
+      isSubmitting = false;
 
       guestCount = 2;
       if (guestCountEl) guestCountEl.textContent = '2';

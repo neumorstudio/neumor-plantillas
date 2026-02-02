@@ -738,9 +738,11 @@ const timeSlots = [
 
   // Form submit
   const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
+  let isSubmitting = false;
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     // Ensure contact section is expanded and has required fields
     if (!contactSection?.classList.contains('expanded')) {
@@ -750,7 +752,9 @@ const timeSlots = [
       return;
     }
 
+    isSubmitting = true;
     submitBtn?.classList.add('loading');
+    submitBtn?.setAttribute('disabled', 'true');
 
     const webhookUrl = form.dataset.webhook;
     const websiteId = form.dataset.websiteId;
@@ -772,26 +776,26 @@ const timeSlots = [
     // Simulate delay
     await new Promise(resolve => setTimeout(resolve, 1200));
 
-    if (webhookUrl) {
-      try {
+    try {
+      if (webhookUrl) {
         const response = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error("Error");
-      } catch {
-        submitBtn?.classList.remove('loading');
-        alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
-        return;
       }
+
+      // Show success
+      form.style.display = 'none';
+      successEl.style.display = 'block';
+    } catch {
+      alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
+    } finally {
+      submitBtn?.classList.remove('loading');
+      submitBtn?.removeAttribute('disabled');
+      isSubmitting = false;
     }
-
-    submitBtn?.classList.remove('loading');
-
-    // Show success
-    form.style.display = 'none';
-    successEl.style.display = 'block';
   });
 
   // Reset on close
