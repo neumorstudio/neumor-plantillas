@@ -272,9 +272,13 @@ const {
 
 <script>
   const form = document.querySelector(".appointment-form") as HTMLFormElement;
+  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const submitLabel = submitBtn?.textContent?.trim() || "Enviar";
+  let isSubmitting = false;
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     const webhookUrl = form.dataset.webhook;
     const websiteId = form.dataset.websiteId;
@@ -293,8 +297,15 @@ const {
       notas: rawData.notes || "",
     };
 
-    if (webhookUrl) {
-      try {
+    isSubmitting = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.setAttribute("aria-busy", "true");
+      submitBtn.textContent = "Enviando...";
+    }
+
+    try {
+      if (webhookUrl) {
         const response = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -306,12 +317,19 @@ const {
         } else {
           throw new Error("Error en respuesta");
         }
-      } catch {
-        alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+      } else {
+        alert("Cita solicitada correctamente. Te contactaremos pronto.");
+        form.reset();
       }
-    } else {
-      alert("Cita solicitada correctamente. Te contactaremos pronto.");
-      form.reset();
+    } catch {
+      alert("Error al enviar la solicitud. Por favor, llamanos directamente.");
+    } finally {
+      isSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.setAttribute("aria-busy", "false");
+        submitBtn.textContent = submitLabel;
+      }
     }
   });
 </script>

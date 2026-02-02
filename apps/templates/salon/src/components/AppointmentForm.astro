@@ -1110,6 +1110,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   const professionalWarning = form.querySelector<HTMLElement>("[data-professional-warning]");
   const toastEl = form.querySelector<HTMLElement>("[data-toast]");
   const toastMessage = form.querySelector<HTMLElement>("[data-toast-message]");
+  const submitLabel = submitBtn?.textContent?.trim() || "Confirmar reserva";
+  let isSubmitting = false;
 
   let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -1140,8 +1142,8 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       }
     }
     if (submitBtn) {
-      submitBtn.disabled = !email;
-      console.log("[setAuthState] submitBtn.disabled set to:", !email);
+      submitBtn.disabled = !email || isSubmitting;
+      console.log("[setAuthState] submitBtn.disabled set to:", !email || isSubmitting);
     }
     if (authBlock) {
       authBlock.classList.toggle("is-authenticated", Boolean(email));
@@ -1936,6 +1938,10 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (isSubmitting) {
+      console.log("[Submit] Ignored: submission already in progress");
+      return;
+    }
     console.log("[Submit] Form submitted");
     console.log("[Submit] currentUserId:", currentUserId);
     console.log("[Submit] currentCustomerId:", currentCustomerId);
@@ -1988,66 +1994,82 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
       return;
     }
 
+    isSubmitting = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.setAttribute("aria-busy", "true");
+      submitBtn.textContent = "Enviando...";
+    }
+
     let bookingSuccess = false;
     let lastError = "";
 
-    if (webhookUrl) {
-      // Datos con formato esperado por la API /api/citas
-      const webhookData = {
-        website_id: websiteId,
-        nombre: rawData.name,
-        email: rawData.email || undefined,
-        telefono: rawData.phone,
-        servicio: selectedServices.map(s => s.name).join(", "),
-        services: selectedServices,
-        total_price_cents: totalPrice,
-        total_duration_minutes: totalDuration,
-        profesional: getSelectedProfessionalName() || undefined,
-        professional_id: selectedProfessionalId || undefined,
-        customer_id: currentCustomerId || undefined,
-        fecha: rawData.date,
-        hora: rawData.time,
-        notas: rawData.notes || undefined,
-      };
-      try {
-        const response = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(webhookData),
-        });
-        if (response.ok) {
-          bookingSuccess = true;
-        } else {
-          const errorText = await response.text();
-          lastError = errorText || `Error ${response.status}`;
+    try {
+      if (webhookUrl) {
+        // Datos con formato esperado por la API /api/citas
+        const webhookData = {
+          website_id: websiteId,
+          nombre: rawData.name,
+          email: rawData.email || undefined,
+          telefono: rawData.phone,
+          servicio: selectedServices.map(s => s.name).join(", "),
+          services: selectedServices,
+          total_price_cents: totalPrice,
+          total_duration_minutes: totalDuration,
+          profesional: getSelectedProfessionalName() || undefined,
+          professional_id: selectedProfessionalId || undefined,
+          customer_id: currentCustomerId || undefined,
+          fecha: rawData.date,
+          hora: rawData.time,
+          notas: rawData.notes || undefined,
+        };
+        try {
+          const response = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(webhookData),
+          });
+          if (response.ok) {
+            bookingSuccess = true;
+          } else {
+            const errorText = await response.text();
+            lastError = errorText || `Error ${response.status}`;
+          }
+        } catch {
+          lastError = "Error de red al enviar la solicitud.";
         }
-      } catch {
-        lastError = "Error de red al enviar la solicitud.";
-      }
-    } else {
-      lastError = "No hay endpoint configurado para enviar la cita.";
-    }
-
-    if (bookingSuccess) {
-      const bookedDate = typeof rawData.date === "string" ? rawData.date : "";
-      const bookedTime = typeof rawData.time === "string" ? rawData.time : "";
-      if (bookedDate && bookedTime && selectedProfessionalId) {
-        const duration = getSelectedDuration();
-        const start = timeToMinutes(bookedTime);
-        const end = start + duration;
-        const cacheKey = getCacheKey(bookedDate, selectedProfessionalId);
-        const existing = bookingsCache.get(cacheKey);
-        const slots = existing?.slots || [];
-        bookingsCache.set(cacheKey, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
+      } else {
+        lastError = "No hay endpoint configurado para enviar la cita.";
       }
 
-      showToast("Cita solicitada correctamente. Te contactaremos para confirmar.", "success", 5000);
-      form.reset();
-      updateSummary();
-      currentStep = 1;
-      updateSteps();
-    } else {
-      showToast(`Error al enviar. ${lastError || "Por favor, llamanos directamente."}`, "error", 5000);
+      if (bookingSuccess) {
+        const bookedDate = typeof rawData.date === "string" ? rawData.date : "";
+        const bookedTime = typeof rawData.time === "string" ? rawData.time : "";
+        if (bookedDate && bookedTime && selectedProfessionalId) {
+          const duration = getSelectedDuration();
+          const start = timeToMinutes(bookedTime);
+          const end = start + duration;
+          const cacheKey = getCacheKey(bookedDate, selectedProfessionalId);
+          const existing = bookingsCache.get(cacheKey);
+          const slots = existing?.slots || [];
+          bookingsCache.set(cacheKey, { slots: [...slots, { start, end }], fetchedAt: Date.now() });
+        }
+
+        showToast("Cita solicitada correctamente. Te contactaremos para confirmar.", "success", 5000);
+        form.reset();
+        updateSummary();
+        currentStep = 1;
+        updateSteps();
+      } else {
+        showToast(`Error al enviar. ${lastError || "Por favor, llamanos directamente."}`, "error", 5000);
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = !currentUserId;
+        submitBtn.setAttribute("aria-busy", "false");
+        submitBtn.textContent = submitLabel;
+      }
+      isSubmitting = false;
     }
   });
   }
