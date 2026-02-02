@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 interface ProfessionalInput {
   id?: string;
   name: string;
+  description?: string;
   is_active?: boolean;
   sort_order?: number;
   category_ids?: string[];
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
         .insert({
           website_id: website.id,
           name: professional.name,
+          description: professional.description || null,
           is_active: true,
           sort_order: nextOrder,
         })
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
         .from("professionals")
         .update({
           name: professional.name,
+          description: professional.description || null,
           is_active: professional.is_active ?? true,
           sort_order: professional.sort_order ?? 0,
         })
@@ -154,7 +157,7 @@ export async function POST(request: Request) {
 
     const { data } = await supabase
       .from("professionals")
-      .select("id, name, is_active, sort_order")
+      .select("id, name, description, is_active, sort_order")
       .eq("website_id", website.id)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });

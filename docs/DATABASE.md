@@ -499,6 +499,7 @@ Profesionales/empleados del salon.
 | `id` | UUID | PK, DEFAULT gen_random_uuid() | Identificador unico |
 | `website_id` | UUID | FK -> websites(id) ON DELETE CASCADE | Sitio asociado |
 | `name` | TEXT | NOT NULL | Nombre del profesional |
+| `description` | TEXT | - | Descripcion del profesional |
 | `is_active` | BOOLEAN | DEFAULT true | Activo |
 | `sort_order` | INTEGER | DEFAULT 0 | Orden de visualizacion |
 | `created_at` | TIMESTAMPTZ | DEFAULT now() | Fecha de creacion |

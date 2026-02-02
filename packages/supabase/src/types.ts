@@ -644,6 +644,7 @@ export interface Professional {
   id: string;
   website_id: string;
   name: string;
+  description?: string | null;
   is_active: boolean;
   sort_order: number;
 }

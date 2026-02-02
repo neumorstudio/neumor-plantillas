@@ -5,6 +5,7 @@ import { useState } from "react";
 interface Professional {
   id: string;
   name: string;
+  description?: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -116,6 +117,7 @@ export default function ProfesionalesClient({
 }: Props) {
   const [professionals, setProfessionals] = useState<Professional[]>(initialProfessionals);
   const [newProfessionalName, setNewProfessionalName] = useState("");
+  const [newProfessionalDescription, setNewProfessionalDescription] = useState("");
   const [savingProfessionals, setSavingProfessionals] = useState(false);
   const [professionalsMessage, setProfessionalsMessage] = useState<string | null>(null);
   const [categoryAssignments, setCategoryAssignments] = useState<Record<string, string[]>>(() => {
@@ -132,7 +134,7 @@ export default function ProfesionalesClient({
   const runProfessionalsAction = async (
     payload: {
     action: "create" | "update" | "delete";
-    professional: { id?: string; name: string; is_active?: boolean; sort_order?: number };
+    professional: { id?: string; name: string; description?: string; is_active?: boolean; sort_order?: number };
     },
     successMessage?: string
   ) => {
@@ -177,8 +179,12 @@ export default function ProfesionalesClient({
   const handleCreateProfessional = async () => {
     const name = newProfessionalName.trim();
     if (!name) return;
-    await runProfessionalsAction({ action: "create", professional: { name } });
+    await runProfessionalsAction({
+      action: "create",
+      professional: { name, description: newProfessionalDescription.trim() || undefined },
+    });
     setNewProfessionalName("");
+    setNewProfessionalDescription("");
   };
 
   const handleUpdateProfessional = async (
@@ -190,6 +196,7 @@ export default function ProfesionalesClient({
       professional: {
         id: professional.id,
         name: updates.name ?? professional.name,
+        description: updates.description ?? professional.description ?? undefined,
         is_active: updates.is_active ?? professional.is_active,
         sort_order: updates.sort_order ?? professional.sort_order,
         ...(updates.category_ids ? { category_ids: updates.category_ids } : {}),
@@ -240,6 +247,17 @@ export default function ProfesionalesClient({
               placeholder="Ej: Maria Garcia"
               value={newProfessionalName}
               onChange={(event) => setNewProfessionalName(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+              Descripcion (opcional)
+            </label>
+            <textarea
+              className="neumor-input w-full min-h-[96px] text-base resize-vertical"
+              placeholder="Ej: Especialista en color y cortes creativos"
+              value={newProfessionalDescription}
+              onChange={(event) => setNewProfessionalDescription(event.target.value)}
             />
           </div>
           <button
@@ -318,6 +336,25 @@ export default function ProfesionalesClient({
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                      Descripcion
+                    </label>
+                    <textarea
+                      className="neumor-input w-full min-h-[96px] text-base resize-vertical"
+                      value={professional.description || ""}
+                      onChange={(event) =>
+                        setProfessionals((prev) =>
+                          prev.map((item) =>
+                            item.id === professional.id
+                              ? { ...item, description: event.target.value }
+                              : item
+                          )
+                        )
+                      }
+                    />
+                  </div>
+
                   {/* Toggle activo */}
                   <div className="flex items-center justify-between">
                     <ToggleSwitch
@@ -332,16 +369,19 @@ export default function ProfesionalesClient({
                     />
                   </div>
 
-                  {/* Boton guardar nombre */}
+                  {/* Boton guardar info */}
                   <button
                     type="button"
                     className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
                     onClick={() =>
-                      handleUpdateProfessional(professional, { name: professional.name })
+                      handleUpdateProfessional(professional, {
+                        name: professional.name,
+                        description: professional.description || "",
+                      })
                     }
                     disabled={savingProfessionals}
                   >
-                    Guardar nombre
+                    Guardar informacion
                   </button>
                 </div>
               </div>

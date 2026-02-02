@@ -146,6 +146,7 @@ const teamMembers = professionals.map((professional) => {
   return {
     name: professional.name,
     role: primaryCategory,
+    description: professional.description || undefined,
   };
 });
 const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {

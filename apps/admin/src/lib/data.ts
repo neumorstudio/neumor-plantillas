@@ -301,7 +301,7 @@ export async function getProfessionals() {
 
   const { data } = await supabase
     .from("professionals")
-    .select("id, name, is_active, sort_order")
+    .select("id, name, description, is_active, sort_order")
     .eq("website_id", websiteId)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
