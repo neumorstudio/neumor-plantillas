@@ -37,6 +37,12 @@ const navItems: NavItem[] = [
     icon: <Calendar className="w-5 h-5" />,
   },
   {
+    href: "/dashboard/menu",
+    label: "Menu",
+    slug: "menu",
+    icon: <Menu className="w-5 h-5" />,
+  },
+  {
     href: "/dashboard/calendario",
     label: "Calendario",
     slug: "calendario",
@@ -156,6 +162,9 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
   let resolvedSections = visibleSections?.length ? [...visibleSections] : null;
   if (clientInfo?.businessType === "restaurant") {
     const baseSections = resolvedSections ?? navItems.map((item) => item.slug);
+    if (!baseSections.includes("menu")) {
+      baseSections.push("menu");
+    }
     const restaurantSections = baseSections.filter(
       (section) =>
         ![
