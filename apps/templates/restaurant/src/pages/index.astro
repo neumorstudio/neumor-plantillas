@@ -36,7 +36,9 @@ import {
   getWebsiteConfig,
   getMenuItems,
   getBusinessHours,
+  getBusinessHourSlots,
   getSpecialDays,
+  getSpecialDaySlots,
   getBookingsInRange,
   getRestaurantSettings,
   type Theme,
@@ -45,7 +47,9 @@ import {
   type WeekSchedule,
   type MenuItemRow,
   type BusinessHourRow,
+  type BusinessHourSlotRow,
   type SpecialDayRow,
+  type SpecialDaySlotRow,
   type BookingRow,
   type RestaurantRow,
   type SectionConfig,
@@ -338,7 +342,9 @@ const getContentArray = (key: string) => {
 const currentWebsiteId = websiteData?.id || websiteId || "";
 const menuItems = await getMenuItems(currentWebsiteId);
 const businessHours: BusinessHourRow[] = await getBusinessHours(currentWebsiteId);
+const businessHourSlots: BusinessHourSlotRow[] = await getBusinessHourSlots(currentWebsiteId);
 const specialDays: SpecialDayRow[] = await getSpecialDays(currentWebsiteId);
+const specialDaySlots: SpecialDaySlotRow[] = await getSpecialDaySlots(currentWebsiteId);
 const restaurantSettings: RestaurantRow | null = await getRestaurantSettings(currentWebsiteId);
 
 const bookingsStart = new Date();
@@ -589,7 +595,9 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
                   webhookUrl={config.webhookUrl}
                   websiteId={currentWebsiteId}
                   businessHours={businessHours}
+                  businessHourSlots={businessHourSlots}
                   specialDays={specialDays}
+                  specialDaySlots={specialDaySlots}
                   bookings={bookings}
                   capacity={restaurantSettings?.capacity ?? null}
                 />

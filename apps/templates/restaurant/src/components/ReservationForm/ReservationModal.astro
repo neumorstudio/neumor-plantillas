@@ -10,6 +10,12 @@ interface Props {
   websiteId?: string;
   buttonText?: string;
   zones?: string[];
+  businessHours?: { day_of_week: number; is_open: boolean; open_time: string; close_time: string }[];
+  businessHourSlots?: { day_of_week: number; open_time: string; close_time: string; sort_order?: number; is_active?: boolean }[];
+  specialDays?: { id?: string; date: string; is_open: boolean; open_time: string | null; close_time: string | null; note: string | null }[];
+  specialDaySlots?: { special_day_id: string; open_time: string; close_time: string; sort_order?: number }[];
+  bookings?: { booking_date: string; booking_time: string | null; guests: number | null; status: string }[];
+  capacity?: number | null;
 }
 
 const {
@@ -19,12 +25,25 @@ const {
   websiteId = "",
   buttonText = "Reservar Mesa",
   zones = ["Interior", "Terraza", "Barra"],
+  businessHours = [],
+  businessHourSlots = [],
+  specialDays = [],
+  specialDaySlots = [],
+  bookings = [],
+  capacity = null,
 } = Astro.props;
 
 const timeSlots = [
   "13:00", "13:30", "14:00", "14:30", "15:00",
   "20:00", "20:30", "21:00", "21:30", "22:00", "22:30"
 ];
+
+const hoursPayload = JSON.stringify(businessHours);
+const businessHourSlotsPayload = JSON.stringify(businessHourSlots);
+const specialDaysPayload = JSON.stringify(specialDays);
+const specialDaySlotsPayload = JSON.stringify(specialDaySlots);
+const bookingsPayload = JSON.stringify(bookings);
+const capacityPayload = JSON.stringify(capacity);
 ---
 
 <!-- Floating Button -->
@@ -57,6 +76,12 @@ const timeSlots = [
       </div>
 
       <form class="modal-form" data-webhook={webhookUrl} data-website-id={websiteId}>
+        <script type="application/json" data-hours>{hoursPayload}</script>
+        <script type="application/json" data-business-hour-slots>{businessHourSlotsPayload}</script>
+        <script type="application/json" data-special-days>{specialDaysPayload}</script>
+        <script type="application/json" data-special-day-slots>{specialDaySlotsPayload}</script>
+        <script type="application/json" data-bookings>{bookingsPayload}</script>
+        <script type="application/json" data-capacity>{capacityPayload}</script>
         <!-- Date Selection -->
         <div class="form-section">
           <label class="section-label">
@@ -384,6 +409,14 @@ const timeSlots = [
     box-shadow: 0 3px 10px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
   }
 
+  .time-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+
   /* Guests Counter */
   .guests-counter {
     display: flex;
@@ -609,211 +642,440 @@ const timeSlots = [
 </style>
 
 <script>
-  const fab = document.querySelector('[data-open-modal]');
-  const modal = document.querySelector('[data-modal]') as HTMLElement;
-  const closeButtons = document.querySelectorAll('[data-close-modal]');
-  const form = document.querySelector('.modal-form') as HTMLFormElement;
-  const successEl = document.querySelector('.modal-success') as HTMLElement;
+  (function () {
+    const fab = document.querySelector('[data-open-modal]');
+    const modal = document.querySelector('[data-modal]') as HTMLElement | null;
+    const closeButtons = document.querySelectorAll('[data-close-modal]');
+    const form = document.querySelector('.modal-form') as HTMLFormElement | null;
+    const successEl = document.querySelector('.modal-success') as HTMLElement | null;
 
-  // Open modal
-  fab?.addEventListener('click', () => {
-    modal?.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  });
+    if (!form) return;
 
-  // Close modal
-  function closeModal() {
-    modal?.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  closeButtons.forEach(btn => btn.addEventListener('click', closeModal));
-
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal?.classList.contains('active')) {
-      closeModal();
-    }
-  });
-
-  // Date chips
-  const dateChips = document.querySelectorAll('.date-chip');
-  const dateInput = document.querySelector('.date-input-hidden') as HTMLInputElement;
-
-  function getDateString(offset: number) {
-    const date = new Date();
-    date.setDate(date.getDate() + offset);
-    return date.toISOString().split('T')[0];
-  }
-
-  dateChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      dateChips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-
-      const dateType = (chip as HTMLElement).dataset.date;
-
-      if (dateType === 'today') {
-        dateInput.value = getDateString(0);
-        dateInput.classList.remove('visible');
-      } else if (dateType === 'tomorrow') {
-        dateInput.value = getDateString(1);
-        dateInput.classList.remove('visible');
-      } else {
-        dateInput.classList.add('visible');
-        dateInput.focus();
+    const parseJsonScript = (selector: string, fallback: unknown) => {
+      const el = form.querySelector(selector);
+      if (!el) return fallback;
+      try {
+        const parsed = JSON.parse(el.textContent || 'null');
+        return parsed ?? fallback;
+      } catch {
+        return fallback;
       }
-    });
-  });
-
-  // Initialize with today
-  dateInput.value = getDateString(0);
-
-  // Time slots
-  const timeSlots = document.querySelectorAll('.time-slot');
-  const timeInput = document.querySelector('input[name="time"]') as HTMLInputElement;
-
-  timeSlots.forEach(slot => {
-    slot.addEventListener('click', () => {
-      timeSlots.forEach(s => s.classList.remove('active'));
-      slot.classList.add('active');
-      timeInput.value = (slot as HTMLElement).dataset.time || '';
-    });
-  });
-
-  // Guests counter
-  const minusBtn = document.querySelector('.counter-btn.minus');
-  const plusBtn = document.querySelector('.counter-btn.plus');
-  const guestsCount = document.querySelector('.guests-count') as HTMLElement;
-  const guestsInput = document.querySelector('input[name="guests"]') as HTMLInputElement;
-
-  let guests = 2;
-
-  minusBtn?.addEventListener('click', () => {
-    if (guests > 1) {
-      guests--;
-      guestsCount.textContent = String(guests);
-      guestsInput.value = String(guests);
-    }
-  });
-
-  plusBtn?.addEventListener('click', () => {
-    if (guests < 12) {
-      guests++;
-      guestsCount.textContent = String(guests);
-      guestsInput.value = String(guests);
-    }
-  });
-
-  // Zone tabs
-  const zoneTabs = document.querySelectorAll('.zone-tab');
-  const zoneInput = document.querySelector('input[name="zone"]') as HTMLInputElement;
-
-  zoneTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      zoneTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      zoneInput.value = (tab as HTMLElement).dataset.zone || '';
-    });
-  });
-
-  // Contact toggle
-  const contactSection = document.querySelector('.contact-section');
-  const contactToggle = document.querySelector('.contact-toggle');
-
-  contactToggle?.addEventListener('click', () => {
-    contactSection?.classList.toggle('expanded');
-  });
-
-  // Auto-expand contact on form focus
-  const contactInputs = document.querySelectorAll('.contact-fields input, .contact-fields textarea');
-  contactInputs.forEach(input => {
-    input.addEventListener('focus', () => {
-      contactSection?.classList.add('expanded');
-    });
-  });
-
-  // Form submit
-  const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
-  let isSubmitting = false;
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    // Ensure contact section is expanded and has required fields
-    if (!contactSection?.classList.contains('expanded')) {
-      contactSection?.classList.add('expanded');
-      const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-      nameInput?.focus();
-      return;
-    }
-
-    isSubmitting = true;
-    submitBtn?.classList.add('loading');
-    submitBtn?.setAttribute('disabled', 'true');
-
-    const webhookUrl = form.dataset.webhook;
-    const websiteId = form.dataset.websiteId;
-    const formData = new FormData(form);
-    const rawData = Object.fromEntries(formData);
-
-    const data = {
-      website_id: websiteId,
-      nombre: rawData.name,
-      email: rawData.email,
-      telefono: rawData.phone,
-      fecha: rawData.date,
-      hora: rawData.time,
-      personas: parseInt(rawData.guests as string) || 2,
-      zona: rawData.zone,
-      notas: rawData.notes || "",
     };
 
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    const businessHours = parseJsonScript('script[data-hours]', []) as {
+      day_of_week: number;
+      is_open: boolean;
+      open_time: string;
+      close_time: string;
+    }[];
+    const businessHourSlots = parseJsonScript('script[data-business-hour-slots]', []) as {
+      day_of_week: number;
+      open_time: string;
+      close_time: string;
+      sort_order?: number;
+      is_active?: boolean;
+    }[];
+    const specialDays = parseJsonScript('script[data-special-days]', []) as {
+      id?: string;
+      date: string;
+      is_open: boolean;
+      open_time: string | null;
+      close_time: string | null;
+      note: string | null;
+    }[];
+    const specialDaySlots = parseJsonScript('script[data-special-day-slots]', []) as {
+      special_day_id: string;
+      open_time: string;
+      close_time: string;
+      sort_order?: number;
+    }[];
+    const bookings = parseJsonScript('script[data-bookings]', []) as {
+      booking_date: string;
+      booking_time: string | null;
+      guests: number | null;
+      status: string;
+    }[];
+    const capacityRaw = parseJsonScript('script[data-capacity]', null) as number | null;
+    const capacityNum = Number(capacityRaw);
+    const capacity = Number.isFinite(capacityNum) && capacityNum > 0 ? capacityNum : null;
 
-    try {
-      if (webhookUrl) {
-        const response = await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error("Error");
+    const slotIntervalMinutes = 30;
+    const maxAdvanceDays = 90;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dateChips = form.querySelectorAll('.date-chip');
+    const dateInput = form.querySelector('.date-input-hidden') as HTMLInputElement;
+    const timeSlotsContainer = form.querySelector('.time-slots') as HTMLElement | null;
+    const timeInput = form.querySelector('input[name="time"]') as HTMLInputElement;
+    const minusBtn = form.querySelector('.counter-btn.minus');
+    const plusBtn = form.querySelector('.counter-btn.plus');
+    const guestsCount = form.querySelector('.guests-count') as HTMLElement;
+    const guestsInput = form.querySelector('input[name="guests"]') as HTMLInputElement;
+    const zoneTabs = form.querySelectorAll('.zone-tab');
+    const zoneInput = form.querySelector('input[name="zone"]') as HTMLInputElement;
+    const contactSection = form.querySelector('.contact-section');
+    const contactToggle = form.querySelector('.contact-toggle');
+    const contactInputs = form.querySelectorAll('.contact-fields input, .contact-fields textarea');
+    const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
+
+    const toIsoDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const fromIsoDate = (value: string) => {
+      const [year, month, day] = value.split('-').map(Number);
+      return new Date(year, (month || 1) - 1, day || 1);
+    };
+
+    const toMinutes = (value: string) => {
+      if (!value || typeof value !== 'string') return null;
+      const [h, m] = value.slice(0, 5).split(':').map(Number);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+      return h * 60 + m;
+    };
+
+    const normalizeTime = (value: string) => (typeof value === 'string' ? value.slice(0, 5) : '');
+
+    const toTimeString = (minutes: number) => {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
+    const clampToWindow = (openMin: number | null, closeMin: number | null) => {
+      if (!Number.isFinite(openMin) || !Number.isFinite(closeMin) || (openMin as number) >= (closeMin as number)) {
+        return null;
+      }
+      return { openMin: openMin as number, closeMin: closeMin as number };
+    };
+
+    const buildRangesFromSlots = (slots: { open_time: string; close_time: string }[]) => {
+      if (!Array.isArray(slots) || slots.length === 0) return [];
+      return slots
+        .map((slot) => clampToWindow(toMinutes(slot.open_time), toMinutes(slot.close_time)))
+        .filter((range): range is { openMin: number; closeMin: number } => range !== null);
+    };
+
+    const getFallbackRangesForDay = (date: Date) => {
+      const dayOfWeek = (date.getDay() + 6) % 7;
+      const day = businessHours.find((d) => d.day_of_week === dayOfWeek);
+      if (!day) {
+        const fallback = clampToWindow(13 * 60, 23 * 60);
+        return fallback ? [fallback] : [];
+      }
+      if (!day.is_open) return [];
+      const range = clampToWindow(toMinutes(day.open_time), toMinutes(day.close_time))
+        || clampToWindow(13 * 60, 23 * 60);
+      return range ? [range] : [];
+    };
+
+    const getRangesForDate = (date: Date) => {
+      const iso = toIsoDate(date);
+      const special = specialDays.find((d) => d.date === iso);
+
+      if (special) {
+        if (!special.is_open) return [];
+        const specialSlotRanges = buildRangesFromSlots(
+          specialDaySlots
+            .filter((slot) => slot.special_day_id === special.id)
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        );
+        if (specialSlotRanges.length) return specialSlotRanges;
+
+        const specialRange = clampToWindow(toMinutes(special.open_time || ''), toMinutes(special.close_time || ''));
+        if (specialRange) return [specialRange];
+
+        return getFallbackRangesForDay(date);
       }
 
-      // Show success
-      form.style.display = 'none';
-      successEl.style.display = 'block';
-    } catch {
-      alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
-    } finally {
-      submitBtn?.classList.remove('loading');
-      submitBtn?.removeAttribute('disabled');
-      isSubmitting = false;
-    }
-  });
+      const dayOfWeek = (date.getDay() + 6) % 7;
+      const daySlots = businessHourSlots
+        .filter((slot) => slot.day_of_week === dayOfWeek && slot.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const daySlotRanges = buildRangesFromSlots(daySlots);
+      if (daySlotRanges.length) return daySlotRanges;
 
-  // Reset on close
-  closeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      setTimeout(() => {
-        form.style.display = 'block';
-        successEl.style.display = 'none';
-        form.reset();
-        guests = 2;
-        guestsCount.textContent = '2';
-        dateChips.forEach((c, i) => c.classList.toggle('active', i === 0));
-        dateInput.classList.remove('visible');
-        dateInput.value = getDateString(0);
-        timeSlots.forEach((s, i) => s.classList.toggle('active', i === 3));
-        zoneTabs.forEach((t, i) => t.classList.toggle('active', i === 0));
-        contactSection?.classList.remove('expanded');
-      }, 300);
+      return getFallbackRangesForDay(date);
+    };
+
+    const getBookingsForDate = (isoDate: string) =>
+      bookings.filter((b) => b.booking_date === isoDate && b.status !== 'cancelled');
+
+    const getBookedGuestsForSlot = (isoDate: string, time: string) => {
+      const slotTime = normalizeTime(time);
+      return getBookingsForDate(isoDate)
+        .filter((b) => normalizeTime(b.booking_time || '') === slotTime)
+        .reduce((sum, b) => sum + (Number(b.guests) || 2), 0);
+    };
+
+    const generateSlotsForDate = (date: Date) => {
+      const ranges = getRangesForDate(date);
+      if (!ranges.length) return [];
+      const isoDate = toIsoDate(date);
+      const slots: { time: string; remaining: number | null; isFull: boolean }[] = [];
+      ranges.forEach((range) => {
+        for (let minutes = range.openMin; minutes + slotIntervalMinutes <= range.closeMin; minutes += slotIntervalMinutes) {
+          const time = toTimeString(minutes);
+          const bookedGuests = getBookedGuestsForSlot(isoDate, time);
+          const remaining = capacity ? Math.max(0, capacity - bookedGuests) : null;
+          const isFull = capacity ? remaining <= 0 : false;
+          slots.push({ time, remaining, isFull });
+        }
+      });
+      return slots;
+    };
+
+    const getGuestCount = () => Number(guestsInput?.value || 2);
+
+    const getAvailableSlotsForDate = (date: Date, guests: number) => {
+      const slots = generateSlotsForDate(date);
+      if (!capacity) return slots;
+      return slots.filter((slot) => (slot.remaining ?? 0) >= guests);
+    };
+
+    const isSlotAvailable = (isoDate: string, time: string, guests: number) => {
+      const dateObj = fromIsoDate(isoDate);
+      const availableSlots = getAvailableSlotsForDate(dateObj, guests);
+      return availableSlots.some((slot) => slot.time === time);
+    };
+
+    function getDateString(offset: number) {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      return toIsoDate(date);
+    }
+
+    const minDate = getDateString(0);
+    const maxDate = getDateString(maxAdvanceDays);
+    if (dateInput) {
+      dateInput.min = minDate;
+      dateInput.max = maxDate;
+    }
+
+    const renderTimeSlots = () => {
+      if (!timeSlotsContainer) return;
+      timeSlotsContainer.innerHTML = '';
+
+      const dateValue = dateInput?.value;
+      if (!dateValue) {
+        timeInput.value = '';
+        const empty = document.createElement('div');
+        empty.className = 'time-empty';
+        empty.textContent = 'Selecciona una fecha';
+        timeSlotsContainer.appendChild(empty);
+        return;
+      }
+
+      const dateObj = fromIsoDate(dateValue);
+      const slots = getAvailableSlotsForDate(dateObj, getGuestCount());
+
+      if (!slots.length) {
+        timeInput.value = '';
+        const empty = document.createElement('div');
+        empty.className = 'time-empty';
+        empty.textContent = 'No hay horarios disponibles';
+        timeSlotsContainer.appendChild(empty);
+        return;
+      }
+
+      slots.forEach((slot, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `time-slot ${index === 0 ? 'active' : ''}`;
+        button.dataset.time = slot.time;
+        button.textContent = slot.time;
+        button.addEventListener('click', () => {
+          timeSlotsContainer.querySelectorAll('.time-slot').forEach((s) => s.classList.remove('active'));
+          button.classList.add('active');
+          timeInput.value = slot.time;
+        });
+        timeSlotsContainer.appendChild(button);
+      });
+
+      timeInput.value = slots[0].time;
+    };
+
+    const setDateFromChip = (offset: number) => {
+      dateInput.value = getDateString(offset);
+      dateInput.classList.remove('visible');
+      renderTimeSlots();
+    };
+
+    dateChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        dateChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const dateType = (chip as HTMLElement).dataset.date;
+        if (dateType === 'today') {
+          setDateFromChip(0);
+        } else if (dateType === 'tomorrow') {
+          setDateFromChip(1);
+        } else {
+          dateInput.classList.add('visible');
+          dateInput.focus();
+        }
+      });
     });
-  });
+
+    dateInput?.addEventListener('change', () => {
+      renderTimeSlots();
+    });
+
+    let guests = 2;
+
+    minusBtn?.addEventListener('click', () => {
+      if (guests > 1) {
+        guests--;
+        guestsCount.textContent = String(guests);
+        guestsInput.value = String(guests);
+        renderTimeSlots();
+      }
+    });
+
+    plusBtn?.addEventListener('click', () => {
+      if (guests < 12) {
+        guests++;
+        guestsCount.textContent = String(guests);
+        guestsInput.value = String(guests);
+        renderTimeSlots();
+      }
+    });
+
+    zoneTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        zoneTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        zoneInput.value = (tab as HTMLElement).dataset.zone || '';
+      });
+    });
+
+    contactToggle?.addEventListener('click', () => {
+      contactSection?.classList.toggle('expanded');
+    });
+
+    contactInputs.forEach(input => {
+      input.addEventListener('focus', () => {
+        contactSection?.classList.add('expanded');
+      });
+    });
+
+    // Open modal
+    fab?.addEventListener('click', () => {
+      modal?.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+
+    function closeModal() {
+      modal?.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    closeButtons.forEach(btn => btn.addEventListener('click', closeModal));
+
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+      }
+    });
+
+    let isSubmitting = false;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (isSubmitting) return;
+
+      if (!contactSection?.classList.contains('expanded')) {
+        contactSection?.classList.add('expanded');
+        const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement;
+        nameInput?.focus();
+        return;
+      }
+
+      const dateValue = dateInput?.value;
+      const timeValue = timeInput?.value;
+      if (!dateValue || !timeValue) {
+        alert('Selecciona fecha y hora.');
+        return;
+      }
+
+      if (!isSlotAvailable(dateValue, timeValue, getGuestCount())) {
+        alert('Ese horario ya no está disponible. Elige otro.');
+        renderTimeSlots();
+        return;
+      }
+
+      isSubmitting = true;
+      submitBtn?.classList.add('loading');
+      submitBtn?.setAttribute('disabled', 'true');
+
+      const webhookUrl = form.dataset.webhook;
+      const websiteId = form.dataset.websiteId;
+      const formData = new FormData(form);
+      const rawData = Object.fromEntries(formData);
+
+      const data = {
+        website_id: websiteId,
+        nombre: rawData.name,
+        email: rawData.email,
+        telefono: rawData.phone,
+        fecha: rawData.date,
+        hora: rawData.time,
+        personas: parseInt(rawData.guests as string) || 2,
+        zona: rawData.zone,
+        notas: rawData.notes || "",
+      };
+
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      try {
+        if (webhookUrl) {
+          const response = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          if (!response.ok) throw new Error("Error");
+        }
+
+        form.style.display = 'none';
+        if (successEl) successEl.style.display = 'block';
+      } catch {
+        alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
+      } finally {
+        submitBtn?.classList.remove('loading');
+        submitBtn?.removeAttribute('disabled');
+        isSubmitting = false;
+      }
+    });
+
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setTimeout(() => {
+          form.style.display = 'block';
+          if (successEl) successEl.style.display = 'none';
+          form.reset();
+          guests = 2;
+          guestsCount.textContent = '2';
+          dateChips.forEach((c, i) => c.classList.toggle('active', i === 0));
+          dateInput.classList.remove('visible');
+          dateInput.value = minDate;
+          zoneTabs.forEach((t, i) => t.classList.toggle('active', i === 0));
+          contactSection?.classList.remove('expanded');
+          renderTimeSlots();
+        }, 300);
+      });
+    });
+
+    dateInput.value = minDate;
+    renderTimeSlots();
+  })();
 </script>

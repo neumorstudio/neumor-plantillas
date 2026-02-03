@@ -121,11 +121,27 @@ export interface BusinessHourRow {
 }
 
 export interface SpecialDayRow {
+  id?: string;
   date: string;
   is_open: boolean;
   open_time: string | null;
   close_time: string | null;
   note: string | null;
+}
+
+export interface BusinessHourSlotRow {
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export interface SpecialDaySlotRow {
+  special_day_id: string;
+  open_time: string;
+  close_time: string;
+  sort_order?: number;
 }
 
 export interface BookingRow {
@@ -268,8 +284,9 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[
   try {
     const { data, error } = await supabase
       .from("special_days")
-      .select("date, is_open, open_time, close_time, note")
-      .eq("website_id", websiteId);
+      .select("id, date, is_open, open_time, close_time, note")
+      .eq("website_id", websiteId)
+      .order("date", { ascending: true });
 
     if (error) {
       console.error("Error fetching special days:", error.message);
@@ -277,6 +294,71 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[
     }
 
     return (data as SpecialDayRow[] | null) || [];
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return [];
+  }
+}
+
+export async function getBusinessHourSlots(websiteId?: string): Promise<BusinessHourSlotRow[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("business_hour_slots")
+      .select("id, website_id, day_of_week, open_time, close_time, sort_order, is_active")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("day_of_week", { ascending: true })
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching business hour slots:", error.message);
+      return [];
+    }
+
+    return (data as BusinessHourSlotRow[] | null) || [];
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return [];
+  }
+}
+
+export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDaySlotRow[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data: specialDays, error: specialError } = await supabase
+      .from("special_days")
+      .select("id")
+      .eq("website_id", websiteId);
+
+    if (specialError) {
+      console.error("Error fetching special days:", specialError.message);
+      return [];
+    }
+
+    if (!specialDays?.length) {
+      return [];
+    }
+
+    const ids = specialDays.map((day) => day.id);
+    const { data, error } = await supabase
+      .from("special_day_slots")
+      .select("id, special_day_id, open_time, close_time, sort_order")
+      .in("special_day_id", ids)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching special day slots:", error.message);
+      return [];
+    }
+
+    return (data as SpecialDaySlotRow[] | null) || [];
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return [];

@@ -19,8 +19,10 @@ import { TeamSection, GallerySection, BrandsSection, FAQSection, PlansSection, C
 // Import Supabase helpers
 import {
   getBusinessHours,
+  getBusinessHourSlots,
   getMenuItems,
   getSpecialDays,
+  getSpecialDaySlots,
   getBookingsInRange,
   getRestaurantSettings,
 } from "@restaurant/lib/supabase";
@@ -151,7 +153,9 @@ const getContentArray = (key: string) => {
 // Get menu items and other data from Supabase
 const menuItems = await getMenuItems(tenant.id);
 const businessHours = await getBusinessHours(tenant.id);
+const businessHourSlots = await getBusinessHourSlots(tenant.id);
 const specialDays = await getSpecialDays(tenant.id);
+const specialDaySlots = await getSpecialDaySlots(tenant.id);
 const restaurantSettings = await getRestaurantSettings(tenant.id);
 
 const toIsoDate = (date: Date) => date.toISOString().split("T")[0];
@@ -424,7 +428,9 @@ const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   webhookUrl={webhookUrl}
                   websiteId={tenant.id}
                   businessHours={businessHours}
+                  businessHourSlots={businessHourSlots}
                   specialDays={specialDays}
+                  specialDaySlots={specialDaySlots}
                   bookings={bookings}
                   capacity={restaurantSettings?.capacity ?? null}
                 />

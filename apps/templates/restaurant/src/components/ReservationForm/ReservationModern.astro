@@ -12,7 +12,9 @@ interface Props {
   zones?: string[];
   occasions?: { id: string; label: string; icon: string }[];
   businessHours?: { day_of_week: number; is_open: boolean; open_time: string; close_time: string }[];
-  specialDays?: { date: string; is_open: boolean; open_time: string | null; close_time: string | null; note: string | null }[];
+  businessHourSlots?: { day_of_week: number; open_time: string; close_time: string; sort_order?: number; is_active?: boolean }[];
+  specialDays?: { id?: string; date: string; is_open: boolean; open_time: string | null; close_time: string | null; note: string | null }[];
+  specialDaySlots?: { special_day_id: string; open_time: string; close_time: string; sort_order?: number }[];
   bookings?: { booking_date: string; booking_time: string | null; guests: number | null; status: string }[];
   capacity?: number | null;
 }
@@ -31,7 +33,9 @@ const {
     { id: "business", label: "Negocios", icon: "💼" },
   ],
   businessHours = [],
+  businessHourSlots = [],
   specialDays = [],
+  specialDaySlots = [],
   bookings = [],
   capacity = null,
 } = Astro.props;
@@ -47,7 +51,9 @@ const {
 
     <form class="reservation-grid" data-step="date" data-webhook={webhookUrl} data-website-id={websiteId}>
       <script type="application/json" data-hours>{JSON.stringify(businessHours)}</script>
+      <script type="application/json" data-business-hour-slots>{JSON.stringify(businessHourSlots)}</script>
       <script type="application/json" data-special-days>{JSON.stringify(specialDays)}</script>
+      <script type="application/json" data-special-day-slots>{JSON.stringify(specialDaySlots)}</script>
       <script type="application/json" data-bookings>{JSON.stringify(bookings)}</script>
       <script type="application/json" data-capacity>{JSON.stringify(capacity)}</script>
       <!-- Left Column: Date & Time -->
@@ -835,7 +841,9 @@ const {
     };
 
     const businessHours = parseJsonScript('script[data-hours]', []);
+    const businessHourSlots = parseJsonScript('script[data-business-hour-slots]', []);
     const specialDays = parseJsonScript('script[data-special-days]', []);
+    const specialDaySlots = parseJsonScript('script[data-special-day-slots]', []);
     const bookings = parseJsonScript('script[data-bookings]', []);
     const capacityRaw = parseJsonScript('script[data-capacity]', null);
     const capacityNum = Number(capacityRaw);
@@ -884,33 +892,62 @@ const {
       return { openMin, closeMin };
     };
 
-    const getBusinessScheduleForDay = (date) => {
-      const dayOfWeek = date.getDay();
-      const day = businessHours.find((d) => d.day_of_week === dayOfWeek);
-      if (!day) return clampToWindow(13 * 60, 23 * 60);
-      if (!day.is_open) return null;
-      const openMin = toMinutes(day.open_time) ?? 13 * 60;
-      const closeMin = toMinutes(day.close_time) ?? 23 * 60;
-      // Si el horario está mal configurado (open >= close), caer al fallback.
-      return clampToWindow(openMin, closeMin) ?? clampToWindow(13 * 60, 23 * 60);
+    const buildRangesFromSlots = (slots) => {
+      if (!Array.isArray(slots) || slots.length === 0) return [];
+      return slots
+        .map((slot) => {
+          const openMin = toMinutes(slot.open_time || '');
+          const closeMin = toMinutes(slot.close_time || '');
+          return clampToWindow(openMin, closeMin);
+        })
+        .filter((range) => range !== null);
     };
 
-    const getScheduleForDate = (date) => {
+    const getFallbackRangesForDay = (date) => {
+      const dayOfWeek = (date.getDay() + 6) % 7;
+      const day = businessHours.find((d) => d.day_of_week === dayOfWeek);
+      if (!day) {
+        const fallback = clampToWindow(13 * 60, 23 * 60);
+        return fallback ? [fallback] : [];
+      }
+      if (!day.is_open) return [];
+      const openMin = toMinutes(day.open_time) ?? 13 * 60;
+      const closeMin = toMinutes(day.close_time) ?? 23 * 60;
+      const range = clampToWindow(openMin, closeMin) ?? clampToWindow(13 * 60, 23 * 60);
+      return range ? [range] : [];
+    };
+
+    const getRangesForDate = (date) => {
       const iso = toIsoDate(date);
       const special = specialDays.find((d) => d.date === iso);
+
       if (special) {
-        if (!special.is_open) return null;
+        if (!special.is_open) return [];
+        const specialSlotRanges = buildRangesFromSlots(
+          specialDaySlots
+            .filter((slot) => slot.special_day_id === special.id)
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        );
+        if (specialSlotRanges.length) return specialSlotRanges;
+
         const specialOpen = toMinutes(special.open_time || '');
         const specialClose = toMinutes(special.close_time || '');
-        // Si el día especial no define horas, caer al horario normal.
-        if (specialOpen === null || specialClose === null) {
-          return getBusinessScheduleForDay(date);
+        if (specialOpen !== null && specialClose !== null) {
+          const range = clampToWindow(specialOpen, specialClose);
+          if (range) return [range];
         }
-        // Si el horario especial está mal, caer al horario normal.
-        return clampToWindow(specialOpen, specialClose) ?? getBusinessScheduleForDay(date);
+
+        return getFallbackRangesForDay(date);
       }
 
-      return getBusinessScheduleForDay(date);
+      const dayOfWeek = (date.getDay() + 6) % 7;
+      const daySlots = businessHourSlots
+        .filter((slot) => slot.day_of_week === dayOfWeek && slot.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const daySlotRanges = buildRangesFromSlots(daySlots);
+      if (daySlotRanges.length) return daySlotRanges;
+
+      return getFallbackRangesForDay(date);
     };
 
     const getBookingsForDate = (isoDate) =>
@@ -924,17 +961,19 @@ const {
     };
 
     const generateSlotsForDate = (date) => {
-      const schedule = getScheduleForDate(date);
-      if (!schedule) return [];
+      const ranges = getRangesForDate(date);
+      if (!ranges.length) return [];
       const isoDate = toIsoDate(date);
       const slots = [];
-      for (let minutes = schedule.openMin; minutes + slotIntervalMinutes <= schedule.closeMin; minutes += slotIntervalMinutes) {
-        const time = toTimeString(minutes);
-        const bookedGuests = getBookedGuestsForSlot(isoDate, time);
-        const remaining = capacity ? Math.max(0, capacity - bookedGuests) : null;
-        const isFull = capacity ? remaining <= 0 : false;
-        slots.push({ time, remaining, isFull });
-      }
+      ranges.forEach((range) => {
+        for (let minutes = range.openMin; minutes + slotIntervalMinutes <= range.closeMin; minutes += slotIntervalMinutes) {
+          const time = toTimeString(minutes);
+          const bookedGuests = getBookedGuestsForSlot(isoDate, time);
+          const remaining = capacity ? Math.max(0, capacity - bookedGuests) : null;
+          const isFull = capacity ? remaining <= 0 : false;
+          slots.push({ time, remaining, isFull });
+        }
+      });
       return slots;
     };
 
@@ -1170,7 +1209,7 @@ const {
         telefono: rawData.phone,
         fecha: rawData.date,
         hora: rawData.time,
-        comensales: Number(rawData.guests),
+        personas: Number(rawData.guests),
         zona: rawData.zone,
         ocasion: rawData.occasion,
         notas: rawData.notes,
