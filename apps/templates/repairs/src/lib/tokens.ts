@@ -234,7 +234,7 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   }
 
   // Favicon
-  const favicon = config.branding?.favicon || config.logo || null;
+  const favicon = config.branding?.favicon || config.branding?.logo || config.logo || null;
 
   // === DEBUG OUTPUT ===
   console.log('[tokens.ts] OUTPUT - cssVariables:', cssVariables ? 'has content' : 'empty');
