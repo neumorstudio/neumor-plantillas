@@ -11,11 +11,19 @@ import Header from "@restaurant/components/Header.astro";
 import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@restaurant/components/Hero";
 import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@restaurant/components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@restaurant/components/Features";
+import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@restaurant/components/Reviews";
 import { FooterFull, FooterMinimal, FooterCentered } from "@restaurant/components/Footer";
-import { ReservationClassic } from "@restaurant/components/ReservationForm";
+import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@restaurant/components/ReservationForm";
+import { TeamSection, GallerySection, BrandsSection, FAQSection, PlansSection, ContactSection } from "@restaurant/components/Sections";
 
 // Import Supabase helpers
-import { getBusinessHours, getMenuItems } from "@restaurant/lib/supabase";
+import {
+  getBusinessHours,
+  getMenuItems,
+  getSpecialDays,
+  getBookingsInRange,
+  getRestaurantSettings,
+} from "@restaurant/lib/supabase";
 
 // Get tenant from middleware
 const tenant = Astro.locals.tenant as TenantData;
@@ -29,6 +37,22 @@ const config = (nestedContent ? { ...rawConfig, ...nestedContent } : rawConfig) 
 const url = new URL(Astro.request.url);
 const isPreview = url.searchParams.get("preview") === "1";
 const previewTheme = url.searchParams.get("theme");
+const previewVariants = {
+  hero: url.searchParams.get("v_hero"),
+  menu: url.searchParams.get("v_menu"),
+  features: url.searchParams.get("v_features"),
+  reviews: url.searchParams.get("v_reviews"),
+  footer: url.searchParams.get("v_footer"),
+  reservation: url.searchParams.get("v_reservation"),
+};
+const previewSectionVariants = {
+  team: url.searchParams.get("v_team"),
+  gallery: url.searchParams.get("v_gallery"),
+  brands: url.searchParams.get("v_brands"),
+  faq: url.searchParams.get("v_faq"),
+  plans: url.searchParams.get("v_plans"),
+  contact: url.searchParams.get("v_contact"),
+};
 const previewContent = isPreview ? {
   heroTitle: url.searchParams.get("heroTitle"),
   heroSubtitle: url.searchParams.get("heroSubtitle"),
@@ -44,26 +68,100 @@ const componentMap = {
   hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
   menu: { tabs: MenuTabs, grid: MenuGrid, list: MenuList, carousel: MenuCarousel },
   features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
+  reviews: { grid: ReviewsGrid, carousel: ReviewsCarousel, minimal: ReviewsMinimal },
   footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+  reservation: { classic: ReservationClassic, wizard: ReservationWizard, modal: ReservationModal, modern: ReservationModern },
 };
 
 // Get variants from config or use defaults
-const variants = (config.variants as Record<string, string>) || {
+const baseVariants = {
   hero: "classic",
   menu: "tabs",
   features: "cards",
+  reviews: "carousel",
   footer: "full",
+  reservation: "modern",
+  ...(config.variants as Record<string, string> | undefined),
 };
 
-// Select components based on variants
-const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroClassic;
-const Menu = componentMap.menu[variants.menu as keyof typeof componentMap.menu] || MenuTabs;
-const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
-const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
+let selectedVariants = { ...baseVariants };
+if (isPreview) {
+  selectedVariants = {
+    ...selectedVariants,
+    hero: previewVariants.hero || selectedVariants.hero,
+    menu: previewVariants.menu || selectedVariants.menu,
+    features: previewVariants.features || selectedVariants.features,
+    reviews: previewVariants.reviews || selectedVariants.reviews,
+    footer: previewVariants.footer || selectedVariants.footer,
+    reservation: previewVariants.reservation || selectedVariants.reservation,
+  };
+}
 
-// Get menu items from Supabase
+// Select components based on variants
+const Hero = componentMap.hero[selectedVariants.hero as keyof typeof componentMap.hero] || HeroClassic;
+const Menu = componentMap.menu[selectedVariants.menu as keyof typeof componentMap.menu] || MenuTabs;
+const Features = componentMap.features[selectedVariants.features as keyof typeof componentMap.features] || FeaturesCards;
+const ReviewsComponent = componentMap.reviews[selectedVariants.reviews as keyof typeof componentMap.reviews] || ReviewsCarousel;
+const FooterComponent = componentMap.footer[selectedVariants.footer as keyof typeof componentMap.footer] || FooterFull;
+const ReservationForm = componentMap.reservation[selectedVariants.reservation as keyof typeof componentMap.reservation] || ReservationClassic;
+
+// ============================================
+// CONFIGURACION DE SECCIONES DINAMICAS
+// ============================================
+
+interface SectionConfig {
+  id: string;
+  enabled: boolean;
+  variant: string;
+  order: number;
+}
+
+// Secciones por defecto para restaurant
+const defaultSections: SectionConfig[] = [
+  { id: "hero", enabled: true, variant: "classic", order: 0 },
+  { id: "features", enabled: true, variant: "cards", order: 1 },
+  { id: "menu", enabled: true, variant: "tabs", order: 2 },
+  { id: "reservation", enabled: true, variant: "modern", order: 3 },
+  { id: "footer", enabled: true, variant: "full", order: 4 },
+];
+
+// Obtener sectionsConfig de la BD o usar defaults
+const sectionsConfigRaw = config.sectionsConfig as { sections: SectionConfig[] } | undefined;
+const sectionsConfig = sectionsConfigRaw || { sections: defaultSections };
+
+// Crear un mapa para acceso rapido a la configuracion de cada seccion
+const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
+const legacyEnabledSections = new Set(
+  defaultSections.filter((section) => section.enabled).map((section) => section.id)
+);
+
+// Helpers para contenido
+const getContentText = (key: string) => {
+  const value = config?.[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const getContentArray = (key: string) => {
+  const value = config?.[key];
+  return Array.isArray(value) && value.length > 0 ? value : undefined;
+};
+
+// Get menu items and other data from Supabase
 const menuItems = await getMenuItems(tenant.id);
 const businessHours = await getBusinessHours(tenant.id);
+const specialDays = await getSpecialDays(tenant.id);
+const restaurantSettings = await getRestaurantSettings(tenant.id);
+
+const toIsoDate = (date: Date) => date.toISOString().split("T")[0];
+const bookingsStart = new Date();
+const bookingsEnd = new Date();
+bookingsEnd.setDate(bookingsEnd.getDate() + 90);
+const bookings = tenant.id
+  ? await getBookingsInRange(tenant.id, toIsoDate(bookingsStart), toIsoDate(bookingsEnd))
+  : [];
+
 const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_time: string }[]) => {
   const openDay = hours.find((item) => item.is_open && item.open_time && item.close_time);
   if (!openDay) return "Cerrado";
@@ -133,7 +231,7 @@ const menuCategories = menuItems?.length
     })()
   : undefined;
 
-// Extraer configuración de personalización visual
+// Extraer configuracion de personalizacion visual
 const customization = {
   colors: config.colors as Record<string, unknown> | undefined,
   primaryColor: config.primaryColor as string | undefined,
@@ -172,6 +270,9 @@ const pageConfig = {
 const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/reservas`
   : "";
+const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
+  ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/contacto`
+  : "";
 ---
 
 <Layout
@@ -185,32 +286,175 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
     restaurantName={pageConfig.restaurantName}
     logo={pageConfig.logo}
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+    showOrders={false}
   />
 
-  <main>
-    <Hero
-      title={pageConfig.heroTitle}
-      subtitle={pageConfig.heroSubtitle}
-      ctaText={pageConfig.heroCta}
-      backgroundImage={pageConfig.heroImage}
-      scheduleLabel={scheduleLabel}
-      address={pageConfig.address}
-      phone={pageConfig.phone}
-    />
+  <main class="sections-container" style="display: flex; flex-direction: column;">
+    {(() => {
+      const allSections = [
+        "hero",
+        "features",
+        "menu",
+        "testimonials",
+        "team",
+        "gallery",
+        "brands",
+        "faq",
+        "plans",
+        "contact",
+        "reservation",
+      ];
 
-    <Features features={pageConfig.features?.items} />
+      return allSections.map((sectionId) => {
+        const sectionCfg = sectionConfigMap.get(sectionId);
+        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
+        const order = sectionCfg?.order ?? 99;
+        const style = `order: ${order}; ${!isEnabled ? "display: none;" : ""}`;
 
-    <Menu categories={menuCategories} />
-
-    <ReservationClassic webhookUrl={webhookUrl} websiteId={tenant.id} />
+        switch (sectionId) {
+          case "hero":
+            return (
+              <section data-section-id="hero" style={style}>
+                <Hero
+                  title={pageConfig.heroTitle}
+                  subtitle={pageConfig.heroSubtitle}
+                  ctaText={getContentText("heroCta")}
+                  backgroundImage={pageConfig.heroImage}
+                  scheduleLabel={scheduleLabel}
+                  address={pageConfig.address}
+                  phone={pageConfig.phone}
+                />
+              </section>
+            );
+          case "features":
+            return (
+              <section data-section-id="features" style={style}>
+                <Features features={pageConfig.features?.items} />
+              </section>
+            );
+          case "menu":
+            return (
+              <section data-section-id="menu" style={style}>
+                <Menu categories={menuCategories} />
+              </section>
+            );
+          case "testimonials":
+            return (
+              <section data-section-id="testimonials" style={style}>
+                <ReviewsComponent
+                  title={getContentText("reviewsTitle")}
+                  subtitle={getContentText("reviewsSubtitle")}
+                  googleRating={config.googleRating as number | undefined}
+                  totalReviews={config.totalReviews as number | undefined}
+                />
+              </section>
+            );
+          case "team":
+            return (
+              <section data-section-id="team" style={style}>
+                <TeamSection
+                  title={getContentText("teamTitle")}
+                  subtitle={getContentText("teamSubtitle")}
+                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                />
+              </section>
+            );
+          case "gallery":
+            return (
+              <section data-section-id="gallery" style={style}>
+                <GallerySection
+                  title={getContentText("galleryTitle")}
+                  subtitle={getContentText("gallerySubtitle")}
+                  images={getContentArray("galleryImages")}
+                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                />
+              </section>
+            );
+          case "brands":
+            return (
+              <section data-section-id="brands" style={style}>
+                <BrandsSection
+                  title={getContentText("brandsTitle")}
+                  subtitle={getContentText("brandsSubtitle")}
+                  logos={getContentArray("brandsLogos")}
+                  variant={previewSectionVariants.brands || sectionCfg?.variant || "carousel"}
+                />
+              </section>
+            );
+          case "faq":
+            return (
+              <section data-section-id="faq" style={style}>
+                <FAQSection
+                  title={getContentText("faqTitle")}
+                  subtitle={getContentText("faqSubtitle")}
+                  items={getContentArray("faqItems")}
+                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                />
+              </section>
+            );
+          case "plans":
+            return (
+              <section data-section-id="plans" style={style}>
+                <PlansSection
+                  title={getContentText("plansTitle")}
+                  subtitle={getContentText("plansSubtitle")}
+                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                />
+              </section>
+            );
+          case "contact":
+            return (
+              <section data-section-id="contact" style={style}>
+                <ContactSection
+                  title={getContentText("contactTitle")}
+                  subtitle={getContentText("contactSubtitle")}
+                  address={pageConfig.address}
+                  phone={pageConfig.phone}
+                  email={pageConfig.email}
+                  webhookUrl={contactWebhookUrl}
+                  websiteId={tenant.id}
+                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
+                />
+              </section>
+            );
+          case "reservation":
+            return (
+              <section data-section-id="reservation" style={style}>
+                <ReservationForm
+                  webhookUrl={webhookUrl}
+                  websiteId={tenant.id}
+                  businessHours={businessHours}
+                  specialDays={specialDays}
+                  bookings={bookings}
+                  capacity={restaurantSettings?.capacity ?? null}
+                />
+              </section>
+            );
+          default:
+            return null;
+        }
+      });
+    })()}
   </main>
 
-  <FooterComponent
-    restaurantName={pageConfig.restaurantName}
-    address={pageConfig.address}
-    phone={pageConfig.phone}
-    email={pageConfig.email}
-    socialLinks={pageConfig.socialLinks}
-    schedule={pageConfig.schedule}
-  />
+  {/* Footer - siempre renderizado para live preview */}
+  {(() => {
+    const footerCfg = sectionConfigMap.get("footer");
+    const isFooterEnabled = footerCfg?.enabled ?? true;
+    const footerOrder = footerCfg?.order ?? 100;
+    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? "display: none;" : ""}`;
+
+    return (
+      <div data-section-id="footer" style={footerStyle}>
+        <FooterComponent
+          restaurantName={pageConfig.restaurantName}
+          address={pageConfig.address}
+          phone={pageConfig.phone}
+          email={pageConfig.email}
+          socialLinks={pageConfig.socialLinks}
+          schedule={pageConfig.schedule}
+        />
+      </div>
+    );
+  })()}
 </Layout>
