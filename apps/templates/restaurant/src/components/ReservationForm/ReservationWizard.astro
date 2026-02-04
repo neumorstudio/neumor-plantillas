@@ -149,19 +149,15 @@ const capacityPayload = JSON.stringify(capacity);
               <input type="hidden" name="date" id="selectedDate" required />
             </div>
 
-            <!-- Time Wheel Selector -->
+            <!-- Time Selector -->
             <div class="time-selector">
               <h3 class="time-label">Selecciona la hora</h3>
-              <div class="time-wheel-container">
-                <div class="time-wheel-mask"></div>
-                <div class="time-wheel" role="listbox" aria-label="Selector de hora">
-                  {timeSlots.map((time) => (
-                    <div class="time-option" data-time={time} role="option">
-                      {time}
-                    </div>
-                  ))}
-                </div>
-                <div class="time-wheel-highlight"></div>
+              <div class="time-grid" role="listbox" aria-label="Selector de hora">
+                {timeSlots.map((time) => (
+                  <button type="button" class="time-slot" data-time={time} role="option">
+                    {time}
+                  </button>
+                ))}
               </div>
               <input type="hidden" name="time" id="selectedTime" required />
             </div>
@@ -567,6 +563,11 @@ const capacityPayload = JSON.stringify(capacity);
     opacity: 0.3;
   }
 
+  .calendar-spacer {
+    width: 34px;
+    height: 34px;
+  }
+
   .auth-block {
     display: flex;
     flex-direction: column;
@@ -634,7 +635,7 @@ const capacityPayload = JSON.stringify(capacity);
     display: none !important;
   }
 
-  /* Time Wheel */
+  /* Time Selector */
   .time-selector {
     display: flex;
     flex-direction: column;
@@ -647,75 +648,56 @@ const capacityPayload = JSON.stringify(capacity);
     margin-bottom: 1rem;
   }
 
-  .time-wheel-container {
-    position: relative;
-    height: 200px;
+  .time-grid {
     width: 100%;
-    overflow: hidden;
-    border-radius: 1rem;
-    background: var(--neumor-bg);
-    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
-  }
-
-  .time-wheel-mask {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      var(--neumor-bg) 0%,
-      transparent 30%,
-      transparent 70%,
-      var(--neumor-bg) 100%
-    );
-    z-index: 2;
-  }
-
-  .time-wheel {
-    height: 100%;
-    overflow-y: scroll;
-    scroll-snap-type: y mandatory;
+    max-height: 240px;
+    overflow-y: auto;
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.25rem;
     scrollbar-width: none;
-    padding: 80px 0;
   }
 
-  .time-wheel::-webkit-scrollbar {
+  .time-grid::-webkit-scrollbar {
     display: none;
   }
 
-  .time-option {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    scroll-snap-align: center;
+  .time-slot {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 999px;
+    border: none;
     cursor: pointer;
+    background: var(--neumor-bg);
+    color: var(--text-primary);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
     transition: all 0.2s;
-    opacity: 0.4;
   }
 
-  .time-option.selected {
-    opacity: 1;
-    font-weight: 700;
-    font-size: 1.5rem;
+  .time-slot:hover:not(.is-full):not(:disabled) {
+    background: rgba(99, 102, 241, 0.12);
     color: var(--accent);
+    font-weight: 600;
   }
 
-  .time-wheel-highlight {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
-    height: 44px;
+  .time-slot.selected {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .time-slot.is-full,
+  .time-slot:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .time-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 0.75rem;
     border-radius: 0.75rem;
-    border: 2px solid var(--accent);
-    pointer-events: none;
-    z-index: 1;
+    background: rgba(0, 0, 0, 0.04);
   }
 
   /* Guests Pills */
@@ -1065,8 +1047,8 @@ const capacityPayload = JSON.stringify(capacity);
       margin-top: 1.5rem;
     }
 
-    .time-wheel-container {
-      height: 150px;
+    .time-grid {
+      max-height: 220px;
     }
 
     .zone-options {
@@ -1098,7 +1080,7 @@ const capacityPayload = JSON.stringify(capacity);
     const nextMonthBtn = wizardForm.querySelector('.next-month');
     const selectedDateInput = wizardForm.querySelector('#selectedDate') as HTMLInputElement;
     const selectedTimeInput = wizardForm.querySelector('#selectedTime') as HTMLInputElement;
-    const timeWheel = wizardForm.querySelector('.time-wheel') as HTMLElement | null;
+    const timeGrid = wizardForm.querySelector('.time-grid') as HTMLElement | null;
     const guestPills = wizardForm.querySelectorAll('.guest-pill');
     const selectedGuestsInput = wizardForm.querySelector('#selectedGuests') as HTMLInputElement;
     const zoneOptions = wizardForm.querySelectorAll('.zone-option');
@@ -1225,7 +1207,7 @@ const capacityPayload = JSON.stringify(capacity);
     let currentStep = 1;
     let currentDate = new Date();
     let selectedDate: Date | null = null;
-    let timeOptions: HTMLElement[] = [];
+    let timeOptions: HTMLButtonElement[] = [];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1369,13 +1351,10 @@ const capacityPayload = JSON.stringify(capacity);
 
       calendarDays.innerHTML = '';
 
-      const prevMonthLastDay = new Date(year, month, 0).getDate();
-      for (let i = startDay - 1; i >= 0; i--) {
-        const day = document.createElement('button');
-        day.type = 'button';
-        day.className = 'calendar-day other-month disabled';
-        day.textContent = String(prevMonthLastDay - i);
-        calendarDays.appendChild(day);
+      for (let i = 0; i < startDay; i++) {
+        const spacer = document.createElement('div');
+        spacer.className = 'calendar-spacer';
+        calendarDays.appendChild(spacer);
       }
 
       for (let d = 1; d <= lastDay.getDate(); d++) {
@@ -1401,12 +1380,10 @@ const capacityPayload = JSON.stringify(capacity);
 
       const totalCells = calendarDays.children.length;
       const remaining = 42 - totalCells;
-      for (let i = 1; i <= remaining && totalCells + i <= 42; i++) {
-        const day = document.createElement('button');
-        day.type = 'button';
-        day.className = 'calendar-day other-month disabled';
-        day.textContent = String(i);
-        calendarDays.appendChild(day);
+      for (let i = 0; i < remaining; i++) {
+        const spacer = document.createElement('div');
+        spacer.className = 'calendar-spacer';
+        calendarDays.appendChild(spacer);
       }
     };
 
@@ -1434,53 +1411,16 @@ const capacityPayload = JSON.stringify(capacity);
       }
     };
 
-    const updateSelectedTime = () => {
-      if (!timeWheel || timeOptions.length === 0) {
-        selectedTimeInput.value = '';
-        updateNextButton();
-        updateSummary();
-        return;
-      }
-
-      const optionHeight = 40;
-      const centerOffset = timeWheel.clientHeight / 2 - optionHeight / 2;
-      const selectedIndex = Math.min(
-        timeOptions.length - 1,
-        Math.max(0, Math.round((timeWheel.scrollTop + centerOffset) / optionHeight))
-      );
-
-      timeOptions.forEach((opt, i) => {
-        opt.classList.toggle('selected', i === selectedIndex);
-        if (i === selectedIndex) {
-          selectedTimeInput.value = opt.dataset.time || '';
-        }
-      });
-
-      updateNextButton();
-      updateSummary();
-    };
-
-    const bindTimeOptions = () => {
-      if (!timeWheel) return;
-      timeOptions = Array.from(timeWheel.querySelectorAll('.time-option')) as HTMLElement[];
-      timeOptions.forEach((opt, i) => {
-        opt.addEventListener('click', () => {
-          timeWheel.scrollTo({ top: i * 40, behavior: 'smooth' });
-        });
-      });
-    };
-
     const renderTimeOptions = () => {
-      if (!timeWheel) return;
-      timeWheel.innerHTML = '';
+      if (!timeGrid) return;
+      timeGrid.innerHTML = '';
       selectedTimeInput.value = '';
 
       if (!selectedDate) {
         const empty = document.createElement('div');
-        empty.className = 'time-option selected';
+        empty.className = 'time-empty';
         empty.textContent = 'Selecciona una fecha';
-        timeWheel.appendChild(empty);
-        bindTimeOptions();
+        timeGrid.appendChild(empty);
         updateNextButton();
         updateSummary();
         return;
@@ -1489,26 +1429,33 @@ const capacityPayload = JSON.stringify(capacity);
       const availableSlots = getAvailableSlotsForDate(selectedDate, getGuestCount());
       if (!availableSlots.length) {
         const empty = document.createElement('div');
-        empty.className = 'time-option selected';
+        empty.className = 'time-empty';
         empty.textContent = 'Sin horarios disponibles';
-        timeWheel.appendChild(empty);
-        bindTimeOptions();
+        timeGrid.appendChild(empty);
         updateNextButton();
         updateSummary();
         return;
       }
 
       availableSlots.forEach((slot) => {
-        const opt = document.createElement('div');
-        opt.className = 'time-option';
-        opt.dataset.time = slot.time;
-        opt.textContent = slot.time;
-        timeWheel.appendChild(opt);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'time-slot';
+        btn.dataset.time = slot.time;
+        btn.textContent = slot.time;
+        btn.addEventListener('click', () => {
+          timeOptions.forEach((opt) => opt.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedTimeInput.value = slot.time;
+          updateNextButton();
+          updateSummary();
+        });
+        timeGrid.appendChild(btn);
       });
 
-      bindTimeOptions();
-      timeWheel.scrollTop = 0;
-      updateSelectedTime();
+      timeOptions = Array.from(timeGrid.querySelectorAll('.time-slot')) as HTMLButtonElement[];
+      updateNextButton();
+      updateSummary();
     };
 
     const selectDate = (date: Date) => {
@@ -1529,8 +1476,6 @@ const capacityPayload = JSON.stringify(capacity);
       currentDate.setMonth(currentDate.getMonth() + 1);
       renderCalendar();
     });
-
-    timeWheel?.addEventListener('scroll', updateSelectedTime);
 
     guestPills.forEach(pill => {
       pill.addEventListener('click', () => {
