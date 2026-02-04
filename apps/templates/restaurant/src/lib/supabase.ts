@@ -172,15 +172,19 @@ export interface Website {
 }
 
 // Cliente Supabase (solo lectura para el template)
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl =
+  import.meta.env.PUBLIC_SUPABASE_URL ||
+  import.meta.env.NEXT_PUBLIC_SUPABASE_URL ||
+  import.meta.env.SUPABASE_URL;
+const supabaseAnonKey =
+  import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Verificar que las variables de entorno estén configuradas
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
     "⚠️ Supabase no configurado. Usando configuración por defecto.",
-    "Configura PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY en .env"
+    "Configura PUBLIC_SUPABASE_URL/PUBLIC_SUPABASE_ANON_KEY o NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY en .env"
   );
 }
 
