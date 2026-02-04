@@ -165,6 +165,9 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
     if (!baseSections.includes("menu")) {
       baseSections.push("menu");
     }
+    if (!baseSections.includes("calendario")) {
+      baseSections.push("calendario");
+    }
     const restaurantSections = baseSections.filter(
       (section) =>
         ![

@@ -95,6 +95,7 @@ interface Props {
   professionalCategories: ProfessionalCategory[];
   year: number;
   month: number;
+  businessType: string;
 }
 
 const dayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
@@ -109,7 +110,12 @@ export default function CalendarioClient({
   professionalCategories,
   year,
   month,
+  businessType,
 }: Props) {
+  const isRestaurant = businessType === "restaurant";
+  const bookingLabel = isRestaurant ? "Reserva" : "Cita";
+  const bookingLabelPlural = isRestaurant ? "Reservas" : "Citas";
+
   const createTempId = () =>
     (typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
@@ -262,13 +268,13 @@ export default function CalendarioClient({
   }, [bookings, selectedDate]);
 
   const filteredBookingsForDay = useMemo(() => {
-    if (selectedProfessionalId === "all") {
+    if (isRestaurant || selectedProfessionalId === "all") {
       return bookingsForDay;
     }
     return bookingsForDay.filter(
       (booking) => booking.professional_id === selectedProfessionalId
     );
-  }, [bookingsForDay, selectedProfessionalId]);
+  }, [bookingsForDay, isRestaurant, selectedProfessionalId]);
 
   const parseHour = (value: string | null) => {
     if (!value) return null;
@@ -362,6 +368,7 @@ export default function CalendarioClient({
     );
 
   const getAvailableProfessionals = () => {
+    if (isRestaurant) return [];
     const requiredCategories = getSelectedServiceCategories();
     const activeProfessionals = professionals.filter((professional) => professional.is_active);
     if (!requiredCategories.length) return activeProfessionals;
@@ -374,7 +381,7 @@ export default function CalendarioClient({
   const getAvailableTimes = () => {
     const dateValue = createForm.booking_date;
     const professionalId = createForm.professional_id;
-    if (!dateValue || !professionalId) return [];
+    if (!dateValue || (!isRestaurant && !professionalId)) return [];
     const schedule = getScheduleForDate(dateValue);
     if (!schedule.is_open || !schedule.slots.length) return [];
 
@@ -385,25 +392,27 @@ export default function CalendarioClient({
     );
     const duration = totalDuration > 0 ? totalDuration : 30;
 
-    const bookedIntervals = bookings
-      .filter(
-        (booking) =>
-          booking.booking_date === dateValue &&
-          booking.professional_id === professionalId &&
-          ["pending", "confirmed"].includes(booking.status)
-      )
-      .map((booking) => {
-        const durationFromServices = Array.isArray(booking.services)
-          ? booking.services.reduce(
-              (sum, service) => sum + (service.duration_minutes || 0),
-              0
-            )
-          : 0;
-        const durationMinutes =
-          booking.total_duration_minutes || durationFromServices || 30;
-        const start = timeToMinutes(booking.booking_time || "00:00");
-        return { start, end: start + durationMinutes };
-      });
+    const bookedIntervals = isRestaurant
+      ? []
+      : bookings
+          .filter(
+            (booking) =>
+              booking.booking_date === dateValue &&
+              booking.professional_id === professionalId &&
+              ["pending", "confirmed"].includes(booking.status)
+          )
+          .map((booking) => {
+            const durationFromServices = Array.isArray(booking.services)
+              ? booking.services.reduce(
+                  (sum, service) => sum + (service.duration_minutes || 0),
+                  0
+                )
+              : 0;
+            const durationMinutes =
+              booking.total_duration_minutes || durationFromServices || 30;
+            const start = timeToMinutes(booking.booking_time || "00:00");
+            return { start, end: start + durationMinutes };
+          });
 
     const step = 15;
     const times: string[] = [];
@@ -426,7 +435,7 @@ export default function CalendarioClient({
 
   const availableProfessionals = useMemo(
     () => getAvailableProfessionals(),
-    [createForm.service_ids, professionals, professionalCategoryMap]
+    [createForm.service_ids, professionals, professionalCategoryMap, isRestaurant]
   );
   const availableTimes = useMemo(
     () => getAvailableTimes(),
@@ -437,6 +446,7 @@ export default function CalendarioClient({
       bookings,
       slots,
       specialDays,
+      isRestaurant,
     ]
   );
 
@@ -721,11 +731,11 @@ export default function CalendarioClient({
       setCreateError("Nombre y telefono son obligatorios.");
       return;
     }
-    if (!selectedServices.length) {
+    if (!isRestaurant && !selectedServices.length) {
       setCreateError("Selecciona al menos un servicio.");
       return;
     }
-    if (!createForm.professional_id) {
+    if (!isRestaurant && !createForm.professional_id) {
       setCreateError("Selecciona un profesional.");
       return;
     }
@@ -747,7 +757,7 @@ export default function CalendarioClient({
           booking_time: createForm.booking_time,
           professional_id: createForm.professional_id,
           notes: createForm.notes || null,
-          services: selectedServices,
+          services: isRestaurant ? [] : selectedServices,
         }),
       });
       const data = await response.json();
@@ -781,25 +791,32 @@ export default function CalendarioClient({
     setBookingError(null);
 
     try {
-      const servicesList = servicesText
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-        .map((name) => ({ name }));
+      const servicesList = isRestaurant
+        ? []
+        : servicesText
+            .split(",")
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+            .map((name) => ({ name }));
 
       const parsedPrice = Number(priceText.replace(",", "."));
       const totalPriceCents = Number.isFinite(parsedPrice)
         ? Math.round(parsedPrice * 100)
         : null;
 
-      await updateBooking(bookingEdit.id, {
+      const updatePayload: Record<string, unknown> = {
         customer_name: bookingEdit.customer_name,
         customer_phone: bookingEdit.customer_phone,
         booking_time: bookingEdit.booking_time || null,
         notes: bookingEdit.notes || null,
-        services: servicesList.length ? servicesList : null,
-        total_price_cents: totalPriceCents,
-      } as unknown as Record<string, unknown>);
+      };
+
+      if (!isRestaurant) {
+        updatePayload.services = servicesList.length ? servicesList : null;
+        updatePayload.total_price_cents = totalPriceCents;
+      }
+
+      await updateBooking(bookingEdit.id, updatePayload);
 
       setBookings((prev) =>
         prev.map((booking) =>
@@ -810,8 +827,12 @@ export default function CalendarioClient({
                 customer_phone: bookingEdit.customer_phone,
                 booking_time: bookingEdit.booking_time,
                 notes: bookingEdit.notes,
-                services: servicesList.length ? servicesList : null,
-                total_price_cents: totalPriceCents,
+                services: isRestaurant
+                  ? booking.services
+                  : servicesList.length
+                    ? servicesList
+                    : null,
+                total_price_cents: isRestaurant ? booking.total_price_cents : totalPriceCents,
               }
             : booking
         )
@@ -842,7 +863,7 @@ export default function CalendarioClient({
       <div className="mb-8">
         <h1 className="text-3xl font-heading font-bold mb-2">Calendario</h1>
         <p className="text-[var(--text-secondary)]">
-          Configura horarios y revisa las reservas del dia.
+          Configura horarios y revisa las {bookingLabelPlural.toLowerCase()} del dia.
         </p>
       </div>
 
@@ -910,7 +931,9 @@ export default function CalendarioClient({
             {/* Cabecera compacta - siempre visible */}
             <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base md:text-lg font-bold text-[var(--text-primary)]">Citas</h3>
+                <h3 className="text-base md:text-lg font-bold text-[var(--text-primary)]">
+                  {bookingLabelPlural}
+                </h3>
                 {selectedDate && (
                   <span className="text-xs md:text-sm font-medium text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded-lg">
                     {new Date(selectedDate + "T00:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
@@ -939,7 +962,7 @@ export default function CalendarioClient({
             </div>
 
             {/* Filtro de profesional - siempre visible */}
-            {professionals.length > 1 && (
+            {!isRestaurant && professionals.length > 1 && (
               <div className="flex items-center gap-2 mb-3 shrink-0">
                 <label className="text-xs md:text-sm font-medium text-[var(--text-secondary)] whitespace-nowrap">
                   Filtrar:
@@ -1025,7 +1048,7 @@ export default function CalendarioClient({
                 ) : (
                   <div className="neumor-inset p-4 rounded-xl text-center">
                     <p className="text-sm text-[var(--text-secondary)]">
-                      Sin citas este día
+                      Sin {bookingLabelPlural.toLowerCase()} este día
                     </p>
                   </div>
                 )}
@@ -1379,7 +1402,7 @@ export default function CalendarioClient({
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="neumor-card p-4 sm:p-6 w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto scroll-hidden rounded-t-3xl sm:rounded-2xl">
             <h2 className="text-lg sm:text-xl font-heading font-semibold mb-4 text-[var(--text-primary)]">
-              Nueva cita interna
+              Nueva {bookingLabel.toLowerCase()} interna
             </h2>
 
             {createError && (
@@ -1431,105 +1454,114 @@ export default function CalendarioClient({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-2">
-                  Servicios
-                </label>
-                <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto scroll-hidden">
-                  {serviceCatalog.length ? (
-                    serviceCatalog.map((category) => (
-                      <div key={category.id} className="neumor-card-sm p-2 sm:p-3">
-                        <p className="text-xs sm:text-sm font-semibold mb-2">{category.name}</p>
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {category.items.map((item) => {
-                            const selected = createForm.service_ids.includes(item.id);
-                            return (
-                              <label
-                                key={item.id}
-                                className={`neumor-inset px-2 sm:px-3 py-1.5 sm:py-1 rounded-full text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer active:scale-95 transition ${selected ? "ring-2 ring-[var(--accent)]" : ""}`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  className="w-4 h-4"
-                                  checked={selected}
-                                  onChange={(event) => {
-                                    const checked = event.target.checked;
-                                    setCreateForm((prev) => {
-                                      const nextServiceIds = checked
-                                        ? [...prev.service_ids, item.id]
-                                        : prev.service_ids.filter((id) => id !== item.id);
-                                      const requiredCategories = new Set(
-                                        allServiceItems
-                                          .filter((service) => nextServiceIds.includes(service.id))
-                                          .map((service) => service.category_id)
-                                          .filter(Boolean)
-                                      );
-                                      const currentCategories =
-                                        professionalCategoryMap.get(prev.professional_id) || new Set();
-                                      const keepProfessional =
-                                        prev.professional_id &&
-                                        Array.from(requiredCategories).every((categoryId) =>
-                                          currentCategories.has(categoryId)
-                                        );
-
-                                      return {
-                                        ...prev,
-                                        service_ids: nextServiceIds,
-                                        professional_id: keepProfessional
-                                          ? prev.professional_id
-                                          : "",
-                                        booking_time: "",
-                                      };
-                                    });
-                                  }}
-                                />
-                                <span className="leading-tight">
-                                  {item.name} · {(item.price_cents / 100).toFixed(2)}€ ·{" "}
-                                  {item.duration_minutes}min
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      No hay servicios configurados.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {!isRestaurant && (
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Profesional
+                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-2">
+                    Servicios
                   </label>
-                  <select
-                    className="neumor-input w-full text-base py-2.5"
-                    value={createForm.professional_id}
-                    onChange={(event) =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        professional_id: event.target.value,
-                        booking_time: "",
-                      }))
-                    }
-                  >
-                    <option value="">Selecciona profesional</option>
-                    {availableProfessionals.map((professional) => (
-                      <option key={professional.id} value={professional.id}>
-                        {professional.name}
-                      </option>
-                    ))}
-                  </select>
-                  {createForm.service_ids.length > 0 && !availableProfessionals.length && (
-                    <p className="text-xs text-red-600 mt-2">
-                      No hay profesionales que cubran esos servicios.
-                    </p>
-                  )}
+                  <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto scroll-hidden">
+                    {serviceCatalog.length ? (
+                      serviceCatalog.map((category) => (
+                        <div key={category.id} className="neumor-card-sm p-2 sm:p-3">
+                          <p className="text-xs sm:text-sm font-semibold mb-2">{category.name}</p>
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                            {category.items.map((item) => {
+                              const selected = createForm.service_ids.includes(item.id);
+                              return (
+                                <label
+                                  key={item.id}
+                                  className={`neumor-inset px-2 sm:px-3 py-1.5 sm:py-1 rounded-full text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer active:scale-95 transition ${selected ? "ring-2 ring-[var(--accent)]" : ""}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4"
+                                    checked={selected}
+                                    onChange={(event) => {
+                                      const checked = event.target.checked;
+                                      setCreateForm((prev) => {
+                                        const nextServiceIds = checked
+                                          ? [...prev.service_ids, item.id]
+                                          : prev.service_ids.filter((id) => id !== item.id);
+                                        const requiredCategories = new Set(
+                                          allServiceItems
+                                            .filter((service) => nextServiceIds.includes(service.id))
+                                            .map((service) => service.category_id)
+                                            .filter(Boolean)
+                                        );
+                                        const currentCategories =
+                                          professionalCategoryMap.get(prev.professional_id) ||
+                                          new Set();
+                                        const keepProfessional =
+                                          prev.professional_id &&
+                                          Array.from(requiredCategories).every((categoryId) =>
+                                            currentCategories.has(categoryId)
+                                          );
+
+                                        return {
+                                          ...prev,
+                                          service_ids: nextServiceIds,
+                                          professional_id: keepProfessional
+                                            ? prev.professional_id
+                                            : "",
+                                          booking_time: "",
+                                        };
+                                      });
+                                    }}
+                                  />
+                                  <span className="leading-tight">
+                                    {item.name} · {(item.price_cents / 100).toFixed(2)}€ ·{" "}
+                                    {item.duration_minutes}min
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        No hay servicios configurados.
+                      </p>
+                    )}
+                  </div>
                 </div>
+              )}
+
+              <div
+                className={`grid grid-cols-1 ${
+                  isRestaurant ? "sm:grid-cols-1" : "sm:grid-cols-2"
+                } gap-3 sm:gap-4`}
+              >
+                {!isRestaurant && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                      Profesional
+                    </label>
+                    <select
+                      className="neumor-input w-full text-base py-2.5"
+                      value={createForm.professional_id}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          professional_id: event.target.value,
+                          booking_time: "",
+                        }))
+                      }
+                    >
+                      <option value="">Selecciona profesional</option>
+                      {availableProfessionals.map((professional) => (
+                        <option key={professional.id} value={professional.id}>
+                          {professional.name}
+                        </option>
+                      ))}
+                    </select>
+                    {createForm.service_ids.length > 0 && !availableProfessionals.length && (
+                      <p className="text-xs text-red-600 mt-2">
+                        No hay profesionales que cubran esos servicios.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Fecha
@@ -1573,37 +1605,41 @@ export default function CalendarioClient({
                     </div>
                   ) : (
                     <span className="text-xs text-[var(--text-secondary)] block text-center py-2">
-                      Selecciona servicios, profesional y fecha para ver horas.
+                      {isRestaurant
+                        ? "Selecciona fecha para ver horas."
+                        : "Selecciona servicios, profesional y fecha para ver horas."}
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Precio total
-                  </label>
-                  <div className="neumor-input w-full text-sm sm:text-base py-2.5 font-semibold text-[var(--accent)]">
-                    {(
-                      getSelectedServiceItems().reduce(
-                        (sum, service) => sum + (service.price_cents || 0),
-                        0
-                      ) / 100
-                    ).toFixed(2)}€
+              {!isRestaurant && (
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                      Precio total
+                    </label>
+                    <div className="neumor-input w-full text-sm sm:text-base py-2.5 font-semibold text-[var(--accent)]">
+                      {(
+                        getSelectedServiceItems().reduce(
+                          (sum, service) => sum + (service.price_cents || 0),
+                          0
+                        ) / 100
+                      ).toFixed(2)}€
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                      Categorías
+                    </label>
+                    <div className="neumor-input w-full text-sm sm:text-base py-2.5 truncate">
+                      {getSelectedCategoryNames().length
+                        ? getSelectedCategoryNames().join(", ")
+                        : "Sin categorías"}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                    Categorías
-                  </label>
-                  <div className="neumor-input w-full text-sm sm:text-base py-2.5 truncate">
-                    {getSelectedCategoryNames().length
-                      ? getSelectedCategoryNames().join(", ")
-                      : "Sin categorías"}
-                  </div>
-                </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
@@ -1635,7 +1671,7 @@ export default function CalendarioClient({
                 onClick={handleCreateBooking}
                 disabled={savingCreate}
               >
-                {savingCreate ? "Guardando..." : "Guardar reserva"}
+                {savingCreate ? "Guardando..." : `Guardar ${bookingLabel.toLowerCase()}`}
               </button>
             </div>
           </div>
@@ -1646,7 +1682,7 @@ export default function CalendarioClient({
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="neumor-card p-4 sm:p-6 w-full sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto scroll-hidden rounded-t-3xl sm:rounded-2xl">
             <h2 className="text-lg sm:text-xl font-heading font-semibold mb-4 sm:mb-6 text-[var(--text-primary)]">
-              Editar cita
+              Editar {bookingLabel.toLowerCase()}
             </h2>
 
             {bookingError && (
@@ -1699,30 +1735,34 @@ export default function CalendarioClient({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                  Servicios
-                </label>
-                <input
-                  className="neumor-input w-full text-base py-2.5"
-                  value={servicesText}
-                  onChange={(event) => setServicesText(event.target.value)}
-                  placeholder="Corte, Color, Peinado"
-                />
-              </div>
+              {!isRestaurant && (
+                <>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                      Servicios
+                    </label>
+                    <input
+                      className="neumor-input w-full text-base py-2.5"
+                      value={servicesText}
+                      onChange={(event) => setServicesText(event.target.value)}
+                      placeholder="Corte, Color, Peinado"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                  Precio total (EUR)
-                </label>
-                <input
-                  className="neumor-input w-full text-base py-2.5"
-                  inputMode="decimal"
-                  value={priceText}
-                  onChange={(event) => setPriceText(event.target.value)}
-                  placeholder="25.00"
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
+                      Precio total (EUR)
+                    </label>
+                    <input
+                      className="neumor-input w-full text-base py-2.5"
+                      inputMode="decimal"
+                      value={priceText}
+                      onChange={(event) => setPriceText(event.target.value)}
+                      placeholder="25.00"
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
@@ -1747,7 +1787,7 @@ export default function CalendarioClient({
                 }}
                 disabled={savingBooking}
               >
-                Cancelar cita
+                Cancelar {bookingLabel.toLowerCase()}
               </button>
               <button
                 className="neumor-btn w-full sm:w-auto px-5 py-3 sm:py-2 active:scale-[0.98]"
@@ -1775,14 +1815,14 @@ export default function CalendarioClient({
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="neumor-card p-4 sm:p-6 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl">
             <h2 className="text-lg sm:text-xl font-heading font-semibold mb-3 text-[var(--text-primary)]">
-              Eliminar cita
+              Eliminar {bookingLabel.toLowerCase()}
             </h2>
             <p className="text-sm text-[var(--text-secondary)]">
-              Esta acción es permanente. Se eliminará la cita de{" "}
+              Esta acción es permanente. Se eliminará la {bookingLabel.toLowerCase()} de{" "}
               <span className="font-semibold text-[var(--text-primary)]">
                 {deleteConfirm.customer_name}
               </span>{" "}
-              y se liberará la hora para nuevas citas.
+              y se liberará la hora para nuevas {bookingLabelPlural.toLowerCase()}.
             </p>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
@@ -1803,7 +1843,7 @@ export default function CalendarioClient({
                   }
                 }}
               >
-                Eliminar cita
+                Eliminar {bookingLabel.toLowerCase()}
               </button>
             </div>
           </div>
