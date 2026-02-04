@@ -8,6 +8,7 @@ interface Props {
   subtitle?: string;
   webhookUrl?: string;
   websiteId?: string;
+  currentUser?: { email: string; id: string; customerId: string | null; name?: string; phone?: string | null } | null;
   buttonText?: string;
   zones?: string[];
   businessHours?: { day_of_week: number; is_open: boolean; open_time: string; close_time: string }[];
@@ -23,6 +24,7 @@ const {
   subtitle = "Selecciona los detalles de tu visita",
   webhookUrl = "",
   websiteId = "",
+  currentUser = null,
   buttonText = "Reservar Mesa",
   zones = ["Interior", "Terraza", "Barra"],
   businessHours = [],
@@ -75,13 +77,46 @@ const capacityPayload = JSON.stringify(capacity);
         <p class="modal-subtitle">{subtitle}</p>
       </div>
 
-      <form class="modal-form" data-webhook={webhookUrl} data-website-id={websiteId}>
+      <form
+        class="modal-form"
+        data-webhook={webhookUrl}
+        data-website-id={websiteId}
+        data-current-user={currentUser ? JSON.stringify(currentUser) : ""}
+        data-require-auth="true"
+      >
         <script type="application/json" data-hours>{hoursPayload}</script>
         <script type="application/json" data-business-hour-slots>{businessHourSlotsPayload}</script>
         <script type="application/json" data-special-days>{specialDaysPayload}</script>
         <script type="application/json" data-special-day-slots>{specialDaySlotsPayload}</script>
         <script type="application/json" data-bookings>{bookingsPayload}</script>
         <script type="application/json" data-capacity>{capacityPayload}</script>
+
+        <div class="auth-block neumor-inset" data-auth-block>
+          <div class="auth-content">
+            <div class="auth-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div>
+              <h5>Inicia sesion para reservar</h5>
+              <p>Necesitas iniciar sesion con Google para confirmar tu reserva.</p>
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button type="button" class="neumor-btn neumor-btn-accent" data-auth-google>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              Continuar con Google
+            </button>
+            <span class="auth-user" data-auth-user hidden></span>
+          </div>
+        </div>
         <!-- Date Selection -->
         <div class="form-section">
           <label class="section-label">
@@ -320,6 +355,80 @@ const capacityPayload = JSON.stringify(capacity);
   .modal-subtitle {
     color: var(--text-secondary);
     font-size: 0.9rem;
+  }
+
+  .auth-block {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 99, 102, 241), 0.08), rgba(var(--accent-rgb, 99, 102, 241), 0.02));
+    border: 1px solid rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+  }
+
+  .auth-block.is-authenticated {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .auth-content {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .auth-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 0.75rem;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-block.is-authenticated .auth-icon {
+    background: #10b981;
+  }
+
+  .auth-block h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .auth-block p {
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .auth-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .auth-actions button svg {
+    margin-right: 0.4rem;
+  }
+
+  .auth-user {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .auth-block.is-authenticated .auth-actions button {
+    display: none;
+  }
+
+  .auth-block:not(.is-authenticated) .auth-user {
+    display: none !important;
   }
 
   /* Form Sections */
@@ -719,6 +828,61 @@ const capacityPayload = JSON.stringify(capacity);
     const contactInputs = form.querySelectorAll('.contact-fields input, .contact-fields textarea');
     const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
 
+    const authBlock = form.querySelector('[data-auth-block]');
+    const authButton = form.querySelector('[data-auth-google]');
+    const authUser = form.querySelector('[data-auth-user]');
+    const requireAuth = form.dataset.requireAuth === 'true';
+    let isAuthenticated = false;
+
+    const setAuthState = (email: string) => {
+      isAuthenticated = Boolean(email);
+      if (authUser) {
+        if (email) {
+          authUser.textContent = `Conectado como ${email}`;
+          authUser.removeAttribute('hidden');
+        } else {
+          authUser.textContent = '';
+          authUser.setAttribute('hidden', 'true');
+        }
+      }
+      if (authBlock) {
+        authBlock.classList.toggle('is-authenticated', Boolean(email));
+        const title = authBlock.querySelector('h5');
+        const subtitle = authBlock.querySelector('p');
+        if (title && subtitle) {
+          if (email) {
+            title.textContent = 'Sesion iniciada';
+            subtitle.textContent = 'Ya puedes confirmar tu reserva.';
+          } else {
+            title.textContent = 'Inicia sesion para reservar';
+            subtitle.textContent = 'Necesitas iniciar sesion con Google para confirmar tu reserva.';
+          }
+        }
+      }
+      if (submitBtn && requireAuth) {
+        submitBtn.disabled = !isAuthenticated;
+      }
+    };
+
+    const currentUserRaw = form.dataset.currentUser || '';
+    if (currentUserRaw) {
+      try {
+        const parsed = JSON.parse(currentUserRaw);
+        if (parsed && parsed.email) {
+          setAuthState(parsed.email);
+        }
+      } catch {
+        setAuthState('');
+      }
+    } else {
+      setAuthState('');
+    }
+
+    authButton?.addEventListener('click', () => {
+      const returnUrl = `${window.location.pathname}${window.location.search}#reserve`;
+      window.location.href = `/mi-cuenta/auth/google?return_url=${encodeURIComponent(returnUrl)}`;
+    });
+
     const toIsoDate = (date: Date) => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -992,6 +1156,11 @@ const capacityPayload = JSON.stringify(capacity);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (isSubmitting) return;
+      if (requireAuth && !isAuthenticated) {
+        alert('Necesitas iniciar sesion con Google para reservar.');
+        authBlock?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
 
       if (!contactSection?.classList.contains('expanded')) {
         contactSection?.classList.add('expanded');
