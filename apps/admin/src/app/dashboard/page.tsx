@@ -283,10 +283,17 @@ export default async function DashboardPage() {
           <BookingsTodayWidget
             key={widgetId}
             count={(widgetData.bookings_today as { count: number })?.count || 0}
+            label={businessType === "restaurant" ? "Reservas hoy" : "Citas hoy"}
           />
         );
       case "bookings_month":
-        return <BookingsMonthWidget key={widgetId} count={stats.bookingsThisMonth} />;
+        return (
+          <BookingsMonthWidget
+            key={widgetId}
+            count={stats.bookingsThisMonth}
+            label={businessType === "restaurant" ? "Reservas este mes" : "Citas este mes"}
+          />
+        );
       case "bookings_pending":
         return businessType === "salon" ? (
           <RevenueMonthWidget
