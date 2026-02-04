@@ -53,7 +53,6 @@ const {
 
     <form
       class="reservation-grid"
-      data-step="date"
       data-webhook={webhookUrl}
       data-website-id={websiteId}
       data-current-user={currentUser ? JSON.stringify(currentUser) : ""}
@@ -94,50 +93,34 @@ const {
       </div>
       <!-- Left Column: Date & Time -->
       <div class="reservation-datetime neumor-card">
-        <!-- Mini Calendar -->
-        <div class="calendar-section step-panel step-date" data-panel="date">
-          <div class="calendar-header">
-            <button type="button" class="calendar-nav prev-month" aria-label="Mes anterior">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-            <span class="calendar-month-year"></span>
-            <button type="button" class="calendar-nav next-month" aria-label="Mes siguiente">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
+        <div class="calendar-wrapper">
+          <div class="calendar-card">
+            <div class="calendar-header">
+              <button type="button" class="calendar-nav" data-calendar-prev aria-label="Mes anterior">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <span class="calendar-month-year" data-calendar-label></span>
+              <button type="button" class="calendar-nav" data-calendar-next aria-label="Mes siguiente">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div class="calendar-weekdays">
+              <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+            </div>
+            <div class="calendar-grid" data-calendar-grid></div>
+            <input type="hidden" name="date" id="selectedDate" required />
           </div>
-          <div class="calendar-weekdays">
-            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
-          </div>
-          <div class="calendar-days"></div>
-          <input type="hidden" name="date" id="selectedDate" required />
-        </div>
 
-        <!-- Time Slots -->
-        <div class="time-section step-panel step-time" data-panel="time">
-          <div class="time-period">
-            <h4 class="period-label">
-              <span class="period-icon">☀️</span>
-              Horarios disponibles
-            </h4>
-            <p class="time-hint">Selecciona una hora para continuar</p>
-            <div class="time-grid" data-time-grid>
-              
-            </div>
+          <div class="time-card">
+            <div class="time-header">Selecciona una hora</div>
+            <p class="time-hint">Elige un horario disponible para tu reserva</p>
+            <div class="time-grid" data-time-grid></div>
+            <input type="hidden" name="time" id="selectedTime" required />
           </div>
-          <div class="time-period">
-            <h4 class="period-label">
-              <span class="period-icon">🌙</span>
-              Cena
-            </h4>
-            <div class="time-grid">
-              
-            </div>
-          </div>
-          <input type="hidden" name="time" id="selectedTime" required />
         </div>
       </div>
 
@@ -289,50 +272,39 @@ const {
     margin: 0 auto;
   }
 
-  .reservation-grid .step-panel {
-    transition: opacity 240ms ease, transform 240ms ease;
-  }
-
-  .reservation-grid[data-step="date"] .step-time,
-  .reservation-grid[data-step="date"] .step-details {
-    display: none;
-  }
-
-  .reservation-grid[data-step="time"] .step-details {
-    display: none;
-  }
-
-  .reservation-grid[data-step="time"] .step-time,
-  .reservation-grid[data-step="details"] .step-details {
-    animation: stepFadeIn 240ms ease;
-  }
-
-  @keyframes stepFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   /* Left Column */
   .reservation-datetime {
     padding: 1.5rem;
   }
 
   /* Calendar */
-  .calendar-section {
-    max-width: 360px;
-    margin: 0 auto 1.5rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--shadow-dark);
-    width: 100%;
+  .calendar-wrapper {
     display: grid;
-    justify-items: center;
+    grid-template-columns: minmax(260px, 1fr) 190px;
+    gap: 1.25rem;
+    width: 100%;
+    align-items: start;
+  }
+
+  .calendar-card,
+  .time-card,
+  .summary-card {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    background: var(--shadow-light);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendar-card {
+    min-width: 260px;
+  }
+
+  .time-card {
+    max-height: 360px;
+    overflow: hidden;
+    position: relative;
+    min-width: 0;
   }
 
   .calendar-header {
@@ -348,105 +320,67 @@ const {
   }
 
   .calendar-nav {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--neumor-bg);
     border: none;
+    background: #fff;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08),
+      -4px -4px 10px rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    color: var(--text-primary);
-    box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
-    transition: all 0.2s;
   }
 
-  .calendar-nav:hover {
-    box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
-  }
-
-  .calendar-nav:active {
-    box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
-  }
-
-  .calendar-weekdays {
+  .calendar-weekdays,
+  .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    margin-bottom: 0.5rem;
-    width: 100%;
+    gap: 0.35rem;
+    pointer-events: auto;
+    justify-items: center;
   }
 
   .calendar-weekdays span {
-    font-size: 0.7rem;
-    font-weight: 600;
+    text-align: center;
+    font-size: 0.75rem;
     color: var(--text-secondary);
-    padding: 0.25rem;
-  }
-
-  .calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    justify-items: center;
     width: 100%;
   }
 
   .calendar-day {
-    aspect-ratio: 1;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    font-size: 0.8rem;
-    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease, font-weight 160ms ease;
     border: none;
-    background: transparent;
-    color: var(--text-primary);
-  }
-
-  .calendar-day.day--active {
+    background: #fff;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
     cursor: pointer;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+    font-size: 0.8rem;
   }
 
-  .calendar-day.day--active:hover:not(.selected) {
-    background: rgba(99, 102, 241, 0.12);
-    color: var(--accent);
-    font-weight: 700;
-    box-shadow:
-      inset 0 0 0 1px rgba(99, 102, 241, 0.25),
-      0 6px 12px rgba(99, 102, 241, 0.18);
+  .calendar-day.is-selected {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: none;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
   }
 
-  .calendar-day.today {
-    font-weight: 700;
-    color: var(--accent);
-    box-shadow: inset 0 0 0 2px var(--accent);
+  .calendar-day.is-today {
+    border: 2px solid var(--accent);
   }
 
-  .calendar-day.selected {
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-    color: white;
-    transform: scale(1.05);
-    box-shadow: 0 3px 10px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
-    outline: 2px solid rgba(255, 255, 255, 0.9);
-    font-weight: 700;
+  .calendar-day.is-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
 
-  .calendar-day.disabled {
-    opacity: 0.25;
-    pointer-events: none;
-  }
-
-  .calendar-day.day--disabled {
-    cursor: default;
-  }
-
-  .calendar-day.other-month {
-    opacity: 0.25;
+  .calendar-spacer {
+    width: 28px;
+    height: 28px;
   }
 
   .auth-block {
@@ -512,20 +446,9 @@ const {
   }
 
   /* Time Slots */
-  .time-section {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .period-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.85rem;
+  .time-header {
     font-weight: 600;
     margin-bottom: 0.75rem;
-    color: var(--text-secondary);
   }
 
   .time-hint {
@@ -534,30 +457,33 @@ const {
     color: var(--text-secondary);
   }
 
-  .time-section .time-period + .time-period {
-    display: none;
-  }
-
-  .period-icon {
-    font-size: 1rem;
-  }
-
   .time-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
+    gap: 0.65rem;
+    overflow-y: auto;
+    max-height: 300px;
+    padding-right: 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .time-grid::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 
   .time-btn {
-    padding: 0.625rem 0.5rem;
-    border-radius: 0.5rem;
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    border-radius: 999px;
     border: none;
     cursor: pointer;
     font-weight: 500;
     font-size: 0.85rem;
-    background: var(--neumor-bg);
+    background: #fff;
     color: var(--text-primary);
-    box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.9);
     transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease, font-weight 160ms ease;
   }
 
@@ -566,10 +492,6 @@ const {
     color: var(--accent);
     font-weight: 700;
     transform: translateY(-1px);
-    box-shadow:
-      4px 4px 10px var(--shadow-dark),
-      -4px -4px 10px var(--shadow-light),
-      0 8px 16px rgba(99, 102, 241, 0.18);
   }
 
   .time-btn.active {
@@ -582,7 +504,6 @@ const {
   .time-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
-    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
   }
 
   .time-empty {
@@ -886,16 +807,16 @@ const {
     .reservation-title {
       font-size: 2rem;
     }
+
+    .calendar-wrapper {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 600px) {
     .guests-zone-row {
       grid-template-columns: 1fr;
       gap: 1.25rem;
-    }
-
-    .time-grid {
-      grid-template-columns: repeat(3, 1fr);
     }
 
     .form-row {
@@ -974,10 +895,10 @@ const {
       window.location.href = `/mi-cuenta/auth/google?return_url=${encodeURIComponent(returnUrl)}`;
     });
 
-    const calendarDays = form.querySelector('.calendar-days');
-    const monthYearDisplay = form.querySelector('.calendar-month-year');
-    const prevMonthBtn = form.querySelector('.prev-month');
-    const nextMonthBtn = form.querySelector('.next-month');
+    const calendarGrid = form.querySelector('[data-calendar-grid]');
+    const monthYearDisplay = form.querySelector('[data-calendar-label]');
+    const prevMonthBtn = form.querySelector('[data-calendar-prev]');
+    const nextMonthBtn = form.querySelector('[data-calendar-next]');
 
     const selectedDateInput = form.querySelector('#selectedDate');
     const selectedTimeInput = form.querySelector('#selectedTime');
@@ -1163,16 +1084,6 @@ const {
       });
     };
 
-    const setStep = (nextStep) => {
-      form.dataset.step = nextStep;
-      if (nextStep === 'time') {
-        form.querySelector('.step-time')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      if (nextStep === 'details') {
-        form.querySelector('.step-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    };
-
     const updateSummary = () => {
       if (summaryGuests) summaryGuests.textContent = String(guestCount);
       if (selectedDate && summaryDate) {
@@ -1186,7 +1097,15 @@ const {
     };
 
     const renderTimeSlots = () => {
-      if (!timeGrid || !selectedDate) return;
+      if (!timeGrid) return;
+      if (!selectedDate) {
+        timeGrid.innerHTML = '';
+        const empty = document.createElement('div');
+        empty.className = 'time-empty';
+        empty.textContent = 'Selecciona una fecha para ver horarios.';
+        timeGrid.appendChild(empty);
+        return;
+      }
       const isoDate = toIsoDate(selectedDate);
       const slots = generateSlotsForDate(selectedDate);
       timeGrid.innerHTML = '';
@@ -1219,7 +1138,6 @@ const {
           timeGrid.querySelectorAll('.time-btn').forEach((b) => b.classList.remove('active'));
           btn.classList.add('active');
           updateSummary();
-          setStep('details');
         });
 
         timeGrid.appendChild(btn);
@@ -1227,7 +1145,7 @@ const {
     };
 
     const renderCalendar = () => {
-      if (!calendarDays || !monthYearDisplay) return;
+      if (!calendarGrid || !monthYearDisplay) return;
 
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -1237,15 +1155,12 @@ const {
       const lastDay = new Date(year, month + 1, 0);
       const startDay = (firstDay.getDay() + 6) % 7;
 
-      calendarDays.innerHTML = '';
+      calendarGrid.innerHTML = '';
 
-      const prevMonthLastDay = new Date(year, month, 0).getDate();
-      for (let i = startDay - 1; i >= 0; i--) {
-        const day = document.createElement('button');
-        day.type = 'button';
-        day.className = 'calendar-day other-month disabled day--disabled';
-        day.textContent = String(prevMonthLastDay - i);
-        calendarDays.appendChild(day);
+      for (let i = 0; i < startDay; i++) {
+        const spacer = document.createElement('div');
+        spacer.className = 'calendar-spacer';
+        calendarGrid.appendChild(spacer);
       }
 
       const maxDate = new Date(today);
@@ -1262,13 +1177,14 @@ const {
 
         const invalid = dayDate < today || dayDate > maxDate || !hasAvailability(dayDate);
         if (invalid) {
-          day.classList.add('disabled', 'day--disabled');
+          day.classList.add('is-disabled');
+          day.disabled = true;
         } else {
-          day.classList.add('day--active');
+          day.classList.add('is-active');
         }
 
-        if (dayDate.toDateString() === today.toDateString()) day.classList.add('today');
-        if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) day.classList.add('selected');
+        if (dayDate.toDateString() === today.toDateString()) day.classList.add('is-today');
+        if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) day.classList.add('is-selected');
 
         if (!invalid) {
           day.addEventListener('click', () => {
@@ -1279,21 +1195,10 @@ const {
             renderCalendar();
             renderTimeSlots();
             updateSummary();
-            setStep('time');
           });
         }
 
-        calendarDays.appendChild(day);
-      }
-
-      const totalCells = calendarDays.children.length;
-      const remaining = 42 - totalCells;
-      for (let i = 1; i <= remaining && totalCells + i <= 42; i++) {
-        const day = document.createElement('button');
-        day.type = 'button';
-        day.className = 'calendar-day other-month disabled day--disabled';
-        day.textContent = String(i);
-        calendarDays.appendChild(day);
+        calendarGrid.appendChild(day);
       }
     };
 
@@ -1360,7 +1265,8 @@ const {
         return;
       }
       if (!selectedDateInput?.value || !selectedTimeInput?.value) {
-        setStep('date');
+        alert('Selecciona fecha y hora para continuar.');
+        form.querySelector('.calendar-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 
@@ -1455,6 +1361,7 @@ const {
     });
 
     renderCalendar();
+    renderTimeSlots();
     updateSummary();
   })();
 
