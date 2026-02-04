@@ -1379,6 +1379,7 @@ const capacityPayload = JSON.stringify(capacity);
       console.debug('[ReservationWizard] daySlots', daySlots);
       const daySlotRanges = buildRangesFromSlots(daySlots);
       if (daySlotRanges.length) return daySlotRanges;
+      if (businessHourSlots.length > 0) return [];
 
       return getFallbackRangesForDay(date);
     };
