@@ -546,11 +546,14 @@ const capacityPayload = JSON.stringify(capacity);
   }
 
   .calendar-day.selected {
-    background: var(--neumor-bg);
-    color: var(--accent);
-    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
-    outline: 2px solid rgba(var(--accent-rgb, 99, 102, 241), 0.5);
-    transform: scale(1.05);
+    background: var(--accent) !important;
+    color: #fff !important;
+    box-shadow:
+      inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+      inset -2px -2px 6px rgba(0, 0, 0, 0.25),
+      0 0 0 2px rgba(255, 255, 255, 0.45),
+      0 6px 14px rgba(var(--accent-rgb, 99, 102, 241), 0.35) !important;
+    transform: scale(1.06);
     font-weight: 700;
   }
 
@@ -677,6 +680,7 @@ const capacityPayload = JSON.stringify(capacity);
     color: var(--text-primary);
     box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
     transition: all 0.2s;
+    border: 1px solid rgba(0, 0, 0, 0.04);
   }
 
   .time-slot:hover:not(.is-full):not(:disabled) {
@@ -689,6 +693,10 @@ const capacityPayload = JSON.stringify(capacity);
     background: linear-gradient(135deg, var(--accent), var(--accent-hover));
     color: #fff;
     font-weight: 700;
+    box-shadow:
+      0 6px 14px rgba(var(--accent-rgb, 99, 102, 241), 0.35),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.2);
+    border-color: rgba(var(--accent-rgb, 99, 102, 241), 0.5);
   }
 
   .time-slot.is-full,
@@ -1397,6 +1405,16 @@ const capacityPayload = JSON.stringify(capacity);
         if (dayDate.toDateString() === today.toDateString()) day.classList.add('today');
         if (selectedDate && dayDate.toDateString() === selectedDate.toDateString()) {
           day.classList.add('selected');
+          day.setAttribute('data-selected', 'true');
+          day.style.background = 'var(--neumor-bg)';
+          day.style.color = 'var(--accent)';
+          day.style.borderRadius = '999px';
+          day.style.width = '34px';
+          day.style.height = '34px';
+          day.style.display = 'flex';
+          day.style.alignItems = 'center';
+          day.style.justifyContent = 'center';
+          day.style.boxShadow = 'inset 2px 2px 6px rgba(0, 0, 0, 0.14), inset -2px -2px 6px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(var(--accent-rgb, 99, 102, 241), 0.45), 0 6px 14px rgba(0, 0, 0, 0.1)';
         }
         if (!invalid) {
           day.addEventListener('click', () => selectDate(dayDate));
@@ -1471,8 +1489,17 @@ const capacityPayload = JSON.stringify(capacity);
         btn.dataset.time = slot.time;
         btn.textContent = slot.time;
         btn.addEventListener('click', () => {
-          timeOptions.forEach((opt) => opt.classList.remove('selected'));
+          timeOptions.forEach((opt) => {
+            opt.classList.remove('selected');
+            opt.style.background = '';
+            opt.style.color = '';
+            opt.style.boxShadow = '';
+          });
           btn.classList.add('selected');
+          btn.style.background = 'var(--neumor-bg)';
+          btn.style.color = 'var(--accent)';
+          btn.style.borderRadius = '999px';
+          btn.style.boxShadow = 'inset 2px 2px 6px rgba(0, 0, 0, 0.14), inset -2px -2px 6px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(var(--accent-rgb, 99, 102, 241), 0.45), 0 6px 14px rgba(0, 0, 0, 0.1)';
           selectedTimeInput.value = slot.time;
           updateNextButton();
           updateSummary();
