@@ -200,6 +200,14 @@ const supabaseServer = supabaseUrl && supabaseServiceKey && import.meta.env.SSR
 
 const getSupabaseClient = () => supabaseServer ?? supabaseAnon;
 
+const getEnvDebugInfo = () => ({
+  hasUrl: Boolean(supabaseUrl),
+  hasAnonKey: Boolean(supabaseAnonKey),
+  hasServiceKey: Boolean(supabaseServiceKey),
+  isSSR: Boolean(import.meta.env.SSR),
+  projectRef: supabaseUrl ? supabaseUrl.match(/https:\/\/([^.]+)\.supabase/)?.[1] || "" : "",
+});
+
 export const supabase = supabaseAnon;
 
 /**
@@ -272,6 +280,11 @@ export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | 
 export async function getBusinessHours(websiteId?: string): Promise<BusinessHourRow[]> {
   const client = getSupabaseClient();
   if (!client || !websiteId) {
+    console.warn("[restaurant] business_hours skipped", {
+      websiteId: websiteId || null,
+      clientReady: Boolean(client),
+      ...getEnvDebugInfo(),
+    });
     return [];
   }
 
@@ -287,6 +300,13 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
       return [];
     }
 
+    if (!data?.length) {
+      console.warn("[restaurant] business_hours empty", {
+        websiteId,
+        ...getEnvDebugInfo(),
+      });
+    }
+
     return (data as BusinessHourRow[] | null) || [];
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
@@ -297,6 +317,11 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
 export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[]> {
   const client = getSupabaseClient();
   if (!client || !websiteId) {
+    console.warn("[restaurant] special_days skipped", {
+      websiteId: websiteId || null,
+      clientReady: Boolean(client),
+      ...getEnvDebugInfo(),
+    });
     return [];
   }
 
@@ -312,6 +337,13 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[
       return [];
     }
 
+    if (!data?.length) {
+      console.warn("[restaurant] special_days empty", {
+        websiteId,
+        ...getEnvDebugInfo(),
+      });
+    }
+
     return (data as SpecialDayRow[] | null) || [];
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
@@ -322,6 +354,11 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[
 export async function getBusinessHourSlots(websiteId?: string): Promise<BusinessHourSlotRow[]> {
   const client = getSupabaseClient();
   if (!client || !websiteId) {
+    console.warn("[restaurant] business_hour_slots skipped", {
+      websiteId: websiteId || null,
+      clientReady: Boolean(client),
+      ...getEnvDebugInfo(),
+    });
     return [];
   }
 
@@ -339,6 +376,13 @@ export async function getBusinessHourSlots(websiteId?: string): Promise<Business
       return [];
     }
 
+    if (!data?.length) {
+      console.warn("[restaurant] business_hour_slots empty", {
+        websiteId,
+        ...getEnvDebugInfo(),
+      });
+    }
+
     return (data as BusinessHourSlotRow[] | null) || [];
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
@@ -349,6 +393,11 @@ export async function getBusinessHourSlots(websiteId?: string): Promise<Business
 export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDaySlotRow[]> {
   const client = getSupabaseClient();
   if (!client || !websiteId) {
+    console.warn("[restaurant] special_day_slots skipped", {
+      websiteId: websiteId || null,
+      clientReady: Boolean(client),
+      ...getEnvDebugInfo(),
+    });
     return [];
   }
 
@@ -364,6 +413,10 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
     }
 
     if (!specialDays?.length) {
+      console.warn("[restaurant] special_day_slots empty (no special days)", {
+        websiteId,
+        ...getEnvDebugInfo(),
+      });
       return [];
     }
 
@@ -377,6 +430,13 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
     if (error) {
       console.error("Error fetching special day slots:", error.message);
       return [];
+    }
+
+    if (!data?.length) {
+      console.warn("[restaurant] special_day_slots empty", {
+        websiteId,
+        ...getEnvDebugInfo(),
+      });
     }
 
     return (data as SpecialDaySlotRow[] | null) || [];
