@@ -22,7 +22,7 @@ import Layout from "@layouts/Layout.astro";
 import Header from "@components/Header.astro";
 
 // Importar TODAS las variantes de componentes
-import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@components/Hero";
 import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
@@ -92,8 +92,8 @@ const componentMap = {
     modern: HeroModern,
     bold: HeroBold,
     minimal: HeroMinimal,
-    fullscreen: HeroModern,
-    split: HeroBold,
+    fullscreen: HeroFullscreen,
+    split: HeroSplit,
   },
   menu: {
     tabs: MenuTabs,
