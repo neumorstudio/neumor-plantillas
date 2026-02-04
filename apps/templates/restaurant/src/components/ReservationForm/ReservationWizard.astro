@@ -546,11 +546,11 @@ const capacityPayload = JSON.stringify(capacity);
   }
 
   .calendar-day.selected {
-    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-    color: white;
-    box-shadow: 0 4px 12px rgba(var(--accent-rgb, 99, 102, 241), 0.4);
-    transform: scale(1.1);
-    outline: 2px solid rgba(255, 255, 255, 0.9);
+    background: var(--neumor-bg);
+    color: var(--accent);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+    outline: 2px solid rgba(var(--accent-rgb, 99, 102, 241), 0.5);
+    transform: scale(1.05);
     font-weight: 700;
   }
 
@@ -566,6 +566,11 @@ const capacityPayload = JSON.stringify(capacity);
   .calendar-spacer {
     width: 34px;
     height: 34px;
+  }
+
+  .calendar-day.today {
+    border: 2px solid rgba(var(--accent-rgb, 99, 102, 241), 0.4);
+    border-radius: 50%;
   }
 
   .auth-block {
@@ -1102,6 +1107,24 @@ const capacityPayload = JSON.stringify(capacity);
     const authUser = wizardForm.querySelector('[data-auth-user]');
     const requireAuth = wizardForm.dataset.requireAuth === 'true';
     let isAuthenticated = false;
+    let currentUser: { email?: string; name?: string; phone?: string | null } | null = null;
+
+    const nameInput = wizardForm.querySelector('#wizard-name') as HTMLInputElement | null;
+    const emailInput = wizardForm.querySelector('#wizard-email') as HTMLInputElement | null;
+    const phoneInput = wizardForm.querySelector('#wizard-phone') as HTMLInputElement | null;
+
+    const fillContactFields = () => {
+      if (!currentUser) return;
+      if (nameInput && !nameInput.value && currentUser.name) {
+        nameInput.value = currentUser.name;
+      }
+      if (emailInput && !emailInput.value && currentUser.email) {
+        emailInput.value = currentUser.email;
+      }
+      if (phoneInput && !phoneInput.value && currentUser.phone) {
+        phoneInput.value = currentUser.phone;
+      }
+    };
 
     const setAuthState = (email: string) => {
       isAuthenticated = Boolean(email);
@@ -1137,6 +1160,9 @@ const capacityPayload = JSON.stringify(capacity);
     if (currentUserRaw) {
       try {
         const parsed = JSON.parse(currentUserRaw);
+        if (parsed) {
+          currentUser = parsed;
+        }
         if (parsed && parsed.email) {
           setAuthState(parsed.email);
         }
@@ -1146,6 +1172,7 @@ const capacityPayload = JSON.stringify(capacity);
     } else {
       setAuthState('');
     }
+    fillContactFields();
 
     authButton?.addEventListener('click', () => {
       const returnUrl = `${window.location.pathname}${window.location.search}#reserve`;
