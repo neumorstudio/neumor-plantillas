@@ -9,6 +9,8 @@ export const heroVariants = {
   modern: 'HeroModern',
   bold: 'HeroBold',
   minimal: 'HeroMinimal',
+  fullscreen: 'HeroModern',
+  split: 'HeroBold',
 } as const;
 
 export type HeroVariant = keyof typeof heroVariants;
