@@ -500,69 +500,7 @@ export default async function DashboardPage() {
             <RecentBookingsTable bookings={recentBookings} variant="default" />
           )}
 
-          {/* Status Panels */}
-          {businessType !== "salon" && (
-            <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div className="neumor-card p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold mb-4">
-                Estado de Automatizaciones
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--text-secondary)]">
-                    Notificaciones WhatsApp
-                  </span>
-                  <span className="badge badge-pending">Pendiente config</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--text-secondary)]">
-                    Confirmacion por Email
-                  </span>
-                  <span className="badge badge-pending">Pendiente config</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--text-secondary)]">
-                    Recordatorio 24h
-                  </span>
-                  <span className="badge badge-pending">Pendiente config</span>
-                </div>
-              </div>
-              <p className="text-xs text-[var(--text-secondary)] mt-4">
-                Configura tus automatizaciones en la seccion de Configuracion
-              </p>
-            </div>
-
-            <div className="neumor-card p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold mb-4">Guia Rapida</h3>
-              <div className="space-y-3">
-                <div className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    1
-                  </div>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Revisa las reservas entrantes en la seccion Reservas
-                  </p>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    2
-                  </div>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Gestiona contactos y consultas en la seccion Leads
-                  </p>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    3
-                  </div>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Configura notificaciones automaticas en Configuracion
-                  </p>
-                </div>
-              </div>
-            </div>
-            </div>
-          )}
+          {/* Status Panels removed */}
         </>
       )}
     </div>
