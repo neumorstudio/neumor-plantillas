@@ -1493,7 +1493,13 @@ const capacityPayload = JSON.stringify(capacity);
     const updateNextButton = () => {
       const step1NextBtn = document.querySelector('.wizard-step[data-step="1"] .next-step') as HTMLButtonElement;
       if (step1NextBtn) {
-        step1NextBtn.disabled = !selectedDateInput.value || !selectedTimeInput.value;
+        if (!selectedDateInput.value || !selectedTimeInput.value) {
+          step1NextBtn.disabled = true;
+          return;
+        }
+        const dateObj = fromIsoDate(selectedDateInput.value);
+        const availability = getAvailableSlotsForDate(dateObj, getGuestCount());
+        step1NextBtn.disabled = availability.length === 0;
       }
     };
 
@@ -1636,9 +1642,15 @@ const capacityPayload = JSON.stringify(capacity);
           }
           const dateObj = fromIsoDate(selectedDateInput.value);
           const availability = getAvailableSlotsForDate(dateObj, getGuestCount());
+          if (!availability.length) {
+            showMessage('Ese día no está disponible. Elige otra fecha.');
+            renderCalendar();
+            renderTimeOptions();
+            return;
+          }
           const isAvailable = availability.some((slot) => slot.time === selectedTimeInput.value);
           if (!isAvailable) {
-            showMessage('Ese horario ya no está disponible. Elige otro.');
+            showMessage('Esa hora ya no está disponible. Elige otra.');
             renderCalendar();
             renderTimeOptions();
             return;
@@ -1674,9 +1686,16 @@ const capacityPayload = JSON.stringify(capacity);
 
       const dateObj = fromIsoDate(dateValue);
       const availability = getAvailableSlotsForDate(dateObj, getGuestCount());
+      if (!availability.length) {
+        showMessage('Ese día no está disponible. Elige otra fecha.');
+        goToStep(1);
+        renderCalendar();
+        renderTimeOptions();
+        return;
+      }
       const isAvailable = availability.some((slot) => slot.time === timeValue);
       if (!isAvailable) {
-        showMessage('Ese horario ya no está disponible. Elige otro.');
+        showMessage('Esa hora ya no está disponible. Elige otra.');
         goToStep(1);
         renderCalendar();
         renderTimeOptions();
