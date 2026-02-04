@@ -1276,7 +1276,8 @@ const capacityPayload = JSON.stringify(capacity);
     const capacityNum = Number(capacityRaw);
     const capacity = Number.isFinite(capacityNum) && capacityNum > 0 ? capacityNum : null;
 
-    console.log('[ReservationWizard] websiteId', wizardForm.dataset.websiteId || '');
+    const debugWebsiteId = wizardForm.dataset.websiteId || '';
+    console.log('[ReservationWizard] websiteId', debugWebsiteId);
     console.log('[ReservationWizard] hoursCount', businessHours.length);
     console.log('[ReservationWizard] slotsCount', businessHourSlots.length);
     console.log('[ReservationWizard] specialDaysCount', specialDays.length);
@@ -1355,7 +1356,13 @@ const capacityPayload = JSON.stringify(capacity);
       const iso = toIsoDate(date);
       console.debug('[ReservationWizard] getRangesForDate', { iso });
       if (businessHourSlots.length === 0 && businessHours.length === 0 && specialDays.length === 0) {
-        console.debug('[ReservationWizard] no schedule data, blocking availability');
+        console.warn('[ReservationWizard] no schedule data, blocking availability', {
+          websiteId: debugWebsiteId,
+          hoursCount: businessHours.length,
+          slotsCount: businessHourSlots.length,
+          specialDaysCount: specialDays.length,
+          specialSlotsCount: specialDaySlots.length,
+        });
         return [];
       }
       const special = specialDays.find((d) => d.date === iso);
