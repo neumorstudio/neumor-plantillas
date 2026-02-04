@@ -1586,6 +1586,25 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
   };
 
+  const scrollTimeSlotIntoView = (target?: HTMLElement) => {
+    if (!timeGrid) {
+      return;
+    }
+    const slot =
+      target ||
+      timeGrid.querySelector<HTMLElement>(".time-slot.is-selected") ||
+      timeGrid.querySelector<HTMLElement>(".time-slot:not(.is-disabled)");
+    if (!slot) {
+      return;
+    }
+    const offset =
+      slot.offsetTop - timeGrid.clientHeight / 2 + slot.clientHeight / 2;
+    timeGrid.scrollTo({
+      top: Math.max(0, offset),
+      behavior: "smooth",
+    });
+  };
+
   const renderTimeSlots = async () => {
     if (!timeGrid) {
       return;
@@ -1653,6 +1672,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         timeGrid.appendChild(button);
       }
     });
+    scrollTimeSlotIntoView();
   };
 
   const getAutoSelectEndDate = () => {
@@ -1710,6 +1730,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     today.setHours(0, 0, 0, 0);
     await applyAutoSelectFromDate(toIsoDate(today));
   };
+
 
   const getSelectedServices = () => {
     const selected = Array.from(
