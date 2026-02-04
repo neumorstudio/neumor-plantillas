@@ -1276,10 +1276,11 @@ const capacityPayload = JSON.stringify(capacity);
     const capacityNum = Number(capacityRaw);
     const capacity = Number.isFinite(capacityNum) && capacityNum > 0 ? capacityNum : null;
 
-    console.debug('[ReservationWizard] hours', businessHours);
-    console.debug('[ReservationWizard] hourSlots', businessHourSlots);
-    console.debug('[ReservationWizard] specialDays', specialDays);
-    console.debug('[ReservationWizard] specialDaySlots', specialDaySlots);
+    console.log('[ReservationWizard] websiteId', wizardForm.dataset.websiteId || '');
+    console.log('[ReservationWizard] hoursCount', businessHours.length);
+    console.log('[ReservationWizard] slotsCount', businessHourSlots.length);
+    console.log('[ReservationWizard] specialDaysCount', specialDays.length);
+    console.log('[ReservationWizard] specialSlotsCount', specialDaySlots.length);
 
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
