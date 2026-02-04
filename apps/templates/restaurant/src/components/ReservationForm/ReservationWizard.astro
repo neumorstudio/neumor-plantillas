@@ -1276,6 +1276,11 @@ const capacityPayload = JSON.stringify(capacity);
     const capacityNum = Number(capacityRaw);
     const capacity = Number.isFinite(capacityNum) && capacityNum > 0 ? capacityNum : null;
 
+    console.debug('[ReservationWizard] hours', businessHours);
+    console.debug('[ReservationWizard] hourSlots', businessHourSlots);
+    console.debug('[ReservationWizard] specialDays', specialDays);
+    console.debug('[ReservationWizard] specialDaySlots', specialDaySlots);
+
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const slotIntervalMinutes = 30;
@@ -1347,9 +1352,11 @@ const capacityPayload = JSON.stringify(capacity);
 
     const getRangesForDate = (date: Date) => {
       const iso = toIsoDate(date);
+      console.debug('[ReservationWizard] getRangesForDate', { iso });
       const special = specialDays.find((d) => d.date === iso);
 
       if (special) {
+        console.debug('[ReservationWizard] specialDay hit', special);
         if (!special.is_open) return [];
         const specialSlotRanges = buildRangesFromSlots(
           specialDaySlots
@@ -1365,9 +1372,11 @@ const capacityPayload = JSON.stringify(capacity);
       }
 
       const dayOfWeek = (date.getDay() + 6) % 7;
+      console.debug('[ReservationWizard] weekday', { dayOfWeek });
       const daySlots = businessHourSlots
         .filter((slot) => slot.day_of_week === dayOfWeek && slot.is_active !== false)
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      console.debug('[ReservationWizard] daySlots', daySlots);
       const daySlotRanges = buildRangesFromSlots(daySlots);
       if (daySlotRanges.length) return daySlotRanges;
 
@@ -1414,6 +1423,10 @@ const capacityPayload = JSON.stringify(capacity);
       maxDate.setDate(maxDate.getDate() + maxAdvanceDays);
       if (date < today || date > maxDate) return false;
       const slots = getAvailableSlotsForDate(date, getGuestCount());
+      console.debug('[ReservationWizard] availability', {
+        iso: toIsoDate(date),
+        slots: slots.map((slot) => slot.time),
+      });
       return slots.length > 0;
     };
 
