@@ -172,8 +172,9 @@ export interface Website {
 }
 
 // Cliente Supabase (solo lectura para el template)
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Verificar que las variables de entorno estén configuradas
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -183,21 +184,32 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = supabaseUrl && supabaseAnonKey
+const supabaseAnon = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+const supabaseServer = supabaseUrl && supabaseServiceKey && import.meta.env.SSR
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    })
+  : null;
+
+const getSupabaseClient = () => supabaseServer ?? supabaseAnon;
+
+export const supabase = supabaseAnon;
 
 /**
  * Obtiene la configuración del website desde Supabase
  * Busca por website_id (preferido) o por dominio
  */
 export async function getWebsiteConfig(websiteId?: string, domain?: string): Promise<Website | null> {
-  if (!supabase) {
+  const client = getSupabaseClient();
+  if (!client) {
     return null;
   }
 
   try {
-    let query = supabase
+    let query = client
       .from("websites")
       .select("id, client_id, domain, theme, config, is_active");
 
@@ -227,12 +239,13 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
 }
 
 export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | null> {
-  if (!supabase || !websiteId) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
     return null;
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("menu_items")
       .select("id, website_id, name, description, price_cents, category, tag, image_url, is_active, sort_order")
       .eq("website_id", websiteId)
@@ -253,12 +266,13 @@ export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | 
 }
 
 export async function getBusinessHours(websiteId?: string): Promise<BusinessHourRow[]> {
-  if (!supabase || !websiteId) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
     return [];
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("business_hours")
       .select("day_of_week, is_open, open_time, close_time")
       .eq("website_id", websiteId)
@@ -277,12 +291,13 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
 }
 
 export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[]> {
-  if (!supabase || !websiteId) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
     return [];
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("special_days")
       .select("id, date, is_open, open_time, close_time, note")
       .eq("website_id", websiteId)
@@ -301,12 +316,13 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[
 }
 
 export async function getBusinessHourSlots(websiteId?: string): Promise<BusinessHourSlotRow[]> {
-  if (!supabase || !websiteId) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
     return [];
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("business_hour_slots")
       .select("id, website_id, day_of_week, open_time, close_time, sort_order, is_active")
       .eq("website_id", websiteId)
@@ -327,12 +343,13 @@ export async function getBusinessHourSlots(websiteId?: string): Promise<Business
 }
 
 export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDaySlotRow[]> {
-  if (!supabase || !websiteId) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
     return [];
   }
 
   try {
-    const { data: specialDays, error: specialError } = await supabase
+    const { data: specialDays, error: specialError } = await client
       .from("special_days")
       .select("id")
       .eq("website_id", websiteId);
@@ -347,7 +364,7 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
     }
 
     const ids = specialDays.map((day) => day.id);
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("special_day_slots")
       .select("id, special_day_id, open_time, close_time, sort_order")
       .in("special_day_id", ids)
@@ -370,12 +387,13 @@ export async function getBookingsInRange(
   startDate?: string,
   endDate?: string
 ): Promise<BookingRow[]> {
-  if (!supabase || !websiteId || !startDate || !endDate) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId || !startDate || !endDate) {
     return [];
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("bookings")
       .select("id, website_id, booking_date, booking_time, guests, status")
       .eq("website_id", websiteId)
@@ -395,12 +413,13 @@ export async function getBookingsInRange(
 }
 
 export async function getRestaurantSettings(websiteId?: string): Promise<RestaurantRow | null> {
-  if (!supabase || !websiteId) {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
     return null;
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from("restaurants")
       .select("website_id, capacity, is_open, takeaway_enabled")
       .eq("website_id", websiteId)
