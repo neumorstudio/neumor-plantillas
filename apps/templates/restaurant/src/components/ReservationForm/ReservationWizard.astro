@@ -1353,6 +1353,10 @@ const capacityPayload = JSON.stringify(capacity);
     const getRangesForDate = (date: Date) => {
       const iso = toIsoDate(date);
       console.debug('[ReservationWizard] getRangesForDate', { iso });
+      if (businessHourSlots.length === 0 && businessHours.length === 0 && specialDays.length === 0) {
+        console.debug('[ReservationWizard] no schedule data, blocking availability');
+        return [];
+      }
       const special = specialDays.find((d) => d.date === iso);
 
       if (special) {
