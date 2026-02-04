@@ -141,6 +141,52 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No se pudo guardar" }, { status: 500 });
     }
 
+    const dayNames = [
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves",
+      "viernes",
+      "sábado",
+      "domingo",
+    ];
+
+    const schedule = payload.reduce<Record<string, { open: string; close: string; closed?: boolean }>>(
+      (acc, day) => {
+        const key = dayNames[day.day_of_week] || `day-${day.day_of_week}`;
+        acc[key] = {
+          open: day.open_time,
+          close: day.close_time,
+          ...(day.is_open ? {} : { closed: true }),
+        };
+        return acc;
+      },
+      {}
+    );
+
+    const { data: websiteConfig } = await supabase
+      .from("websites")
+      .select("config")
+      .eq("id", website.id)
+      .single();
+
+    const currentConfig =
+      (websiteConfig?.config as Record<string, unknown> | null) || {};
+    const currentOpenStatus =
+      (currentConfig.openStatus as Record<string, unknown> | null) || {};
+    const updatedConfig = {
+      ...currentConfig,
+      openStatus: {
+        ...currentOpenStatus,
+        schedule,
+      },
+    };
+
+    await supabase
+      .from("websites")
+      .update({ config: updatedConfig })
+      .eq("id", website.id);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
