@@ -122,6 +122,7 @@ const capacityPayload = JSON.stringify(capacity);
           </div>
         </div>
         <!-- Step 1: Fecha y Hora -->
+        <div id="wizard-message" class="wizard-message" hidden></div>
         <div class="wizard-step active" data-step="1">
           <h2 class="step-title">{title}</h2>
           <p class="step-subtitle">{subtitle}</p>
@@ -442,6 +443,28 @@ const capacityPayload = JSON.stringify(capacity);
     color: var(--text-secondary);
     text-align: center;
     margin-bottom: 2rem;
+  }
+
+  .wizard-message {
+    margin: 0 auto 1.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background: var(--neumor-bg);
+    color: var(--text-primary);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+    font-size: 0.95rem;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .wizard-message.error {
+    color: #b91c1c;
+  }
+
+  .wizard-message.info {
+    color: var(--accent);
   }
 
   /* DateTime Selector */
@@ -1110,6 +1133,23 @@ const capacityPayload = JSON.stringify(capacity);
     const wizardSuccess = document.querySelector('.wizard-success') as HTMLElement;
     const submitBtn = document.querySelector('.submit-btn') as HTMLButtonElement;
     const newReservationBtn = document.querySelector('.new-reservation');
+    const messageBox = document.querySelector('#wizard-message') as HTMLElement | null;
+
+    const showMessage = (text: string, type: 'error' | 'info' = 'error') => {
+      if (!messageBox) return;
+      messageBox.textContent = text;
+      messageBox.classList.remove('error', 'info');
+      messageBox.classList.add(type);
+      messageBox.removeAttribute('hidden');
+      messageBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    const clearMessage = () => {
+      if (!messageBox) return;
+      messageBox.textContent = '';
+      messageBox.setAttribute('hidden', 'true');
+      messageBox.classList.remove('error', 'info');
+    };
 
     const authBlock = wizardForm.querySelector('[data-auth-block]');
     const authButton = wizardForm.querySelector('[data-auth-google]');
@@ -1502,6 +1542,7 @@ const capacityPayload = JSON.stringify(capacity);
           btn.style.borderRadius = '999px';
           btn.style.boxShadow = 'inset 2px 2px 6px rgba(0, 0, 0, 0.14), inset -2px -2px 6px rgba(255, 255, 255, 0.8), 0 0 0 2px rgba(var(--accent-rgb, 99, 102, 241), 0.45), 0 6px 14px rgba(0, 0, 0, 0.1)';
           selectedTimeInput.value = slot.time;
+          clearMessage();
           updateNextButton();
           updateSummary();
         });
@@ -1516,6 +1557,7 @@ const capacityPayload = JSON.stringify(capacity);
     const selectDate = (date: Date) => {
       selectedDate = date;
       selectedDateInput.value = toIsoDate(date);
+      clearMessage();
       renderCalendar();
       renderTimeOptions();
       updateNextButton();
@@ -1565,6 +1607,7 @@ const capacityPayload = JSON.stringify(capacity);
     const goToStep = (step: number) => {
       currentStep = step;
 
+      clearMessage();
       wizardSteps.forEach(s => s.classList.remove('active'));
       document.querySelector(`.wizard-step[data-step="${step}"]`)?.classList.add('active');
 
@@ -1582,9 +1625,24 @@ const capacityPayload = JSON.stringify(capacity);
     nextBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         if (currentStep === 1 && requireAuth && !isAuthenticated) {
-          alert('Necesitas iniciar sesion con Google para continuar.');
+          showMessage('Necesitas iniciar sesión con Google para continuar.');
           authBlock?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return;
+        }
+        if (currentStep === 1) {
+          if (!selectedDateInput.value || !selectedTimeInput.value) {
+            showMessage('Selecciona una fecha y hora disponibles para continuar.');
+            return;
+          }
+          const dateObj = fromIsoDate(selectedDateInput.value);
+          const availability = getAvailableSlotsForDate(dateObj, getGuestCount());
+          const isAvailable = availability.some((slot) => slot.time === selectedTimeInput.value);
+          if (!isAvailable) {
+            showMessage('Ese horario ya no está disponible. Elige otro.');
+            renderCalendar();
+            renderTimeOptions();
+            return;
+          }
         }
         if (currentStep < 3) goToStep(currentStep + 1);
       });
@@ -1602,7 +1660,7 @@ const capacityPayload = JSON.stringify(capacity);
       e.preventDefault();
       if (isSubmitting) return;
       if (requireAuth && !isAuthenticated) {
-        alert('Necesitas iniciar sesion con Google para reservar.');
+        showMessage('Necesitas iniciar sesión con Google para reservar.');
         authBlock?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
@@ -1618,7 +1676,7 @@ const capacityPayload = JSON.stringify(capacity);
       const availability = getAvailableSlotsForDate(dateObj, getGuestCount());
       const isAvailable = availability.some((slot) => slot.time === timeValue);
       if (!isAvailable) {
-        alert('Ese horario ya no está disponible. Elige otro.');
+        showMessage('Ese horario ya no está disponible. Elige otro.');
         goToStep(1);
         renderCalendar();
         renderTimeOptions();
@@ -1656,14 +1714,22 @@ const capacityPayload = JSON.stringify(capacity);
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
           });
-          if (!response.ok) throw new Error("Error");
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData?.error || "Error");
+          }
         }
 
         wizardSteps.forEach(s => s.classList.remove('active'));
         wizardSuccess.style.display = 'block';
+        clearMessage();
         createConfetti();
-      } catch {
-        alert("Error al enviar la reserva. Por favor, inténtalo de nuevo.");
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message && error.message !== "Error"
+            ? error.message
+            : "No se pudo enviar la reserva. Revisa fecha y hora disponibles.";
+        showMessage(message);
       } finally {
         submitBtn?.classList.remove('loading');
         submitBtn?.removeAttribute('disabled');
@@ -1699,6 +1765,7 @@ const capacityPayload = JSON.stringify(capacity);
       renderTimeOptions();
       goToStep(1);
       wizardSuccess.style.display = 'none';
+      clearMessage();
       updateNextButton();
     });
 
