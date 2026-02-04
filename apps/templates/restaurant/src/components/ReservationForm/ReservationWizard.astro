@@ -88,12 +88,12 @@ const capacityPayload = JSON.stringify(capacity);
         data-current-user={currentUser ? JSON.stringify(currentUser) : ""}
         data-require-auth="true"
       >
-        <script type="application/json" data-hours>{hoursPayload}</script>
-        <script type="application/json" data-business-hour-slots>{businessHourSlotsPayload}</script>
-        <script type="application/json" data-special-days>{specialDaysPayload}</script>
-        <script type="application/json" data-special-day-slots>{specialDaySlotsPayload}</script>
-        <script type="application/json" data-bookings>{bookingsPayload}</script>
-        <script type="application/json" data-capacity>{capacityPayload}</script>
+        <script type="application/json" data-hours set:html={hoursPayload}></script>
+        <script type="application/json" data-business-hour-slots set:html={businessHourSlotsPayload}></script>
+        <script type="application/json" data-special-days set:html={specialDaysPayload}></script>
+        <script type="application/json" data-special-day-slots set:html={specialDaySlotsPayload}></script>
+        <script type="application/json" data-bookings set:html={bookingsPayload}></script>
+        <script type="application/json" data-capacity set:html={capacityPayload}></script>
 
         <div class="auth-block neumor-inset" data-auth-block>
           <div class="auth-content">

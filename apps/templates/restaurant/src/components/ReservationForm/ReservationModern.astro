@@ -58,12 +58,12 @@ const {
       data-current-user={currentUser ? JSON.stringify(currentUser) : ""}
       data-require-auth="true"
     >
-      <script type="application/json" data-hours>{JSON.stringify(businessHours)}</script>
-      <script type="application/json" data-business-hour-slots>{JSON.stringify(businessHourSlots)}</script>
-      <script type="application/json" data-special-days>{JSON.stringify(specialDays)}</script>
-      <script type="application/json" data-special-day-slots>{JSON.stringify(specialDaySlots)}</script>
-      <script type="application/json" data-bookings>{JSON.stringify(bookings)}</script>
-      <script type="application/json" data-capacity>{JSON.stringify(capacity)}</script>
+      <script type="application/json" data-hours set:html={JSON.stringify(businessHours)}></script>
+      <script type="application/json" data-business-hour-slots set:html={JSON.stringify(businessHourSlots)}></script>
+      <script type="application/json" data-special-days set:html={JSON.stringify(specialDays)}></script>
+      <script type="application/json" data-special-day-slots set:html={JSON.stringify(specialDaySlots)}></script>
+      <script type="application/json" data-bookings set:html={JSON.stringify(bookings)}></script>
+      <script type="application/json" data-capacity set:html={JSON.stringify(capacity)}></script>
 
       <!-- Left Column: Date & Time -->
       <div class="reservation-datetime neumor-card">
