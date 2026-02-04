@@ -60,6 +60,86 @@ const allowedReservationKeys = new Set([
   "notas",
 ]);
 
+const timeToMinutes = (value: string) => {
+  const [hours, minutes] = value.split(":").map(Number);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours * 60 + minutes;
+};
+
+const getWeekdayIndex = (dateValue: string) => {
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  return (date.getDay() + 6) % 7;
+};
+
+type TimeRange = { start: number; end: number };
+
+async function getAvailableRangesForDate(websiteId: string, dateValue: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: specialDay } = await supabase
+    .from("special_days")
+    .select("id, is_open, open_time, close_time")
+    .eq("website_id", websiteId)
+    .eq("date", dateValue)
+    .maybeSingle();
+
+  if (specialDay) {
+    if (!specialDay.is_open) return [];
+    const { data: specialSlots } = await supabase
+      .from("special_day_slots")
+      .select("open_time, close_time, sort_order")
+      .eq("special_day_id", specialDay.id)
+      .order("sort_order", { ascending: true });
+
+    if (specialSlots?.length) {
+      return specialSlots
+        .map((slot) => ({
+          start: timeToMinutes(slot.open_time),
+          end: timeToMinutes(slot.close_time),
+        }))
+        .filter((slot): slot is TimeRange => slot.start !== null && slot.end !== null);
+    }
+
+    const open = timeToMinutes(specialDay.open_time || "");
+    const close = timeToMinutes(specialDay.close_time || "");
+    if (open !== null && close !== null) return [{ start: open, end: close }];
+    return [];
+  }
+
+  const weekdayIndex = getWeekdayIndex(dateValue);
+  if (weekdayIndex === null) return [];
+
+  const { data: slotRows } = await supabase
+    .from("business_hour_slots")
+    .select("open_time, close_time, sort_order")
+    .eq("website_id", websiteId)
+    .eq("day_of_week", weekdayIndex)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (slotRows?.length) {
+    return slotRows
+      .map((slot) => ({
+        start: timeToMinutes(slot.open_time),
+        end: timeToMinutes(slot.close_time),
+      }))
+      .filter((slot): slot is TimeRange => slot.start !== null && slot.end !== null);
+  }
+
+  const { data: hourRow } = await supabase
+    .from("business_hours")
+    .select("is_open, open_time, close_time")
+    .eq("website_id", websiteId)
+    .eq("day_of_week", weekdayIndex)
+    .maybeSingle();
+
+  if (!hourRow || !hourRow.is_open) return [];
+  const open = timeToMinutes(hourRow.open_time);
+  const close = timeToMinutes(hourRow.close_time);
+  if (open !== null && close !== null) return [{ start: open, end: close }];
+  return [];
+}
+
 // Helper CORS configurado
 async function getCorsHeaders(origin: string | null) {
   return getCorsHeadersForOrigin(
@@ -203,6 +283,26 @@ export async function POST(request: NextRequest) {
       .single();
 
     // Insertar reserva en la base de datos
+    const bookingMinutes = timeToMinutes(body.hora);
+    if (bookingMinutes === null) {
+      return NextResponse.json(
+        { error: "Hora no valida" },
+        { status: 400, headers: responseCorsHeaders }
+      );
+    }
+
+    const availableRanges = await getAvailableRangesForDate(body.website_id, body.fecha);
+    const isWithinRange = availableRanges.some(
+      (range) => bookingMinutes >= range.start && bookingMinutes < range.end
+    );
+
+    if (!isWithinRange) {
+      return NextResponse.json(
+        { error: "Horario no disponible para esa fecha" },
+        { status: 400, headers: responseCorsHeaders }
+      );
+    }
+
     const { data: booking, error: bookingError } = await getSupabaseAdmin()
       .from("bookings")
       .insert({
