@@ -1333,6 +1333,9 @@ const capacityPayload = JSON.stringify(capacity);
       const dayOfWeek = (date.getDay() + 6) % 7;
       const day = businessHours.find((d) => d.day_of_week === dayOfWeek);
       if (!day) {
+        if (businessHourSlots.length > 0 || businessHours.length > 0) {
+          return [];
+        }
         const fallback = clampToWindow(13 * 60, 23 * 60);
         return fallback ? [fallback] : [];
       }
