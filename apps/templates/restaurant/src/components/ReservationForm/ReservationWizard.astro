@@ -1276,13 +1276,6 @@ const capacityPayload = JSON.stringify(capacity);
     const capacityNum = Number(capacityRaw);
     const capacity = Number.isFinite(capacityNum) && capacityNum > 0 ? capacityNum : null;
 
-    const debugWebsiteId = wizardForm.dataset.websiteId || '';
-    console.log('[ReservationWizard] websiteId', debugWebsiteId);
-    console.log('[ReservationWizard] hoursCount', businessHours.length);
-    console.log('[ReservationWizard] slotsCount', businessHourSlots.length);
-    console.log('[ReservationWizard] specialDaysCount', specialDays.length);
-    console.log('[ReservationWizard] specialSlotsCount', specialDaySlots.length);
-
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const slotIntervalMinutes = 30;
@@ -1354,21 +1347,12 @@ const capacityPayload = JSON.stringify(capacity);
 
     const getRangesForDate = (date: Date) => {
       const iso = toIsoDate(date);
-      console.debug('[ReservationWizard] getRangesForDate', { iso });
       if (businessHourSlots.length === 0 && businessHours.length === 0 && specialDays.length === 0) {
-        console.warn('[ReservationWizard] no schedule data, blocking availability', {
-          websiteId: debugWebsiteId,
-          hoursCount: businessHours.length,
-          slotsCount: businessHourSlots.length,
-          specialDaysCount: specialDays.length,
-          specialSlotsCount: specialDaySlots.length,
-        });
         return [];
       }
       const special = specialDays.find((d) => d.date === iso);
 
       if (special) {
-        console.debug('[ReservationWizard] specialDay hit', special);
         if (!special.is_open) return [];
         const specialSlotRanges = buildRangesFromSlots(
           specialDaySlots
@@ -1384,11 +1368,9 @@ const capacityPayload = JSON.stringify(capacity);
       }
 
       const dayOfWeek = (date.getDay() + 6) % 7;
-      console.debug('[ReservationWizard] weekday', { dayOfWeek });
       const daySlots = businessHourSlots
         .filter((slot) => slot.day_of_week === dayOfWeek && slot.is_active !== false)
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      console.debug('[ReservationWizard] daySlots', daySlots);
       const daySlotRanges = buildRangesFromSlots(daySlots);
       if (daySlotRanges.length) return daySlotRanges;
       if (businessHourSlots.length > 0) return [];
@@ -1436,10 +1418,6 @@ const capacityPayload = JSON.stringify(capacity);
       maxDate.setDate(maxDate.getDate() + maxAdvanceDays);
       if (date < today || date > maxDate) return false;
       const slots = getAvailableSlotsForDate(date, getGuestCount());
-      console.debug('[ReservationWizard] availability', {
-        iso: toIsoDate(date),
-        slots: slots.map((slot) => slot.time),
-      });
       return slots.length > 0;
     };
 
