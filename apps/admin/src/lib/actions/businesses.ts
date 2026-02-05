@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@supabase/supabase-js";
 import { requireSuperAdmin } from "@/lib/superadmin";
-import { getDefaultSectionsConfig, type BusinessType, type Database } from "@neumorstudio/supabase";
+import { getDefaultSectionsConfig, type BusinessType, type Database, type Json } from "@neumorstudio/supabase";
 
 export interface BusinessWithWebsite {
   id: string;
@@ -237,13 +237,14 @@ export async function createBusiness(formData: FormData) {
     businessName: businessName.trim(),
     businessType: businessType,
   };
-  const config =
+  const configPayload =
     businessType === "restaurant"
       ? {
           ...baseConfig,
           sectionsConfig: getDefaultSectionsConfig(businessType),
         }
       : baseConfig;
+  const config = JSON.parse(JSON.stringify(configPayload)) as Json;
 
   // Crear website con subdomain y/o custom_domain correctamente
   const { data: website, error: websiteError } = await supabase
