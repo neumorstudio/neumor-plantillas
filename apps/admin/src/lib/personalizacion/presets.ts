@@ -3,6 +3,7 @@ import type {
   ColorsConfig,
   TypographyConfig,
   EffectsConfig,
+  BusinessType,
 } from "@neumorstudio/supabase";
 
 // ============================================
@@ -28,7 +29,9 @@ export interface TemplatePreset {
     reviews: "grid" | "carousel" | "minimal";
     footer: "full" | "minimal" | "centered";
     reservation: "classic" | "wizard" | "modal" | "modern";
+    orders?: "default";
   };
+  businessTypes?: BusinessType[];
 }
 
 export const templatePresets: TemplatePreset[] = [
@@ -68,6 +71,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "minimal",
       reservation: "classic"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -106,6 +110,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "centered",
       reservation: "wizard"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -144,6 +149,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "full",
       reservation: "modal"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -182,6 +188,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "full",
       reservation: "wizard"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -220,6 +227,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "full",
       reservation: "classic"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -258,6 +266,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "minimal",
       reservation: "modern"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -296,6 +305,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "centered",
       reservation: "wizard"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -334,6 +344,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "minimal",
       reservation: "modern"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -372,6 +383,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "centered",
       reservation: "modal"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -410,6 +422,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "minimal",
       reservation: "modern"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -448,6 +461,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "centered",
       reservation: "wizard"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -486,6 +500,7 @@ export const templatePresets: TemplatePreset[] = [
       footer: "minimal",
       reservation: "modern"
     },
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
   },
 
   // ============================================
@@ -524,6 +539,172 @@ export const templatePresets: TemplatePreset[] = [
       footer: "minimal",
       reservation: "wizard"
     },
+    // Excluir de restaurant explicitamente si se desea, o dejar para todos los demas
+    businessTypes: ["salon", "clinic", "fitness", "shop", "repairs"],
+  },
+
+  // ============================================
+  // RESTAURANT PRESETS
+  // ============================================
+
+  // ============================================
+  // 14. GOURMET NOIR - Fine Dining
+  // ============================================
+  {
+    id: "gourmet-noir",
+    name: "Gourmet Noir",
+    description: "Elegancia oscura y sofisticada",
+    preview: "linear-gradient(135deg, #0f0f0f 0%, #d4af37 50%, #1a1a1a 100%)",
+    theme: "midnight",
+    skin: "glass",
+    colors: {
+      primary: "#d4af37", // Gold
+      secondary: "#a0a0a0",
+      accent: "#d4af37"
+    },
+    typography: {
+      headingFont: "Playfair Display",
+      bodyFont: "Cormorant Garamond",
+      baseFontSize: 18,
+      scale: 1.414
+    },
+    effects: {
+      shadowIntensity: 60,
+      borderRadius: "soft",
+      glassmorphism: true,
+      blurIntensity: 20
+    },
+    variants: {
+      hero: "fullscreen",
+      menu: "list",
+      services: "list", // fallback
+      features: "banner",
+      reviews: "minimal",
+      footer: "centered",
+      reservation: "wizard",
+      orders: "default"
+    },
+    businessTypes: ["restaurant"],
+  },
+
+  // ============================================
+  // 15. URBAN BISTRO - Modern & Hip
+  // ============================================
+  {
+    id: "urban-bistro",
+    name: "Urban Bistro",
+    description: "Moderno, urbano y vibrante",
+    preview: "linear-gradient(135deg, #121212 0%, #ff6b35 50%, #004e64 100%)",
+    theme: "dark",
+    skin: "brutalist",
+    colors: {
+      primary: "#ff6b35", // Vibrant Orange
+      secondary: "#ffffff",
+      accent: "#004e64" // Deep Teal
+    },
+    typography: {
+      headingFont: "Oswald",
+      bodyFont: "Inter",
+      baseFontSize: 16,
+      scale: 1.333
+    },
+    effects: {
+      shadowIntensity: 20,
+      borderRadius: "sharp",
+      glassmorphism: false,
+      blurIntensity: 0
+    },
+    variants: {
+      hero: "bold",
+      menu: "grid",
+      services: "grid", // fallback
+      features: "icons",
+      reviews: "grid",
+      footer: "minimal",
+      reservation: "modern",
+      orders: "default"
+    },
+    businessTypes: ["restaurant"],
+  },
+
+  // ============================================
+  // 16. FRESCO ITALIANO - Rustic & Authentic
+  // ============================================
+  {
+    id: "fresco-italiano",
+    name: "Fresco Italiano",
+    description: "Rústico, natural y acogedor",
+    preview: "linear-gradient(135deg, #fbf7f0 0%, #6e7c5e 50%, #d2691e 100%)",
+    theme: "rustic",
+    skin: "neumorphic",
+    colors: {
+      primary: "#2c3e2c", // Dark Olive
+      secondary: "#5d4037", // Brown
+      accent: "#d2691e" // Terracotta
+    },
+    typography: {
+      headingFont: "Marcellus",
+      bodyFont: "Lato",
+      baseFontSize: 17,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 40,
+      borderRadius: "rounded",
+      glassmorphism: false,
+      blurIntensity: 10
+    },
+    variants: {
+      hero: "classic",
+      menu: "tabs",
+      services: "tabs", // fallback
+      features: "cards",
+      reviews: "carousel",
+      footer: "full",
+      reservation: "classic",
+      orders: "default"
+    },
+    businessTypes: ["restaurant"],
+  },
+
+  // ============================================
+  // 17. NEON NIGHTS - Bar & Nightclub
+  // ============================================
+  {
+    id: "neon-nights",
+    name: "Neon Nights",
+    description: "Electrizante y nocturno",
+    preview: "linear-gradient(135deg, #000000 0%, #bc13fe 50%, #0ff0fc 100%)",
+    theme: "dark",
+    skin: "glass",
+    colors: {
+      primary: "#bc13fe", // Neon Purple
+      secondary: "#0ff0fc", // Cyan
+      accent: "#fe00fe" // Hot Pink
+    },
+    typography: {
+      headingFont: "Orbitron",
+      bodyFont: "Exo 2",
+      baseFontSize: 16,
+      scale: 1.25
+    },
+    effects: {
+      shadowIntensity: 80,
+      borderRadius: "pill",
+      glassmorphism: true,
+      blurIntensity: 30
+    },
+    variants: {
+      hero: "modern",
+      menu: "carousel",
+      services: "carousel", // fallback
+      features: "icons",
+      reviews: "minimal",
+      footer: "minimal",
+      reservation: "modal",
+      orders: "default"
+    },
+    businessTypes: ["restaurant"],
   },
 
 ];

@@ -15,6 +15,7 @@ import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@restaurant/compon
 import { FooterFull, FooterMinimal, FooterCentered } from "@restaurant/components/Footer";
 import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@restaurant/components/ReservationForm";
 import { TeamSection, GallerySection, BrandsSection, FAQSection, PlansSection, ContactSection } from "@restaurant/components/Sections";
+import { OrdersDefault } from "@restaurant/components/Orders";
 import { createPortalClient } from "../../lib/supabase-portal";
 
 // Import Supabase helpers
@@ -26,6 +27,7 @@ import {
   getSpecialDaySlots,
   getBookingsInRange,
   getRestaurantSettings,
+  getOrderSettings,
 } from "@restaurant/lib/supabase";
 
 // Get tenant from middleware
@@ -100,6 +102,7 @@ const componentMap = {
   reviews: { grid: ReviewsGrid, carousel: ReviewsCarousel, minimal: ReviewsMinimal },
   footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
   reservation: { classic: ReservationClassic, wizard: ReservationWizard, modal: ReservationModal, modern: ReservationModern },
+  orders: { default: OrdersDefault },
 };
 
 // Get variants from config or use defaults
@@ -134,6 +137,16 @@ const ReviewsComponent = componentMap.reviews[selectedVariants.reviews as keyof 
 const FooterComponent = componentMap.footer[selectedVariants.footer as keyof typeof componentMap.footer] || FooterFull;
 const ReservationForm = componentMap.reservation[selectedVariants.reservation as keyof typeof componentMap.reservation] || ReservationClassic;
 
+// Get menu items and other data from Supabase
+const menuItems = await getMenuItems(tenant.id);
+const businessHours = await getBusinessHours(tenant.id);
+const businessHourSlots = await getBusinessHourSlots(tenant.id);
+const specialDays = await getSpecialDays(tenant.id);
+const specialDaySlots = await getSpecialDaySlots(tenant.id);
+const restaurantSettings = await getRestaurantSettings(tenant.id);
+const orderSettings = await getOrderSettings(tenant.id);
+const ordersFeatureEnabled = restaurantSettings?.takeaway_enabled !== false;
+
 // ============================================
 // CONFIGURACION DE SECCIONES DINAMICAS
 // ============================================
@@ -150,8 +163,9 @@ const defaultSections: SectionConfig[] = [
   { id: "hero", enabled: true, variant: "classic", order: 0 },
   { id: "features", enabled: true, variant: "cards", order: 1 },
   { id: "menu", enabled: true, variant: "tabs", order: 2 },
-  { id: "reservation", enabled: true, variant: "modern", order: 3 },
-  { id: "footer", enabled: true, variant: "full", order: 4 },
+  { id: "orders", enabled: ordersFeatureEnabled, variant: "default", order: 3 },
+  { id: "reservation", enabled: true, variant: "modern", order: 4 },
+  { id: "footer", enabled: true, variant: "full", order: 5 },
 ];
 
 // Obtener sectionsConfig de la BD o usar defaults
@@ -163,6 +177,8 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
 const legacyEnabledSections = new Set(
   defaultSections.filter((section) => section.enabled).map((section) => section.id)
 );
+const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legacyEnabledSections.has("orders"))
+  && ordersFeatureEnabled;
 
 // Helpers para contenido
 const getContentText = (key: string) => {
@@ -176,14 +192,6 @@ const getContentArray = (key: string) => {
   const value = config?.[key];
   return Array.isArray(value) && value.length > 0 ? value : undefined;
 };
-
-// Get menu items and other data from Supabase
-const menuItems = await getMenuItems(tenant.id);
-const businessHours = await getBusinessHours(tenant.id);
-const businessHourSlots = await getBusinessHourSlots(tenant.id);
-const specialDays = await getSpecialDays(tenant.id);
-const specialDaySlots = await getSpecialDaySlots(tenant.id);
-const restaurantSettings = await getRestaurantSettings(tenant.id);
 
 const toIsoDate = (date: Date) => date.toISOString().split("T")[0];
 const bookingsStart = new Date();
@@ -230,6 +238,23 @@ const scheduleFallback = buildHoursFromSchedule(
 );
 const resolvedBusinessHours = businessHours.length ? businessHours : scheduleFallback;
 const scheduleLabel = buildScheduleLabel(resolvedBusinessHours);
+const normalizeTimeString = (value: string) => (value ? value.slice(0, 5) : "");
+const fallbackOrderWindow = (() => {
+  const firstOpen = resolvedBusinessHours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (firstOpen) {
+    return {
+      start: normalizeTimeString(firstOpen.open_time),
+      end: normalizeTimeString(firstOpen.close_time),
+    };
+  }
+  return { start: "12:00", end: "22:00" };
+})();
+const pickupWindow = orderSettings
+  ? {
+      start: normalizeTimeString(orderSettings.pickup_start_time || fallbackOrderWindow.start),
+      end: normalizeTimeString(orderSettings.pickup_end_time || fallbackOrderWindow.end),
+    }
+  : fallbackOrderWindow;
 
 const formatPrice = (priceCents: number) => {
   return new Intl.NumberFormat("es-ES", {
@@ -335,6 +360,8 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
 const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/contacto`
   : "";
+const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
+  || (import.meta.env.PUBLIC_ADMIN_URL ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/pedidos` : "");
 ---
 
 <Layout
@@ -348,7 +375,7 @@ const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
     restaurantName={pageConfig.restaurantName}
     logo={pageConfig.logo}
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
-    showOrders={false}
+    showOrders={isOrdersSectionEnabled}
   />
 
   <main class="sections-container" style="display: flex; flex-direction: column;">
@@ -357,6 +384,7 @@ const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
         "hero",
         "features",
         "menu",
+        "orders",
         "testimonials",
         "team",
         "gallery",
@@ -369,7 +397,8 @@ const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
 
       return allSections.map((sectionId) => {
         const sectionCfg = sectionConfigMap.get(sectionId);
-        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
+        const isEnabled = (sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId))
+          && (sectionId !== "orders" || ordersFeatureEnabled);
         const order = sectionCfg?.order ?? 99;
         const style = `order: ${order}; ${!isEnabled ? "display: none;" : ""}`;
 
@@ -398,6 +427,23 @@ const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
             return (
               <section data-section-id="menu" style={style}>
                 <Menu categories={menuCategories} />
+              </section>
+            );
+          case "orders":
+            return (
+              <section data-section-id="orders" style={style}>
+                <OrdersDefault
+                  title={getContentText("ordersTitle") || "Pedidos para recoger"}
+                  subtitle={getContentText("ordersSubtitle") || "Elige tus platos, paga online y recoge sin esperas."}
+                  categories={menuCategories || []}
+                  websiteId={tenant.id}
+                  webhookUrl={ordersWebhookUrl}
+                  pickupStart={pickupWindow.start}
+                  pickupEnd={pickupWindow.end}
+                  prefillName={currentUser?.name || ""}
+                  prefillEmail={currentUser?.email || ""}
+                  prefillPhone={currentUser?.phone || ""}
+                />
               </section>
             );
           case "testimonials":

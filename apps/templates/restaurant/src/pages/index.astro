@@ -30,6 +30,7 @@ import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@components/Review
 import { FAQSection, ContactSection, TeamSection, GallerySection, BrandsSection, PlansSection } from "@components/Sections";
 import { StatusPulse, StatusMorph, StatusLiquid, StatusTime } from "@components/OpenStatus";
 import { ReservationClassic, ReservationWizard, ReservationModal, ReservationModern } from "@components/ReservationForm";
+import { OrdersDefault } from "@components/Orders";
 
 // Importar cliente Supabase
 import {
@@ -41,6 +42,7 @@ import {
   getSpecialDaySlots,
   getBookingsInRange,
   getRestaurantSettings,
+  getOrderSettings,
   type Theme,
   type WebsiteVariants,
   type OpenStatusConfig,
@@ -52,6 +54,7 @@ import {
   type SpecialDaySlotRow,
   type BookingRow,
   type RestaurantRow,
+  type OrderSettingsRow,
   type SectionConfig,
   type SectionsConfig,
 } from "@lib/supabase";
@@ -128,6 +131,9 @@ const componentMap = {
     modal: ReservationModal,
     modern: ReservationModern,
   },
+  orders: {
+    default: OrdersDefault,
+  },
 };
 
 // ============================================
@@ -160,7 +166,10 @@ const defaultConfig = {
   heroTitle: "Bienvenidos a Nuestro Restaurante",
   heroSubtitle: "Una experiencia culinaria única",
   heroImage: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
+  ordersTitle: "Pedidos para recoger",
+  ordersSubtitle: "Elige tus platos, paga online y recoge sin esperas.",
   webhookUrl: import.meta.env.PUBLIC_ADMIN_URL ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/reservas` : (import.meta.env.PUBLIC_RESERVATION_WEBHOOK_URL || ""),
+  ordersWebhookUrl: import.meta.env.PUBLIC_ADMIN_URL ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/pedidos` : (import.meta.env.PUBLIC_ORDERS_WEBHOOK_URL || ""),
   address: "Tu dirección aquí",
   phone: "+34 000 000 000",
   email: "contacto@turestaurante.com",
@@ -180,8 +189,6 @@ const defaultConfig = {
     language: "es",
   } as OpenStatusConfig,
 };
-
-// Orders functionality has been removed
 
 const formatPrice = (priceCents: number) => {
   return new Intl.NumberFormat("es-ES", {
@@ -299,7 +306,10 @@ if (websiteData) {
     heroTitle: dbConfig.heroTitle || defaultConfig.heroTitle,
     heroSubtitle: dbConfig.heroSubtitle || defaultConfig.heroSubtitle,
     heroImage: dbConfig.heroImage || defaultConfig.heroImage,
+    ordersTitle: dbConfig.ordersTitle || defaultConfig.ordersTitle,
+    ordersSubtitle: dbConfig.ordersSubtitle || defaultConfig.ordersSubtitle,
     webhookUrl: defaultConfig.webhookUrl,
+    ordersWebhookUrl: defaultConfig.ordersWebhookUrl,
     address: dbConfig.address || defaultConfig.address,
     phone: dbConfig.phone || defaultConfig.phone,
     email: dbConfig.email || defaultConfig.email,
@@ -348,6 +358,7 @@ const businessHourSlots: BusinessHourSlotRow[] = await getBusinessHourSlots(curr
 const specialDays: SpecialDayRow[] = await getSpecialDays(currentWebsiteId);
 const specialDaySlots: SpecialDaySlotRow[] = await getSpecialDaySlots(currentWebsiteId);
 const restaurantSettings: RestaurantRow | null = await getRestaurantSettings(currentWebsiteId);
+const orderSettings: OrderSettingsRow | null = await getOrderSettings(currentWebsiteId);
 
 const bookingsStart = new Date();
 const bookingsEnd = new Date();
@@ -394,6 +405,23 @@ const scheduleFallback = buildHoursFromSchedule(
 );
 const resolvedBusinessHours = businessHours.length ? businessHours : scheduleFallback;
 const scheduleLabel = buildScheduleLabel(resolvedBusinessHours);
+const ordersFeatureEnabled = restaurantSettings?.takeaway_enabled !== false;
+const fallbackOrderWindow = (() => {
+  const firstOpen = resolvedBusinessHours.find((item) => item.is_open && item.open_time && item.close_time);
+  if (firstOpen) {
+    return {
+      start: normalizeTimeString(firstOpen.open_time),
+      end: normalizeTimeString(firstOpen.close_time),
+    };
+  }
+  return { start: "12:00", end: "22:00" };
+})();
+const pickupWindow = orderSettings
+  ? {
+      start: normalizeTimeString(orderSettings.pickup_start_time || fallbackOrderWindow.start),
+      end: normalizeTimeString(orderSettings.pickup_end_time || fallbackOrderWindow.end),
+    }
+  : fallbackOrderWindow;
 
 // ============================================
 // SELECCION DINAMICA DE COMPONENTES
@@ -446,8 +474,9 @@ const defaultSections: SectionConfig[] = [
   { id: "hero", enabled: true, variant: "classic", order: 0 },
   { id: "features", enabled: true, variant: "cards", order: 1 },
   { id: "menu", enabled: true, variant: "tabs", order: 2 },
-  { id: "reservation", enabled: true, variant: "modern", order: 3 },
-  { id: "footer", enabled: true, variant: "full", order: 4 },
+  { id: "orders", enabled: ordersFeatureEnabled, variant: "default", order: 3 },
+  { id: "reservation", enabled: true, variant: "modern", order: 4 },
+  { id: "footer", enabled: true, variant: "full", order: 5 },
 ];
 
 // Obtener sectionsConfig de la BD o usar defaults
@@ -458,6 +487,11 @@ const sectionsConfig: SectionsConfig = websiteData?.config?.sectionsConfig || {
 // Crear un mapa para acceso rapido a la configuracion de cada seccion
 // IMPORTANTE: Incluir TODAS las secciones (no solo habilitadas) para permitir live preview
 const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
+const legacyEnabledSections = new Set(
+  defaultSections.filter((section) => section.enabled).map((section) => section.id)
+);
+const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legacyEnabledSections.has("orders"))
+  && ordersFeatureEnabled;
 ---
 
 <Layout
@@ -470,7 +504,7 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
     restaurantName={config.restaurantName}
     logo={customization.branding?.logo || customization.logo}
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
-    showOrders={false}
+    showOrders={isOrdersSectionEnabled}
   />
 
   {/* Indicador de Estado - Posición Header (barra debajo del header) */}
@@ -497,6 +531,7 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
         "hero",
         "features",
         "menu",
+        "orders",
         "testimonials",
         "team",
   "gallery",
@@ -506,13 +541,11 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
         "contact",
         "reservation",
       ];
-      const legacyEnabledSections = new Set(
-        defaultSections.filter((section) => section.enabled).map((section) => section.id)
-      );
 
       return allSections.map((sectionId) => {
         const sectionCfg = sectionConfigMap.get(sectionId);
-        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
+        const isEnabled = (sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId))
+          && (sectionId !== "orders" || ordersFeatureEnabled);
         const order = sectionCfg?.order ?? 99;
         const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
 
@@ -541,6 +574,20 @@ const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
             return (
               <section data-section-id="menu" style={style}>
                 <Menu categories={menuCategories} />
+              </section>
+            );
+          case "orders":
+            return (
+              <section data-section-id="orders" style={style}>
+                <OrdersDefault
+                  title={getContentText("ordersTitle") || config.ordersTitle}
+                  subtitle={getContentText("ordersSubtitle") || config.ordersSubtitle}
+                  categories={menuCategories || []}
+                  websiteId={currentWebsiteId}
+                  webhookUrl={config.ordersWebhookUrl}
+                  pickupStart={pickupWindow.start}
+                  pickupEnd={pickupWindow.end}
+                />
               </section>
             );
           case "testimonials":

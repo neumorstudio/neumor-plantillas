@@ -17,6 +17,7 @@ import {
   getExpiringPackages,
   getRecentSessions,
   getWebsiteId,
+  getOrdersToday,
 } from "@/lib/data";
 import {
   BookingsTodayWidget,
@@ -94,6 +95,14 @@ async function loadWidgetData(widgetIds: string[]) {
     promises.push(
       getBookingsToday().then((result) => {
         data.bookings_today = result;
+      })
+    );
+  }
+
+  if (widgetIds.includes("orders_today")) {
+    promises.push(
+      getOrdersToday().then((result) => {
+        data.orders_today = result;
       })
     );
   }
@@ -347,7 +356,12 @@ export default async function DashboardPage() {
           />
         );
       case "orders_today":
-        return <OrdersTodayWidget key={widgetId} count={0} />;
+        return (
+          <OrdersTodayWidget
+            key={widgetId}
+            count={(widgetData.orders_today as { count: number })?.count || 0}
+          />
+        );
       // Fitness widgets
       case "sessions_today":
         return (

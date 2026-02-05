@@ -255,10 +255,10 @@ export function PersonalizacionClient({
     footer: "footer",
     testimonials: "reviews",
     reservation: "reservation",
+    orders: "orders",
     // Secciones sin variante correspondiente en Variants
     booking: null,
     contact: null,
-    orders: null,
   };
 
   // Handler para sincronizar cambio de variante de sección con estado variants
@@ -283,6 +283,7 @@ export function PersonalizacionClient({
     footer: "footer",
     reviews: "testimonials",
     reservation: "reservation",
+    orders: "orders",
   };
 
   // Función para aplicar un preset completo
@@ -301,8 +302,11 @@ export function PersonalizacionClient({
       sections: prev.sections.map(section => {
         // Buscar si hay una variante del preset para esta sección
         for (const [variantKey, sectionId] of Object.entries(variantKeyToSectionId)) {
-          if (sectionId === section.id && preset.variants[variantKey as keyof typeof preset.variants]) {
-            return { ...section, variant: preset.variants[variantKey as keyof typeof preset.variants] };
+          if (sectionId === section.id) {
+            const presetVariant = preset.variants[variantKey as keyof typeof preset.variants];
+            if (presetVariant) {
+              return { ...section, variant: presetVariant };
+            }
           }
         }
         return section;
@@ -371,6 +375,7 @@ export function PersonalizacionClient({
       v_reviews: reviewsVariant,
       v_menu: menuVariant,
       v_reservation: reservationVariant,
+      v_orders: getSectionVariant("orders", variants.orders),
       // Variantes de "services" segun template
       v_services: servicesVariant,
       v_products: servicesVariant,
@@ -664,6 +669,7 @@ export function PersonalizacionClient({
       case "diseno":
         return (
           <DesignTab
+            businessType={businessType}
             theme={theme}
             skin={skin}
             activePreset={activePreset}

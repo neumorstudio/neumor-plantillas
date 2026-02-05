@@ -3,7 +3,7 @@
  * Incluye Presets, Tema, Skin, Colores, Efectos y Tipografia.
  */
 
-import type { Theme, ColorsConfig, EffectsConfig, TypographyConfig } from "@neumorstudio/supabase";
+import type { Theme, ColorsConfig, EffectsConfig, TypographyConfig, BusinessType } from "@neumorstudio/supabase";
 import { ColorPicker, SliderControl, OptionSelector, FontSelector } from "@/components/customization";
 import { CollapsibleSection } from "@/components/ui";
 import { getThemeIcon } from "@/components/icons";
@@ -17,6 +17,7 @@ import type { TemplatePreset } from "@/lib/personalizacion";
 import { defaultColors } from "../../constants";
 
 interface DesignTabProps {
+  businessType: BusinessType;
   theme: Theme;
   skin: string;
   activePreset: string | null;
@@ -34,6 +35,7 @@ interface DesignTabProps {
 }
 
 export function DesignTab({
+  businessType,
   theme,
   skin,
   activePreset,
@@ -69,15 +71,14 @@ export function DesignTab({
           Elige una plantilla completa o personaliza cada detalle abajo.
         </p>
         <div className="grid grid-cols-2 gap-3">
-          {templatePresets.map((preset) => (
+          {templatePresets.filter(p => !p.businessTypes || p.businessTypes.includes(businessType)).map((preset) => (
             <button
               key={preset.id}
               onClick={() => onApplyPreset(preset)}
-              className={`relative p-3 rounded-xl text-left transition-all overflow-hidden ${
-                activePreset === preset.id
+              className={`relative p-3 rounded-xl text-left transition-all overflow-hidden ${activePreset === preset.id
                   ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
                   : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
-              }`}
+                }`}
               style={{ background: preset.preview }}
             >
               <div className="relative z-10">
@@ -122,11 +123,10 @@ export function DesignTab({
                 <button
                   key={t.value}
                   onClick={() => { onSetTheme(t.value); onSetActivePreset(null); }}
-                  className={`relative p-2 rounded-lg text-left transition-all ${
-                    theme === t.value
+                  className={`relative p-2 rounded-lg text-left transition-all ${theme === t.value
                       ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
                       : "hover:shadow-md hover:scale-[1.01]"
-                  }`}
+                    }`}
                   style={{
                     background: `linear-gradient(135deg, ${t.colors[0]} 0%, ${t.colors[1]} 100%)`,
                   }}
@@ -172,11 +172,10 @@ export function DesignTab({
             <button
               key={s.value}
               onClick={() => onSkinChange(s.value)}
-              className={`relative p-3 rounded-lg text-left transition-all ${
-                skin === s.value
+              className={`relative p-3 rounded-lg text-left transition-all ${skin === s.value
                   ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02] bg-[var(--shadow-light)]"
                   : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
-              }`}
+                }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <div
@@ -192,7 +191,7 @@ export function DesignTab({
                 <div className="absolute top-1 right-1 text-[var(--accent)]">
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
+                  </svg>
                 </div>
               )}
             </button>

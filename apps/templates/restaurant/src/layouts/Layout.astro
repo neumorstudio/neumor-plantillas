@@ -744,6 +744,16 @@ const defaultFonts = !fontImports
                 el.textContent = content.plansSubtitle;
               });
             }
+            if (content.ordersTitle) {
+              document.querySelectorAll('[data-content="ordersTitle"]').forEach(function(el) {
+                el.textContent = content.ordersTitle;
+              });
+            }
+            if (content.ordersSubtitle) {
+              document.querySelectorAll('[data-content="ordersSubtitle"]').forEach(function(el) {
+                el.textContent = content.ordersSubtitle;
+              });
+            }
             if (content.contactTitle) {
               document.querySelectorAll('[data-content="contactTitle"]').forEach(function(el) {
                 el.textContent = content.contactTitle;

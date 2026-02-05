@@ -17,6 +17,7 @@ export interface Variants {
   reviews: "grid" | "carousel" | "minimal";
   footer: "full" | "minimal" | "centered";
   reservation: "classic" | "wizard" | "modal" | "modern";
+  orders?: "default"; // restaurant only
 }
 
 export interface Props {

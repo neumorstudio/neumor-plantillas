@@ -54,6 +54,9 @@ export interface WebsiteConfig {
   heroImage?: string;
   heroImages?: string[];
   heroCta?: string;
+  ordersTitle?: string;
+  ordersSubtitle?: string;
+  ordersWebhookUrl?: string;
   reviewsTitle?: string;
   reviewsSubtitle?: string;
   teamTitle?: string;
@@ -158,6 +161,12 @@ export interface RestaurantRow {
   capacity: number | null;
   is_open: boolean | null;
   takeaway_enabled: boolean | null;
+}
+
+export interface OrderSettingsRow {
+  website_id: string;
+  pickup_start_time: string;
+  pickup_end_time: string;
 }
 
 export type Theme = "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark";
@@ -435,6 +444,31 @@ export async function getRestaurantSettings(websiteId?: string): Promise<Restaur
     }
 
     return (data as RestaurantRow | null) || null;
+  } catch (err) {
+    console.error("Error connecting to Supabase:", err);
+    return null;
+  }
+}
+
+export async function getOrderSettings(websiteId?: string): Promise<OrderSettingsRow | null> {
+  const client = getSupabaseClient();
+  if (!client || !websiteId) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await client
+      .from("order_settings")
+      .select("website_id, pickup_start_time, pickup_end_time")
+      .eq("website_id", websiteId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching order settings:", error.message);
+      return null;
+    }
+
+    return (data as OrderSettingsRow | null) || null;
   } catch (err) {
     console.error("Error connecting to Supabase:", err);
     return null;

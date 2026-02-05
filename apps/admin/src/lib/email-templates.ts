@@ -57,6 +57,20 @@ interface ContactEmailData {
   businessAddress?: string;
 }
 
+interface OrderEmailData {
+  businessName: string;
+  customerName: string;
+  items: Array<{ name: string; quantity: number; total: string }>;
+  total: string;
+  pickupDate: string;
+  pickupTime: string;
+  notes?: string;
+  phone?: string;
+  email?: string;
+  businessPhone?: string;
+  businessAddress?: string;
+}
+
 function renderDetailRows(rows: Array<{ label: string; value: string }>) {
   return rows
     .filter((row) => row.value)
@@ -1768,6 +1782,200 @@ export function getRepairsQuoteNotificationEmail(data: ContactEmailData): string
             </td>
           </tr>
 
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+export function getOrderCustomerEmail(data: OrderEmailData): string {
+  const itemsRows = data.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+            <strong style="color: #111827;">${item.name}</strong>
+            <span style="color: #6b7280; font-size: 13px;"> x${item.quantity}</span>
+          </td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
+            <strong style="color: #111827;">${item.total}</strong>
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido confirmado</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">Pedido confirmado</h1>
+              <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 15px;">
+                ${data.businessName}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 32px;">
+              <p style="color: #374151; font-size: 16px; margin: 0 0 16px;">
+                Hola <strong>${data.customerName}</strong>,
+              </p>
+              <p style="color: #6b7280; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">
+                Gracias por tu pedido. Lo tendremos listo para que lo recojas.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #111827; margin: 0 0 12px; font-size: 16px;">Recogida</h3>
+                    <p style="margin: 0; color: #4b5563; font-size: 14px;">
+                      ${data.pickupDate} a las ${data.pickupTime}
+                    </p>
+                    ${data.notes ? `<p style="margin: 10px 0 0; color: #6b7280; font-size: 13px;">Notas: ${data.notes}</p>` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #111827; margin: 0 0 12px; font-size: 16px;">Detalle del pedido</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${itemsRows}
+                      <tr>
+                        <td style="padding: 10px 0; text-align: right; font-size: 15px;" colspan="2">
+                          <strong>Total: ${data.total}</strong>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color: #6b7280; font-size: 13px; margin: 0;">
+                Si necesitas cambiar algo, responde a este correo o llama al restaurante.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 11px; margin: 0;">Email automatico de NeumorStudio</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+export function getOrderRestaurantEmail(data: OrderEmailData): string {
+  const itemsRows = data.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+            <strong style="color: #111827;">${item.name}</strong>
+            <span style="color: #6b7280; font-size: 13px;"> x${item.quantity}</span>
+          </td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
+            <strong style="color: #111827;">${item.total}</strong>
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo pedido</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 32px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 600;">Nuevo pedido para recoger</h1>
+              <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 15px;">
+                ${data.businessName}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff7ed; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #9a3412; margin: 0 0 10px;">Cliente</h3>
+                    <p style="margin: 0; color: #7c2d12; font-size: 14px;">
+                      <strong>${data.customerName}</strong>
+                      ${data.phone ? ` | ${data.phone}` : ""}
+                      ${data.email ? ` | ${data.email}` : ""}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #111827; margin: 0 0 12px; font-size: 16px;">Recogida</h3>
+                    <p style="margin: 0; color: #4b5563; font-size: 14px;">
+                      ${data.pickupDate} a las ${data.pickupTime}
+                    </p>
+                    ${data.notes ? `<p style="margin: 10px 0 0; color: #6b7280; font-size: 13px;">Notas: ${data.notes}</p>` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td>
+                    <h3 style="color: #111827; margin: 0 0 12px; font-size: 16px;">Detalle del pedido</h3>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${itemsRows}
+                      <tr>
+                        <td style="padding: 10px 0; text-align: right; font-size: 15px;" colspan="2">
+                          <strong>Total: ${data.total}</strong>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 11px; margin: 0;">Notificacion automatica de NeumorStudio</p>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>

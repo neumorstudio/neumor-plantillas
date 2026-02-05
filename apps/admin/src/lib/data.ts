@@ -232,6 +232,24 @@ export async function getBookings(page = 1, pageSize = 10) {
   return { data: parsedData, count: count || 0 };
 }
 
+// Orders (restaurant)
+export async function getOrders() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return [];
+
+  const { data } = await supabase
+    .from("orders")
+    .select(
+      "id, customer_name, customer_email, customer_phone, pickup_date, pickup_time, notes, status, total_amount, currency, created_at, paid_at, stripe_payment_status, order_items(id, item_name, quantity, total_price, unit_price)"
+    )
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false });
+
+  return data || [];
+}
+
 export async function getBusinessHours() {
   const supabase = await createClient();
   const websiteId = await getWebsiteId();
@@ -559,6 +577,24 @@ export async function getBookingsToday() {
     .select("*", { count: "exact", head: true })
     .eq("website_id", websiteId)
     .eq("booking_date", today);
+
+  return { count: count || 0 };
+}
+
+// Widget: Pedidos de hoy (restaurant/shop)
+export async function getOrdersToday() {
+  const supabase = await createClient();
+  const websiteId = await getWebsiteId();
+
+  if (!websiteId) return { count: 0 };
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const { count } = await supabase
+    .from("orders")
+    .select("*", { count: "exact", head: true })
+    .eq("website_id", websiteId)
+    .eq("pickup_date", today);
 
   return { count: count || 0 };
 }

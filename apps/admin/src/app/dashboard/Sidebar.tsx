@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound } from "lucide-react";
+import { Menu, X, LogOut, Home, Calendar, FileText, Wrench, CreditCard, Users, Mail, Settings, Palette, BarChart3, Package, Dumbbell, TrendingUp, UserRound, ShoppingCart } from "lucide-react";
 
 interface SidebarProps {
   clientInfo: {
@@ -41,6 +41,12 @@ const navItems: NavItem[] = [
     label: "Menu",
     slug: "menu",
     icon: <Menu className="w-5 h-5" />,
+  },
+  {
+    href: "/dashboard/pedidos",
+    label: "Pedidos",
+    slug: "pedidos",
+    icon: <ShoppingCart className="w-5 h-5" />,
   },
   {
     href: "/dashboard/calendario",
@@ -164,6 +170,9 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
     const baseSections = resolvedSections ?? navItems.map((item) => item.slug);
     if (!baseSections.includes("menu")) {
       baseSections.push("menu");
+    }
+    if (!baseSections.includes("pedidos")) {
+      baseSections.push("pedidos");
     }
     if (!baseSections.includes("calendario")) {
       baseSections.push("calendario");

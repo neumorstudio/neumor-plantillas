@@ -1,0 +1,552 @@
+---
+interface OrderCategory {
+  name: string;
+  icon: string;
+  items: Array<{
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    priceCents: number;
+    tag?: string;
+    image?: string;
+  }>;
+}
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  categories?: OrderCategory[];
+  websiteId: string;
+  webhookUrl?: string;
+  pickupStart?: string;
+  pickupEnd?: string;
+  currency?: string;
+  prefillName?: string;
+  prefillEmail?: string;
+  prefillPhone?: string;
+}
+
+const {
+  title = "Pedidos para recoger",
+  subtitle = "Elige tus platos, paga online y recoge sin esperas.",
+  categories = [],
+  websiteId,
+  webhookUrl = "",
+  pickupStart,
+  pickupEnd,
+  currency = "EUR",
+  prefillName = "",
+  prefillEmail = "",
+  prefillPhone = "",
+} = Astro.props;
+
+const hasMenu = categories.length > 0;
+const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` : null;
+---
+
+<section id="orders" class="orders-section" data-orders data-website-id={websiteId} data-currency={currency}>
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title" data-content="ordersTitle">{title}</h2>
+      <p class="section-subtitle" data-content="ordersSubtitle">{subtitle}</p>
+      {pickupWindow && (
+        <div class="pickup-window">
+          Recogida disponible: <strong>{pickupWindow}</strong>
+        </div>
+      )}
+    </div>
+
+    {!hasMenu ? (
+      <div class="orders-empty neumor-card">
+        Todavia no hay platos disponibles para pedir.
+      </div>
+    ) : (
+      <div class="orders-layout">
+        <div class="orders-menu neumor-card">
+          <div class="menu-tabs">
+            {categories.map((category, index) => (
+              <button
+                type="button"
+                class={`menu-tab neumor-btn ${index === 0 ? "active" : ""}`}
+                data-category={index}
+              >
+                <span class="tab-icon" set:html={category.icon} />
+                <span class="tab-name">{category.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <div class="menu-content">
+            {categories.map((category, catIndex) => (
+              <div class={`menu-category ${catIndex === 0 ? "active" : ""}`} data-category-content={catIndex}>
+                <div class="menu-grid">
+                  {category.items.map((item) => (
+                    <article class="menu-item neumor-card">
+                      {item.image && (
+                        <div class="menu-image">
+                          <img src={item.image} alt={item.name} loading="lazy" />
+                        </div>
+                      )}
+                      <div class="menu-info">
+                        <div class="menu-header">
+                          <h3 class="menu-name">{item.name}</h3>
+                          {item.tag && <span class={`menu-tag tag-${item.tag}`}>{item.tag}</span>}
+                        </div>
+                        <p class="menu-description">{item.description}</p>
+                      </div>
+                      <div class="menu-actions">
+                        <div class="menu-price">
+                          <span class="price-value">{item.price}</span>
+                          <span class="price-currency">€</span>
+                        </div>
+                        <button
+                          type="button"
+                          class="order-add neumor-btn"
+                          data-add-item
+                          data-item-id={item.id}
+                          data-item-name={item.name}
+                          data-item-price={item.priceCents}
+                        >
+                          Anadir
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside class="orders-cart neumor-card">
+          <div class="cart-header">
+            <h3 class="cart-title">Tu pedido</h3>
+            <span class="cart-count" data-cart-count>0</span>
+          </div>
+
+          <div class="cart-empty" data-cart-empty>
+            Tu carrito esta vacio.
+          </div>
+
+          <div class="cart-items" data-cart-items></div>
+
+          <div class="cart-total">
+            <span>Total</span>
+            <strong data-cart-total>0.00 EUR</strong>
+          </div>
+
+          <form class="orders-form" data-webhook={webhookUrl} data-website-id={websiteId}>
+            <div class="form-grid">
+              <label class="form-field">
+                Nombre
+                <input type="text" name="name" placeholder="Tu nombre" value={prefillName} required />
+              </label>
+              <label class="form-field">
+                Telefono
+                <input type="tel" name="phone" placeholder="+34 000 000 000" value={prefillPhone} required />
+              </label>
+              <label class="form-field">
+                Email
+                <input type="email" name="email" placeholder="tucorreo@email.com" value={prefillEmail} />
+              </label>
+              <label class="form-field">
+                Fecha de recogida
+                <input type="date" name="pickupDate" required />
+              </label>
+              <label class="form-field">
+                Hora de recogida
+                <input type="time" name="pickupTime" step="900" required data-pickup-start={pickupStart} data-pickup-end={pickupEnd} />
+              </label>
+              <label class="form-field form-notes">
+                Notas
+                <textarea name="notes" rows="3" placeholder="Indicaciones para tu pedido"></textarea>
+              </label>
+            </div>
+
+            <div class="order-message" data-order-message></div>
+
+            <button type="submit" class="neumor-btn neumor-btn-accent order-submit" data-order-submit>
+              Pagar y recoger
+            </button>
+          </form>
+        </aside>
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .orders-section { padding: 6rem 0; }
+  .section-header { text-align: center; margin-bottom: 2.5rem; }
+  .section-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); }
+  .section-subtitle { font-size: 1.05rem; color: var(--text-secondary); max-width: 560px; margin: 0 auto; }
+  .pickup-window { margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary); }
+
+  .orders-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.6fr); gap: 2rem; align-items: start; }
+  .orders-empty { padding: 2rem; text-align: center; color: var(--text-secondary); }
+
+  .orders-menu { padding: 2rem; }
+  .menu-tabs { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 2rem; }
+  .menu-tab { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.1rem; border-radius: 999px; font-weight: 600; }
+  .menu-tab.active { background: var(--accent); color: #fff; box-shadow: 4px 4px 12px var(--shadow-dark), -2px -2px 8px var(--shadow-light); }
+  .tab-icon { width: 20px; height: 20px; display: flex; }
+  .tab-icon :global(svg) { width: 100%; height: 100%; }
+
+  .menu-content { position: relative; }
+  .menu-category { display: none; animation: fadeIn 0.35s ease; }
+  .menu-category.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .menu-item { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.25rem; border-radius: 1.25rem; }
+  .menu-image img { width: 100%; border-radius: 1rem; aspect-ratio: 4 / 3; object-fit: cover; }
+  .menu-header { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .menu-name { font-size: 1.05rem; font-weight: 600; margin: 0; color: var(--text-primary); }
+  .menu-tag { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--accent); color: #fff; }
+  .menu-description { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+  .menu-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .menu-price { display: flex; align-items: baseline; gap: 0.2rem; font-weight: 700; }
+  .price-value { font-size: 1.2rem; color: var(--text-primary); }
+  .price-currency { font-size: 0.85rem; color: var(--accent); }
+  .order-add { padding: 0.5rem 0.9rem; border-radius: 0.75rem; font-size: 0.85rem; }
+
+  .orders-cart { position: sticky; top: 100px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+  .cart-header { display: flex; align-items: center; justify-content: space-between; }
+  .cart-title { margin: 0; font-size: 1.1rem; }
+  .cart-count { background: var(--accent); color: #fff; border-radius: 999px; padding: 0.1rem 0.5rem; font-size: 0.8rem; }
+  .cart-empty { color: var(--text-secondary); font-size: 0.9rem; }
+  .cart-items { display: flex; flex-direction: column; gap: 0.75rem; }
+  .cart-item { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; padding: 0.75rem; border-radius: 0.9rem; background: var(--neumor-bg); box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
+  .cart-item-info { display: flex; flex-direction: column; gap: 0.2rem; }
+  .cart-item-name { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+  .cart-item-price { font-size: 0.8rem; color: var(--text-secondary); }
+  .cart-item-controls { display: flex; align-items: center; gap: 0.4rem; }
+  .qty-btn { border: none; background: var(--neumor-bg); box-shadow: 2px 2px 6px var(--shadow-dark), -2px -2px 6px var(--shadow-light); border-radius: 999px; width: 26px; height: 26px; cursor: pointer; }
+  .qty-value { font-weight: 600; min-width: 20px; text-align: center; }
+  .cart-item-total { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+  .cart-remove { border: none; background: transparent; color: var(--text-secondary); cursor: pointer; }
+
+  .cart-total { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--shadow-dark); padding-top: 0.75rem; }
+
+  .orders-form { display: flex; flex-direction: column; gap: 1rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  .form-field { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.85rem; color: var(--text-secondary); }
+  .form-field input,
+  .form-field textarea {
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    background: var(--neumor-bg);
+    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+  .form-field input:focus,
+  .form-field textarea:focus { outline: 2px solid rgba(var(--accent-rgb, 99, 102, 241), 0.3); }
+  .form-notes { grid-column: 1 / -1; }
+  .order-message { font-size: 0.85rem; color: var(--text-secondary); min-height: 1.2rem; }
+  .order-message.is-error { color: #dc2626; }
+  .order-message.is-success { color: #16a34a; }
+  .order-submit { width: 100%; padding: 0.9rem 1rem; font-size: 1rem; }
+
+  @media (max-width: 1024px) {
+    .orders-layout { grid-template-columns: 1fr; }
+    .orders-cart { position: static; }
+  }
+
+  @media (max-width: 640px) {
+    .orders-section { padding: 4rem 0; }
+    .orders-menu { padding: 1.5rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .menu-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const root = document.querySelector("[data-orders]");
+    if (!root) return;
+
+    const cartItemsEl = root.querySelector("[data-cart-items]");
+    const cartEmptyEl = root.querySelector("[data-cart-empty]");
+    const cartTotalEl = root.querySelector("[data-cart-total]");
+    const cartCountEl = root.querySelector("[data-cart-count]");
+    const messageEl = root.querySelector("[data-order-message]");
+    const form = root.querySelector(".orders-form");
+    const submitBtn = root.querySelector("[data-order-submit]");
+
+    if (!cartItemsEl || !cartEmptyEl || !cartTotalEl || !cartCountEl || !form || !submitBtn) return;
+
+    const websiteId = root.getAttribute("data-website-id") || "";
+    const currency = root.getAttribute("data-currency") || "EUR";
+    const storageKey = `neumor-orders:${websiteId}`;
+
+    const tabs = root.querySelectorAll(".menu-tab");
+    const contents = root.querySelectorAll(".menu-category");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const categoryIndex = tab.getAttribute("data-category");
+        tabs.forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        contents.forEach((content) => {
+          content.classList.remove("active");
+          if (content.getAttribute("data-category-content") === categoryIndex) {
+            content.classList.add("active");
+          }
+        });
+      });
+    });
+
+    const formatMoney = (cents) => {
+      try {
+        return new Intl.NumberFormat("es-ES", {
+          style: "currency",
+          currency,
+          minimumFractionDigits: 2,
+        }).format(cents / 100);
+      } catch {
+        return `${(cents / 100).toFixed(2)} ${currency}`;
+      }
+    };
+
+    const escapeHtml = (value) => {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    };
+
+    const loadCart = () => {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        return {};
+      }
+    };
+
+    const saveCart = (cart) => {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(cart));
+      } catch {
+        // ignore
+      }
+    };
+
+    let cart = loadCart();
+
+    const updateMessage = (text, type) => {
+      if (!messageEl) return;
+      messageEl.textContent = text || "";
+      messageEl.classList.remove("is-error", "is-success");
+      if (type === "error") messageEl.classList.add("is-error");
+      if (type === "success") messageEl.classList.add("is-success");
+    };
+
+    const renderCart = () => {
+      const entries = Object.values(cart);
+      cartItemsEl.innerHTML = "";
+
+      if (entries.length === 0) {
+        cartEmptyEl.style.display = "block";
+      } else {
+        cartEmptyEl.style.display = "none";
+      }
+
+      let total = 0;
+      let totalItems = 0;
+
+      entries.forEach((item) => {
+        const itemTotal = item.priceCents * item.quantity;
+        total += itemTotal;
+        totalItems += item.quantity;
+
+        const row = document.createElement("div");
+        row.className = "cart-item";
+        row.innerHTML = `
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escapeHtml(item.name)}</div>
+            <div class="cart-item-price">${formatMoney(item.priceCents)}</div>
+          </div>
+          <div class="cart-item-controls">
+            <button type="button" class="qty-btn" data-qty-minus="${item.id}">-</button>
+            <span class="qty-value">${item.quantity}</span>
+            <button type="button" class="qty-btn" data-qty-plus="${item.id}">+</button>
+          </div>
+          <div class="cart-item-total">${formatMoney(itemTotal)}</div>
+          <button type="button" class="cart-remove" data-remove="${item.id}">x</button>
+        `;
+        cartItemsEl.appendChild(row);
+      });
+
+      cartTotalEl.textContent = formatMoney(total);
+      cartCountEl.textContent = totalItems.toString();
+      submitBtn.disabled = entries.length === 0 || !form.dataset.webhook;
+    };
+
+    const addItem = (id, name, priceCents) => {
+      if (!id) return;
+      if (!cart[id]) {
+        cart[id] = { id, name, priceCents, quantity: 1 };
+      } else {
+        cart[id].quantity += 1;
+      }
+      saveCart(cart);
+      renderCart();
+    };
+
+    const adjustQty = (id, delta) => {
+      if (!cart[id]) return;
+      cart[id].quantity += delta;
+      if (cart[id].quantity <= 0) {
+        delete cart[id];
+      }
+      saveCart(cart);
+      renderCart();
+    };
+
+    const removeItem = (id) => {
+      if (!cart[id]) return;
+      delete cart[id];
+      saveCart(cart);
+      renderCart();
+    };
+
+    root.addEventListener("click", (event) => {
+      const addBtn = event.target.closest("[data-add-item]");
+      if (addBtn) {
+        const id = addBtn.getAttribute("data-item-id");
+        const name = addBtn.getAttribute("data-item-name") || "";
+        const price = Number(addBtn.getAttribute("data-item-price"));
+        if (Number.isFinite(price)) {
+          addItem(id, name, price);
+          updateMessage("Plato anadido al carrito.", "success");
+        }
+        return;
+      }
+
+      const minusBtn = event.target.closest("[data-qty-minus]");
+      if (minusBtn) {
+        adjustQty(minusBtn.getAttribute("data-qty-minus"), -1);
+        return;
+      }
+
+      const plusBtn = event.target.closest("[data-qty-plus]");
+      if (plusBtn) {
+        adjustQty(plusBtn.getAttribute("data-qty-plus"), 1);
+        return;
+      }
+
+      const removeBtn = event.target.closest("[data-remove]");
+      if (removeBtn) {
+        removeItem(removeBtn.getAttribute("data-remove"));
+      }
+    });
+
+    const pickupTimeInput = form.querySelector('input[name="pickupTime"]');
+    if (pickupTimeInput) {
+      const start = pickupTimeInput.getAttribute("data-pickup-start");
+      const end = pickupTimeInput.getAttribute("data-pickup-end");
+      if (start) pickupTimeInput.setAttribute("min", start);
+      if (end) pickupTimeInput.setAttribute("max", end);
+    }
+
+    const pickupDateInput = form.querySelector('input[name="pickupDate"]');
+    if (pickupDateInput) {
+      const today = new Date();
+      const iso = today.toISOString().split("T")[0];
+      pickupDateInput.setAttribute("min", iso);
+    }
+
+    const url = new URL(window.location.href);
+    const orderStatus = url.searchParams.get("order");
+    if (orderStatus === "success") {
+      updateMessage("Pago confirmado. Te esperamos para recoger tu pedido.", "success");
+      cart = {};
+      saveCart(cart);
+      renderCart();
+      url.searchParams.delete("order");
+      window.history.replaceState({}, document.title, url.toString());
+    } else if (orderStatus === "cancel") {
+      updateMessage("Pago cancelado. Puedes intentarlo de nuevo.", "error");
+      url.searchParams.delete("order");
+      window.history.replaceState({}, document.title, url.toString());
+    } else {
+      updateMessage("", null);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      updateMessage("", null);
+      const webhookUrl = form.dataset.webhook;
+      const websiteIdValue = form.dataset.websiteId;
+
+      if (!webhookUrl || !websiteIdValue) {
+        updateMessage("Pedidos no disponibles en este momento.", "error");
+        return;
+      }
+
+      const items = Object.values(cart).map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+      }));
+
+      if (items.length === 0) {
+        updateMessage("Agrega al menos un plato al carrito.", "error");
+        return;
+      }
+
+      const formData = new FormData(form);
+      const payload = {
+        website_id: websiteIdValue,
+        items,
+        customer: {
+          name: formData.get("name"),
+          email: formData.get("email"),
+          phone: formData.get("phone"),
+        },
+        pickup_date: formData.get("pickupDate"),
+        pickup_time: formData.get("pickupTime"),
+        notes: formData.get("notes"),
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Procesando...";
+
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          updateMessage(result?.error || "No se pudo crear el pedido.", "error");
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Pagar y recoger";
+          return;
+        }
+
+        if (result?.url) {
+          window.location.href = result.url;
+          return;
+        }
+
+        updateMessage("No se pudo iniciar el pago.", "error");
+      } catch (error) {
+        updateMessage("Error de red. Intenta nuevamente.", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Pagar y recoger";
+      }
+    });
+
+    renderCart();
+  });
+</script>
