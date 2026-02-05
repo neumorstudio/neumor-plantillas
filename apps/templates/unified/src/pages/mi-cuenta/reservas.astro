@@ -191,21 +191,17 @@ const getServiceName = (service: unknown): string => {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     const backdrop = document.querySelector('[data-cancel-backdrop]');
-    const closeBtn = document.querySelector('[data-cancel-close]');
-    const confirmBtn = document.querySelector('[data-cancel-confirm]');
     let activeForm = null;
 
-    document.querySelectorAll('[data-cancel-trigger]').forEach((button) => {
-      button.addEventListener('click', () => {
-        activeForm = button.closest('form');
-        if (backdrop) {
-          backdrop.hidden = false;
-          document.body.classList.add('portal-modal-open');
-        }
-      });
-    });
+    const openModal = (form) => {
+      activeForm = form;
+      if (backdrop) {
+        backdrop.hidden = false;
+        document.body.classList.add('portal-modal-open');
+      }
+    };
 
     const closeModal = () => {
       if (backdrop) backdrop.hidden = true;
@@ -213,13 +209,30 @@ const getServiceName = (service: unknown): string => {
       activeForm = null;
     };
 
-    closeBtn?.addEventListener('click', closeModal);
-    backdrop?.addEventListener('click', (event) => {
-      if (event.target === backdrop) closeModal();
-    });
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
 
-    confirmBtn?.addEventListener('click', () => {
-      if (activeForm) activeForm.submit();
+      const trigger = target.closest('[data-cancel-trigger]');
+      if (trigger) {
+        const form = trigger.closest('form');
+        if (form) openModal(form);
+        return;
+      }
+
+      if (target.closest('[data-cancel-close]')) {
+        closeModal();
+        return;
+      }
+
+      if (target.closest('[data-cancel-confirm]')) {
+        if (activeForm) activeForm.submit();
+        return;
+      }
+
+      if (backdrop && target === backdrop) {
+        closeModal();
+      }
     });
   </script>
 </PortalLayout>
