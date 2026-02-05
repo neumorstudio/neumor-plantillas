@@ -3,16 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@supabase/supabase-js";
 import { requireSuperAdmin } from "@/lib/superadmin";
-import type { Database } from "@neumorstudio/supabase";
-
-type BusinessType =
-  | "restaurant"
-  | "clinic"
-  | "salon"
-  | "shop"
-  | "fitness"
-  | "realestate"
-  | "repairs";
+import { getDefaultSectionsConfig, type BusinessType, type Database } from "@neumorstudio/supabase";
 
 export interface BusinessWithWebsite {
   id: string;
@@ -242,25 +233,55 @@ export async function createBusiness(formData: FormData) {
     return { error: clientError?.message || "Error al crear el negocio" };
   }
 
+  const baseConfig = {
+    businessName: businessName.trim(),
+    businessType: businessType,
+  };
+  const config =
+    businessType === "restaurant"
+      ? {
+          ...baseConfig,
+          sectionsConfig: getDefaultSectionsConfig(businessType),
+        }
+      : baseConfig;
+
   // Crear website con subdomain y/o custom_domain correctamente
-  const { error: websiteError } = await supabase.from("websites").insert({
+  const { data: website, error: websiteError } = await supabase
+    .from("websites")
+    .insert({
     client_id: client.id,
     subdomain: subdomain,
     custom_domain: customDomain,
     domain: domain.toLowerCase().trim(), // Mantener para retrocompatibilidad
     theme: theme,
     is_active: isActive,
-    config: {
-      businessName: businessName.trim(),
-      businessType: businessType,
-    },
-  });
+    config: config,
+  })
+    .select("id")
+    .single();
 
-  if (websiteError) {
+  if (websiteError || !website) {
     // Rollback: eliminar client creado
     await supabase.from("clients").delete().eq("id", client.id);
     console.error("[SUPERADMIN] Error creating website:", websiteError);
     return { error: websiteError.message || "Error al crear el website" };
+  }
+
+  if (businessType === "restaurant") {
+    const { error: restaurantError } = await supabase.from("restaurants").insert({
+      website_id: website.id,
+      takeaway_enabled: true,
+      is_open: true,
+      kitchen_open: true,
+      capacity: 20,
+    });
+
+    if (restaurantError) {
+      await supabase.from("websites").delete().eq("id", website.id);
+      await supabase.from("clients").delete().eq("id", client.id);
+      console.error("[SUPERADMIN] Error creating restaurant settings:", restaurantError);
+      return { error: restaurantError.message || "Error al preparar pedidos del restaurante" };
+    }
   }
 
   revalidatePath("/super/businesses");
