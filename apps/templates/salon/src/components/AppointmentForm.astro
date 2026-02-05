@@ -735,6 +735,12 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     padding-right: 0.25rem;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .time-grid.is-loading {
+    opacity: 0.45;
+    pointer-events: none;
   }
 
   :global(.time-grid::-webkit-scrollbar) {
@@ -1251,6 +1257,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     { slots: { start: number; end: number }[]; fetchedAt: number }
   >();
   const cacheTtlMs = 0;
+  let timeSlotsRenderId = 0;
 
   let currentStep = 1;
   const currentMonth = new Date();
@@ -1520,6 +1527,14 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     return slots;
   };
 
+  const setTimeGridLoading = (isLoading: boolean) => {
+    if (!timeGrid) {
+      return;
+    }
+    timeGrid.classList.toggle("is-loading", isLoading);
+    timeGrid.setAttribute("aria-busy", isLoading ? "true" : "false");
+  };
+
   const renderCalendar = () => {
     if (!calendarGrid || !calendarLabel) {
       return;
@@ -1579,7 +1594,7 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         });
         button.classList.add("is-selected");
         updateSummary();
-        renderTimeSlots();
+        setTimeGridLoading(true);
         applyAutoSelectFromDate(selected);
       });
       calendarGrid.appendChild(button);
@@ -1609,27 +1624,40 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     if (!timeGrid) {
       return;
     }
-    timeGrid.innerHTML = "";
+    const renderId = (timeSlotsRenderId += 1);
     const dateValue = dateInput?.value || "";
     if (!dateValue) {
+      timeGrid.replaceChildren();
+      setTimeGridLoading(false);
       return;
     }
     const now = new Date();
     const todayIso = now.toISOString().slice(0, 10);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     if (dateValue < todayIso) {
+      timeGrid.replaceChildren();
+      setTimeGridLoading(false);
       return;
     }
     const professionalId = getSelectedProfessionalId();
     if (!professionalId) {
+      timeGrid.replaceChildren();
+      setTimeGridLoading(false);
       return;
     }
     const duration = getSelectedDuration();
     const schedule = getDaySchedule(dateValue);
     if (!schedule.is_open || !schedule.slots.length) {
+      timeGrid.replaceChildren();
+      setTimeGridLoading(false);
       return;
     }
+    setTimeGridLoading(true);
     const bookedSlots = dateValue ? await loadBookedSlots(dateValue, professionalId) : [];
+    if (renderId !== timeSlotsRenderId) {
+      return;
+    }
+    const fragment = document.createDocumentFragment();
     schedule.slots.forEach((slotRange) => {
       const startMinutes = timeToMinutes(slotRange.open_time);
       let endMinutes = timeToMinutes(slotRange.close_time);
@@ -1669,9 +1697,11 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
             updateSummary();
           });
         }
-        timeGrid.appendChild(button);
+        fragment.appendChild(button);
       }
     });
+    timeGrid.replaceChildren(fragment);
+    setTimeGridLoading(false);
     scrollTimeSlotIntoView();
   };
 
