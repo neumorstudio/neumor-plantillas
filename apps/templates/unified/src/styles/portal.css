@@ -362,6 +362,56 @@
   color: #b91c1c;
 }
 
+.portal-action-btn-danger:hover,
+.portal-action-btn-danger:active {
+  color: #b91c1c;
+  box-shadow: var(--ng-shadow-soft);
+}
+
+/* Cancel modal */
+.portal-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.5rem;
+}
+
+.portal-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--ng-surface);
+  border-radius: 1.25rem;
+  border: 1px solid var(--ng-glass-border);
+  box-shadow: var(--ng-shadow-raised);
+  padding: 1.5rem;
+}
+
+.portal-modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ng-text-primary);
+}
+
+.portal-modal-text {
+  margin: 0.75rem 0 1.25rem 0;
+  color: var(--ng-text-secondary);
+  font-size: 0.9rem;
+}
+
+.portal-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.portal-modal-open {
+  overflow: hidden;
+}
+
 /* Login Page */
 .portal-login-container {
   min-height: 100vh;

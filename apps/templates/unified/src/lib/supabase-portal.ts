@@ -151,9 +151,9 @@ export async function getCustomerBookings(
 
   const { data, error } = await supabase
     .from("bookings")
-    .select("id, booking_date, booking_time, status, services, total_price_cents, notes, customer_id")
+    .select("id, booking_date, booking_time, status, services, total_price_cents, notes, customer_id, created_at")
     .eq("customer_id", customerId)
-    .order("booking_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(50);
 
   console.log("[getCustomerBookings] Result:", data?.length, "bookings, error:", error?.message);
