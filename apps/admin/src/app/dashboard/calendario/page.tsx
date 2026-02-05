@@ -137,6 +137,7 @@ export default async function CalendarioPage() {
       professionalCategories={professionalCategories}
       year={year}
       month={month}
+      businessType={businessType}
     />
   );
 }

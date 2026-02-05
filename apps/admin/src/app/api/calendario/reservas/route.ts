@@ -7,9 +7,9 @@ interface InternalBookingInput {
   customer_email?: string | null;
   booking_date: string;
   booking_time: string;
-  professional_id: string;
+  professional_id?: string | null;
   notes?: string | null;
-  services: {
+  services?: {
     id: string;
     name: string;
     price_cents: number;
@@ -40,20 +40,13 @@ export async function POST(request: Request) {
       services,
     } = body;
 
-    if (
-      !customer_name ||
-      !customer_phone ||
-      !booking_date ||
-      !booking_time ||
-      !professional_id ||
-      !services?.length
-    ) {
+    if (!customer_name || !customer_phone || !booking_date || !booking_time) {
       return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
     }
 
     const { data: client } = await supabase
       .from("clients")
-      .select("id, auth_user_id")
+      .select("id, auth_user_id, business_type")
       .eq("auth_user_id", user.id)
       .single();
 
@@ -71,8 +64,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Website no encontrado" }, { status: 404 });
     }
 
-    const totalPrice = services.reduce((sum, service) => sum + (service.price_cents || 0), 0);
-    const totalDuration = services.reduce(
+    const businessType = client?.business_type || "salon";
+    const isRestaurant = businessType === "restaurant";
+
+    if (!isRestaurant && (!professional_id || !services?.length)) {
+      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    }
+
+    const safeServices = services ?? [];
+    const totalPrice = safeServices.reduce((sum, service) => sum + (service.price_cents || 0), 0);
+    const totalDuration = safeServices.reduce(
       (sum, service) => sum + (service.duration_minutes || 0),
       0
     );
@@ -84,14 +85,14 @@ export async function POST(request: Request) {
       customer_email: customer_email || null,
       booking_date,
       booking_time,
-      professional_id,
+      professional_id: isRestaurant ? null : professional_id,
       guests: 1,
       notes: notes || null,
       status: "confirmed",
       source: "phone",
-      services,
-      total_price_cents: totalPrice,
-      total_duration_minutes: totalDuration,
+      services: isRestaurant ? [] : safeServices,
+      total_price_cents: isRestaurant ? null : totalPrice,
+      total_duration_minutes: isRestaurant ? null : totalDuration,
     };
 
     const { data, error } = await supabase

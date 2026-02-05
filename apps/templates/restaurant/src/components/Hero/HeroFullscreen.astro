@@ -1,0 +1,240 @@
+---
+/**
+ * HeroFullscreen - Pantalla completa con alto impacto visual
+ */
+interface Props {
+  title: string;
+  subtitle: string;
+  ctaText?: string;
+  ctaLink?: string;
+  backgroundImage?: string;
+  logoUrl?: string;
+}
+
+const {
+  title,
+  subtitle,
+  ctaText = "Reservar Mesa",
+  ctaLink = "#reserve",
+  backgroundImage,
+  logoUrl,
+} = Astro.props;
+---
+
+<section class="hero-fullscreen">
+  {backgroundImage && (
+    <div class="hero-bg" data-parallax>
+      <img src={backgroundImage} alt="" class="hero-bg-image" loading="eager" />
+      <div class="hero-overlay"></div>
+    </div>
+  )}
+
+  <div class="hero-content">
+    {logoUrl && <img src={logoUrl} alt="" class="hero-logo animate-scale-in" />}
+
+    <h1 class="hero-title animate-reveal">
+      {title.split(" ").map((word, i) => (
+        <span class="title-word" style={`animation-delay: ${0.1 + i * 0.1}s`}>{word}</span>
+      ))}
+    </h1>
+
+    <p class="hero-subtitle animate-fade-in">{subtitle}</p>
+
+    <a href={ctaLink} class="hero-cta animate-fade-in animation-delay-400">
+      <span data-content="heroCta">{ctaText}</span>
+    </a>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-mouse">
+      <div class="scroll-wheel"></div>
+    </div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<style>
+  .hero-fullscreen {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--neumor-bg);
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: -10%;
+    z-index: 0;
+  }
+
+  .hero-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+    transition: transform 0.1s ease-out;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.45) 0%,
+      rgba(0, 0, 0, 0.65) 50%,
+      rgba(0, 0, 0, 0.8) 100%
+    );
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    max-width: 1000px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .hero-logo {
+    width: auto;
+    height: 80px;
+    max-width: 200px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 12vw, 8rem);
+    font-weight: 300;
+    color: white;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 0.3em;
+  }
+
+  .title-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: revealWord 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+    line-height: 1.6;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    margin-top: 1rem;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 3.5rem;
+    margin-top: 2rem;
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hero-cta:hover {
+    background: white;
+    color: black;
+    border-color: white;
+    transform: scale(1.05);
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: rgba(255, 255, 255, 0.5);
+    animation: fadeIn 1s ease-out 1.5s forwards;
+    opacity: 0;
+  }
+
+  .scroll-mouse {
+    width: 24px;
+    height: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    position: relative;
+  }
+
+  .scroll-wheel {
+    width: 4px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scrollWheel 2s ease-in-out infinite;
+  }
+
+  .scroll-text {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  @keyframes revealWord {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scrollWheel {
+    0%,
+    100% {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    50% {
+      transform: translateX(-50%) translateY(8px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-content {
+      padding: 1.5rem;
+    }
+
+    .hero-cta {
+      padding: 1rem 2rem;
+    }
+  }
+</style>

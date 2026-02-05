@@ -8,7 +8,7 @@ import type { TenantData } from "../../middleware";
 // Import components from restaurant template
 import Layout from "@restaurant/layouts/Layout.astro";
 import Header from "@restaurant/components/Header.astro";
-import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@restaurant/components/Hero";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@restaurant/components/Hero";
 import { MenuTabs, MenuGrid, MenuList, MenuCarousel } from "@restaurant/components/Menu";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@restaurant/components/Features";
 import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@restaurant/components/Reviews";
@@ -94,7 +94,7 @@ try {
 
 // Component mapping
 const componentMap = {
-  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal, fullscreen: HeroFullscreen, split: HeroSplit },
   menu: { tabs: MenuTabs, grid: MenuGrid, list: MenuList, carousel: MenuCarousel },
   features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
   reviews: { grid: ReviewsGrid, carousel: ReviewsCarousel, minimal: ReviewsMinimal },
@@ -198,7 +198,38 @@ const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_
   if (!openDay) return "Cerrado";
   return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
 };
-const scheduleLabel = buildScheduleLabel(businessHours);
+const buildHoursFromSchedule = (
+  schedule: Record<string, { open?: string; close?: string; closed?: boolean }> | undefined
+) => {
+  if (!schedule) return [];
+  const dayKeys = [
+    ["lunes", "monday"],
+    ["martes", "tuesday"],
+    ["miércoles", "miercoles", "wednesday"],
+    ["jueves", "thursday"],
+    ["viernes", "friday"],
+    ["sábado", "sabado", "saturday"],
+    ["domingo", "sunday"],
+  ];
+
+  return dayKeys.map((keys, idx) => {
+    const key = keys.find((k) => schedule[k]);
+    const entry = key ? schedule[key] : undefined;
+    const isClosed = entry?.closed === true || !entry;
+    return {
+      day_of_week: idx,
+      is_open: !isClosed,
+      open_time: entry?.open || "09:00",
+      close_time: entry?.close || "19:00",
+    };
+  });
+};
+
+const scheduleFallback = buildHoursFromSchedule(
+  (config.openStatus as { schedule?: Record<string, { open?: string; close?: string; closed?: boolean }> } | undefined)?.schedule
+);
+const resolvedBusinessHours = businessHours.length ? businessHours : scheduleFallback;
+const scheduleLabel = buildScheduleLabel(resolvedBusinessHours);
 
 const formatPrice = (priceCents: number) => {
   return new Intl.NumberFormat("es-ES", {
@@ -455,7 +486,7 @@ const contactWebhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   webhookUrl={webhookUrl}
                   websiteId={tenant.id}
                   currentUser={currentUser}
-                  businessHours={businessHours}
+                  businessHours={resolvedBusinessHours}
                   businessHourSlots={businessHourSlots}
                   specialDays={specialDays}
                   specialDaySlots={specialDaySlots}

@@ -161,14 +161,14 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
 
   if (headingFont && headingFont !== 'system') {
     fonts.push(headingFont);
-    vars.push(`--font-heading: '${headingFont}', serif;`);
+    colorVars.push(`--font-heading: '${headingFont}', serif`);
   }
 
   if (bodyFont && bodyFont !== 'system') {
     if (!fonts.includes(bodyFont)) {
       fonts.push(bodyFont);
     }
-    vars.push(`--font-body: '${bodyFont}', system-ui, sans-serif;`);
+    colorVars.push(`--font-body: '${bodyFont}', system-ui, sans-serif`);
   }
 
   // Escala tipográfica

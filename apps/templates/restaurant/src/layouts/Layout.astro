@@ -111,11 +111,6 @@ const defaultFonts = !fontImports
 
     <title>{title}</title>
 
-    <!-- Custom CSS Variables from personalization -->
-    {cssVariables && (
-      <style set:html={cssVariables}></style>
-    )}
-
     <style is:global>
       :root {
         --font-heading: "Playfair Display", serif;
@@ -134,6 +129,11 @@ const defaultFonts = !fontImports
         border-radius: var(--radius-base, 1rem);
       }
     </style>
+
+    <!-- Custom CSS Variables from personalization (override defaults) -->
+    {cssVariables && (
+      <style set:html={cssVariables}></style>
+    )}
 
     <style is:inline>
       .pwa-install-banner {
