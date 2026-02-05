@@ -178,7 +178,7 @@ const getServiceName = (service: unknown): string => {
     </div>
   )}
 
-  <div class="portal-modal-backdrop" data-cancel-backdrop hidden>
+  <div class="portal-modal-backdrop" data-cancel-backdrop style="display: none;">
     <div class="portal-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
       <h2 id="cancel-modal-title" class="portal-modal-title">Cancelar cita</h2>
       <p class="portal-modal-text">¿Seguro que quieres cancelar esta cita?</p>
@@ -198,13 +198,13 @@ const getServiceName = (service: unknown): string => {
     const openModal = (form) => {
       activeForm = form;
       if (backdrop) {
-        backdrop.hidden = false;
+        backdrop.style.display = 'flex';
         document.body.classList.add('portal-modal-open');
       }
     };
 
     const closeModal = () => {
-      if (backdrop) backdrop.hidden = true;
+      if (backdrop) backdrop.style.display = 'none';
       document.body.classList.remove('portal-modal-open');
       activeForm = null;
     };
@@ -215,17 +215,20 @@ const getServiceName = (service: unknown): string => {
 
       const trigger = target.closest('[data-cancel-trigger]');
       if (trigger) {
+        event.preventDefault();
         const form = trigger.closest('form');
         if (form) openModal(form);
         return;
       }
 
       if (target.closest('[data-cancel-close]')) {
+        event.preventDefault();
         closeModal();
         return;
       }
 
       if (target.closest('[data-cancel-confirm]')) {
+        event.preventDefault();
         if (activeForm) activeForm.submit();
         return;
       }
