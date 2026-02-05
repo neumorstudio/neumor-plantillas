@@ -84,7 +84,9 @@ const canCancelBooking = (booking: CustomerBooking) => {
   const status = getEffectiveStatus(booking);
   if (status === "cancelled" || status === "completed") return false;
   const dt = getBookingDateTime(booking);
-  return dt ? dt > new Date() : false;
+  if (!dt) return false;
+  const minCancelTime = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  return dt > minCancelTime;
 };
 
 const getCancelLabel = () => {
