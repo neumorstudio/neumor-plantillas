@@ -153,9 +153,9 @@ const getServiceName = (service: unknown): string => {
               <form class="portal-action-row" method="POST" action="/mi-cuenta/cancelar">
                 <input type="hidden" name="booking_id" value={booking.id} />
                 <button
-                  type="button"
+                  type="submit"
                   class="portal-action-btn portal-action-btn-danger"
-                  data-cancel-trigger
+                  onclick="return confirm('¿Seguro que quieres cancelar esta cita?');"
                 >
                   {getCancelLabel()}
                 </button>
@@ -178,64 +178,4 @@ const getServiceName = (service: unknown): string => {
     </div>
   )}
 
-  <div class="portal-modal-backdrop" data-cancel-backdrop style="display: none;">
-    <div class="portal-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
-      <h2 id="cancel-modal-title" class="portal-modal-title">Cancelar cita</h2>
-      <p class="portal-modal-text">¿Seguro que quieres cancelar esta cita?</p>
-      <div class="portal-modal-actions">
-        <button type="button" class="portal-action-btn" data-cancel-close>Volver</button>
-        <button type="button" class="portal-action-btn portal-action-btn-danger" data-cancel-confirm>
-          Confirmar cancelación
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script is:inline>
-    const backdrop = document.querySelector('[data-cancel-backdrop]');
-    let activeForm = null;
-
-    const openModal = (form) => {
-      activeForm = form;
-      if (backdrop) {
-        backdrop.style.display = 'flex';
-        document.body.classList.add('portal-modal-open');
-      }
-    };
-
-    const closeModal = () => {
-      if (backdrop) backdrop.style.display = 'none';
-      document.body.classList.remove('portal-modal-open');
-      activeForm = null;
-    };
-
-    document.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-
-      const trigger = target.closest('[data-cancel-trigger]');
-      if (trigger) {
-        event.preventDefault();
-        const form = trigger.closest('form');
-        if (form) openModal(form);
-        return;
-      }
-
-      if (target.closest('[data-cancel-close]')) {
-        event.preventDefault();
-        closeModal();
-        return;
-      }
-
-      if (target.closest('[data-cancel-confirm]')) {
-        event.preventDefault();
-        if (activeForm) activeForm.submit();
-        return;
-      }
-
-      if (backdrop && target === backdrop) {
-        closeModal();
-      }
-    });
-  </script>
 </PortalLayout>
