@@ -24,6 +24,14 @@ html.dark {
   color-scheme: dark;
 }
 
+body {
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.font-heading {
+  font-family: var(--font-heading, var(--font-body, system-ui, sans-serif));
+}
+
 /* ================================================
    ANIMATIONS
    ================================================ */

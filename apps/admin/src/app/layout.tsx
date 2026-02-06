@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-body",
+  display: "swap",
 });
 
-const playfair = Playfair_Display({
+const plusJakartaHeading = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-heading",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -41,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="es" className={`${plusJakarta.variable} ${plusJakartaHeading.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -55,143 +55,166 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-heading font-bold text-[var(--text-primary)]">
-            NeumorStudio
-          </h1>
-          <p className="text-[var(--text-secondary)] mt-2">
-            Panel de Administracion
-          </p>
-        </div>
+    <div className="min-h-screen bg-[var(--neumor-bg)] relative overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.85),transparent_55%)]"
+      />
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="neumor-card p-8">
-          <h2 className="text-xl font-semibold mb-6 text-center">
-            Iniciar Sesion
-          </h2>
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-heading font-semibold text-[var(--text-primary)] tracking-tight">
+              NeumorStudio
+            </h1>
+            <p className="text-sm sm:text-base text-[var(--text-secondary)] mt-2">
+              Panel de Administracion
+            </p>
+          </div>
 
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
+          <form
+            onSubmit={handleSubmit}
+            className="neumor-card relative overflow-hidden p-8 sm:p-10"
+          >
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-gradient-to-br from-white/70 via-white/30 to-transparent opacity-60"
+            />
+            <div className="relative space-y-6">
+              <div className="text-center space-y-2">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+                  Iniciar Sesión
+                </h2>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Ingresa tus credenciales para continuar.
+                </p>
+              </div>
 
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium mb-2 text-[var(--text-primary)]"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                ref={emailRef}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="neumor-input w-full"
-                placeholder="tu@email.com"
-                autoComplete="email"
-                required
-              />
-            </div>
+              {error && (
+                <div className="p-3 rounded-lg bg-red-100 text-red-700 text-sm border border-red-200/60">
+                  {error}
+                </div>
+              )}
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium mb-2 text-[var(--text-primary)]"
-              >
-                Contrasena
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  ref={passwordRef}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="neumor-input w-full pr-10"
-                  placeholder="Tu contrasena"
-                  autoComplete="current-password"
-                  required
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-[var(--text-primary)]"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    ref={emailRef}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="neumor-input w-full transition-shadow duration-200 placeholder:text-[var(--text-secondary)]/70"
+                    placeholder="tu@email.com"
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-[var(--text-primary)]"
+                  >
+                    Contraseña
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      ref={passwordRef}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="neumor-input w-full pr-12 transition-shadow duration-200 placeholder:text-[var(--text-secondary)]/70"
+                      placeholder="Tu contrasena"
+                      autoComplete="current-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      aria-label={
+                        showPassword
+                          ? "Ocultar contrasena"
+                          : "Mostrar contrasena"
+                      }
+                      aria-pressed={showPassword}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 neumor-raised-sm p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors active:scale-95 focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2"
+                    >
+                      {showPassword ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="h-5 w-5"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 3l18 18"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="h-5 w-5"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
-                  aria-pressed={showPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  type="submit"
+                  disabled={loading}
+                  className="neumor-btn w-full bg-[var(--accent)] text-white font-semibold tracking-wide transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {showPassword ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 3l18 18"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                  )}
+                  {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
                 </button>
               </div>
             </div>
+          </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="neumor-btn neumor-btn-accent w-full mt-6"
-            >
-              {loading ? "Iniciando sesion..." : "Iniciar Sesion"}
-            </button>
-          </div>
-        </form>
-
-        <p className="mt-8 text-center text-xs text-[var(--text-secondary)]">
-          &copy; {new Date().getFullYear()} NeumorStudio. Todos los derechos
-          reservados.
-        </p>
+          <p className="mt-8 text-center text-xs text-[var(--text-secondary)]">
+            &copy; {new Date().getFullYear()} NeumorStudio. Todos los derechos
+            reservados.
+          </p>
+        </div>
       </div>
     </div>
   );
