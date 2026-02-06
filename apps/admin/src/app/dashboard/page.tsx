@@ -18,6 +18,7 @@ import {
   getRecentSessions,
   getWebsiteId,
   getOrdersToday,
+  getProfessionals,
 } from "@/lib/data";
 import {
   BookingsTodayWidget,
@@ -241,46 +242,72 @@ export default async function DashboardPage() {
   // Cargar tablas según tipo de negocio
   const isRepairsType = businessType === "repairs" || businessType === "realestate";
   const isFitnessType = businessType === "fitness";
-  const recentBookings = !isRepairsType && !isFitnessType ? await getRecentBookings(5) : [];
+  const recentBookings = !isRepairsType && !isFitnessType ? await getRecentBookings(20) : [];
   const recentJobs = isRepairsType ? await getRecentJobs(5) : [];
   const recentQuotes = isRepairsType ? await getRecentQuotes(5) : [];
   const recentSessions = isFitnessType ? await getRecentSessions(5) : [];
-  let professionalRevenue: { name: string; total: number; count: number }[] = [];
+  let professionalRevenue: {
+    today: { name: string; total: number; count: number }[];
+    week: { name: string; total: number; count: number }[];
+  } | null = null;
   if (businessType === "salon") {
     const websiteId = await getWebsiteId();
     if (websiteId) {
       const supabase = await createClient();
       const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-        .toISOString()
-        .split("T")[0];
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        .toISOString()
-        .split("T")[0];
-      const { data } = await supabase
-        .from("bookings")
-        .select("total_price_cents, status, booking_date, professional:professionals(name)")
-        .eq("website_id", websiteId)
-        .in("status", ["confirmed", "completed"])
-        .gte("booking_date", firstDayOfMonth)
-        .lt("booking_date", today);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayStr = today.toISOString().split("T")[0];
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - 6);
+      const weekStartStr = weekStart.toISOString().split("T")[0];
 
-      const map = new Map<string, { total: number; count: number }>();
-      (data || []).forEach((item) => {
+      const [professionals, bookingsResponse] = await Promise.all([
+        getProfessionals(),
+        supabase
+          .from("bookings")
+          .select("total_price_cents, status, booking_date, professional:professionals(name)")
+          .eq("website_id", websiteId)
+          .in("status", ["confirmed", "completed"])
+          .gte("booking_date", weekStartStr)
+          .lte("booking_date", todayStr),
+      ]);
+
+      const bookingData = bookingsResponse.data || [];
+      const professionalNames = Array.from(
+        new Set(professionals.map((prof) => prof.name).filter(Boolean))
+      );
+      const hasUnassigned = bookingData.some((item) => {
         const prof = Array.isArray(item.professional) ? item.professional[0] : item.professional;
-        const name = prof?.name || "Sin asignar";
-        const entry = map.get(name) || { total: 0, count: 0 };
-        entry.total += item.total_price_cents || 0;
-        entry.count += 1;
-        map.set(name, entry);
+        return !prof?.name;
       });
-      professionalRevenue = Array.from(map.entries())
-        .map(([name, value]) => ({
-          name,
-          total: value.total / 100,
-          count: value.count,
-        }))
-        .sort((a, b) => b.total - a.total);
+      const names = [...professionalNames];
+      if (!names.length || hasUnassigned) {
+        names.push("Sin asignar");
+      }
+
+      const buildRows = (items: typeof bookingData) => {
+        const map = new Map<string, { total: number; count: number }>();
+        names.forEach((name) => map.set(name, { total: 0, count: 0 }));
+        items.forEach((item) => {
+          const prof = Array.isArray(item.professional) ? item.professional[0] : item.professional;
+          const name = prof?.name || "Sin asignar";
+          if (!map.has(name)) {
+            map.set(name, { total: 0, count: 0 });
+          }
+          const entry = map.get(name)!;
+          entry.total += item.total_price_cents || 0;
+          entry.count += 1;
+        });
+        return names.map((name) => {
+          const entry = map.get(name) || { total: 0, count: 0 };
+          return { name, total: entry.total / 100, count: entry.count };
+        });
+      };
+
+      professionalRevenue = {
+        today: buildRows(bookingData.filter((item) => item.booking_date === todayStr)),
+        week: buildRows(bookingData),
+      };
     }
   }
 
@@ -515,7 +542,7 @@ export default async function DashboardPage() {
           {businessType === "salon" ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <RecentBookingsTable bookings={recentBookings} variant="salon" />
-              <ProfessionalRevenueTable rows={professionalRevenue} />
+              <ProfessionalRevenueTable data={professionalRevenue} />
             </div>
           ) : (
             <RecentBookingsTable bookings={recentBookings} variant="default" />

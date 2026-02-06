@@ -581,7 +581,7 @@ export function PersonalizacionClient({
       }
       setActivePreset(null);
       setMessage({ type: "success", text: "Configuracion restaurada" });
-      setTimeout(() => setMessage(null), 3000);
+      setTimeout(() => setMessage(null), 2500);
     }
   }, [initialTheme, initialConfig, businessType]);
 
@@ -635,7 +635,7 @@ export function PersonalizacionClient({
 
       if (response.ok) {
         setMessage({ type: "success", text: "Guardado correctamente" });
-        setTimeout(() => setMessage(null), 3000);
+        setTimeout(() => setMessage(null), 2500);
 
         // Refrescar el iframe para mostrar los cambios guardados
         // Añadir timestamp para invalidar caché del middleware y navegador

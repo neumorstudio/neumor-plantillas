@@ -173,10 +173,11 @@ export async function getRecentBookings(limit = 5) {
   const { data } = await supabase
     .from("bookings")
     .select(
-      "id, customer_name, booking_date, booking_time, guests, status, professional_id, services, total_price_cents, total_duration_minutes, professional:professionals(name)"
+      "id, customer_name, customer_phone, notes, booking_date, booking_time, guests, status, professional_id, services, total_price_cents, total_duration_minutes, professional:professionals(name)"
     )
     .eq("website_id", websiteId)
-    .order("created_at", { ascending: false })
+    .order("booking_date", { ascending: false })
+    .order("booking_time", { ascending: false })
     .limit(limit);
 
   // Map professional from array to object and parse services

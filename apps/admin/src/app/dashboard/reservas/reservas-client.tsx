@@ -69,7 +69,7 @@ export default function ReservasClient({
   const getTimeBucket = (bookingTime: string | null) => {
     const hour = parseHour(bookingTime);
     if (hour === null) return "Sin hora";
-    if (hour < 13) return "Manana";
+    if (hour < 13) return "Mañana";
     if (hour < 20) return "Tarde";
     return "Noche";
   };

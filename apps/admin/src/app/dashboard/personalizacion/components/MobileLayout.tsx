@@ -76,13 +76,18 @@ export function MobileLayout({
 
       {/* Toast Message */}
       {message && (
-        <div
-          className={`fixed top-16 left-4 right-4 z-50 p-3 rounded-lg text-sm shadow-lg ${message.type === "success"
-              ? "bg-green-500 text-white"
-              : "bg-red-500 text-white"
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+              message.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
             }`}
-        >
-          {message.text}
+            role="status"
+            aria-live="polite"
+          >
+            {message.text}
+          </div>
         </div>
       )}
 

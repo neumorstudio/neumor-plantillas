@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Template {
   id: string;
@@ -149,6 +149,12 @@ export function NewsletterClient({
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
 
   // AI Generation state
   const [showAIModal, setShowAIModal] = useState(false);
@@ -422,14 +428,18 @@ export function NewsletterClient({
 
       {/* Message */}
       {message && (
-        <div
-          className={`mb-6 p-4 rounded-lg ${
-            message.type === "success"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : "bg-red-100 text-red-800 border border-red-200"
-          }`}
-        >
-          {message.text}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+              message.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {message.text}
+          </div>
         </div>
       )}
 

@@ -9,19 +9,23 @@ interface StatCardProps {
 
 function StatCard({ label, value, subValue, icon }: StatCardProps) {
   return (
-    <div className="neumor-card p-6 stat-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <span className="stat-value">{value}</span>
+    <div className="neumor-card p-5 sm:p-6 stat-card">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-3xl sm:text-4xl font-heading font-semibold leading-none tracking-tight text-[var(--text-primary)] tabular-nums">
+            {value}
+          </div>
           {subValue && (
-            <span className="block text-sm text-[var(--accent)] font-medium mt-1">
+            <div className="mt-2 text-xs sm:text-sm text-[var(--accent)] font-medium">
               {subValue}
-            </span>
+            </div>
           )}
-          <span className="stat-label">{label}</span>
+          <div className="mt-2 text-sm text-[var(--text-secondary)]">
+            {label}
+          </div>
         </div>
         {icon && (
-          <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)]">
+          <div className="w-11 h-11 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)]">
             {icon}
           </div>
         )}
@@ -165,10 +169,7 @@ export function RevenueMonthWidget({
       label={label}
       value={`${totalAmount.toLocaleString("es-ES")} €`}
       icon={
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
+        <span className="text-lg font-semibold leading-none">€</span>
       }
     />
   );

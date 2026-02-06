@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ConfirmDialog } from "@/components/mobile";
 
 interface Professional {
   id: string;
@@ -119,7 +120,16 @@ export default function ProfesionalesClient({
   const [newProfessionalName, setNewProfessionalName] = useState("");
   const [newProfessionalDescription, setNewProfessionalDescription] = useState("");
   const [savingProfessionals, setSavingProfessionals] = useState(false);
-  const [professionalsMessage, setProfessionalsMessage] = useState<string | null>(null);
+  const [professionalsMessage, setProfessionalsMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [expandedProfessionals, setExpandedProfessionals] = useState<Record<string, boolean>>({});
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    professionalId?: string;
+    name?: string;
+  }>({ isOpen: false });
   const [categoryAssignments, setCategoryAssignments] = useState<Record<string, string[]>>(() => {
     const map: Record<string, string[]> = {};
     professionalCategories.forEach((item) => {
@@ -165,16 +175,23 @@ export default function ProfesionalesClient({
         setCategoryAssignments(nextMap);
       }
       if (successMessage) {
-        setProfessionalsMessage(successMessage);
+        setProfessionalsMessage({ type: "success", text: successMessage });
       }
     } catch (error) {
-      setProfessionalsMessage(
-        error instanceof Error ? error.message : "No se pudo guardar"
-      );
+      setProfessionalsMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "No se pudo guardar",
+      });
     } finally {
       setSavingProfessionals(false);
     }
   };
+
+  useEffect(() => {
+    if (!professionalsMessage) return;
+    const timeout = window.setTimeout(() => setProfessionalsMessage(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [professionalsMessage]);
 
   const handleCreateProfessional = async () => {
     const name = newProfessionalName.trim();
@@ -205,12 +222,41 @@ export default function ProfesionalesClient({
   };
 
   const handleDeleteProfessional = async (professional: Professional) => {
-    const confirmed = window.confirm("Eliminar este profesional?");
-    if (!confirmed) return;
     await runProfessionalsAction({
       action: "delete",
       professional: { id: professional.id, name: professional.name },
     });
+  };
+
+  const toggleProfessional = (professionalId: string) => {
+    setExpandedProfessionals((prev) => ({
+      ...prev,
+      [professionalId]: !(prev[professionalId] ?? false),
+    }));
+  };
+
+  const requestDeleteProfessional = (professional: Professional) => {
+    setConfirmDialog({
+      isOpen: true,
+      professionalId: professional.id,
+      name: professional.name,
+    });
+  };
+
+  const closeConfirmDialog = () => {
+    if (savingProfessionals) return;
+    setConfirmDialog({ isOpen: false });
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDialog.professionalId) return;
+    const target = professionals.find((item) => item.id === confirmDialog.professionalId);
+    if (!target) {
+      setConfirmDialog({ isOpen: false });
+      return;
+    }
+    await handleDeleteProfessional(target);
+    setConfirmDialog({ isOpen: false });
   };
 
   return (
@@ -225,8 +271,18 @@ export default function ProfesionalesClient({
 
       {/* Mensaje de feedback global */}
       {professionalsMessage && (
-        <div className="mb-6 p-4 rounded-xl text-sm font-medium bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
-          {professionalsMessage}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+              professionalsMessage.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {professionalsMessage.text}
+          </div>
         </div>
       )}
 
@@ -282,183 +338,221 @@ export default function ProfesionalesClient({
 
         {professionals.map((professional) => {
           const assignedCategories = categoryAssignments[professional.id] || [];
+          const isExpanded = expandedProfessionals[professional.id] ?? false;
 
           return (
             <div key={professional.id} className="neumor-card p-5 md:p-6">
               {/* Header del profesional */}
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-start gap-4">
                 <AvatarPlaceholder name={professional.name} />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold truncate">{professional.name}</h3>
-                  <div className="mt-2">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        professional.is_active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full mr-2 ${
-                          professional.is_active ? "bg-green-500" : "bg-gray-400"
-                        }`}
-                      />
-                      {professional.is_active ? "Activo" : "Inactivo"}
-                    </span>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-xl font-semibold truncate">{professional.name}</h3>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            professional.is_active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full mr-2 ${
+                              professional.is_active ? "bg-green-500" : "bg-gray-400"
+                            }`}
+                          />
+                          {professional.is_active ? "Activo" : "Inactivo"}
+                        </span>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                          {assignedCategories.length} categorias
+                        </span>
+                      </div>
+                      {professional.description && !isExpanded && (
+                        <p className="text-sm text-[var(--text-secondary)] mt-2 line-clamp-2">
+                          {professional.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="neumor-btn px-4 py-2 text-sm font-medium"
+                        onClick={() => toggleProfessional(professional.id)}
+                      >
+                        {isExpanded ? "Cerrar" : "Editar"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => requestDeleteProfessional(professional)}
+                        disabled={savingProfessionals}
+                        className="px-4 py-2 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Seccion: Informacion */}
-              <div className="mb-6">
-                <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-4">
-                  Informacion
-                </h4>
+              {isExpanded && (
+                <>
+                  {/* Seccion: Informacion */}
+                  <div className="mt-6 mb-6">
+                    <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-4">
+                      Informacion
+                    </h4>
 
-                <div className="space-y-4">
-                  {/* Nombre editable */}
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                      Nombre
-                    </label>
-                    <input
-                      className="neumor-input w-full h-12 text-base"
-                      value={professional.name}
-                      onChange={(event) =>
-                        setProfessionals((prev) =>
-                          prev.map((item) =>
-                            item.id === professional.id
-                              ? { ...item, name: event.target.value }
-                              : item
-                          )
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                      Descripcion
-                    </label>
-                    <textarea
-                      className="neumor-input w-full min-h-[96px] text-base resize-vertical"
-                      value={professional.description || ""}
-                      onChange={(event) =>
-                        setProfessionals((prev) =>
-                          prev.map((item) =>
-                            item.id === professional.id
-                              ? { ...item, description: event.target.value }
-                              : item
-                          )
-                        )
-                      }
-                    />
-                  </div>
-
-                  {/* Toggle activo */}
-                  <div className="flex items-center justify-between">
-                    <ToggleSwitch
-                      checked={professional.is_active}
-                      onChange={(checked) =>
-                        handleUpdateProfessional(professional, {
-                          is_active: checked,
-                        })
-                      }
-                      label="Activo"
-                      disabled={savingProfessionals}
-                    />
-                  </div>
-
-                  {/* Boton guardar info */}
-                  <button
-                    type="button"
-                    className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
-                    onClick={() =>
-                      handleUpdateProfessional(professional, {
-                        name: professional.name,
-                        description: professional.description || "",
-                      })
-                    }
-                    disabled={savingProfessionals}
-                  >
-                    Guardar informacion
-                  </button>
-                </div>
-              </div>
-
-              {/* Separador */}
-              <div className="border-t border-[var(--shadow-light)] my-6" />
-
-              {/* Seccion: Categorias */}
-              <div>
-                <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-4">
-                  Categorias asignadas
-                </h4>
-
-                {categories.length === 0 ? (
-                  <div className="text-sm text-[var(--text-secondary)] text-center py-6 neumor-inset rounded-xl">
-                    No hay categorias creadas.
-                  </div>
-                ) : (
-                  <div className="space-y-3 mb-4">
-                    {categories.map((category) => {
-                      const selected = assignedCategories.includes(category.id);
-                      return (
-                        <CategoryChip
-                          key={category.id}
-                          name={category.name}
-                          selected={selected}
-                          onChange={(newSelected) => {
-                            setCategoryAssignments((prev) => {
-                              const current = new Set(prev[professional.id] || []);
-                              if (newSelected) {
-                                current.add(category.id);
-                              } else {
-                                current.delete(category.id);
-                              }
-                              return {
-                                ...prev,
-                                [professional.id]: Array.from(current),
-                              };
-                            });
-                          }}
+                    <div className="space-y-4">
+                      {/* Nombre editable */}
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                          Nombre
+                        </label>
+                        <input
+                          className="neumor-input w-full h-12 text-base"
+                          value={professional.name}
+                          onChange={(event) =>
+                            setProfessionals((prev) =>
+                              prev.map((item) =>
+                                item.id === professional.id
+                                  ? { ...item, name: event.target.value }
+                                  : item
+                              )
+                            )
+                          }
                         />
-                      );
-                    })}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                          Descripcion
+                        </label>
+                        <textarea
+                          className="neumor-input w-full min-h-[96px] text-base resize-vertical"
+                          value={professional.description || ""}
+                          onChange={(event) =>
+                            setProfessionals((prev) =>
+                              prev.map((item) =>
+                                item.id === professional.id
+                                  ? { ...item, description: event.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                        />
+                      </div>
+
+                      {/* Toggle activo */}
+                      <div className="flex items-center justify-between">
+                        <ToggleSwitch
+                          checked={professional.is_active}
+                          onChange={(checked) =>
+                            handleUpdateProfessional(professional, {
+                              is_active: checked,
+                            })
+                          }
+                          label="Activo"
+                          disabled={savingProfessionals}
+                        />
+                      </div>
+
+                      {/* Boton guardar info */}
+                      <button
+                        type="button"
+                        className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
+                        onClick={() =>
+                          handleUpdateProfessional(professional, {
+                            name: professional.name,
+                            description: professional.description || "",
+                          })
+                        }
+                        disabled={savingProfessionals}
+                      >
+                        Guardar informacion
+                      </button>
+                    </div>
                   </div>
-                )}
 
-                {categories.length > 0 && (
-                  <button
-                    type="button"
-                    className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
-                    onClick={() =>
-                      handleUpdateProfessional(professional, {
-                        category_ids: assignedCategories,
-                      })
-                    }
-                    disabled={savingProfessionals}
-                  >
-                    Guardar categorias
-                  </button>
-                )}
-              </div>
+                  {/* Separador */}
+                  <div className="border-t border-[var(--shadow-light)] my-6" />
 
-              {/* Separador antes de eliminar */}
-              <div className="border-t border-[var(--shadow-light)] mt-8 pt-6">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteProfessional(professional)}
-                  disabled={savingProfessionals}
-                  className="w-full h-10 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  Eliminar profesional
-                </button>
-              </div>
+                  {/* Seccion: Categorias */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-4">
+                      Categorias asignadas
+                    </h4>
+
+                    {categories.length === 0 ? (
+                      <div className="text-sm text-[var(--text-secondary)] text-center py-6 neumor-inset rounded-xl">
+                        No hay categorias creadas.
+                      </div>
+                    ) : (
+                      <div className="space-y-3 mb-4">
+                        {categories.map((category) => {
+                          const selected = assignedCategories.includes(category.id);
+                          return (
+                            <CategoryChip
+                              key={category.id}
+                              name={category.name}
+                              selected={selected}
+                              onChange={(newSelected) => {
+                                setCategoryAssignments((prev) => {
+                                  const current = new Set(prev[professional.id] || []);
+                                  if (newSelected) {
+                                    current.add(category.id);
+                                  } else {
+                                    current.delete(category.id);
+                                  }
+                                  return {
+                                    ...prev,
+                                    [professional.id]: Array.from(current),
+                                  };
+                                });
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {categories.length > 0 && (
+                      <button
+                        type="button"
+                        className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
+                        onClick={() =>
+                          handleUpdateProfessional(professional, {
+                            category_ids: assignedCategories,
+                          })
+                        }
+                        disabled={savingProfessionals}
+                      >
+                        Guardar categorias
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={closeConfirmDialog}
+        onConfirm={confirmDelete}
+        title="Eliminar profesional"
+        description={
+          confirmDialog.name
+            ? `Se eliminará a "${confirmDialog.name}".`
+            : "Se eliminará este profesional."
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={savingProfessionals}
+      />
     </div>
   );
 }

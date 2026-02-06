@@ -391,7 +391,7 @@ export function getReminder24hEmail(data: ReservationEmailData): string {
           <tr>
             <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center;">
               <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">
-                ¡Te esperamos manana!
+                ¡Te esperamos mañana!
               </h1>
               <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
                 ${data.restaurantName}
@@ -406,7 +406,7 @@ export function getReminder24hEmail(data: ReservationEmailData): string {
                 Hola <strong>${data.customerName}</strong>,
               </p>
               <p style="color: #6b7280; font-size: 15px; margin: 0 0 30px 0; line-height: 1.6;">
-                Este es un recordatorio de tu reserva para <strong>manana</strong>.
+                Este es un recordatorio de tu reserva para <strong>mañana</strong>.
               </p>
 
               <!-- Big Date/Time Display -->

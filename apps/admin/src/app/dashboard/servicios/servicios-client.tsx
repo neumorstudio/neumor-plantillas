@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ConfirmDialog } from "@/components/mobile";
 
 type ServiceItem = {
   id: string;
@@ -160,6 +161,24 @@ export function ServiciosClient({ initialCategories }: Props) {
   } | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("");
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+  const [openNewItem, setOpenNewItem] = useState<Record<string, boolean>>({});
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    type: "category" | "item" | null;
+    categoryId?: string;
+    itemId?: string;
+    name?: string;
+  }>({
+    isOpen: false,
+    type: null,
+  });
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
   const [selectedIcons, setSelectedIcons] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     initialCategories.forEach((cat) => {
@@ -231,8 +250,6 @@ export function ServiciosClient({ initialCategories }: Props) {
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
-    const confirmed = window.confirm("Eliminar esta categoria y sus servicios?");
-    if (!confirmed) return;
     await runAction({ action: "deleteCategory", id: categoryId }, "Categoria eliminada");
   };
 
@@ -293,8 +310,6 @@ export function ServiciosClient({ initialCategories }: Props) {
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    const confirmed = window.confirm("Eliminar este servicio?");
-    if (!confirmed) return;
     await runAction({ action: "deleteItem", id: itemId }, "Servicio eliminado");
   };
 
@@ -311,6 +326,61 @@ export function ServiciosClient({ initialCategories }: Props) {
     return icon ? icon.svg : null;
   };
 
+  const toggleCategory = (categoryId: string) => {
+    setOpenCategories((prev) => ({
+      ...prev,
+      [categoryId]: !(prev[categoryId] ?? false),
+    }));
+  };
+
+  const toggleNewService = (categoryId: string) => {
+    setOpenNewItem((prev) => ({
+      ...prev,
+      [categoryId]: !(prev[categoryId] ?? false),
+    }));
+  };
+
+  const toggleItem = (itemId: string) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [itemId]: !(prev[itemId] ?? false),
+    }));
+  };
+
+  const requestDeleteCategory = (categoryId: string, name: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "category",
+      categoryId,
+      name,
+    });
+  };
+
+  const requestDeleteItem = (itemId: string, name: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "item",
+      itemId,
+      name,
+    });
+  };
+
+  const closeConfirmDialog = () => {
+    if (loading) return;
+    setConfirmDialog({ isOpen: false, type: null });
+  };
+
+  const confirmDelete = async () => {
+    if (loading || !confirmDialog.type) return;
+    if (confirmDialog.type === "category" && confirmDialog.categoryId) {
+      await handleDeleteCategory(confirmDialog.categoryId);
+    }
+    if (confirmDialog.type === "item" && confirmDialog.itemId) {
+      await handleDeleteItem(confirmDialog.itemId);
+    }
+    setConfirmDialog({ isOpen: false, type: null });
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header */}
@@ -325,14 +395,18 @@ export function ServiciosClient({ initialCategories }: Props) {
 
       {/* Mensaje de feedback */}
       {message && (
-        <div
-          className={`mb-6 p-4 rounded-xl text-sm font-medium ${
-            message.type === "success"
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {message.text}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+              message.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {message.text}
+          </div>
         </div>
       )}
 
@@ -392,6 +466,8 @@ export function ServiciosClient({ initialCategories }: Props) {
         {categories.map((category) => {
           const newItem = getNewItemState(category.id);
           const categoryIconSvg = getCategoryIcon(category.icon);
+          const isCategoryOpen = openCategories[category.id] ?? false;
+          const isNewItemOpen = openNewItem[category.id] ?? false;
 
           return (
             <div key={category.id} className="neumor-card p-5 md:p-6">
@@ -494,234 +570,280 @@ export function ServiciosClient({ initialCategories }: Props) {
                   Servicios disponibles en &quot;{category.name}&quot;
                 </p>
 
-                {/* Lista de servicios */}
-                <div className="space-y-4">
-                  {category.items.length === 0 && (
-                    <div className="text-sm text-[var(--text-secondary)] text-center py-6 neumor-inset rounded-xl">
-                      No hay servicios en esta categoria.
-                    </div>
-                  )}
-
-                  {category.items.map((item) => (
-                    <form
-                      key={item.id}
-                      className="neumor-inset p-5 rounded-xl"
-                      onSubmit={(event) => handleUpdateItem(event, item.id)}
-                    >
-                      <div className="space-y-4">
-                        {/* Nombre */}
-                        <div>
-                          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                            Nombre del servicio
-                          </label>
-                          <input
-                            name="name"
-                            defaultValue={item.name}
-                            className="neumor-input w-full h-12 text-base"
-                          />
-                        </div>
-
-                        {/* Precio y Duracion - 2 columnas */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                              Precio (EUR)
-                            </label>
-                            <input
-                              name="price"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              defaultValue={(item.price_cents / 100).toFixed(2)}
-                              className="neumor-input w-full h-12 text-base"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                              Duracion (min)
-                            </label>
-                            <input
-                              name="duration"
-                              type="number"
-                              min="15"
-                              step="15"
-                              defaultValue={item.duration_minutes}
-                              className="neumor-input w-full h-12 text-base"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Notas */}
-                        <div>
-                          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                            Notas (opcional)
-                          </label>
-                          <textarea
-                            name="notes"
-                            defaultValue={item.notes || ""}
-                            className="neumor-input w-full text-base"
-                            rows={2}
-                            placeholder="Descripcion o detalles adicionales..."
-                          />
-                        </div>
-
-                        {/* Orden y Estado */}
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <label className="text-xs font-medium text-[var(--text-secondary)]">
-                              Orden
-                            </label>
-                            <input
-                              name="sort_order"
-                              type="number"
-                              defaultValue={item.sort_order}
-                              className="neumor-input w-20 h-10 text-center"
-                            />
-                          </div>
-                          <ToggleSwitch
-                            name="is_active"
-                            defaultChecked={item.is_active}
-                            label="Activo"
-                          />
-                        </div>
-
-                        {/* Boton guardar */}
-                        <button
-                          type="submit"
-                          className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
-                          disabled={loading}
-                        >
-                          Guardar servicio
-                        </button>
-
-                        {/* Boton eliminar - separado */}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="w-full h-10 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          disabled={loading}
-                        >
-                          Eliminar servicio
-                        </button>
-                      </div>
-                    </form>
-                  ))}
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <button
+                    type="button"
+                    className="neumor-btn px-4 py-2 text-sm font-medium"
+                    onClick={() => toggleCategory(category.id)}
+                  >
+                    {isCategoryOpen
+                      ? "Ocultar servicios"
+                      : `Ver servicios (${category.items.length})`}
+                  </button>
+                  <button
+                    type="button"
+                    className="neumor-btn neumor-btn-accent px-4 py-2 text-sm font-medium"
+                    onClick={() => toggleNewService(category.id)}
+                  >
+                    {isNewItemOpen ? "Cerrar alta" : "+ Nuevo servicio"}
+                  </button>
                 </div>
+
+                {/* Lista de servicios */}
+                {isCategoryOpen && (
+                  <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1 scroll-hidden">
+                    {category.items.length === 0 && (
+                      <div className="text-sm text-[var(--text-secondary)] text-center py-6 neumor-inset rounded-xl">
+                        No hay servicios en esta categoria.
+                      </div>
+                    )}
+
+                    {category.items.map((item) => {
+                      const isExpanded = expandedItems[item.id] ?? false;
+                      return (
+                        <div key={item.id} className="neumor-inset p-4 rounded-xl">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-[var(--text-primary)] truncate">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-[var(--text-secondary)]">
+                                €{(item.price_cents / 100).toFixed(2)} · {item.duration_minutes} min ·{" "}
+                                {item.is_active ? "Activo" : "Inactivo"}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="neumor-btn px-3 py-1.5 text-xs font-medium"
+                                onClick={() => toggleItem(item.id)}
+                              >
+                                {isExpanded ? "Cerrar" : "Editar"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => requestDeleteItem(item.id, item.name)}
+                                className="px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                disabled={loading}
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <form
+                              className="mt-4 pt-4 border-t border-[var(--shadow-light)] space-y-4"
+                              onSubmit={(event) => handleUpdateItem(event, item.id)}
+                            >
+                              {/* Nombre */}
+                              <div>
+                                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                                  Nombre del servicio
+                                </label>
+                                <input
+                                  name="name"
+                                  defaultValue={item.name}
+                                  className="neumor-input w-full h-11 text-sm"
+                                />
+                              </div>
+
+                              {/* Precio y Duracion - 2 columnas */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                                    Precio (EUR)
+                                  </label>
+                                  <input
+                                    name="price"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    defaultValue={(item.price_cents / 100).toFixed(2)}
+                                    className="neumor-input w-full h-11 text-sm"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                                    Duracion (min)
+                                  </label>
+                                  <input
+                                    name="duration"
+                                    type="number"
+                                    min="15"
+                                    step="15"
+                                    defaultValue={item.duration_minutes}
+                                    className="neumor-input w-full h-11 text-sm"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Notas */}
+                              <div>
+                                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                                  Notas (opcional)
+                                </label>
+                                <textarea
+                                  name="notes"
+                                  defaultValue={item.notes || ""}
+                                  className="neumor-input w-full text-sm"
+                                  rows={2}
+                                  placeholder="Descripcion o detalles adicionales..."
+                                />
+                              </div>
+
+                              {/* Orden y Estado */}
+                              <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-xs font-medium text-[var(--text-secondary)]">
+                                    Orden
+                                  </label>
+                                  <input
+                                    name="sort_order"
+                                    type="number"
+                                    defaultValue={item.sort_order}
+                                    className="neumor-input w-20 h-10 text-center text-sm"
+                                  />
+                                </div>
+                                <ToggleSwitch
+                                  name="is_active"
+                                  defaultChecked={item.is_active}
+                                  label="Activo"
+                                />
+                              </div>
+
+                              {/* Boton guardar */}
+                              <button
+                                type="submit"
+                                className="neumor-btn neumor-btn-accent w-full h-11 text-sm font-medium"
+                                disabled={loading}
+                              >
+                                Guardar servicio
+                              </button>
+                            </form>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Formulario nuevo servicio */}
-                <div className="mt-6 p-5 rounded-xl bg-[var(--bg-secondary)]/50 border-2 border-dashed border-[var(--shadow-light)]">
-                  <h5 className="font-semibold mb-4">Anadir nuevo servicio</h5>
+                {isNewItemOpen && (
+                  <div className="mt-4 p-4 rounded-xl bg-[var(--bg-secondary)]/50 border-2 border-dashed border-[var(--shadow-light)]">
+                    <h5 className="font-semibold mb-3 text-sm">Anadir nuevo servicio</h5>
 
-                  <div className="space-y-4">
-                    {/* Nombre */}
-                    <div>
-                      <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                        Nombre del servicio
-                      </label>
-                      <input
-                        type="text"
-                        className="neumor-input w-full h-12 text-base"
-                        placeholder="Ej: Corte caballero"
-                        value={newItem.name}
-                        onChange={(event) =>
-                          setNewItemByCategory((prev) => ({
-                            ...prev,
-                            [category.id]: {
-                              ...newItem,
-                              name: event.target.value,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    {/* Precio y Duracion - 2 columnas */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      {/* Nombre */}
                       <div>
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                          Precio (EUR)
+                          Nombre del servicio
                         </label>
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          className="neumor-input w-full h-12 text-base"
-                          placeholder="15.00"
-                          value={newItem.price}
+                          type="text"
+                          className="neumor-input w-full h-11 text-sm"
+                          placeholder="Ej: Corte caballero"
+                          value={newItem.name}
                           onChange={(event) =>
                             setNewItemByCategory((prev) => ({
                               ...prev,
                               [category.id]: {
                                 ...newItem,
-                                price: event.target.value,
+                                name: event.target.value,
                               },
                             }))
                           }
                         />
                       </div>
+
+                      {/* Precio y Duracion - 2 columnas */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                            Precio (EUR)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="neumor-input w-full h-11 text-sm"
+                            placeholder="15.00"
+                            value={newItem.price}
+                            onChange={(event) =>
+                              setNewItemByCategory((prev) => ({
+                                ...prev,
+                                [category.id]: {
+                                  ...newItem,
+                                  price: event.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
+                            Duracion (min)
+                          </label>
+                          <input
+                            type="number"
+                            min="15"
+                            step="15"
+                            className="neumor-input w-full h-11 text-sm"
+                            placeholder="30"
+                            value={newItem.duration}
+                            onChange={(event) =>
+                              setNewItemByCategory((prev) => ({
+                                ...prev,
+                                [category.id]: {
+                                  ...newItem,
+                                  duration: event.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      {/* Notas */}
                       <div>
                         <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                          Duracion (min)
+                          Notas (opcional)
                         </label>
-                        <input
-                          type="number"
-                          min="15"
-                          step="15"
-                          className="neumor-input w-full h-12 text-base"
-                          placeholder="30"
-                          value={newItem.duration}
+                        <textarea
+                          className="neumor-input w-full text-sm"
+                          rows={2}
+                          placeholder="Descripcion o detalles..."
+                          value={newItem.notes}
                           onChange={(event) =>
                             setNewItemByCategory((prev) => ({
                               ...prev,
                               [category.id]: {
                                 ...newItem,
-                                duration: event.target.value,
+                                notes: event.target.value,
                               },
                             }))
                           }
                         />
                       </div>
-                    </div>
 
-                    {/* Notas */}
-                    <div>
-                      <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                        Notas (opcional)
-                      </label>
-                      <textarea
-                        className="neumor-input w-full text-base"
-                        rows={2}
-                        placeholder="Descripcion o detalles..."
-                        value={newItem.notes}
-                        onChange={(event) =>
-                          setNewItemByCategory((prev) => ({
-                            ...prev,
-                            [category.id]: {
-                              ...newItem,
-                              notes: event.target.value,
-                            },
-                          }))
-                        }
-                      />
+                      {/* Boton crear */}
+                      <button
+                        onClick={() => handleCreateItem(category.id)}
+                        disabled={loading || !newItem.name.trim()}
+                        className="neumor-btn neumor-btn-accent w-full h-11 text-sm font-medium"
+                      >
+                        Crear servicio
+                      </button>
                     </div>
-
-                    {/* Boton crear */}
-                    <button
-                      onClick={() => handleCreateItem(category.id)}
-                      disabled={loading || !newItem.name.trim()}
-                      className="neumor-btn neumor-btn-accent w-full h-12 text-base font-medium"
-                    >
-                      Crear servicio
-                    </button>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Separador antes de eliminar */}
               <div className="border-t border-[var(--shadow-light)] mt-8 pt-6">
                 <button
                   type="button"
-                  onClick={() => handleDeleteCategory(category.id)}
+                  onClick={() => requestDeleteCategory(category.id, category.name)}
                   className="w-full h-10 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   disabled={loading}
                 >
@@ -732,6 +854,30 @@ export function ServiciosClient({ initialCategories }: Props) {
           );
         })}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={closeConfirmDialog}
+        onConfirm={confirmDelete}
+        title={
+          confirmDialog.type === "category"
+            ? "Eliminar categoria"
+            : "Eliminar servicio"
+        }
+        description={
+          confirmDialog.type === "category"
+            ? (confirmDialog.name
+                ? `Se eliminará la categoria "${confirmDialog.name}" y todos sus servicios.`
+                : "Se eliminará esta categoria y todos sus servicios.")
+            : (confirmDialog.name
+                ? `Se eliminará el servicio "${confirmDialog.name}".`
+                : "Se eliminará este servicio.")
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={loading}
+      />
     </div>
   );
 }

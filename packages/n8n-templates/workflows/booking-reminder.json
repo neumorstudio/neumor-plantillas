@@ -129,9 +129,9 @@
       "parameters": {
         "fromEmail": "reservas@neumorstudio.com",
         "toEmail": "={{ $('loop-bookings').item.json.customer_email }}",
-        "subject": "Recordatorio: Tu reserva es manana",
+        "subject": "Recordatorio: Tu reserva es mañana",
         "emailFormat": "html",
-        "html": "<!DOCTYPE html><html><body><h1>Recordatorio de Reserva</h1><p>Hola {{ $('loop-bookings').item.json.customer_name }},</p><p>Te recordamos que tu reserva es <strong>manana {{ $('loop-bookings').item.json.booking_date }}</strong> a las <strong>{{ $('loop-bookings').item.json.booking_time }}</strong>.</p><p>Personas: {{ $('loop-bookings').item.json.guests }}</p><p>Te esperamos!</p><p>Si necesitas cancelar o modificar tu reserva, contactanos.</p></body></html>"
+        "html": "<!DOCTYPE html><html><body><h1>Recordatorio de Reserva</h1><p>Hola {{ $('loop-bookings').item.json.customer_name }},</p><p>Te recordamos que tu reserva es <strong>mañana {{ $('loop-bookings').item.json.booking_date }}</strong> a las <strong>{{ $('loop-bookings').item.json.booking_time }}</strong>.</p><p>Personas: {{ $('loop-bookings').item.json.guests }}</p><p>Te esperamos!</p><p>Si necesitas cancelar o modificar tu reserva, contactanos.</p></body></html>"
       },
       "typeVersion": 2,
       "credentials": {

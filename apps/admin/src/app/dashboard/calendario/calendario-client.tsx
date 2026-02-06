@@ -99,6 +99,7 @@ interface Props {
 }
 
 const dayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+const MAX_SLOTS_PER_DAY = 3;
 
 export default function CalendarioClient({
   initialHours,
@@ -192,7 +193,7 @@ export default function CalendarioClient({
   const [selectedDate, setSelectedDate] = useState<string | null>(todayIso);
   const [slots, setSlots] = useState<BusinessHourSlot[]>(fallbackSlots);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [calendarYear, setCalendarYear] = useState(year);
   const [calendarMonth, setCalendarMonth] = useState(month);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
@@ -205,7 +206,6 @@ export default function CalendarioClient({
   const [deleteConfirm, setDeleteConfirm] = useState<Booking | null>(null);
   const [specialDays, setSpecialDays] = useState<SpecialDay[]>(initialSpecialDays);
   const [savingSpecialDays, setSavingSpecialDays] = useState(false);
-  const [specialDaysMessage, setSpecialDaysMessage] = useState<string | null>(null);
   const [professionals] = useState<Professional[]>(initialProfessionals);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
@@ -221,6 +221,12 @@ export default function CalendarioClient({
     notes: "",
     service_ids: [] as string[],
   });
+
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = window.setTimeout(() => setToast(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
 
   const allServiceItems = useMemo(
     () => serviceCatalog.flatMap((category) => category.items),
@@ -285,7 +291,7 @@ export default function CalendarioClient({
   const getTimeBucket = (bookingTime: string | null) => {
     const hour = parseHour(bookingTime);
     if (hour === null) return "Sin hora";
-    if (hour < 13) return "Manana";
+    if (hour < 13) return "Mañana";
     if (hour < 20) return "Tarde";
     return "Noche";
   };
@@ -467,6 +473,9 @@ export default function CalendarioClient({
   const handleAddSlot = (day: number) => {
     setSlots((prev) => {
       const daySlots = getSlotsForDay(day, prev);
+      if (daySlots.length >= MAX_SLOTS_PER_DAY) {
+        return prev;
+      }
       const nextOrder = daySlots.length;
       return [
         ...prev,
@@ -536,7 +545,10 @@ export default function CalendarioClient({
       setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       setBookings([]);
-      setMessage(error instanceof Error ? error.message : "Error al cargar reservas.");
+      setToast({
+        type: "error",
+        text: error instanceof Error ? error.message : "Error al cargar reservas.",
+      });
     } finally {
       setLoadingBookings(false);
     }
@@ -574,7 +586,7 @@ export default function CalendarioClient({
 
   const handleSave = async () => {
     setSaving(true);
-    setMessage(null);
+    setToast(null);
 
     try {
       const response = await fetch("/api/calendario/horarios", {
@@ -588,9 +600,12 @@ export default function CalendarioClient({
         throw new Error(data.error || "No se pudo guardar.");
       }
 
-      setMessage("Horarios guardados.");
+      setToast({ type: "success", text: "Horarios guardados." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Error al guardar.");
+      setToast({
+        type: "error",
+        text: error instanceof Error ? error.message : "Error al guardar.",
+      });
     } finally {
       setSaving(false);
     }
@@ -688,9 +703,10 @@ export default function CalendarioClient({
           throw new Error("No se pudo eliminar.");
         }
       } catch (error) {
-        setSpecialDaysMessage(
-          error instanceof Error ? error.message : "No se pudo eliminar."
-        );
+        setToast({
+          type: "error",
+          text: error instanceof Error ? error.message : "No se pudo eliminar.",
+        });
         return;
       }
     }
@@ -700,7 +716,7 @@ export default function CalendarioClient({
 
   const handleSaveSpecialDays = async () => {
     setSavingSpecialDays(true);
-    setSpecialDaysMessage(null);
+    setToast(null);
 
     try {
       const response = await fetch("/api/calendario/especiales", {
@@ -716,9 +732,12 @@ export default function CalendarioClient({
 
       const data = await response.json();
       setSpecialDays(data);
-      setSpecialDaysMessage("Fechas especiales guardadas.");
+      setToast({ type: "success", text: "Fechas especiales guardadas." });
     } catch (error) {
-      setSpecialDaysMessage(error instanceof Error ? error.message : "Error al guardar.");
+      setToast({
+        type: "error",
+        text: error instanceof Error ? error.message : "Error al guardar.",
+      });
     } finally {
       setSavingSpecialDays(false);
     }
@@ -867,9 +886,19 @@ export default function CalendarioClient({
         </p>
       </div>
 
-      {message && (
-        <div className="mb-4 p-3 rounded-lg bg-[var(--shadow-light)] text-sm">
-          {message}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+              toast.type === "success"
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {toast.text}
+          </div>
         </div>
       )}
 
@@ -987,7 +1016,7 @@ export default function CalendarioClient({
               <div className="flex-1 overflow-y-auto scroll-hidden min-h-0 -mx-1 px-1">
                 {filteredBookingsForDay.length ? (
                   <div className="space-y-3">
-                    {(["Manana", "Tarde", "Noche", "Sin hora"] as const).map((bucket) => {
+                    {(["Mañana", "Tarde", "Noche", "Sin hora"] as const).map((bucket) => {
                       const bucketBookings = bookingsByBucket[bucket] || [];
                       if (!bucketBookings.length) return null;
                       return (
@@ -1068,17 +1097,18 @@ export default function CalendarioClient({
           <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-5 text-[var(--text-primary)]">Horarios del local</h3>
 
           {/* Grid de días - responsive: 1 columna en móvil, flex en desktop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4 items-start">
               {dayLabels.map((label, index) => {
                 const daySlots = getSlotsForDay(index);
                 const isOpen = daySlots.length > 0;
                 const isWeekend = index >= 5;
                 const fullDayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+                const reachedSlotLimit = daySlots.length >= MAX_SLOTS_PER_DAY;
 
                 return (
                   <div
                     key={label}
-                    className={`neumor-card-sm p-3 md:p-4 rounded-2xl transition-all w-full lg:w-[280px] lg:shrink-0 ${
+                    className={`neumor-card-sm p-3 md:p-4 rounded-2xl transition-all w-full ${
                       isOpen
                         ? "border-l-4 border-l-green-500"
                         : "border-l-4 border-l-gray-300 opacity-75"
@@ -1159,10 +1189,17 @@ export default function CalendarioClient({
                         })}
                         <button
                           type="button"
-                          className="w-full py-2.5 md:py-2 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-lg transition-colors active:scale-[0.98]"
+                          disabled={reachedSlotLimit}
+                          className={`w-full py-2.5 md:py-2 text-sm font-medium rounded-lg transition-colors active:scale-[0.98] ${
+                            reachedSlotLimit
+                              ? "text-[var(--text-secondary)] cursor-not-allowed opacity-70"
+                              : "text-[var(--accent)] hover:bg-[var(--accent)]/10"
+                          }`}
                           onClick={() => handleAddSlot(index)}
                         >
-                          + Agregar tramo
+                          {reachedSlotLimit
+                            ? `Máximo ${MAX_SLOTS_PER_DAY} tramos`
+                            : "+ Agregar tramo"}
                         </button>
                       </div>
                     ) : (
@@ -1194,26 +1231,26 @@ export default function CalendarioClient({
             </button>
           </div>
 
-          <div className="neumor-card p-4 md:p-5 max-w-4xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-5">
+          <div
+            className={`neumor-card p-3 md:p-4 w-full ${
+              specialDays.length ? "max-w-4xl" : "max-w-2xl"
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 md:gap-4 mb-3 md:mb-4">
               <div>
                 <h3 className="text-lg md:text-xl font-bold text-[var(--text-primary)]">Fechas especiales</h3>
                 <p className="text-xs md:text-sm text-[var(--text-secondary)] mt-1">Festivos, vacaciones o días con horario diferente</p>
               </div>
               <button
                 type="button"
-                className="neumor-btn neumor-btn-accent text-sm md:text-base font-semibold w-full sm:w-auto px-5 py-2.5 active:scale-[0.98]"
+                className="neumor-btn neumor-btn-accent text-sm md:text-base font-semibold w-full sm:w-auto px-5 py-2.5 active:scale-[0.98] sm:mt-0 sm:ml-auto"
                 onClick={handleAddSpecialDay}
               >
                 + Agregar fecha
               </button>
             </div>
 
-            {specialDaysMessage && (
-              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-base">
-                {specialDaysMessage}
-              </div>
-            )}
+            {/* Toast handled globally */}
 
             <div className="grid grid-cols-1 md:flex md:flex-wrap gap-3 md:gap-4">
               {specialDays.length ? (
@@ -1377,7 +1414,7 @@ export default function CalendarioClient({
                   );
                 })
               ) : (
-                <div className="neumor-inset p-4 rounded-xl text-center">
+                <div className="neumor-inset px-4 py-2.5 rounded-xl text-center text-sm w-full sm:w-fit">
                   <p className="text-sm text-[var(--text-secondary)]">
                     Sin fechas especiales configuradas
                   </p>

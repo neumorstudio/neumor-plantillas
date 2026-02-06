@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 export interface AdminMenuItem {
   id: string;
@@ -27,7 +27,7 @@ function eurosToCents(value: number) {
 export default function MenuClient({ initialItems }: { initialItems: AdminMenuItem[] }) {
   const [items, setItems] = useState<AdminMenuItem[]>(initialItems);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const [newItem, setNewItem] = useState({
@@ -55,6 +55,12 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
+
   const saveItem = (item: AdminMenuItem) => {
     startTransition(async () => {
       setMessage(null);
@@ -80,9 +86,12 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
           throw new Error(data.error || "No se pudo guardar el item.");
         }
         updateLocalItem(item.id, data.item);
-        setMessage(`Guardado: ${data.item.name}`);
+        setMessage({ type: "success", text: `Guardado: ${data.item.name}` });
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Error al guardar el item.");
+        setMessage({
+          type: "error",
+          text: error instanceof Error ? error.message : "Error al guardar el item.",
+        });
       }
     });
   };
@@ -95,7 +104,7 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
       const price = eurosToCents(Number(newItem.priceEuros));
 
       if (!name || !category || price <= 0) {
-        setMessage("Completa nombre, categoria y precio.");
+        setMessage({ type: "error", text: "Completa nombre, categoria y precio." });
         return;
       }
 
@@ -115,9 +124,12 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
         }
         setItems((prev) => [data.item!, ...prev]);
         setNewItem({ name: "", category: category, priceEuros: "" });
-        setMessage(`Item creado: ${data.item.name}`);
+        setMessage({ type: "success", text: `Item creado: ${data.item.name}` });
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Error al crear el item.");
+        setMessage({
+          type: "error",
+          text: error instanceof Error ? error.message : "Error al crear el item.",
+        });
       }
     });
   };
@@ -189,9 +201,19 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
         </div>
 
         {message && (
-          <p className="text-sm text-[var(--text-secondary)]" role="status">
-            {message}
-          </p>
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+            <div
+              className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+                message.type === "success"
+                  ? "bg-green-50 text-green-700 border border-green-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              {message.text}
+            </div>
+          </div>
         )}
       </div>
 
@@ -293,4 +315,3 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
     </div>
   );
 }
-

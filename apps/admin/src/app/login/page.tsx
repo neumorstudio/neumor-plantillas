@@ -199,13 +199,15 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="neumor-btn w-full bg-[var(--accent)] text-white font-semibold tracking-wide transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="neumor-btn px-6 bg-[var(--accent)] text-white font-semibold tracking-wide transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
