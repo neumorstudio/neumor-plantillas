@@ -376,8 +376,8 @@ export function RecentBookingsTable({
                         }
                       }}
                     >
-                      <td className="font-medium">
-                        {booking.customer_name}
+                      <td data-label="Cliente" className="is-stacked">
+                        <span className="font-medium">{booking.customer_name}</span>
                         <span
                           className="mt-1 block text-xs text-[var(--text-secondary)] line-clamp-1"
                           title={serviceNames}
@@ -385,18 +385,18 @@ export function RecentBookingsTable({
                           {serviceNames}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Cita" className="is-stacked">
                         <span className="block text-sm">{formatDate(booking.booking_date)}</span>
                         <span className="block text-xs text-[var(--text-secondary)]">
                           {booking.booking_time || "-"}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <span className={`badge ${getBookingStatusBadge(booking.status).class}`}>
                           {getBookingStatusBadge(booking.status).label}
                         </span>
                       </td>
-                      <td className="text-right">
+                      <td data-label="Precio" className="text-right">
                         <span className="text-sm font-semibold">{price}</span>
                       </td>
                     </tr>
@@ -419,11 +419,13 @@ export function RecentBookingsTable({
                       }
                     }}
                   >
-                    <td className="font-medium">{booking.customer_name}</td>
-                    <td>{formatDate(booking.booking_date)}</td>
-                    <td>{booking.booking_time || "-"}</td>
-                    <td>{booking.guests || 1}</td>
-                    <td>
+                    <td data-label="Cliente" className="font-medium">
+                      {booking.customer_name}
+                    </td>
+                    <td data-label="Fecha">{formatDate(booking.booking_date)}</td>
+                    <td data-label="Hora">{booking.booking_time || "-"}</td>
+                    <td data-label="Personas">{booking.guests || 1}</td>
+                    <td data-label="Estado">
                       <span className={`badge ${getBookingStatusBadge(booking.status).class}`}>
                         {getBookingStatusBadge(booking.status).label}
                       </span>

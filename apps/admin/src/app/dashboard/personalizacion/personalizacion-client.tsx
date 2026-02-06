@@ -14,6 +14,7 @@ import type {
   SectionId,
 } from "@neumorstudio/supabase";
 import { getDefaultSectionsConfig, SECTIONS_CATALOG } from "@neumorstudio/supabase";
+import { themes } from "@/lib/personalizacion";
 
 // Types locales
 import type {
@@ -66,16 +67,85 @@ export function PersonalizacionClient({
 }: Props) {
   const isMobile = useIsMobile();
 
+  const getThemeDefaults = useCallback((nextTheme: Theme): ColorsConfig => {
+    const themeOption = themes.find((t) => t.value === nextTheme);
+    if (!themeOption) {
+      return { ...defaultColors };
+    }
+
+    const [toneA, toneB, accent] = themeOption.colors;
+    const base = toneB || toneA || defaultColors.primary;
+
+    const hexToRgb = (hex: string) => {
+      const sanitized = hex.replace("#", "");
+      const value = parseInt(sanitized, 16);
+      return {
+        r: (value >> 16) & 255,
+        g: (value >> 8) & 255,
+        b: value & 255,
+      };
+    };
+
+    const rgbToHex = (r: number, g: number, b: number) =>
+      `#${[r, g, b]
+        .map((channel) => Math.max(0, Math.min(255, Math.round(channel))).toString(16).padStart(2, "0"))
+        .join("")}`;
+
+    const adjustLuminosity = (hex: string, percent: number) => {
+      const { r, g, b } = hexToRgb(hex);
+      const factor = percent / 100;
+      return rgbToHex(
+        r + (255 * factor),
+        g + (255 * factor),
+        b + (255 * factor),
+      );
+    };
+
+    const luminance = (hex: string) => {
+      const { r, g, b } = hexToRgb(hex);
+      return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    };
+
+    const isLight = luminance(base) > 0.6;
+    const primary = adjustLuminosity(base, isLight ? -55 : 70);
+    const secondary = adjustLuminosity(base, isLight ? -35 : 45);
+
+    return {
+      primary,
+      secondary,
+      accent: accent || defaultColors.accent,
+    };
+  }, []);
+
+  const buildColorOverrides = useCallback(
+    (config: WebsiteConfig) => {
+      const resolved: ColorsConfig = {
+        ...config.colors,
+        primary: config.colors?.primary || config.primaryColor,
+        secondary: config.colors?.secondary || config.secondaryColor,
+      };
+
+      const usesDefaults =
+        !resolved.background &&
+        !resolved.text &&
+        (!resolved.primary || resolved.primary === defaultColors.primary) &&
+        (!resolved.secondary || resolved.secondary === defaultColors.secondary) &&
+        (!resolved.accent || resolved.accent === defaultColors.accent);
+
+      return usesDefaults ? {} : resolved;
+    },
+    [],
+  );
+
   // State
   const [activeTab, setActiveTab] = useState<TabId>("diseno");
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [variants, setVariants] = useState<Variants>(initialConfig.variants as Variants || defaultVariants);
-  const [colors, setColors] = useState<ColorsConfig>({
-    ...defaultColors,
-    ...initialConfig.colors,
-    primary: initialConfig.colors?.primary || initialConfig.primaryColor || defaultColors.primary,
-    secondary: initialConfig.colors?.secondary || initialConfig.secondaryColor || defaultColors.secondary,
-  });
+  const [colors, setColors] = useState<ColorsConfig>(() => buildColorOverrides(initialConfig));
+  const displayColors = useMemo(() => ({
+    ...getThemeDefaults(theme),
+    ...colors,
+  }), [colors, getThemeDefaults, theme]);
   const [typography, setTypography] = useState<TypographyConfig>({
     ...defaultTypography,
     ...initialConfig.typography,
@@ -506,12 +576,7 @@ export function PersonalizacionClient({
       // Restaurar a valores iniciales (guardados en BD), no a defaults del sistema
       setTheme(initialTheme);
       setVariants(initialConfig.variants as Variants || defaultVariants);
-      setColors({
-        ...defaultColors,
-        ...initialConfig.colors,
-        primary: initialConfig.colors?.primary || initialConfig.primaryColor || defaultColors.primary,
-        secondary: initialConfig.colors?.secondary || initialConfig.secondaryColor || defaultColors.secondary,
-      });
+      setColors(buildColorOverrides(initialConfig));
       setTypography({
         ...defaultTypography,
         ...initialConfig.typography,
@@ -583,7 +648,13 @@ export function PersonalizacionClient({
       setMessage({ type: "success", text: "Configuracion restaurada" });
       setTimeout(() => setMessage(null), 2500);
     }
-  }, [initialTheme, initialConfig, businessType]);
+  }, [initialTheme, initialConfig, businessType, buildColorOverrides]);
+
+  const handleThemeChange = useCallback((nextTheme: Theme) => {
+    setTheme(nextTheme);
+    setColors(getThemeDefaults(nextTheme));
+    setActivePreset(null);
+  }, [getThemeDefaults]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -673,13 +744,13 @@ export function PersonalizacionClient({
             theme={theme}
             skin={skin}
             activePreset={activePreset}
-            colors={colors}
+            colors={displayColors}
             effects={effects}
             typography={typography}
             isMobile={isMobile}
             onApplyPreset={applyPreset}
             onSetActivePreset={setActivePreset}
-            onSetTheme={setTheme}
+            onSetTheme={handleThemeChange}
             onSkinChange={handleSkinChange}
             onColorChange={handleColorChange}
             onEffectsChange={handleEffectsChange}

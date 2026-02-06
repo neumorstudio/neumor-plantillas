@@ -24,6 +24,9 @@ import {
   getRateLimitKey,
   rateLimitPresets,
 } from "@neumorstudio/api-utils/rate-limit";
+import { sendPushNotification } from "@/lib/push";
+
+export const runtime = "nodejs";
 
 // Cliente Supabase con service role para bypass RLS (lazy init)
 function getSupabaseAdmin() {
@@ -379,6 +382,19 @@ export async function POST(request: NextRequest) {
         from: fromAddress,
       });
       emailResults.restaurantEmail = result.success;
+    }
+
+    if (notificationSettings?.whatsapp_booking_confirmation !== false) {
+      await sendPushNotification(getSupabaseAdmin(), body.website_id, {
+        title: `Nueva reserva · ${restaurantName}`,
+        body: `${body.nombre} · ${formatDate(body.fecha)} ${body.hora} · ${body.personas || 1} personas`,
+        url: `/dashboard/reservas?date=${body.fecha}`,
+        tag: "booking",
+        data: {
+          bookingId: booking.id,
+          type: "reservation",
+        },
+      });
     }
 
     // Registrar en activity_log

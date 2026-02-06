@@ -26,6 +26,9 @@ import {
   getRateLimitKey,
   rateLimitPresets,
 } from "@neumorstudio/api-utils/rate-limit";
+import { sendPushNotification } from "@/lib/push";
+
+export const runtime = "nodejs";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -337,6 +340,19 @@ export async function POST(request: NextRequest) {
         from: fromAddress,
       });
       emailResults.businessEmail = result.success;
+    }
+
+    if (notificationSettings?.whatsapp_booking_confirmation !== false) {
+      await sendPushNotification(getSupabaseAdmin(), body.website_id, {
+        title: `Nueva cita · ${businessName}`,
+        body: `${nombre} · ${servicio || "Cita"} · ${formatDate(body.fecha)} ${body.hora}`,
+        url: `/dashboard/calendario?date=${body.fecha}`,
+        tag: "booking",
+        data: {
+          bookingId: booking.id,
+          type: "appointment",
+        },
+      });
     }
 
     await getSupabaseAdmin().from("activity_log").insert({

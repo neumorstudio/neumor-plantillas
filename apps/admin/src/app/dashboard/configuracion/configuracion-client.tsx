@@ -30,15 +30,6 @@ interface Props {
   initialWebsiteConfig: Record<string, unknown> | null;
 }
 
-const businessTypeLabels: Record<string, string> = {
-  restaurant: "Restaurante",
-  clinic: "Clinica",
-  salon: "Peluqueria",
-  shop: "Tienda",
-  fitness: "Gimnasio",
-  realestate: "Inmobiliaria",
-};
-
 export function ConfiguracionClient({
   client,
   websiteId,
@@ -47,15 +38,13 @@ export function ConfiguracionClient({
 }: Props) {
   const baseConfig = initialWebsiteConfig || {};
 
-  // Business data state
   const initialAddress =
     typeof baseConfig.address === "string" ? baseConfig.address : "";
-
-  const [businessData, setBusinessData] = useState({
+  const businessData = {
     business_name: client.business_name,
     phone: client.phone || "",
     address: client.address || initialAddress,
-  });
+  };
 
   // Notification settings state
   const [settings, setSettings] = useState({
@@ -70,6 +59,7 @@ export function ConfiguracionClient({
   });
 
   const [saving, setSaving] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -89,6 +79,165 @@ export function ConfiguracionClient({
       }));
     }
   };
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const ensurePushSubscription = async (silent = false) => {
+    if (typeof window === "undefined") return false;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      if (!silent) {
+        setMessage({
+          type: "error",
+          text: "Tu navegador no soporta notificaciones push.",
+        });
+      }
+      return false;
+    }
+
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+    if (!isStandalone) {
+      if (!silent) {
+        setMessage({
+          type: "error",
+          text: "Instala la app para activar notificaciones moviles.",
+        });
+      }
+      return false;
+    }
+
+    if (!vapidPublicKey) {
+      if (!silent) {
+        setMessage({
+          type: "error",
+          text: "Faltan las claves VAPID para activar notificaciones.",
+        });
+      }
+      return false;
+    }
+
+    if (Notification.permission === "denied") {
+      if (!silent) {
+        setMessage({
+          type: "error",
+          text: "Permiso denegado. Activa las notificaciones en tu navegador.",
+        });
+      }
+      return false;
+    }
+
+    if (Notification.permission === "default") {
+      if (silent) return false;
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setMessage({
+          type: "error",
+          text: "No se concedio el permiso para notificaciones.",
+        });
+        return false;
+      }
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      }
+
+      const response = await fetch("/api/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteId, subscription }),
+      });
+
+      if (!response.ok) {
+        if (!silent) {
+          setMessage({
+            type: "error",
+            text: "No se pudo guardar la suscripcion push.",
+          });
+        }
+        return false;
+      }
+
+      return true;
+    } catch {
+      if (!silent) {
+        setMessage({
+          type: "error",
+          text: "No se pudo activar la suscripcion push.",
+        });
+      }
+      return false;
+    }
+  };
+
+  const removePushSubscription = async () => {
+    if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      await fetch("/api/push", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteId, endpoint: subscription.endpoint }),
+      });
+      await subscription.unsubscribe();
+    }
+  };
+
+  const handleMobileToggle = async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
+
+    if (settings.whatsapp_booking_confirmation) {
+      await removePushSubscription();
+      setSettings((prev) => ({
+        ...prev,
+        whatsapp_booking_confirmation: false,
+      }));
+      setPushBusy(false);
+      return;
+    }
+
+    const ok = await ensurePushSubscription();
+    if (ok) {
+      setSettings((prev) => ({
+        ...prev,
+        whatsapp_booking_confirmation: true,
+      }));
+    }
+    setPushBusy(false);
+  };
+
+  useEffect(() => {
+    if (!settings.whatsapp_booking_confirmation) return;
+    if (typeof window === "undefined") return;
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission !== "granted") return;
+
+    ensurePushSubscription(true).catch(() => {});
+  }, [settings.whatsapp_booking_confirmation]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -128,7 +277,7 @@ export function ConfiguracionClient({
       <div className="mb-8">
         <h1 className="text-3xl font-heading font-bold mb-2">Configuracion</h1>
         <p className="text-[var(--text-secondary)]">
-          Personaliza tus datos y automatizaciones
+          Gestiona notificaciones y acceso rapido al website
         </p>
       </div>
 
@@ -150,99 +299,17 @@ export function ConfiguracionClient({
       )}
 
       <div className="max-w-2xl space-y-6">
-        {/* Business Info */}
-        <div className="neumor-card p-6">
-          <h2 className="text-xl font-semibold mb-6">Datos del Negocio</h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Nombre del Negocio
-              </label>
-              <input
-                type="text"
-                value={businessData.business_name}
-                onChange={(e) =>
-                  setBusinessData((prev) => ({
-                    ...prev,
-                    business_name: e.target.value,
-                  }))
-                }
-                className="neumor-input w-full"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Tipo de Negocio
-              </label>
-              <div className="neumor-inset p-3 rounded-lg text-[var(--text-secondary)]">
-                {businessTypeLabels[client.business_type] || client.business_type}
-              </div>
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
-                Contacta con NeumorStudio para cambiar el tipo de negocio
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <div className="neumor-inset p-3 rounded-lg text-[var(--text-secondary)]">
-                {client.email}
-              </div>
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
-                El email no se puede modificar
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Telefono</label>
-              <input
-                type="tel"
-                value={businessData.phone}
-                onChange={(e) =>
-                  setBusinessData((prev) => ({
-                    ...prev,
-                    phone: e.target.value,
-                  }))
-                }
-                placeholder="+34 600 000 000"
-                className="neumor-input w-full"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Direccion
-              </label>
-              <input
-                type="text"
-                value={businessData.address}
-                onChange={(e) =>
-                  setBusinessData((prev) => ({
-                    ...prev,
-                    address: e.target.value,
-                  }))
-                }
-                placeholder="Calle Principal 123, Ciudad"
-                className="neumor-input w-full"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Reservation Notifications */}
         <div className="neumor-card p-6">
-          <h2 className="text-xl font-semibold mb-6">
-            Notificaciones de Reservas
-          </h2>
+          <h2 className="text-xl font-semibold mb-6">Notificaciones</h2>
 
           <div className="space-y-6">
-            {/* Email Confirmation */}
+            {/* Email Notifications */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">Confirmacion por Email</h3>
+                <h3 className="font-medium">Notificaciones por Email</h3>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Enviar email automatico al cliente cuando haga una reserva
+                  Recibe alertas y confirmaciones en tu correo
                 </p>
               </div>
               <button
@@ -254,97 +321,19 @@ export function ConfiguracionClient({
               </button>
             </div>
 
-            {/* WhatsApp Confirmation */}
+            {/* Mobile Notifications */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">Confirmacion por WhatsApp</h3>
+                <h3 className="font-medium">Notificaciones Movil</h3>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Enviar mensaje de WhatsApp al cliente con la confirmacion
+                  Recibe avisos importantes en la app instalada
                 </p>
               </div>
               <button
-                onClick={() => handleToggle("whatsapp_booking_confirmation")}
+                onClick={handleMobileToggle}
                 className="neumor-toggle"
                 data-active={settings.whatsapp_booking_confirmation}
-              >
-                <span className="neumor-toggle-knob" />
-              </button>
-            </div>
-
-            {/* 24h Reminder */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Recordatorio 24 horas antes</h3>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Enviar recordatorio automatico 24h antes de la reserva
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle("reminder_24h")}
-                className="neumor-toggle"
-                data-active={settings.reminder_24h}
-              >
-                <span className="neumor-toggle-knob" />
-              </button>
-            </div>
-
-            {settings.reminder_24h && (
-              <div className="ml-4 p-4 bg-[var(--shadow-light)] rounded-lg">
-                <label className="block text-sm font-medium mb-2">
-                  Hora del recordatorio
-                </label>
-                <input
-                  type="time"
-                  value={settings.reminder_time}
-                  onChange={(e) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      reminder_time: e.target.value,
-                    }))
-                  }
-                  className="neumor-input"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Lead Notifications */}
-        <div className="neumor-card p-6">
-          <h2 className="text-xl font-semibold mb-6">
-            Notificaciones de Leads
-          </h2>
-
-          <div className="space-y-6">
-            {/* Email New Lead */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Nuevo lead por Email</h3>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Recibir email cuando llegue un nuevo contacto
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle("email_new_lead")}
-                className="neumor-toggle"
-                data-active={settings.email_new_lead}
-              >
-                <span className="neumor-toggle-knob" />
-              </button>
-            </div>
-
-            {/* WhatsApp New Lead */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Nuevo lead por WhatsApp</h3>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Recibir notificacion por WhatsApp de nuevos contactos
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle("whatsapp_new_lead")}
-                className="neumor-toggle"
-                data-active={settings.whatsapp_new_lead}
+                disabled={pushBusy}
               >
                 <span className="neumor-toggle-knob" />
               </button>
@@ -352,25 +341,16 @@ export function ConfiguracionClient({
           </div>
         </div>
 
-        {/* Webhook Info */}
+        {/* Website ID */}
         <div className="neumor-card p-6">
-          <h2 className="text-xl font-semibold mb-4">Integracion n8n</h2>
+          <h2 className="text-xl font-semibold mb-4">Website ID</h2>
           <p className="text-sm text-[var(--text-secondary)] mb-4">
-            Tu webhook de n8n esta configurado y activo. Las automatizaciones se
-            ejecutan automaticamente.
+            Usalo para localizar rapidamente tu web en soporte o incidencias.
           </p>
 
           <div className="neumor-inset p-4 rounded-lg">
-            <p className="text-xs text-[var(--text-secondary)] mb-1">
-              Website ID
-            </p>
             <code className="text-sm break-all">{websiteId}</code>
           </div>
-
-          <p className="text-xs text-[var(--text-secondary)] mt-4">
-            Si necesitas cambios en las automatizaciones, contacta con el equipo
-            de NeumorStudio.
-          </p>
         </div>
 
         {/* Save Button */}

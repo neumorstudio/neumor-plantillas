@@ -24,6 +24,9 @@ import {
   getRateLimitKey,
   rateLimitPresets,
 } from "@neumorstudio/api-utils/rate-limit";
+import { sendPushNotification } from "@/lib/push";
+
+export const runtime = "nodejs";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -270,6 +273,19 @@ export async function POST(request: NextRequest) {
         from: fromAddress,
       });
       emailResults.businessEmail = result.success;
+    }
+
+    if (notificationSettings?.whatsapp_booking_confirmation !== false) {
+      await sendPushNotification(getSupabaseAdmin(), body.website_id, {
+        title: `Nueva sesion · ${businessName}`,
+        body: `${nombre} · ${clase || "Sesion"} · ${formatDate(body.fecha)} ${body.hora}`,
+        url: `/dashboard/sesiones?date=${body.fecha}`,
+        tag: "booking",
+        data: {
+          bookingId: booking.id,
+          type: "fitness",
+        },
+      });
     }
 
     await getSupabaseAdmin().from("activity_log").insert({

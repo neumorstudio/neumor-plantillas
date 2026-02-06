@@ -63,6 +63,7 @@ TRUNCATE TABLE restaurants CASCADE;
 
 -- Configuración de notificaciones
 TRUNCATE TABLE notification_settings CASCADE;
+TRUNCATE TABLE push_subscriptions CASCADE;
 
 -- ============================================================================
 -- 2. Borrar websites (sitios web de clientes)
