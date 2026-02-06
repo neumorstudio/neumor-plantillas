@@ -46,6 +46,15 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
 ---
 
 <section id="orders" class="orders-section" data-orders data-website-id={websiteId} data-currency={currency}>
+  {/* Toast de notificaciones */}
+  <div class="order-toast" data-order-toast role="alert" aria-live="polite">
+    <div class="toast-content">
+      <span class="toast-icon" data-toast-icon></span>
+      <span class="toast-message" data-toast-message></span>
+      <button type="button" class="toast-close" data-toast-close aria-label="Cerrar notificación">×</button>
+    </div>
+  </div>
+
   <div class="container">
     <div class="section-header">
       <h2 class="section-title" data-content="ordersTitle">{title}</h2>
@@ -249,6 +258,181 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
   .order-message.is-error { color: #dc2626; }
   .order-message.is-success { color: #16a34a; }
   .order-submit { width: 100%; padding: 0.9rem 1rem; font-size: 1rem; }
+  .order-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+  .order-submit .spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast de notificaciones */
+  .order-toast {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-150%);
+    z-index: 10000;
+    min-width: 320px;
+    max-width: 90vw;
+    padding: 1rem 1.25rem;
+    background: var(--neumor-bg, #f0f0f3);
+    border-radius: 1rem;
+    box-shadow: 
+      8px 8px 20px var(--shadow-dark, rgba(163,177,198,0.4)),
+      -4px -4px 12px var(--shadow-light, rgba(255,255,255,0.8));
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .order-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .order-toast.toast-error {
+    border-left: 4px solid #dc2626;
+  }
+  .order-toast.toast-success {
+    border-left: 4px solid #16a34a;
+  }
+  .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .toast-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.9rem;
+  }
+  .toast-error .toast-icon {
+    background: #dc2626;
+    color: white;
+  }
+  .toast-success .toast-icon {
+    background: #16a34a;
+    color: white;
+  }
+  .toast-message {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-primary, #1f2937);
+    line-height: 1.4;
+  }
+  .toast-close {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary, #6b7280);
+    font-size: 1.25rem;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .toast-close:hover {
+    background: var(--shadow-dark, rgba(163,177,198,0.2));
+    color: var(--text-primary, #1f2937);
+  }
+  /* Banner de confirmación de pago */
+  .payment-success-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .payment-success-banner.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .success-card {
+    background: var(--neumor-bg, #f0f0f3);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 
+      12px 12px 30px var(--shadow-dark, rgba(163,177,198,0.4)),
+      -6px -6px 20px var(--shadow-light, rgba(255,255,255,0.8));
+    transform: scale(0.9);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .payment-success-banner.show .success-card {
+    transform: scale(1);
+  }
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(22, 163, 74, 0.3);
+  }
+  .success-icon svg {
+    width: 40px;
+    height: 40px;
+    color: white;
+  }
+  .success-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary, #1f2937);
+    margin-bottom: 0.5rem;
+  }
+  .success-text {
+    font-size: 1rem;
+    color: var(--text-secondary, #6b7280);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  .success-close {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 0.75rem;
+    background: var(--accent, #6366f1);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 4px 4px 12px var(--shadow-dark, rgba(163,177,198,0.4)), -2px -2px 8px var(--shadow-light, rgba(255,255,255,0.8));
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .success-close:hover {
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 16px var(--shadow-dark, rgba(163,177,198,0.5)), -3px -3px 10px var(--shadow-light, rgba(255,255,255,0.9));
+  }
 
   @media (max-width: 1024px) {
     .orders-layout { grid-template-columns: 1fr; }
@@ -463,45 +647,141 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       pickupDateInput.setAttribute("min", iso);
     }
 
+    // Sistema de Toast mejorado
+    const toastEl = root.closest("[data-orders]")?.parentElement?.querySelector("[data-order-toast]") as HTMLElement | null;
+    const toastMessageEl = toastEl?.querySelector("[data-toast-message]") as HTMLElement | null;
+    const toastIconEl = toastEl?.querySelector("[data-toast-icon]") as HTMLElement | null;
+    const toastCloseEl = toastEl?.querySelector("[data-toast-close]") as HTMLElement | null;
+    let toastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const showToast = (message: string, type = "error", duration = 5000) => {
+      if (!toastEl || !toastMessageEl) {
+        // Fallback al mensaje inline si no hay toast
+        updateMessage(message, type);
+        return;
+      }
+      
+      toastEl.classList.remove("toast-error", "toast-success", "show");
+      void (toastEl as HTMLElement).offsetWidth; // Force reflow
+      
+      toastEl.classList.add(`toast-${type}`);
+      toastMessageEl.textContent = message;
+      
+      if (toastIconEl) {
+        toastIconEl.textContent = type === "success" ? "✓" : "!";
+      }
+      
+      toastEl.classList.add("show");
+      
+      if (toastTimeout) clearTimeout(toastTimeout);
+      if (duration > 0) {
+        toastTimeout = setTimeout(() => {
+          toastEl.classList.remove("show");
+        }, duration);
+      }
+    };
+
+    const hideToast = () => {
+      if (toastEl) toastEl.classList.remove("show");
+      if (toastTimeout) clearTimeout(toastTimeout);
+    };
+
+    toastCloseEl?.addEventListener("click", hideToast);
+
+    // Banner de éxito de pago
+    const createSuccessBanner = () => {
+      const existing = document.querySelector("[data-payment-success-banner]");
+      if (existing) existing.remove();
+
+      const banner = document.createElement("div");
+      banner.className = "payment-success-banner";
+      banner.setAttribute("data-payment-success-banner", "");
+      banner.innerHTML = `
+        <div class="success-card">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <h3 class="success-title">¡Pedido confirmado!</h3>
+          <p class="success-text">Tu pago se ha procesado correctamente. Te esperamos para recoger tu pedido en la fecha y hora seleccionadas.</p>
+          <button type="button" class="success-close" data-success-close>Entendido</button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+
+      const closeBtn = banner.querySelector("[data-success-close]");
+      closeBtn?.addEventListener("click", () => {
+        banner.classList.remove("show");
+        setTimeout(() => banner.remove(), 300);
+      });
+
+      return banner;
+    };
+
+    const showSuccessBanner = () => {
+      const banner = createSuccessBanner();
+      requestAnimationFrame(() => {
+        banner.classList.add("show");
+      });
+    };
+
+    // Manejar retorno desde Stripe
     const url = new URL(window.location.href);
     const orderStatus = url.searchParams.get("order");
     if (orderStatus === "success") {
-      updateMessage("Pago confirmado. Te esperamos para recoger tu pedido.", "success");
+      // Limpiar carrito completamente
       cart = {};
       saveCart(cart);
       renderCart();
+      
+      // Mostrar banner de éxito
+      showSuccessBanner();
+      
+      // Limpiar URL
       url.searchParams.delete("order");
       window.history.replaceState({}, document.title, url.toString());
     } else if (orderStatus === "cancel") {
-      updateMessage("Pago cancelado. Puedes intentarlo de nuevo.", "error");
+      showToast("Pago cancelado. Puedes intentarlo de nuevo cuando quieras.", "error", 6000);
       url.searchParams.delete("order");
       window.history.replaceState({}, document.title, url.toString());
-    } else {
-      updateMessage("", null);
     }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      hideToast();
       updateMessage("", null);
-      const webhookUrl = form.dataset.webhook;
-      const websiteIdValue = form.dataset.websiteId;
+      
+      const webhookUrl = (form as HTMLFormElement).dataset.webhook;
+      const websiteIdValue = (form as HTMLFormElement).dataset.websiteId;
 
       if (!webhookUrl || !websiteIdValue) {
-        updateMessage("Pedidos no disponibles en este momento.", "error");
+        showToast("Pedidos no disponibles en este momento. Inténtalo más tarde.", "error");
         return;
       }
 
-      const items = Object.values(cart).map((item) => ({
+      // Validación: carrito vacío
+      const cartEntries = Object.values(cart) as Array<{ id: string; name: string; priceCents: number; quantity: number }>;
+      if (cartEntries.length === 0) {
+        showToast("Añade al menos un plato a tu pedido para continuar.", "error");
+        return;
+      }
+
+      // Validación: cada producto debe tener precio válido
+      const invalidItems = cartEntries.filter(item => !item.priceCents || item.priceCents <= 0);
+      if (invalidItems.length > 0) {
+        const itemNames = invalidItems.slice(0, 2).map(i => i.name).join(", ");
+        const more = invalidItems.length > 2 ? ` y ${invalidItems.length - 2} más` : "";
+        showToast(`Error con: ${itemNames}${more}. Contacta con el restaurante.`, "error", 6000);
+        return;
+      }
+
+      const items = cartEntries.map(item => ({
         id: item.id,
         quantity: item.quantity,
       }));
 
-      if (items.length === 0) {
-        updateMessage("Agrega al menos un plato al carrito.", "error");
-        return;
-      }
-
-      const formData = new FormData(form);
+      const formData = new FormData(form as HTMLFormElement);
       const payload = {
         website_id: websiteIdValue,
         items,
@@ -515,8 +795,10 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
         notes: formData.get("notes"),
       };
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Procesando...";
+      // Estado de carga
+      (submitBtn as HTMLButtonElement).disabled = true;
+      const originalText = submitBtn.textContent || "Pagar y recoger";
+      submitBtn.innerHTML = '<span class="spinner"></span>Procesando tu pedido...';
 
       try {
         const response = await fetch(webhookUrl, {
@@ -525,25 +807,34 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
           body: JSON.stringify(payload),
         });
 
-        const result = await response.json().catch(() => ({}));
+        let result = {};
+        try {
+          result = await response.json();
+        } catch {
+          result = {};
+        }
+
         if (!response.ok) {
-          updateMessage(result?.error || "No se pudo crear el pedido.", "error");
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Pagar y recoger";
+          // Mostrar mensaje específico del backend si existe
+          const errorMessage = (result as { message?: string; error?: string }).message || (result as { message?: string; error?: string }).error || "No se pudo crear el pedido. Inténtalo de nuevo.";
+          showToast(errorMessage, "error", 6000);
+          (submitBtn as HTMLButtonElement).disabled = false;
+          submitBtn.textContent = originalText;
           return;
         }
 
-        if (result?.url) {
-          window.location.href = result.url;
+        if ((result as { url?: string }).url) {
+          // Redirección a Stripe - el carrito se limpiará al volver con ?order=success
+          window.location.href = (result as { url: string }).url;
           return;
         }
 
-        updateMessage("No se pudo iniciar el pago.", "error");
+        showToast("No se pudo iniciar el pago. Por favor, inténtalo de nuevo.", "error");
       } catch (error) {
-        updateMessage("Error de red. Intenta nuevamente.", "error");
+        showToast("Error de conexión. Comprueba tu internet e inténtalo de nuevo.", "error", 6000);
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Pagar y recoger";
+        (submitBtn as HTMLButtonElement).disabled = false;
+        submitBtn.textContent = originalText;
       }
     });
 
