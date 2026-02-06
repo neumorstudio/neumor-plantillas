@@ -75,6 +75,9 @@ export function PersonalizacionClient({
 
     const [toneA, toneB, accent] = themeOption.colors;
     const base = toneB || toneA || defaultColors.primary;
+    if (!base) {
+      return { ...defaultColors };
+    }
 
     const hexToRgb = (hex: string) => {
       const sanitized = hex.replace("#", "");
