@@ -71,6 +71,45 @@ export function ConfiguracionClient({
     return () => window.clearTimeout(timeout);
   }, [message]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncSubscription = async () => {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        if (settings.whatsapp_booking_confirmation) {
+          setSettings((prev) => ({
+            ...prev,
+            whatsapp_booking_confirmation: false,
+          }));
+        }
+        return;
+      }
+
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as { standalone?: boolean }).standalone === true;
+
+      if (!isStandalone && settings.whatsapp_booking_confirmation) {
+        setSettings((prev) => ({
+          ...prev,
+          whatsapp_booking_confirmation: false,
+        }));
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (!subscription && settings.whatsapp_booking_confirmation) {
+        setSettings((prev) => ({
+          ...prev,
+          whatsapp_booking_confirmation: false,
+        }));
+      }
+    };
+
+    syncSubscription().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleToggle = (key: keyof typeof settings) => {
     if (typeof settings[key] === "boolean") {
       setSettings((prev) => ({
@@ -210,24 +249,26 @@ export function ConfiguracionClient({
     if (pushBusy) return;
     setPushBusy(true);
 
-    if (settings.whatsapp_booking_confirmation) {
-      await removePushSubscription();
-      setSettings((prev) => ({
-        ...prev,
-        whatsapp_booking_confirmation: false,
-      }));
-      setPushBusy(false);
-      return;
-    }
+    try {
+      if (settings.whatsapp_booking_confirmation) {
+        await removePushSubscription();
+        setSettings((prev) => ({
+          ...prev,
+          whatsapp_booking_confirmation: false,
+        }));
+        return;
+      }
 
-    const ok = await ensurePushSubscription();
-    if (ok) {
-      setSettings((prev) => ({
-        ...prev,
-        whatsapp_booking_confirmation: true,
-      }));
+      const ok = await ensurePushSubscription();
+      if (ok) {
+        setSettings((prev) => ({
+          ...prev,
+          whatsapp_booking_confirmation: true,
+        }));
+      }
+    } finally {
+      setPushBusy(false);
     }
-    setPushBusy(false);
   };
 
   useEffect(() => {
@@ -316,6 +357,7 @@ export function ConfiguracionClient({
                 onClick={() => handleToggle("email_booking_confirmation")}
                 className="neumor-toggle"
                 data-active={settings.email_booking_confirmation}
+                type="button"
               >
                 <span className="neumor-toggle-knob" />
               </button>
@@ -334,6 +376,7 @@ export function ConfiguracionClient({
                 className="neumor-toggle"
                 data-active={settings.whatsapp_booking_confirmation}
                 disabled={pushBusy}
+                type="button"
               >
                 <span className="neumor-toggle-knob" />
               </button>
