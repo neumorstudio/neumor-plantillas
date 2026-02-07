@@ -27,7 +27,7 @@ export function RestaurantMobileWrapper({ businessType }: RestaurantMobileWrappe
 
   return (
     <RestaurantMobileProvider businessType={businessType}>
-      <RestaurantBottomNav businessType={businessType} />
+      <RestaurantBottomNav />
     </RestaurantMobileProvider>
   );
 }

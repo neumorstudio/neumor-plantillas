@@ -529,7 +529,6 @@ export default function ReservasClient({
             onCancel={(bookingId) => openConfirmDialog(bookingId, "cancel")}
             onComplete={(bookingId) => openConfirmDialog(bookingId, "complete")}
             getStatusBadge={getStatusBadge}
-            formatDate={formatDate}
             formatTime={formatTime}
             getTimeBucket={getTimeBucket}
             getRelativeLabel={getRelativeLabel}

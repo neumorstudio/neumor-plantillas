@@ -48,19 +48,12 @@ interface RestaurantReservasMobileProps {
   onComplete: (bookingId: string) => void;
   getStatusBadge: (status: string) => React.ReactNode;
   // Funciones reutilizadas del componente padre
-  formatDate: (dateStr: string) => string;
   formatTime: (timeStr: string | null) => string;
   getTimeBucket: (bookingTime: string | null) => string;
   getRelativeLabel: (dateStr: string, timeStr: string | null) => string | null;
   // CORRECCIÓN 1: Fecha activa desde query param
   activeDate: string;
 }
-
-const MEAL_FILTERS: { value: MealFilter; label: string }[] = [
-  { value: "all", label: "Todas" },
-  { value: "comida", label: "Comida" },
-  { value: "cena", label: "Cena" },
-];
 
 export function RestaurantReservasMobile({
   bookings,
@@ -70,7 +63,6 @@ export function RestaurantReservasMobile({
   onCancel,
   onComplete,
   getStatusBadge,
-  formatDate,
   formatTime,
   getTimeBucket,
   getRelativeLabel,

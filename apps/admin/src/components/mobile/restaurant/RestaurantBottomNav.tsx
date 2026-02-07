@@ -27,11 +27,9 @@ import { RestaurantNavFAB } from "./RestaurantNavFAB";
 import { RestaurantNotificationsPane, useNotificationCount } from "./RestaurantNotificationsPane";
 import { useRestaurantMobileContext } from "./RestaurantMobileProvider";
 
-interface RestaurantBottomNavProps {
-  businessType: string;
-}
+interface RestaurantBottomNavProps {}
 
-export function RestaurantBottomNav({ businessType }: RestaurantBottomNavProps) {
+export function RestaurantBottomNav(_: RestaurantBottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [notificationsOpen, setNotificationsOpen] = useState(false);

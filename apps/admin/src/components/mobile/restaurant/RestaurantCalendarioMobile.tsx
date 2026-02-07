@@ -90,7 +90,6 @@ export function RestaurantCalendarioMobile({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [mealFilter, setMealFilter] = useState<MealFilter>("all");
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [editingSpecialDay, setEditingSpecialDay] = useState<number | null>(null);
 
   const todayIso = new Date().toISOString().split("T")[0];
 
