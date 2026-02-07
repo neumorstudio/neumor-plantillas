@@ -1,65 +1,62 @@
----
-title: Arquitectura
-description: Arquitectura técnica y flujo de datos del SaaS.
----
+# Architecture
 
-## Vista general
+Resumen operativo de arquitectura y flujo de datos para contributors.
 
-El repositorio es un monorepo con Turborepo y pnpm. Está dividido en apps y paquetes compartidos:
+## Módulos principales
 
-```
-apps/
-  admin/              # Panel de administración (Next.js 15)
-  templates/          # Sitios públicos (Astro 5 SSR)
-packages/
-  cli/                # Provisioning de clientes
-  api-utils/          # CORS, rate-limit, validation
-  config/             # Config compartida (eslint, tailwind, ts)
-  logger/             # Logger compartido
-  supabase/           # Migraciones y tipos
-  n8n-templates/       # Workflows de automatización
-```
+- `apps/admin` (Next.js 15)
+  - Panel de administración + APIs backend en `src/app/api/`
+  - Server Actions en `src/lib/actions*.ts`
+- `apps/templates/*` (Astro)
+  - Plantillas públicas por vertical
+  - Formularios públicos apuntan a APIs del admin
+- `apps/templates/unified` (Astro)
+  - Multi-tenant: resuelve `subdomain`/`custom_domain` vía middleware
+  - Cache en middleware ~60s, en preview (`?preview=1`) se omite
+- `packages/api-utils`
+  - CORS, rate-limit, validaciones compartidas
+- `packages/supabase`
+  - Tipos y migraciones SQL (source of truth)
+- `packages/logger`
+  - Logger estructurado
+- `packages/cli`
+  - Provisioning de clientes
 
-## Componentes principales
+## Flujo de datos (alto nivel)
 
-```mermaid
-flowchart LR
-  Visitor[Cliente final] --> Template[Templates (Astro)]
-  Template --> AdminAPI[Admin API (Next.js Route Handlers)]
-  AdminPanel[Admin (Next.js)] --> Supabase[(Supabase Postgres)]
-  AdminAPI --> Supabase
-  AdminAPI --> Resend[Email/Resend]
-  AdminAPI --> n8n[n8n Webhooks]
-  Supabase --> AdminPanel
-```
+1. Usuario interactúa con una plantilla (Astro).
+2. Formularios públicos envían datos a APIs del admin (`/api/...`).
+3. Las APIs validan, rate-limit, escriben en Supabase y disparan emails.
+4. Admin consume datos vía server actions (Next.js) y muestra UI.
 
-## Multi-tenancy y RLS
+Regla clave:
+- **Nunca** escribir directo a Supabase desde frontend. Usar APIs del admin.
 
-El aislamiento de datos se basa en `website_id` y políticas RLS en PostgreSQL:
+## Multi-tenant / `website_id`
 
-- `clients` se vincula a `auth.users` por `auth_user_id`.
-- `websites` pertenece a un `client`.
-- Todas las tablas de negocio (bookings, leads, etc.) incluyen `website_id`.
+- La tabla `websites` define configuración y branding por cliente.
+- `website_id` es la clave que relaciona reservas, pedidos, clientes, etc.
+- `apps/templates/unified` resuelve el tenant vía `subdomain` o `custom_domain`.
 
-Este patrón permite que cada usuario vea solo los datos de su website sin lógica adicional en el frontend.
+## Configuración y personalización
 
-## Configuración por tipo de negocio
+- La personalización se guarda en `websites.config`.
+- Section builder usa `config.sectionsConfig` (ver `packages/supabase/src/sections-catalog.ts`).
+- Legacy: algunos textos pueden existir en `config.content`.
 
-La tabla `business_type_config` define qué secciones del dashboard se muestran según el tipo de negocio (`business_type`). El layout del admin consulta esta tabla y ajusta el sidebar de manera dinámica.
+## DB y migraciones
 
-## Flujos clave del producto
+- Migrations fuente: `packages/supabase/migrations/`.
+- Supabase CLI local: `supabase/migrations/`.
+- No crear ni modificar migraciones sin ticket explícito.
 
-- **Carga de sitio público**: las plantillas leen `websites.config` y variantes de componentes para renderizar el sitio.
-- **Captura de datos públicos**: formularios de reservas/citas/presupuestos/contacto envían datos a endpoints del admin o webhooks externos.
-- **Gestión en el admin**: el panel consume Supabase con `website_id` y revalida rutas después de mutaciones.
-- **Automatizaciones**: los workflows de `packages/n8n-templates` cubren captura de leads, reservas y recordatorios.
+## Rutas críticas
 
-## Paquetes compartidos
+- Admin APIs: `apps/admin/src/app/api/*`.
+- Server actions: `apps/admin/src/lib/actions*.ts`.
+- Templates forms:
+  - `AppointmentForm.astro` → `/api/citas`
+  - `ReservationForm.astro` → `/api/reservas`
+  - `ClassBookingForm.astro` → `/api/entrenamientos`
+  - `ContactForm.astro` → `/api/contacto` o `/api/presupuestos`
 
-- `packages/supabase`: migraciones SQL y tipos TypeScript generados.
-- `packages/api-utils`: CORS, rate limiting y validación para endpoints.
-- `packages/config`: configuración compartida (ESLint, Tailwind, TypeScript).
-- `packages/logger`: logger compartido.
-- `packages/cli`: creación de clientes, websites y dominio en Vercel.
-
-Para más detalle de tablas y relaciones, ver `docs/DATABASE.md`.

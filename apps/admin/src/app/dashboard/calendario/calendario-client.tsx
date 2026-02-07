@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SegmentedControl } from "@/components/mobile";
 import { deleteBooking, updateBooking } from "@/lib/actions";
+import { RestaurantCalendarioMobile, useRestaurantMobile } from "@/components/mobile/restaurant";
 
 interface BusinessHour {
   day_of_week: number;
@@ -117,6 +118,7 @@ export default function CalendarioClient({
   businessType,
 }: Props) {
   const isRestaurant = businessType === "restaurant";
+  const { isRestaurantMobile } = useRestaurantMobile({ businessType });
   const bookingLabel = isRestaurant ? "Reserva" : "Cita";
   const bookingLabelPlural = isRestaurant ? "Reservas" : "Citas";
   const searchParams = useSearchParams();
@@ -253,6 +255,12 @@ export default function CalendarioClient({
     notes: "",
     service_ids: [] as string[],
   });
+
+  // CORRECCIÓN 4: Reiniciar createParamHandled cuando cambia el query param
+  useEffect(() => {
+    // Reset el flag cuando cambia el query param para permitir re-apertura
+    createParamHandled.current = false;
+  }, [searchParams.get("create"), searchParams.get("date")]);
 
   useEffect(() => {
     if (createParamHandled.current) return;
@@ -1098,12 +1106,66 @@ export default function CalendarioClient({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold mb-2">Calendario</h1>
-        <p className="text-[var(--text-secondary)]">
-          Configura horarios y revisa las {bookingLabelPlural.toLowerCase()} del dia.
-        </p>
-      </div>
+      {/* 
+        VISTA MÓVIL RESTAURANT (Simplificada)
+        
+        Cuando isRestaurantMobile === true, mostramos una vista simplificada:
+        - Calendario mensual claro
+        - Días pasados deshabilitados
+        - Contadores de reservas en cada celda
+        - Filtros Comida/Cena
+        - Botón "Modificar horarios" para panel colapsable
+      */}
+      {isRestaurantMobile ? (
+        <>
+          {toast && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+              <div
+                className={`p-4 rounded-xl text-sm font-medium shadow-lg ${
+                  toast.type === "success"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                {toast.text}
+              </div>
+            </div>
+          )}
+
+          {/* CORRECCIÓN 3: Pasar handlers para edición de horarios */}
+          <RestaurantCalendarioMobile
+            bookings={bookings}
+            slots={slots}
+            specialDays={specialDays}
+            currentYear={calendarYear}
+            currentMonth={calendarMonth}
+            onMonthChange={(year, month) => {
+              setCalendarYear(year);
+              setCalendarMonth(month);
+              fetchBookings(year, month);
+            }}
+            getTimeBucket={getTimeBucket}
+            onAddSpecialDay={handleAddSpecialDay}
+            onDeleteSpecialDay={handleDeleteSpecialDay}
+            onSaveSpecialDays={handleSaveSpecialDays}
+            onAddSpecialSlot={handleAddSpecialSlot}
+            onRemoveSpecialSlot={handleRemoveSpecialSlot}
+            onSpecialDayChange={handleSpecialDayChange}
+            onSpecialSlotChange={handleSpecialSlotChange}
+            savingSpecialDays={savingSpecialDays}
+          />
+        </>
+      ) : (
+        <>
+          {/* Header - Desktop y móvil no-restaurant */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-heading font-bold mb-2">Calendario</h1>
+            <p className="text-[var(--text-secondary)]">
+              Configura horarios y revisa las {bookingLabelPlural.toLowerCase()} del dia.
+            </p>
+          </div>
 
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
@@ -2324,6 +2386,8 @@ export default function CalendarioClient({
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

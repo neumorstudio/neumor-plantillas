@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Pencil, Calendar, Phone, User, FileText, X } from "lucide-react";
 import { updateBooking, updateBookingStatus } from "@/lib/actions";
 import { BottomSheet, ConfirmDialog, SegmentedControl } from "@/components/mobile";
+import { RestaurantReservasMobile, useRestaurantMobile } from "@/components/mobile/restaurant";
 
 interface Booking {
   id: string;
@@ -55,6 +57,22 @@ export default function ReservasClient({
   businessType: string;
 }) {
   const isRestaurant = businessType === "restaurant";
+  
+  /**
+   * GUARD CENTRAL: isRestaurantMobile
+   * 
+   * Este guard determina si debemos mostrar la vista móvil simplificada
+   * específica para el nicho RESTAURANT.
+   * 
+   * Condiciones:
+   * - businessType === "restaurant"
+   * - viewport < 1024px
+   */
+  const { isRestaurantMobile } = useRestaurantMobile({ businessType });
+  
+  // Leer fecha de URL (para navegación desde calendario)
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [quickFilters, setQuickFilters] = useState<QuickFilter[]>([]);
@@ -274,7 +292,9 @@ export default function ReservasClient({
         (booking.customer_phone?.includes(searchTerm) ?? false) ||
         (booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
       const matchesQuick = matchesQuickFilters(booking);
-      return matchesFilter && matchesSearch && matchesQuick;
+      // Filtro por fecha desde URL (para navegación desde calendario)
+      const matchesDate = dateParam ? booking.booking_date === dateParam : true;
+      return matchesFilter && matchesSearch && matchesQuick && matchesDate;
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
@@ -447,30 +467,101 @@ export default function ReservasClient({
 
   return (
     <div>
-      {/* Header */}
-      {isRestaurant ? (
-        <div className="page-header mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
-            <p className="text-sm text-[var(--text-secondary)]">
-              Gestiona las reservas de tu negocio
-            </p>
-          </div>
-          <Link
-            href={`/dashboard/calendario?create=1&date=${todayIso}`}
-            className="neumor-btn neumor-btn-accent text-sm font-semibold px-4 py-2.5 w-full sm:w-auto text-center"
-          >
-            + Nueva reserva
-          </Link>
-        </div>
+      {/* 
+        VISTA MÓVIL RESTAURANT (Simplificada)
+        
+        Cuando isRestaurantMobile === true, mostramos una vista simplificada:
+        - Solo reservas del día actual
+        - Sin header con título
+        - Sin botón "+ Nueva reserva" (cubierto por FAB)
+        - 3 pestañas: Todas, Comida, Cena
+      */}
+      {isRestaurantMobile ? (
+        <>
+          {undoNotice && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+              <div
+                className="p-4 rounded-xl text-sm font-medium shadow-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-between gap-3"
+                role="status"
+                aria-live="polite"
+              >
+                <span>
+                  {undoNotice.customerName !== "Reserva"
+                    ? `Reserva de ${undoNotice.customerName} cancelada.`
+                    : "Reserva cancelada."}
+                </span>
+                <button
+                  type="button"
+                  className="neumor-btn text-xs px-3 py-1.5"
+                  onClick={handleUndoCancel}
+                  disabled={isPending}
+                >
+                  Deshacer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {undoError && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+              <div
+                className="p-4 rounded-xl text-sm font-medium shadow-lg bg-red-50 text-red-700 border border-red-200"
+                role="status"
+                aria-live="polite"
+              >
+                {undoError}
+              </div>
+            </div>
+          )}
+
+          {/* CORRECCIÓN 1: Pasar fecha activa como prop */}
+          <RestaurantReservasMobile
+            bookings={bookings}
+            isPending={isPending}
+            onEdit={(booking) => {
+              setActionError(null);
+              setBookingEdit(booking);
+              setServicesText(
+                booking.services?.map((s) => s.name).join(", ") || ""
+              );
+            }}
+            onConfirm={(bookingId) => openConfirmDialog(bookingId, "confirm")}
+            onCancel={(bookingId) => openConfirmDialog(bookingId, "cancel")}
+            onComplete={(bookingId) => openConfirmDialog(bookingId, "complete")}
+            getStatusBadge={getStatusBadge}
+            formatDate={formatDate}
+            formatTime={formatTime}
+            getTimeBucket={getTimeBucket}
+            getRelativeLabel={getRelativeLabel}
+            activeDate={dateParam ?? todayIso}
+          />
+        </>
       ) : (
-        <div className="page-header mb-6">
-          <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Gestiona las reservas de tu negocio
-          </p>
-        </div>
-      )}
+        <>
+          {/* Header - Desktop y móvil no-restaurant */}
+          {isRestaurant ? (
+            <div className="page-header mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Gestiona las reservas de tu negocio
+                </p>
+              </div>
+              <Link
+                href={`/dashboard/calendario?create=1&date=${todayIso}`}
+                className="neumor-btn neumor-btn-accent text-sm font-semibold px-4 py-2.5 w-full sm:w-auto text-center"
+              >
+                + Nueva reserva
+              </Link>
+            </div>
+          ) : (
+            <div className="page-header mb-6">
+              <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Gestiona las reservas de tu negocio
+              </p>
+            </div>
+          )}
 
       {isRestaurant && undoNotice && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
@@ -951,6 +1042,8 @@ export default function ReservasClient({
           </div>
         )}
       </BottomSheet>
+        </>
+      )}
     </div>
   );
 }

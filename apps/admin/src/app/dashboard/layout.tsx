@@ -2,6 +2,7 @@
 // Obtiene datos del cliente en el servidor, elimina el flash de "Cargando..."
 import { createClient } from "@/lib/supabase-server";
 import { Sidebar } from "./Sidebar";
+import { RestaurantMobileWrapper } from "@/components/mobile/restaurant";
 
 // Tipo para la configuración del business type
 interface BusinessTypeConfig {
@@ -95,15 +96,35 @@ export default async function DashboardLayout({
         visibleSections: DEFAULT_CONFIG.visible_sections,
       };
 
+  // Determinar si es restaurant para ajustes móviles específicos
+  const isRestaurant = clientInfo?.businessType === "restaurant";
+  
+  // Clase condicional para padding adicional en mobile restaurant (bottom nav)
+  const mainContentClass = isRestaurant 
+    ? "main-content main-content-has-bottom-nav" 
+    : "main-content";
+
   return (
     <div className="min-h-screen bg-[var(--neumor-bg)]">
       {/* Sidebar - Client Component para interactividad */}
       <Sidebar {...sidebarProps} />
 
       {/* Main Content - Responsive padding */}
-      <main className="main-content">
+      <main className={mainContentClass}>
         {children}
       </main>
+
+      {/* 
+        BOTTOM NAVIGATION - RESTAURANT MOBILE ONLY
+        
+        Navegación inferior tipo app nativa, específica para el nicho RESTAURANT.
+        - Solo se renderiza cuando businessType === "restaurant"
+        - Solo visible en mobile (< 1024px) via CSS lg:hidden
+        - No afecta a otros nichos ni al comportamiento desktop
+      */}
+      {isRestaurant && (
+        <RestaurantMobileWrapper businessType="restaurant" />
+      )}
     </div>
   );
 }

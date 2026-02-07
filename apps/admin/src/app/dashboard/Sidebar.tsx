@@ -236,30 +236,47 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
   const panelLabel =
     clientInfo?.businessType === "restaurant" ? "Panel de Restaurante" : "Panel de Gestión";
 
+  /**
+   * RESTAURANT MOBILE - Control de visibilidad del header/sidebar móvil
+   * 
+   * En móvil restaurant, la navegación principal es la bottom navigation.
+   * El header móvil (hamburguesa) y el overlay del sidebar NO se renderizan.
+   * El sidebar desktop se mantiene intacto (visible solo en lg+).
+   */
+  const isRestaurantMobile = clientInfo?.businessType === "restaurant";
+
   return (
     <>
       {/* ==================== MOBILE HEADER ==================== */}
-      <header className="mobile-header lg:hidden">
-        {/* Hamburger Button */}
-        <button
-          onClick={() => setIsMobileOpen(true)}
-          className="mobile-menu-btn"
-          aria-label="Abrir menú"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+      {/* 
+        RESTAURANT MOBILE: Header móvil oculto
+        La navegación principal es la bottom navigation (RestaurantBottomNav)
+        Renderizado condicional: solo si NO es restaurant (u otros nichos)
+      */}
+      {!isRestaurantMobile && (
+        <header className="mobile-header lg:hidden">
+          {/* Hamburger Button */}
+          <button
+            onClick={() => setIsMobileOpen(true)}
+            className="mobile-menu-btn"
+            aria-label="Abrir menú"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
 
-        {/* Page Title */}
-        <h1 className="mobile-header-title">{currentPageTitle}</h1>
+          {/* Page Title */}
+          <h1 className="mobile-header-title">{currentPageTitle}</h1>
 
-        {/* User Avatar */}
-        <div className="mobile-header-avatar">
-          {clientInfo ? getInitials(clientInfo.businessName) : "?"}
-        </div>
-      </header>
+          {/* User Avatar */}
+          <div className="mobile-header-avatar">
+            {clientInfo ? getInitials(clientInfo.businessName) : "?"}
+          </div>
+        </header>
+      )}
 
       {/* ==================== MOBILE OVERLAY ==================== */}
-      {isMobileOpen && (
+      {/* RESTAURANT MOBILE: Overlay oculto (no hay sidebar móvil abierto) */}
+      {!isRestaurantMobile && isMobileOpen && (
         <div
           className="sidebar-overlay lg:hidden"
           onClick={() => setIsMobileOpen(false)}

@@ -1082,6 +1082,833 @@ input[type="time"].no-native-time::-webkit-clear-button {
 }
 
 /* ================================================
+   RESTAURANT MOBILE BOTTOM NAVIGATION
+   ================================================ */
+
+/**
+ * Navegación inferior específica para RESTAURANT - Mobile Only
+ * 
+ * REGLAS DE ACTIVACIÓN:
+ * - Renderizado condicional en DashboardLayout: clientInfo?.businessType === "restaurant"
+ * - CSS visibility: lg:hidden (solo visible en viewport < 1024px)
+ * 
+ * IMPORTANTE: No afecta a otros nichos ni al comportamiento desktop.
+ * Este código es fácilmente eliminable sin impacto colateral.
+ */
+
+/* Contenedor principal de la bottom nav */
+.restaurant-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--neumor-bg);
+  box-shadow: 0 -4px 20px var(--shadow-dark);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Container interno - distribución de items */
+.restaurant-bottom-nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+  padding: 0 0.5rem;
+  position: relative;
+}
+
+/* Items de navegación normales */
+.restaurant-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex: 1;
+  height: 100%;
+  min-height: var(--touch-target-min);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  border-radius: 0.75rem;
+  position: relative;
+}
+
+.restaurant-bottom-nav-item:active {
+  transform: scale(0.95);
+}
+
+.restaurant-bottom-nav-item.active {
+  color: var(--accent);
+}
+
+/* Wrapper del icono para posicionar badge */
+.restaurant-bottom-nav-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Iconos */
+.restaurant-bottom-nav-item svg {
+  width: 22px;
+  height: 22px;
+  transition: transform var(--transition-fast);
+}
+
+.restaurant-bottom-nav-item:active svg {
+  transform: scale(0.9);
+}
+
+/* Label de los items */
+.restaurant-bottom-nav-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Badge de notificaciones */
+.restaurant-bottom-nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ================================================
+   RESTAURANT MOBILE FAB (Floating Action Button)
+   ================================================ */
+
+.restaurant-nav-fab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-top: -20px; /* Eleva el FAB sobre la barra */
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  box-shadow: 
+    0 4px 12px rgba(var(--accent-rgb), 0.4),
+    0 0 0 4px var(--neumor-bg);
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.restaurant-nav-fab:active {
+  transform: scale(0.92);
+  box-shadow: 
+    0 2px 8px rgba(var(--accent-rgb), 0.3),
+    0 0 0 4px var(--neumor-bg);
+}
+
+.restaurant-nav-fab-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restaurant-nav-fab svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* ================================================
+   RESTAURANT MOBILE - AJUSTES DE LAYOUT
+   ================================================ */
+
+/* Padding adicional en main-content SOLO cuando hay bottom nav */
+/* Esta clase se aplica condicionalmente en DashboardLayout */
+.main-content-has-bottom-nav {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom) + 1rem) !important;
+}
+
+/* Desktop: Ocultar siempre la bottom nav de restaurant */
+@media (min-width: 1024px) {
+  .restaurant-bottom-nav {
+    display: none !important;
+  }
+  
+  .main-content-has-bottom-nav {
+    padding-bottom: 1rem !important;
+  }
+}
+
+/* ================================================
+   RESTAURANT MOBILE NOTIFICATIONS PANE
+   ================================================ */
+
+/**
+ * Panel de notificaciones específico para RESTAURANT - Mobile Only
+ * 
+ * Muestra eventos de reservas: creadas, modificadas, canceladas.
+ * Solo disponible para el nicho RESTAURANT en vista móvil.
+ */
+
+/* Overlay del panel */
+.restaurant-notifications-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 45;
+  animation: fadeIn var(--transition-normal);
+}
+
+/* Panel de notificaciones */
+.restaurant-notifications-pane {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 380px;
+  background: var(--neumor-bg);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight var(--transition-slow) cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: -4px 0 20px var(--shadow-dark);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Header del panel */
+.restaurant-notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  padding-top: calc(var(--mobile-header-height, 60px) + 0.5rem);
+  border-bottom: 1px solid var(--shadow-dark);
+  background: var(--neumor-bg);
+}
+
+.restaurant-notifications-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.restaurant-notifications-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.restaurant-notifications-close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: var(--neumor-bg);
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.restaurant-notifications-close:active {
+  box-shadow:
+    inset 2px 2px 4px var(--shadow-dark),
+    inset -2px -2px 4px var(--shadow-light);
+}
+
+/* Lista de notificaciones */
+.restaurant-notifications-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Item de notificación */
+.restaurant-notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 1rem;
+  background: var(--neumor-bg);
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.restaurant-notification-item.unread {
+  background: rgba(var(--accent-rgb), 0.05);
+}
+
+.restaurant-notification-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--neumor-bg);
+  box-shadow:
+    2px 2px 4px var(--shadow-dark),
+    -2px -2px 4px var(--shadow-light);
+  flex-shrink: 0;
+}
+
+.restaurant-notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.restaurant-notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.restaurant-notification-type {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.restaurant-notification-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.restaurant-notification-customer {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.restaurant-notification-details {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.restaurant-notification-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
+/* Estado vacío */
+.restaurant-notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Footer */
+.restaurant-notifications-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--shadow-dark);
+  background: var(--neumor-bg);
+}
+
+.restaurant-notifications-mark-all {
+  width: 100%;
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.restaurant-notifications-mark-all:active {
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+/* Desktop: Panel de notificaciones más estrecho */
+@media (min-width: 640px) {
+  .restaurant-notifications-pane {
+    max-width: 400px;
+  }
+  
+  .restaurant-notifications-header {
+    padding-top: 1rem;
+  }
+}
+
+/* ================================================
+   RESTAURANT MOBILE RESERVAS
+   ================================================ */
+
+/**
+ * Vista móvil simplificada para reservas - RESTAURANT ONLY
+ * 
+ * - Fecha actual fija en la parte superior
+ * - 3 pestañas: Todas, Comida, Cena
+ * - Cards de reservas agrupadas por franja
+ */
+
+.restaurant-reservas-mobile {
+  padding: 0.5rem 0;
+}
+
+/* Fecha actual fija con navegación */
+.restaurant-reservas-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  margin-bottom: 0.75rem;
+  background: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+}
+
+.restaurant-reservas-date-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  justify-content: center;
+}
+
+.restaurant-reservas-date-content svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Botones de navegación de fecha */
+.restaurant-reservas-nav-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: var(--neumor-bg);
+  box-shadow:
+    2px 2px 4px var(--shadow-dark),
+    -2px -2px 4px var(--shadow-light);
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.restaurant-reservas-nav-btn:active {
+  box-shadow:
+    inset 2px 2px 4px var(--shadow-dark),
+    inset -2px -2px 4px var(--shadow-light);
+}
+
+/* Badge "Hoy" */
+.restaurant-reservas-today-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--accent);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+/* Botón para ir al calendario */
+.restaurant-reservas-calendar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: var(--neumor-bg);
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.restaurant-reservas-calendar-btn:active {
+  box-shadow:
+    inset 2px 2px 4px var(--shadow-dark),
+    inset -2px -2px 4px var(--shadow-light);
+}
+
+/* Pestañas */
+.restaurant-reservas-tabs {
+  margin-bottom: 1rem;
+  padding: 0 0.25rem;
+}
+
+/* Lista de reservas */
+.restaurant-reservas-list {
+  padding: 0 0.25rem;
+}
+
+/* Estado vacío */
+.restaurant-reservas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.restaurant-reservas-empty svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Card de reserva */
+.restaurant-reservas-card {
+  background: var(--neumor-bg);
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+  transition: opacity 0.2s ease;
+}
+
+/* Header de la card */
+.restaurant-reservas-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.restaurant-reservas-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.restaurant-reservas-card-title h3 {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Info de la card */
+.restaurant-reservas-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.restaurant-reservas-card-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.restaurant-reservas-card-row svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.restaurant-reservas-card-row a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.restaurant-reservas-card-row a:hover {
+  text-decoration: underline;
+}
+
+/* Acciones */
+.restaurant-reservas-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--shadow-dark);
+}
+
+.restaurant-reservas-card-status {
+  flex: 1;
+  text-align: center;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+}
+
+/* ================================================
+   RESTAURANT MOBILE CALENDARIO
+   ================================================ */
+
+/**
+ * Vista móvil simplificada para calendario - RESTAURANT ONLY
+ * 
+ * - Calendario mensual claro
+ * - Días pasados deshabilitados
+ * - Contadores de reservas en cada celda
+ * - Filtros Comida/Cena
+ */
+
+.restaurant-calendario-mobile {
+  padding: 0.5rem 0;
+}
+
+/* Header del calendario */
+.restaurant-calendario-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+}
+
+.restaurant-calendario-header h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin: 0;
+}
+
+/* Grid del calendario */
+.restaurant-calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Labels de días */
+.restaurant-calendario-day-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.restaurant-calendario-day-label {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0.25rem;
+}
+
+/* Celdas del calendario */
+.restaurant-calendario-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  position: relative;
+  background: var(--neumor-bg);
+  box-shadow:
+    2px 2px 4px var(--shadow-dark),
+    -2px -2px 4px var(--shadow-light);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Día vacío (padding de mes) */
+.restaurant-calendario-day.empty {
+  background: transparent;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Día actual */
+.restaurant-calendario-day.today {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3);
+}
+
+/* Día seleccionado */
+.restaurant-calendario-day.selected:not(.today) {
+  box-shadow:
+    inset 2px 2px 4px var(--shadow-dark),
+    inset -2px -2px 4px var(--shadow-light);
+}
+
+/* Día pasado (deshabilitado) */
+.restaurant-calendario-day.past {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--text-secondary);
+}
+
+/* Contador de reservas */
+.restaurant-calendario-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restaurant-calendario-day.today .restaurant-calendario-count {
+  background: white;
+  color: var(--accent);
+}
+
+/* Filtros Comida/Cena */
+.restaurant-calendario-filters {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+}
+
+.restaurant-calendario-filter {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.restaurant-calendario-filter.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
+}
+
+/* Panel de horarios colapsable */
+.restaurant-calendario-schedule {
+  margin-top: 1rem;
+}
+
+.restaurant-calendario-schedule-toggle {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--neumor-bg);
+  border: none;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow:
+    4px 4px 8px var(--shadow-dark),
+    -4px -4px 8px var(--shadow-light);
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.restaurant-calendario-schedule-toggle:active {
+  box-shadow:
+    inset 2px 2px 4px var(--shadow-dark),
+    inset -2px -2px 4px var(--shadow-light);
+}
+
+.restaurant-calendario-schedule-content {
+  padding: 1rem;
+  margin-top: 0.5rem;
+  background: var(--neumor-bg);
+  border-radius: 1rem;
+  box-shadow:
+    inset 2px 2px 4px var(--shadow-dark),
+    inset -2px -2px 4px var(--shadow-light);
+}
+
+/* ================================================
    UTILITY CLASSES
    ================================================ */
 .line-clamp-1 {
