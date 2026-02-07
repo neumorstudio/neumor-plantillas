@@ -37,6 +37,8 @@ interface DesktopLayoutProps {
   onReset: () => void;
   onSave: () => void;
   saving: boolean;
+  hasUnsavedChanges: boolean;
+  savedNotice: boolean;
 
   // Message
   message: { type: "success" | "error"; text: string } | null;
@@ -57,6 +59,8 @@ export function DesktopLayout({
   onReset,
   onSave,
   saving,
+  hasUnsavedChanges,
+  savedNotice,
   message,
 }: DesktopLayoutProps) {
   return (
@@ -65,12 +69,21 @@ export function DesktopLayout({
       <header className="sticky top-0 z-30 bg-[var(--neumor-bg)] pb-3 mb-3 border-b border-[var(--shadow-dark)]/30">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-heading font-bold">Personalizacion</h1>
+            <h1 className="text-2xl font-heading font-bold">Personalización</h1>
             <p className="text-sm text-[var(--text-secondary)]">
               Personaliza el aspecto de tu web en tiempo real
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {hasUnsavedChanges ? (
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                Cambios sin guardar
+              </span>
+            ) : savedNotice ? (
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                Guardado
+              </span>
+            ) : null}
             <button
               onClick={onReset}
               className="neumor-btn px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-[var(--shadow-light)]"
@@ -82,7 +95,9 @@ export function DesktopLayout({
             <button
               onClick={onSave}
               disabled={saving}
-              className="neumor-btn neumor-btn-accent px-6 py-2.5 font-semibold min-w-[120px]"
+              className={`neumor-btn neumor-btn-accent px-6 py-2.5 font-semibold min-w-[120px] ${
+                hasUnsavedChanges ? "ring-2 ring-[var(--accent)]" : ""
+              }`}
             >
               {saving ? "Guardando..." : "Guardar"}
             </button>

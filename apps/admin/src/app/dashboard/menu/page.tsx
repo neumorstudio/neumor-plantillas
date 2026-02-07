@@ -12,7 +12,7 @@ export default async function MenuPage() {
   if (businessType !== "restaurant") {
     return (
       <div className="neumor-card p-6">
-        <h1 className="text-2xl font-heading font-bold mb-2">Menu</h1>
+        <h1 className="text-2xl font-heading font-bold mb-2">Menú</h1>
         <p className="text-[var(--text-secondary)]">
           Esta seccion solo esta disponible para restaurantes.
         </p>
@@ -23,7 +23,7 @@ export default async function MenuPage() {
   if (!websiteId) {
     return (
       <div className="neumor-card p-6">
-        <h1 className="text-2xl font-heading font-bold mb-2">Menu</h1>
+        <h1 className="text-2xl font-heading font-bold mb-2">Menú</h1>
         <p className="text-[var(--text-secondary)]">
           No se encontro el website asociado a tu cuenta.
         </p>
@@ -46,7 +46,7 @@ export default async function MenuPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-heading font-bold mb-1">Menu</h1>
+        <h1 className="text-2xl font-heading font-bold mb-1">Menú</h1>
         <p className="text-[var(--text-secondary)]">
           Activa, ordena y actualiza tu menu sin depender de PDFs.
         </p>
@@ -56,4 +56,3 @@ export default async function MenuPage() {
     </div>
   );
 }
-

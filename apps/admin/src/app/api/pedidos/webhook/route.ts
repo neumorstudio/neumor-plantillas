@@ -55,8 +55,7 @@ export async function POST(request: NextRequest) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-  } catch (err) {
-    console.error("[pedidos webhook] Firma invalida:", err);
+  } catch {
     return new NextResponse("Firma invalida", { status: 400 });
   }
 

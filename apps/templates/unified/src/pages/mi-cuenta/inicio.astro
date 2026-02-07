@@ -19,17 +19,13 @@ if (!tenant) {
 // Get customer profile
 const customer = await getCustomerProfile(Astro.cookies, tenant.id, Astro.request);
 
-console.log("[MiCuenta/Inicio] tenant.id:", tenant.id);
-console.log("[MiCuenta/Inicio] customer:", customer);
 
 if (!customer) {
-  console.log("[MiCuenta/Inicio] No customer found, redirecting to login");
   return Astro.redirect("/mi-cuenta");
 }
 
 // Get bookings
 const bookings = await getCustomerBookings(Astro.cookies, customer.id, Astro.request);
-console.log("[MiCuenta/Inicio] bookings for customer", customer.id, ":", bookings.length, "bookings");
 
 // Get additional data for gym
 let gymData = null;

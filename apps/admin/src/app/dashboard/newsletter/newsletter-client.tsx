@@ -300,7 +300,7 @@ export function NewsletterClient({
 
       if (response.ok) {
         setAutomation(data.automation);
-        setMessage({ type: "success", text: automation.is_enabled ? "Automatizacion activada" : "Configuracion guardada" });
+        setMessage({ type: "success", text: automation.is_enabled ? "Automatización activada" : "Configuración guardada" });
       } else {
         setMessage({ type: "error", text: data.error || "Error al guardar" });
       }
@@ -493,7 +493,7 @@ export function NewsletterClient({
               : "neumor-btn"
           }`}
         >
-          <span>Automatizacion</span>
+          <span>Automatización</span>
           {automation.is_enabled && (
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
           )}
@@ -814,7 +814,7 @@ export function NewsletterClient({
 
             {/* Audiencia y Plantilla */}
             <div className="neumor-card p-6">
-              <h3 className="font-semibold mb-4">Configuracion de Contenido</h3>
+              <h3 className="font-semibold mb-4">Configuración de Contenido</h3>
 
               <div className="space-y-4">
                 <div>
@@ -860,7 +860,7 @@ export function NewsletterClient({
               disabled={savingAutomation || (automation.is_enabled && !automation.default_template_id)}
               className="neumor-btn neumor-btn-accent w-full py-3"
             >
-              {savingAutomation ? "Guardando..." : "Guardar Configuracion"}
+              {savingAutomation ? "Guardando..." : "Guardar Configuración"}
             </button>
           </div>
 
@@ -868,7 +868,7 @@ export function NewsletterClient({
           <div className="space-y-6">
             {/* Resumen */}
             <div className="neumor-card p-6">
-              <h3 className="font-semibold mb-4">Resumen de Automatizacion</h3>
+              <h3 className="font-semibold mb-4">Resumen de Automatización</h3>
 
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-[var(--border)]">

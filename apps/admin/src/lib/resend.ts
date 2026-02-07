@@ -2,12 +2,6 @@ import { Resend } from "resend";
 
 // Inicializar cliente Resend
 const resendApiKey = process.env.RESEND_API_KEY;
-const isProduction = process.env.NODE_ENV === "production";
-
-// Solo advertir una vez al cargar el módulo en desarrollo
-if (!resendApiKey && !isProduction) {
-  console.warn("[resend] RESEND_API_KEY no configurada - emails deshabilitados en desarrollo");
-}
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -58,13 +52,11 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     });
 
     if (error) {
-      console.error("Error enviando email:", error);
       return { success: false, error: error.message };
     }
 
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error("Error en sendEmail:", err);
     return { success: false, error: String(err) };
   }
 }

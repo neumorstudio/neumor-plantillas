@@ -340,7 +340,7 @@ export default async function DashboardPage() {
         ) : (
           <BookingsPendingWidget key={widgetId} count={stats.pendingBookings} />
         );
-      case "quotes_pending":
+      case "quotes_pending": {
         const qp = widgetData.quotes_pending as { count: number; totalAmount: number } | undefined;
         return (
           <QuotesPendingWidget
@@ -349,7 +349,8 @@ export default async function DashboardPage() {
             totalAmount={qp?.totalAmount || 0}
           />
         );
-      case "quotes_accepted":
+      }
+      case "quotes_accepted": {
         const qa = widgetData.quotes_accepted as { count: number; totalAmount: number } | undefined;
         return (
           <QuotesAcceptedWidget
@@ -358,6 +359,7 @@ export default async function DashboardPage() {
             totalAmount={qa?.totalAmount || 0}
           />
         );
+      }
       case "jobs_active":
         return (
           <JobsActiveWidget
@@ -365,7 +367,7 @@ export default async function DashboardPage() {
             count={(widgetData.jobs_active as { count: number })?.count || 0}
           />
         );
-      case "payments_pending":
+      case "payments_pending": {
         const pp = widgetData.payments_pending as { count: number; totalAmount: number } | undefined;
         return (
           <PaymentsPendingWidget
@@ -374,6 +376,7 @@ export default async function DashboardPage() {
             totalAmount={pp?.totalAmount || 0}
           />
         );
+      }
       case "revenue_month":
         return (
           <RevenueMonthWidget
@@ -411,7 +414,7 @@ export default async function DashboardPage() {
             count={(widgetData.active_clients as { count: number })?.count || 0}
           />
         );
-      case "expiring_packages":
+      case "expiring_packages": {
         const ep = widgetData.expiring_packages as { length: number } | undefined;
         return (
           <ExpiringPackagesWidget
@@ -419,6 +422,7 @@ export default async function DashboardPage() {
             count={Array.isArray(ep) ? ep.length : 0}
           />
         );
+      }
       default:
         return null;
     }

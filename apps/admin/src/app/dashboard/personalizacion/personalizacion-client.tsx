@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type {
   Theme,
@@ -15,6 +15,8 @@ import type {
 } from "@neumorstudio/supabase";
 import { getDefaultSectionsConfig, SECTIONS_CATALOG } from "@neumorstudio/supabase";
 import { themes } from "@/lib/personalizacion";
+import { ColorPicker } from "@/components/customization";
+import { SegmentedControl } from "@/components/mobile";
 
 // Types locales
 import type {
@@ -142,6 +144,8 @@ export function PersonalizacionClient({
 
   // State
   const [activeTab, setActiveTab] = useState<TabId>("diseno");
+  const [editorMode, setEditorMode] = useState<"quick" | "advanced">("advanced");
+  const lastAdvancedTabRef = useRef<TabId>("diseno");
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [variants, setVariants] = useState<Variants>(initialConfig.variants as Variants || defaultVariants);
   const [colors, setColors] = useState<ColorsConfig>(() => buildColorOverrides(initialConfig));
@@ -390,6 +394,8 @@ export function PersonalizacionClient({
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [savedNotice, setSavedNotice] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
 
   // Hook para manejar uploads de archivos
   const { uploading, uploadingHero, uploadingGallery, uploadingBrands, handleLogoUpload, handleHeroImageUpload, handleGalleryImageUpload, handleBrandsLogoUpload } = useFileUpload({
@@ -463,7 +469,6 @@ export function PersonalizacionClient({
       v_contact: getSectionVariant("contact"),
     });
 
-    console.log("[Admin] Preview URL:", `${baseUrl}?${params.toString()}`);
     return `${baseUrl}?${params.toString()}`;
   }, [domain, variants, sectionsConfig]);
 
@@ -475,6 +480,72 @@ export function PersonalizacionClient({
       default: return { width: "100%", height: "100%" };
     }
   }, [previewMode]);
+
+  const configPayload = useMemo(() => {
+    const normalizedHeroImages = content.heroImages || (content.heroImage ? [content.heroImage] : []);
+    const normalizedHeroImage = normalizedHeroImages.includes(content.heroImage || "")
+      ? content.heroImage
+      : normalizedHeroImages[0] || "";
+
+    return {
+      variants,
+      skin,
+      colors,
+      typography,
+      effects,
+      branding,
+      sectionsConfig,
+      features: {
+        title: features.title,
+        subtitle: features.subtitle,
+        items: features.items.map((item) => ({
+          id: item.id,
+          icon: item.icon,
+          title: item.title,
+          description: item.description,
+        })),
+      },
+      ...content,
+      heroImage: normalizedHeroImage,
+      heroImages: normalizedHeroImages,
+    };
+  }, [
+    branding,
+    colors,
+    content,
+    effects,
+    features,
+    sectionsConfig,
+    skin,
+    typography,
+    variants,
+  ]);
+
+  const serializedSnapshot = useMemo(
+    () => JSON.stringify({ theme, config: configPayload }),
+    [theme, configPayload]
+  );
+
+  const hasUnsavedChanges = !!savedSnapshot && savedSnapshot !== serializedSnapshot;
+
+  useEffect(() => {
+    if (!savedSnapshot) {
+      setSavedSnapshot(serializedSnapshot);
+    }
+  }, [savedSnapshot, serializedSnapshot]);
+
+  useEffect(() => {
+    if (!savedNotice) return;
+    const timeout = window.setTimeout(() => setSavedNotice(false), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [savedNotice]);
+
+  useEffect(() => {
+    if (hasUnsavedChanges && savedNotice) {
+      setSavedNotice(false);
+    }
+  }, [hasUnsavedChanges, savedNotice]);
+
 
   // Handlers - limpian el preset activo al hacer cambios manuales
   const handleColorChange = useCallback((key: keyof ColorsConfig, value: string) => {
@@ -488,10 +559,8 @@ export function PersonalizacionClient({
   }, []);
 
   const handleEffectsChange = useCallback((key: keyof EffectsConfig, value: number | string | boolean) => {
-    console.log('[PersonalizacionClient] handleEffectsChange:', key, value);
     setEffects(prev => {
       const newEffects = { ...prev, [key]: value };
-      console.log('[PersonalizacionClient] New effects state:', newEffects);
       return newEffects;
     });
     setActivePreset(null);
@@ -648,7 +717,7 @@ export function PersonalizacionClient({
         setSectionsConfig(getDefaultSectionsConfig(businessType));
       }
       setActivePreset(null);
-      setMessage({ type: "success", text: "Configuracion restaurada" });
+      setMessage({ type: "success", text: "Configuración restaurada" });
       setTimeout(() => setMessage(null), 2500);
     }
   }, [initialTheme, initialConfig, businessType, buildColorOverrides]);
@@ -660,56 +729,28 @@ export function PersonalizacionClient({
   }, [getThemeDefaults]);
 
   const handleSave = async () => {
+    const snapshotAfterSave = serializedSnapshot;
     setSaving(true);
     setMessage(null);
 
     try {
-      // Normalizar heroImages/heroImage para consistencia
-      const normalizedHeroImages = content.heroImages || (content.heroImage ? [content.heroImage] : []);
-      const normalizedHeroImage = normalizedHeroImages.includes(content.heroImage || "")
-        ? content.heroImage
-        : normalizedHeroImages[0] || "";
-
-      const config: Partial<WebsiteConfig> = {
-        variants,
-        skin,
-        colors,
-        typography,
-        effects,
-        branding,
-        sectionsConfig,
-        features: {
-          title: features.title,
-          subtitle: features.subtitle,
-          items: features.items.map(item => ({
-            id: item.id,
-            // Guardar el ID del icono, no el SVG
-            icon: item.icon,
-            title: item.title,
-            description: item.description,
-          })),
-        },
-        ...content,
-        // Sobrescribir con valores normalizados
-        heroImage: normalizedHeroImage,
-        heroImages: normalizedHeroImages,
-      };
-
       const response = await fetch("/api/personalizacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           websiteId,
           theme,
-          config,
+          config: configPayload,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Guardado correctamente" });
-        setTimeout(() => setMessage(null), 2500);
+        setMessage({ type: "success", text: "Guardado" });
+        setTimeout(() => setMessage(null), 2000);
+        setSavedSnapshot(snapshotAfterSave);
+        setSavedNotice(true);
 
         // Refrescar el iframe para mostrar los cambios guardados
         // Añadir timestamp para invalidar caché del middleware y navegador
@@ -733,6 +774,92 @@ export function PersonalizacionClient({
       setSaving(false);
     }
   };
+
+  const handleEditorModeChange = (nextMode: "quick" | "advanced") => {
+    if (nextMode === "quick") {
+      lastAdvancedTabRef.current = activeTab;
+      if (activeTab !== "diseno") {
+        setActiveTab("diseno");
+      }
+    } else {
+      setActiveTab(lastAdvancedTabRef.current);
+    }
+    setEditorMode(nextMode);
+  };
+
+  const quickControls = (
+    <div className="space-y-5">
+      <div className="neumor-inset p-4 rounded-xl space-y-3">
+        <h3 className="text-sm font-semibold">Logo</h3>
+        <label className={`flex items-center justify-center gap-3 p-4 border-2 border-dashed border-[var(--shadow-dark)] rounded-xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--shadow-light)] transition-all ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+            onChange={handleLogoUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+          <svg className="w-6 h-6 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span className="text-sm text-[var(--text-secondary)]">
+            {uploading ? "Subiendo..." : "Toca para subir"}
+          </span>
+        </label>
+        {branding.logo && (
+          <div className="space-y-2">
+            <div className="p-3 neumor-inset rounded-lg flex items-center justify-center">
+              <img
+                src={branding.logo}
+                alt="Logo preview"
+                className="max-h-16 max-w-full object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => handleBrandingChange("logo", "")}
+              className="text-xs text-red-500 hover:text-red-700"
+            >
+              Eliminar logo
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="neumor-inset p-4 rounded-xl space-y-3">
+        <h3 className="text-sm font-semibold">Texto principal</h3>
+        <div>
+          <label className="block text-xs font-medium mb-2">Titulo principal</label>
+          <input
+            className="neumor-input w-full"
+            value={content.heroTitle || ""}
+            onChange={(event) => handleContentChange("heroTitle", event.target.value)}
+            placeholder="Tu propuesta principal"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-2">Subtitulo</label>
+          <textarea
+            className="neumor-input w-full min-h-[90px] resize-none"
+            value={content.heroSubtitle || ""}
+            onChange={(event) => handleContentChange("heroSubtitle", event.target.value)}
+            placeholder="Texto corto de apoyo"
+          />
+        </div>
+      </div>
+
+      <div className="neumor-inset p-4 rounded-xl space-y-3">
+        <h3 className="text-sm font-semibold">Color de acento</h3>
+        <ColorPicker
+          label="Acento (botones y enlaces)"
+          description="Elementos destacados, botones y enlaces"
+          value={colors.accent || defaultColors.accent || "#10b981"}
+          onChange={(value) => handleColorChange("accent", value)}
+        />
+      </div>
+    </div>
+  );
 
   // Render tab content
   const renderTabContent = () => {
@@ -825,7 +952,23 @@ export function PersonalizacionClient({
   };
 
   // Calculate tab content once
-  const tabContent = renderTabContent();
+  const tabContent = (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-[var(--text-secondary)]">Modo</span>
+        <SegmentedControl
+          options={[
+            { value: "quick", label: "Rápido" },
+            { value: "advanced", label: "Avanzado" },
+          ]}
+          value={editorMode}
+          onChange={handleEditorModeChange}
+          size="sm"
+        />
+      </div>
+      {editorMode === "quick" ? quickControls : renderTabContent()}
+    </div>
+  );
 
   // ============================================
   // RENDER - Delegate to layout components
@@ -845,6 +988,8 @@ export function PersonalizacionClient({
         onReset={handleReset}
         onSave={handleSave}
         saving={saving}
+        hasUnsavedChanges={hasUnsavedChanges}
+        savedNotice={savedNotice}
         message={message}
       />
     );
@@ -866,6 +1011,8 @@ export function PersonalizacionClient({
       onReset={handleReset}
       onSave={handleSave}
       saving={saving}
+      hasUnsavedChanges={hasUnsavedChanges}
+      savedNotice={savedNotice}
       message={message}
     />
   );

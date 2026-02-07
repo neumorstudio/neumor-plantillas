@@ -171,7 +171,7 @@ export async function POST(request: Request) {
       professionals: data || [],
       professionalCategories: categories || [],
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

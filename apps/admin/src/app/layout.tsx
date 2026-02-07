@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   title: "NeumorStudio Admin",
   description: "Panel de administracion de automatizaciones",
   manifest: "/manifest.webmanifest",
-  themeColor: "#6366f1",
   appleWebApp: {
     capable: true,
     title: "NeumorStudio Admin",
@@ -36,6 +35,10 @@ export const metadata: Metadata = {
       { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
+};
+
+export const viewport = {
+  themeColor: "#6366f1",
 };
 
 export default function RootLayout({

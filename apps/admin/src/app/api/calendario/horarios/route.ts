@@ -188,7 +188,7 @@ export async function POST(request: Request) {
       .eq("id", website.id);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

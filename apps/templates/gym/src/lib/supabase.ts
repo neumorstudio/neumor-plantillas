@@ -84,6 +84,12 @@ export interface Website {
   theme: Theme;
   config: WebsiteConfig;
   is_active: boolean;
+  clients?: {
+    business_name?: string | null;
+    address?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
 }
 
 export interface BusinessHour {
@@ -98,14 +104,6 @@ export interface BusinessHour {
 // Cliente Supabase (solo lectura para el template)
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-// Verificar que las variables de entorno esten configuradas
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase no configurado. Usando configuracion por defecto.",
-    "Configura PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY en .env"
-  );
-}
 
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
@@ -139,13 +137,11 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
     const { data, error } = await query.single();
 
     if (error) {
-      console.error("Error fetching website config:", error.message);
       return null;
     }
 
     return data as Website;
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
   }
 }
@@ -163,13 +159,11 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
       .order("day_of_week", { ascending: true });
 
     if (error) {
-      console.error("Error fetching business hours:", error.message);
       return [];
     }
 
     return (data as BusinessHour[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return [];
   }
 }

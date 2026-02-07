@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateLeadStatus } from "@/lib/actions";
 import { convertQuoteToJob } from "@/lib/actions/jobs";
-import { Phone, Mail, MessageSquare, Clock, ChevronRight, X, Briefcase } from "lucide-react";
+import { Phone, Mail, MessageSquare, X, Briefcase } from "lucide-react";
 import { ConfirmDialog, SegmentedControl } from "@/components/mobile";
 
 interface QuoteLead {

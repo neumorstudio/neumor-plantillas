@@ -9,10 +9,12 @@ interface FAQConfigItem {
   text: string;
 }
 
+type FAQInputItem = FAQItem | FAQConfigItem;
+
 interface Props {
   title?: string;
   subtitle?: string;
-  items?: FAQItem[];
+  items?: FAQInputItem[];
   variant?: "accordion" | "cards" | "simple";
 }
 
@@ -44,11 +46,11 @@ const {
 
 const mappedItems = Array.isArray(items)
   ? items.map((item) => {
-      if (typeof item?.question === "string" && typeof item?.answer === "string") {
+      if ("question" in item && typeof item.question === "string" && typeof item.answer === "string") {
         return { question: item.question, answer: item.answer };
       }
-      if (typeof (item as FAQConfigItem)?.title === "string" && typeof (item as FAQConfigItem)?.text === "string") {
-        return { question: (item as FAQConfigItem).title, answer: (item as FAQConfigItem).text };
+      if ("title" in item && typeof item.title === "string" && typeof item.text === "string") {
+        return { question: item.title, answer: item.text };
       }
       return null;
     }).filter((item): item is FAQItem => Boolean(item))

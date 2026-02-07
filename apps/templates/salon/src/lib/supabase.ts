@@ -82,6 +82,7 @@ export type SectionId =
   | "services"
   | "team"
   | "gallery"
+  | "brands"
   | "booking"
   | "classes"
   | "trainers"
@@ -205,14 +206,6 @@ export interface SpecialDaySlot {
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-// Verificar que las variables de entorno esten configuradas
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase no configurado. Usando configuracion por defecto.",
-    "Configura PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY en .env"
-  );
-}
-
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
@@ -245,13 +238,11 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
     const { data, error } = await query.single();
 
     if (error) {
-      console.error("Error fetching website config:", error.message);
       return null;
     }
 
     return data as Website;
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
   }
 }
@@ -271,7 +262,6 @@ export async function getServiceCatalog(websiteId?: string): Promise<ServiceCate
       .order("name", { ascending: true });
 
     if (categoryError) {
-      console.error("Error fetching service categories:", categoryError.message);
       return [];
     }
 
@@ -286,7 +276,6 @@ export async function getServiceCatalog(websiteId?: string): Promise<ServiceCate
       .order("name", { ascending: true });
 
     if (itemError) {
-      console.error("Error fetching service items:", itemError.message);
       return [];
     }
 
@@ -303,8 +292,7 @@ export async function getServiceCatalog(websiteId?: string): Promise<ServiceCate
     });
 
     return Array.from(categoryMap.values());
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }
@@ -322,13 +310,11 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
       .order("day_of_week", { ascending: true });
 
     if (error) {
-      console.error("Error fetching business hours:", error.message);
       return [];
     }
 
     return (data as BusinessHour[] | null) || [];
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }
@@ -348,13 +334,11 @@ export async function getBusinessHourSlots(websiteId?: string): Promise<Business
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching business hour slots:", error.message);
       return [];
     }
 
     return (data as BusinessHourSlot[] | null) || [];
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }
@@ -374,13 +358,11 @@ export async function getProfessionals(websiteId?: string): Promise<Professional
       .order("name", { ascending: true });
 
     if (error) {
-      console.error("Error fetching professionals:", error.message);
       return [];
     }
 
     return (data as Professional[] | null) || [];
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }
@@ -399,13 +381,11 @@ export async function getProfessionalCategories(
       .eq("website_id", websiteId);
 
     if (error) {
-      console.error("Error fetching professional categories:", error.message);
       return [];
     }
 
     return (data as ProfessionalCategory[] | null) || [];
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }
@@ -423,13 +403,11 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDay[]> 
       .order("date", { ascending: true });
 
     if (error) {
-      console.error("Error fetching special days:", error.message);
       return [];
     }
 
     return (data as SpecialDay[] | null) || [];
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }
@@ -446,7 +424,6 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
       .eq("website_id", websiteId);
 
     if (specialError) {
-      console.error("Error fetching special days:", specialError.message);
       return [];
     }
 
@@ -462,13 +439,11 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching special day slots:", error.message);
       return [];
     }
 
     return (data as SpecialDaySlot[] | null) || [];
-  } catch (error) {
-    console.error("Error connecting to Supabase:", error);
+  } catch {
     return [];
   }
 }

@@ -417,8 +417,7 @@ export async function POST(request: NextRequest) {
       message: "Reserva creada correctamente",
       emails: emailResults,
     }, { headers: responseCorsHeaders });
-  } catch (error) {
-    console.error("[reservas] Error interno:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500, headers: responseCorsHeaders }

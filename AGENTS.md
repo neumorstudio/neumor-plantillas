@@ -252,6 +252,35 @@ npx supabase db push        # Aplicar migraciones
 
 ---
 
+## Reglas de Contribucion (DX/CI)
+
+- **No romper funcionalidad**: si hay duda, pide contexto antes de tocar logica critica.
+- **Cambios pequenos y revisables**: idealmente en commits/PRs logicos.
+- **No tocar backend/DB sin ticket**: incluye migraciones, tablas, RLS o seeds.
+- **Si cambias logica, actualiza tests** en el mismo PR.
+- **No introducir secretos** en docs, logs o ejemplos.
+- **Evitar PII en logs** (emails completos, telefonos, payloads sensibles).
+
+### Comandos obligatorios antes de entregar
+
+```bash
+pnpm lint
+pnpm type-check   # o pnpm typecheck
+pnpm test
+pnpm build
+```
+
+### Zonas criticas (revisar con cuidado)
+
+- `apps/admin/src/app/api/*` (APIs backend)
+- `apps/admin/src/lib/actions*.ts` (server actions)
+- `apps/templates/*/src/components/*Form.astro` (formularios publicos)
+- `apps/templates/unified/src/middleware.ts` (multi-tenant/caching)
+
+### Si falta informacion
+
+- **Pregunta antes** de asumir (endpoints, schema, contratos).
+
 > **Ante la duda, preguntar.** Es mejor confirmar el enfoque que romper algo existente.
 
 > **Si vas a tocar un formulario que envia datos: LEE PRIMERO todo el handler de submit.**

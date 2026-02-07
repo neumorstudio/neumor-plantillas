@@ -75,8 +75,6 @@ export function ProgresoClient({ customers }: ProgresoClientProps) {
         const data = await recordsRes.json();
         setRecords(data);
       }
-    } catch {
-      console.error("Error loading client data");
     } finally {
       setLoading(false);
     }

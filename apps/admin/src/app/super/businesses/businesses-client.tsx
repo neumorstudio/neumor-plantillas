@@ -432,7 +432,7 @@ export function BusinessesClient({ initialBusinesses }: BusinessesClientProps) {
               {/* Seccion: Website */}
               <div>
                 <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-3">
-                  Configuracion del website
+                  Configuración del website
                 </h3>
 
                 <div className="space-y-4">

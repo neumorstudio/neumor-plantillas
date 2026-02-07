@@ -178,6 +178,12 @@ export interface Website {
   theme: Theme;
   config: WebsiteConfig;
   is_active: boolean;
+  clients?: {
+    business_name?: string | null;
+    address?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
 }
 
 // Cliente Supabase (solo lectura para el template)
@@ -188,14 +194,6 @@ const supabaseUrl =
 const supabaseAnonKey =
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
-
-// Verificar que las variables de entorno estén configuradas
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "⚠️ Supabase no configurado. Usando configuración por defecto.",
-    "Configura PUBLIC_SUPABASE_URL/PUBLIC_SUPABASE_ANON_KEY o NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY en .env"
-  );
-}
 
 const supabaseAnon = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
@@ -240,13 +238,11 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
     const { data, error } = await query.single();
 
     if (error) {
-      console.error("Error fetching website config:", error.message);
       return null;
     }
 
     return data as Website;
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
   }
 }
@@ -267,13 +263,11 @@ export async function getMenuItems(websiteId?: string): Promise<MenuItemRow[] | 
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching menu items:", error.message);
       return null;
     }
 
     return data as MenuItemRow[];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
   }
 }
@@ -292,13 +286,11 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
       .order("day_of_week", { ascending: true });
 
     if (error) {
-      console.error("Error fetching business hours:", error.message);
       return [];
     }
 
     return (data as BusinessHourRow[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return [];
   }
 }
@@ -317,13 +309,11 @@ export async function getSpecialDays(websiteId?: string): Promise<SpecialDayRow[
       .order("date", { ascending: true });
 
     if (error) {
-      console.error("Error fetching special days:", error.message);
       return [];
     }
 
     return (data as SpecialDayRow[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return [];
   }
 }
@@ -344,13 +334,11 @@ export async function getBusinessHourSlots(websiteId?: string): Promise<Business
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching business hour slots:", error.message);
       return [];
     }
 
     return (data as BusinessHourSlotRow[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return [];
   }
 }
@@ -368,7 +356,6 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
       .eq("website_id", websiteId);
 
     if (specialError) {
-      console.error("Error fetching special days:", specialError.message);
       return [];
     }
 
@@ -384,13 +371,11 @@ export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDay
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching special day slots:", error.message);
       return [];
     }
 
     return (data as SpecialDaySlotRow[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return [];
   }
 }
@@ -414,13 +399,11 @@ export async function getBookingsInRange(
       .lte("booking_date", endDate);
 
     if (error) {
-      console.error("Error fetching bookings in range:", error.message);
       return [];
     }
 
     return (data as BookingRow[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return [];
   }
 }
@@ -439,13 +422,11 @@ export async function getRestaurantSettings(websiteId?: string): Promise<Restaur
       .maybeSingle();
 
     if (error) {
-      console.error("Error fetching restaurant settings:", error.message);
       return null;
     }
 
     return (data as RestaurantRow | null) || null;
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
   }
 }
@@ -464,13 +445,11 @@ export async function getOrderSettings(websiteId?: string): Promise<OrderSetting
       .maybeSingle();
 
     if (error) {
-      console.error("Error fetching order settings:", error.message);
       return null;
     }
 
     return (data as OrderSettingsRow | null) || null;
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
   }
 }

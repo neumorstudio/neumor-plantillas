@@ -1398,7 +1398,7 @@ const capacityPayload = JSON.stringify(capacity);
           const time = toTimeString(minutes);
           const bookedGuests = getBookedGuestsForSlot(isoDate, time);
           const remaining = capacity ? Math.max(0, capacity - bookedGuests) : null;
-          const isFull = capacity ? remaining <= 0 : false;
+          const isFull = capacity ? (remaining ?? 0) <= 0 : false;
           slots.push({ time, remaining, isFull });
         }
       });

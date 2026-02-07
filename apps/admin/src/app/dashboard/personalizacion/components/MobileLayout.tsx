@@ -38,6 +38,8 @@ interface MobileLayoutProps {
   onReset: () => void;
   onSave: () => void;
   saving: boolean;
+  hasUnsavedChanges: boolean;
+  savedNotice: boolean;
 
   // Message
   message: { type: "success" | "error"; text: string } | null;
@@ -56,6 +58,8 @@ export function MobileLayout({
   onReset,
   onSave,
   saving,
+  hasUnsavedChanges,
+  savedNotice,
   message,
 }: MobileLayoutProps) {
   return (
@@ -72,6 +76,19 @@ export function MobileLayout({
             <ResetIcon />
           </button>
         </div>
+        {(hasUnsavedChanges || savedNotice) && (
+          <div className="mt-2">
+            <span
+              className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                hasUnsavedChanges
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : "bg-green-50 text-green-700 border-green-200"
+              }`}
+            >
+              {hasUnsavedChanges ? "Cambios sin guardar" : "Guardado"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Toast Message */}
@@ -161,8 +178,10 @@ export function MobileLayout({
         onClick={onSave}
         disabled={saving}
         className={`fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${saving
-            ? 'bg-gray-400'
-            : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:scale-95'
+            ? "bg-gray-400"
+            : `bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:scale-95 ${
+                hasUnsavedChanges ? "ring-2 ring-[var(--accent)]" : ""
+              }`
           }`}
         style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}
       >

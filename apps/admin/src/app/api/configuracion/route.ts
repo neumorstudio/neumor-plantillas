@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
       .eq("id", clientId);
 
     if (clientError) {
-      console.error("Error updating client:", clientError);
       return NextResponse.json(
         { error: "Error al actualizar datos del negocio" },
         { status: 500 }
@@ -83,7 +82,6 @@ export async function POST(request: NextRequest) {
         .eq("id", websiteId);
 
       if (websiteError) {
-        console.error("Error updating website config:", websiteError);
         return NextResponse.json(
           { error: "Error al actualizar configuracion del sitio" },
           { status: 500 }
@@ -110,7 +108,6 @@ export async function POST(request: NextRequest) {
       );
 
     if (settingsError) {
-      console.error("Error updating settings:", settingsError);
       return NextResponse.json(
         { error: "Error al actualizar configuracion de notificaciones" },
         { status: 500 }
@@ -118,8 +115,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Configuration API error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

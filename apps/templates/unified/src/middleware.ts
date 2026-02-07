@@ -24,7 +24,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Parse domain to get subdomain or custom domain
   const { subdomain, customDomain } = parseDomain(host);
 
-  console.log("[Middleware] Host:", host, "Subdomain:", subdomain, "CustomDomain:", customDomain);
 
   // Skip tenant resolution for static assets
   if (url.pathname.startsWith("/_")) {
@@ -38,11 +37,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const tenant = await resolveTenant(subdomain, customDomain, isPreview);
 
   if (!tenant) {
-    console.log("[Middleware] No tenant found, showing 404");
     return new Response("Website not found", { status: 404 });
   }
 
-  console.log("[Middleware] Tenant found:", tenant.businessName, "Type:", tenant.businessType);
 
   // Store tenant data in locals for pages to access
   (locals as Record<string, unknown>).tenant = tenant;
@@ -102,7 +99,6 @@ async function resolveTenant(
   const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error("[Middleware] Missing Supabase credentials");
     return null;
   }
 
@@ -134,7 +130,6 @@ async function resolveTenant(
   const { data: websiteData, error } = await query.single();
 
   if (error || !websiteData) {
-    console.error("[Middleware] Supabase error:", error?.message);
     return null;
   }
 
@@ -153,14 +148,6 @@ async function resolveTenant(
   };
 
   // === DEBUG: Log tenant config from Supabase ===
-  console.log('[Middleware] ========== TENANT DATA FROM SUPABASE ==========');
-  console.log('[Middleware] tenant.id:', tenant.id);
-  console.log('[Middleware] tenant.theme:', tenant.theme);
-  console.log('[Middleware] tenant.config:', JSON.stringify(tenant.config, null, 2));
-  console.log('[Middleware] tenant.config.colors:', (tenant.config as Record<string, unknown>).colors);
-  console.log('[Middleware] tenant.config.effects:', (tenant.config as Record<string, unknown>).effects);
-  console.log('[Middleware] skipCache (preview mode):', skipCache);
-  console.log('[Middleware] ================================================');
 
   // Update cache
   tenantCache.set(cacheKey, {

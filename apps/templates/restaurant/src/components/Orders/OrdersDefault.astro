@@ -452,13 +452,13 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
     const root = document.querySelector("[data-orders]");
     if (!root) return;
 
-    const cartItemsEl = root.querySelector("[data-cart-items]");
-    const cartEmptyEl = root.querySelector("[data-cart-empty]");
-    const cartTotalEl = root.querySelector("[data-cart-total]");
-    const cartCountEl = root.querySelector("[data-cart-count]");
-    const messageEl = root.querySelector("[data-order-message]");
-    const form = root.querySelector(".orders-form");
-    const submitBtn = root.querySelector("[data-order-submit]");
+    const cartItemsEl = root.querySelector("[data-cart-items]") as HTMLElement | null;
+    const cartEmptyEl = root.querySelector("[data-cart-empty]") as HTMLElement | null;
+    const cartTotalEl = root.querySelector("[data-cart-total]") as HTMLElement | null;
+    const cartCountEl = root.querySelector("[data-cart-count]") as HTMLElement | null;
+    const messageEl = root.querySelector("[data-order-message]") as HTMLElement | null;
+    const form = root.querySelector(".orders-form") as HTMLFormElement | null;
+    const submitBtn = root.querySelector("[data-order-submit]") as HTMLButtonElement | null;
 
     if (!cartItemsEl || !cartEmptyEl || !cartTotalEl || !cartCountEl || !form || !submitBtn) return;
 
@@ -468,6 +468,9 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
 
     const tabs = root.querySelectorAll(".menu-tab");
     const contents = root.querySelectorAll(".menu-category");
+
+    type CartItem = { id: string; name: string; priceCents: number; quantity: number };
+    type Cart = Record<string, CartItem>;
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
         const categoryIndex = tab.getAttribute("data-category");
@@ -482,7 +485,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       });
     });
 
-    const formatMoney = (cents) => {
+    const formatMoney = (cents: number) => {
       try {
         return new Intl.NumberFormat("es-ES", {
           style: "currency",
@@ -494,7 +497,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       }
     };
 
-    const escapeHtml = (value) => {
+    const escapeHtml = (value: string) => {
       return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -503,7 +506,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
         .replace(/'/g, "&#39;");
     };
 
-    const loadCart = () => {
+    const loadCart = (): Cart => {
       try {
         const raw = localStorage.getItem(storageKey);
         if (!raw) return {};
@@ -514,7 +517,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       }
     };
 
-    const saveCart = (cart) => {
+    const saveCart = (cart: Cart) => {
       try {
         localStorage.setItem(storageKey, JSON.stringify(cart));
       } catch {
@@ -522,9 +525,9 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       }
     };
 
-    let cart = loadCart();
+    let cart: Cart = loadCart();
 
-    const updateMessage = (text, type) => {
+    const updateMessage = (text: string, type: "error" | "success" | "") => {
       if (!messageEl) return;
       messageEl.textContent = text || "";
       messageEl.classList.remove("is-error", "is-success");
@@ -533,7 +536,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
     };
 
     const renderCart = () => {
-      const entries = Object.values(cart);
+      const entries = Object.values(cart) as CartItem[];
       cartItemsEl.innerHTML = "";
 
       if (entries.length === 0) {
@@ -573,7 +576,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       submitBtn.disabled = entries.length === 0 || !form.dataset.webhook;
     };
 
-    const addItem = (id, name, priceCents) => {
+    const addItem = (id: string | null, name: string, priceCents: number) => {
       if (!id) return;
       if (!cart[id]) {
         cart[id] = { id, name, priceCents, quantity: 1 };
@@ -584,7 +587,8 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       renderCart();
     };
 
-    const adjustQty = (id, delta) => {
+    const adjustQty = (id: string | null, delta: number) => {
+      if (!id) return;
       if (!cart[id]) return;
       cart[id].quantity += delta;
       if (cart[id].quantity <= 0) {
@@ -594,7 +598,8 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
       renderCart();
     };
 
-    const removeItem = (id) => {
+    const removeItem = (id: string | null) => {
+      if (!id) return;
       if (!cart[id]) return;
       delete cart[id];
       saveCart(cart);
@@ -602,7 +607,9 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
     };
 
     root.addEventListener("click", (event) => {
-      const addBtn = event.target.closest("[data-add-item]");
+      const target = event.target as Element | null;
+      if (!target) return;
+      const addBtn = target.closest("[data-add-item]");
       if (addBtn) {
         const id = addBtn.getAttribute("data-item-id");
         const name = addBtn.getAttribute("data-item-name") || "";
@@ -614,19 +621,19 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
         return;
       }
 
-      const minusBtn = event.target.closest("[data-qty-minus]");
+      const minusBtn = target.closest("[data-qty-minus]");
       if (minusBtn) {
         adjustQty(minusBtn.getAttribute("data-qty-minus"), -1);
         return;
       }
 
-      const plusBtn = event.target.closest("[data-qty-plus]");
+      const plusBtn = target.closest("[data-qty-plus]");
       if (plusBtn) {
         adjustQty(plusBtn.getAttribute("data-qty-plus"), 1);
         return;
       }
 
-      const removeBtn = event.target.closest("[data-remove]");
+      const removeBtn = target.closest("[data-remove]");
       if (removeBtn) {
         removeItem(removeBtn.getAttribute("data-remove"));
       }
@@ -654,7 +661,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
     const toastCloseEl = toastEl?.querySelector("[data-toast-close]") as HTMLElement | null;
     let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    const showToast = (message: string, type = "error", duration = 5000) => {
+    const showToast = (message: string, type: "error" | "success" | "" = "error", duration = 5000) => {
       if (!toastEl || !toastMessageEl) {
         // Fallback al mensaje inline si no hay toast
         updateMessage(message, type);
@@ -750,7 +757,7 @@ const pickupWindow = pickupStart && pickupEnd ? `${pickupStart} - ${pickupEnd}` 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       hideToast();
-      updateMessage("", null);
+      updateMessage("", "");
       
       const webhookUrl = (form as HTMLFormElement).dataset.webhook;
       const websiteIdValue = (form as HTMLFormElement).dataset.websiteId;

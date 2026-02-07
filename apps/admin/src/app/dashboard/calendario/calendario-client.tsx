@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { SegmentedControl } from "@/components/mobile";
 import { deleteBooking, updateBooking } from "@/lib/actions";
 
 interface BusinessHour {
@@ -100,6 +102,7 @@ interface Props {
 
 const dayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 const MAX_SLOTS_PER_DAY = 3;
+type CalendarView = "day" | "month";
 
 export default function CalendarioClient({
   initialHours,
@@ -116,16 +119,43 @@ export default function CalendarioClient({
   const isRestaurant = businessType === "restaurant";
   const bookingLabel = isRestaurant ? "Reserva" : "Cita";
   const bookingLabelPlural = isRestaurant ? "Reservas" : "Citas";
+  const searchParams = useSearchParams();
+  const createParamHandled = useRef(false);
 
   const createTempId = () =>
     (typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
+  const isIsoDate = (value: string | null) =>
+    !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+  const toIsoDate = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
+
   const normalizeTime = (value: string) => {
     const [hours = "00", minutes = "00"] = value.split(":");
     return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
   };
+
+  const serializeSlots = (value: BusinessHourSlot[]) =>
+    JSON.stringify(
+      value
+        .map((slot) => ({
+          day_of_week: slot.day_of_week,
+          open_time: normalizeTime(slot.open_time),
+          close_time: normalizeTime(slot.close_time),
+          sort_order: slot.sort_order,
+          is_active: slot.is_active,
+        }))
+        .sort((a, b) => {
+          if (a.day_of_week !== b.day_of_week) return a.day_of_week - b.day_of_week;
+          if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+          return a.open_time.localeCompare(b.open_time);
+        })
+    );
 
   const timeToMinutes = (value: string) => {
     const [hours = "0", minutes = "0"] = value.split(":");
@@ -189,9 +219,11 @@ export default function CalendarioClient({
             sort_order: 0,
             is_active: true,
           }));
-  const todayIso = new Date().toISOString().split("T")[0];
+  const todayIso = toIsoDate(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(todayIso);
+  const [calendarView, setCalendarView] = useState<CalendarView>("day");
   const [slots, setSlots] = useState<BusinessHourSlot[]>(fallbackSlots);
+  const [slotsSnapshot, setSlotsSnapshot] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [calendarYear, setCalendarYear] = useState(year);
@@ -223,10 +255,32 @@ export default function CalendarioClient({
   });
 
   useEffect(() => {
+    if (createParamHandled.current) return;
+    if (searchParams.get("create") !== "1") return;
+
+    const dateParam = searchParams.get("date");
+    const targetDate = isIsoDate(dateParam) ? dateParam : todayIso;
+    setSelectedDate(targetDate);
+    setCreateForm((prev) => ({ ...prev, booking_date: targetDate || todayIso }));
+    setCreateOpen(true);
+    setCreateError(null);
+    createParamHandled.current = true;
+  }, [searchParams, todayIso]);
+
+  useEffect(() => {
     if (!toast) return;
     const timeout = window.setTimeout(() => setToast(null), 2500);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  const serializedSlots = useMemo(() => serializeSlots(slots), [slots]);
+  const hasUnsavedChanges = !!slotsSnapshot && slotsSnapshot !== serializedSlots;
+
+  useEffect(() => {
+    if (!slotsSnapshot) {
+      setSlotsSnapshot(serializedSlots);
+    }
+  }, [serializedSlots, slotsSnapshot]);
 
   const allServiceItems = useMemo(
     () => serviceCatalog.flatMap((category) => category.items),
@@ -318,6 +372,11 @@ export default function CalendarioClient({
       .filter((slot) => slot.day_of_week === day && slot.is_active)
       .sort((a, b) => a.sort_order - b.sort_order);
 
+  const getDayIndexFromDate = (dateValue: string) => {
+    const date = new Date(`${dateValue}T00:00:00`);
+    return (date.getDay() + 6) % 7;
+  };
+
   const getScheduleForDate = (dateValue: string) => {
     const special = specialDays.find((item) => item.date === dateValue);
     if (special) {
@@ -357,6 +416,67 @@ export default function CalendarioClient({
 
     return { is_open: false, slots: [] as { open_time: string; close_time: string }[] };
   };
+
+  const daySchedule = useMemo(() => {
+    if (!selectedDate) return null;
+    return getScheduleForDate(selectedDate);
+  }, [selectedDate, slots, specialDays]);
+
+  const timelineHours = useMemo(() => {
+    if (!selectedDate) return [];
+    if (daySchedule && !daySchedule.is_open && filteredBookingsForDay.length === 0) return [];
+
+    let startHour = 10;
+    let endHour = 23;
+
+    if (daySchedule?.slots?.length) {
+      const ranges = daySchedule.slots
+        .map((slot) => {
+          const [openH, openM] = slot.open_time.split(":").map(Number);
+          const [closeH, closeM] = slot.close_time.split(":").map(Number);
+          if (
+            !Number.isFinite(openH) ||
+            !Number.isFinite(closeH) ||
+            !Number.isFinite(openM) ||
+            !Number.isFinite(closeM)
+          ) {
+            return null;
+          }
+          return {
+            open: openH + openM / 60,
+            close: closeH + closeM / 60,
+          };
+        })
+        .filter(Boolean) as { open: number; close: number }[];
+
+      if (ranges.length) {
+        startHour = Math.floor(Math.min(...ranges.map((range) => range.open)));
+        endHour = Math.ceil(Math.max(...ranges.map((range) => range.close)));
+      }
+    }
+
+    startHour = Math.max(0, Math.min(23, startHour));
+    endHour = Math.max(startHour, Math.min(23, endHour));
+
+    return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
+  }, [daySchedule, selectedDate, filteredBookingsForDay.length]);
+
+  const bookingsByHour = useMemo(() => {
+    const map = new Map<number, Booking[]>();
+    filteredBookingsForDay.forEach((booking) => {
+      const hour = parseHour(booking.booking_time);
+      if (hour === null) return;
+      const list = map.get(hour) || [];
+      list.push(booking);
+      map.set(hour, list);
+    });
+    return map;
+  }, [filteredBookingsForDay]);
+
+  const bookingsWithoutTime = useMemo(
+    () => filteredBookingsForDay.filter((booking) => !booking.booking_time),
+    [filteredBookingsForDay]
+  );
 
   const getSelectedServiceItems = () =>
     allServiceItems.filter((item) => createForm.service_ids.includes(item.id));
@@ -554,6 +674,18 @@ export default function CalendarioClient({
     }
   };
 
+  const selectDate = (dateStr: string) => {
+    setSelectedDate(dateStr);
+    const dateObj = new Date(`${dateStr}T00:00:00`);
+    const nextMonth = dateObj.getMonth();
+    const nextYear = dateObj.getFullYear();
+    if (nextMonth !== calendarMonth || nextYear !== calendarYear) {
+      setCalendarMonth(nextMonth);
+      setCalendarYear(nextYear);
+      fetchBookings(nextYear, nextMonth);
+    }
+  };
+
   useEffect(() => {
     if (!createOpen) return;
     fetchBookings(calendarYear, calendarMonth);
@@ -584,7 +716,82 @@ export default function CalendarioClient({
     fetchBookings(nextYear, nextMonth);
   };
 
+  const handlePrevDay = () => {
+    const baseDate = selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date();
+    baseDate.setDate(baseDate.getDate() - 1);
+    selectDate(toIsoDate(baseDate));
+  };
+
+  const handleNextDay = () => {
+    const baseDate = selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date();
+    baseDate.setDate(baseDate.getDate() + 1);
+    selectDate(toIsoDate(baseDate));
+  };
+
+  const openCreateForHour = (hour: number) => {
+    const targetDate = selectedDate || todayIso;
+    setCreateForm((prev) => ({
+      ...prev,
+      booking_date: targetDate,
+      booking_time: `${String(hour).padStart(2, "0")}:00`,
+    }));
+    setCreateOpen(true);
+    setCreateError(null);
+  };
+
+  const selectedDayIndex = useMemo(
+    () => (selectedDate ? getDayIndexFromDate(selectedDate) : null),
+    [selectedDate]
+  );
+
+  const cloneSlotsForDay = (sourceSlots: BusinessHourSlot[], day: number) =>
+    sourceSlots.map((slot, index) => ({
+      temp_id: createTempId(),
+      day_of_week: day,
+      open_time: slot.open_time,
+      close_time: slot.close_time,
+      sort_order: index,
+      is_active: true,
+    }));
+
+  const applySlotsToDays = (sourceSlots: BusinessHourSlot[], days: number[]) => {
+    setSlots((prev) => {
+      const filtered = prev.filter((slot) => !days.includes(slot.day_of_week));
+      const next = days.flatMap((day) => cloneSlotsForDay(sourceSlots, day));
+      return [...filtered, ...next];
+    });
+  };
+
+  const handleApplyDayToAll = () => {
+    const sourceDay = selectedDayIndex ?? 0;
+    const sourceSlots = getSlotsForDay(sourceDay);
+    applySlotsToDays(sourceSlots, [0, 1, 2, 3, 4, 5, 6]);
+  };
+
+  const handleCopyMonToWeekdays = () => {
+    const mondaySlots = getSlotsForDay(0);
+    applySlotsToDays(mondaySlots, [1, 2, 3, 4]);
+  };
+
+  const confirmApplyDayToAll = () => {
+    if (selectedDayIndex === null) return;
+    const confirmed = window.confirm(
+      "Esto sobrescribira los horarios de todos los dias con el dia seleccionado. ¿Continuar?"
+    );
+    if (!confirmed) return;
+    handleApplyDayToAll();
+  };
+
+  const confirmCopyMonToWeekdays = () => {
+    const confirmed = window.confirm(
+      "Esto sobrescribira los horarios de martes a viernes con los del lunes. ¿Continuar?"
+    );
+    if (!confirmed) return;
+    handleCopyMonToWeekdays();
+  };
+
   const handleSave = async () => {
+    const snapshotAfterSave = serializeSlots(slots);
     setSaving(true);
     setToast(null);
 
@@ -601,6 +808,7 @@ export default function CalendarioClient({
       }
 
       setToast({ type: "success", text: "Horarios guardados." });
+      setSlotsSnapshot(snapshotAfterSave);
     } catch (error) {
       setToast({
         type: "error",
@@ -877,6 +1085,17 @@ export default function CalendarioClient({
     }
   };
 
+  const openBookingDetails = (booking: Booking) => {
+    const legacy = parseLegacyNotes(booking.notes);
+    const servicesFromBooking =
+      booking.services?.map((service) => service.name).join(", ") ||
+      legacy.servicesFromNotes ||
+      "";
+    setBookingEdit({ ...booking, notes: legacy.cleanNotes });
+    setServicesText(servicesFromBooking);
+    setPriceText(getBookingPriceText(booking));
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -904,7 +1123,21 @@ export default function CalendarioClient({
 
       {/* Layout principal reorganizado - Mobile First */}
       <div className="space-y-4 md:space-y-6">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-[var(--text-secondary)]">Vista</span>
+          <SegmentedControl
+            options={[
+              { value: "day", label: "Día" },
+              { value: "month", label: "Mes" },
+            ]}
+            value={calendarView}
+            onChange={setCalendarView}
+            size="sm"
+          />
+        </div>
+
         {/* Fila superior: Calendario + Citas del día */}
+        {calendarView === "month" ? (
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           {/* Calendario - full width en móvil, fijo en desktop */}
           <div className="neumor-card p-4 md:p-5 w-full lg:w-[420px] xl:w-[480px] lg:shrink-0">
@@ -944,7 +1177,7 @@ export default function CalendarioClient({
                 key={`${date || "empty"}-${index}`}
                 type="button"
                 disabled={!date}
-                onClick={() => date && setSelectedDate(date)}
+                onClick={() => date && selectDate(date)}
                 className={`neumor-btn h-11 md:h-10 text-sm md:text-base font-medium ${
                   date === selectedDate ? "day-selected" : ""
                 } ${!date ? "opacity-30 cursor-not-allowed" : ""}`}
@@ -1031,27 +1264,11 @@ export default function CalendarioClient({
                                 className="neumor-inset p-3 md:p-3 cursor-pointer rounded-xl transition active:scale-[0.98] hover:ring-2 hover:ring-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                                 role="button"
                                 tabIndex={0}
-                                onClick={() => {
-                                  const legacy = parseLegacyNotes(booking.notes);
-                                  const servicesFromBooking =
-                                    booking.services?.map((service) => service.name).join(", ") ||
-                                    legacy.servicesFromNotes ||
-                                    "";
-                                  setBookingEdit({ ...booking, notes: legacy.cleanNotes });
-                                  setServicesText(servicesFromBooking);
-                                  setPriceText(getBookingPriceText(booking));
-                                }}
+                                onClick={() => openBookingDetails(booking)}
                                 onKeyDown={(event) => {
                                   if (event.key === "Enter" || event.key === " ") {
                                     event.preventDefault();
-                                    const legacy = parseLegacyNotes(booking.notes);
-                                    const servicesFromBooking =
-                                      booking.services?.map((service) => service.name).join(", ") ||
-                                      legacy.servicesFromNotes ||
-                                      "";
-                                    setBookingEdit({ ...booking, notes: legacy.cleanNotes });
-                                    setServicesText(servicesFromBooking);
-                                    setPriceText(getBookingPriceText(booking));
+                                    openBookingDetails(booking);
                                   }
                                 }}
                               >
@@ -1091,10 +1308,230 @@ export default function CalendarioClient({
             )}
           </div>
         </div>
+        ) : (
+          <div className="neumor-card p-4 md:p-5 w-full flex flex-col max-h-[500px] md:max-h-[620px]">
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base md:text-lg font-bold text-[var(--text-primary)]">
+                    {bookingLabelPlural}
+                  </h3>
+                  {selectedDate && (
+                    <span className="text-xs md:text-sm font-medium text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded-lg">
+                      {new Date(selectedDate + "T00:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    </span>
+                  )}
+                  {selectedDate === todayIso && (
+                    <span className="text-xs font-semibold px-2 py-1 rounded-lg bg-[var(--shadow-light)] text-[var(--text-secondary)]">
+                      Hoy
+                    </span>
+                  )}
+                  {filteredBookingsForDay.length > 0 && (
+                    <span className="text-xs font-bold text-white bg-[var(--accent)] px-2 py-0.5 rounded-full">
+                      {filteredBookingsForDay.length}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="neumor-btn neumor-btn-accent text-sm font-semibold px-3 py-2 shrink-0"
+                  onClick={() => {
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      booking_date: selectedDate || todayIso,
+                    }));
+                    setCreateOpen(true);
+                    setCreateError(null);
+                  }}
+                >
+                  + Nueva
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="neumor-btn text-sm px-3 py-2"
+                    onClick={handlePrevDay}
+                    aria-label="Día anterior"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    className="neumor-btn text-sm px-3 py-2"
+                    onClick={() => selectDate(todayIso)}
+                  >
+                    Hoy
+                  </button>
+                  <button
+                    type="button"
+                    className="neumor-btn text-sm px-3 py-2"
+                    onClick={handleNextDay}
+                    aria-label="Día siguiente"
+                  >
+                    →
+                  </button>
+                </div>
+
+                {!isRestaurant && professionals.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs md:text-sm font-medium text-[var(--text-secondary)] whitespace-nowrap">
+                      Filtrar:
+                    </label>
+                    <select
+                      className="neumor-input text-sm py-2 flex-1"
+                      value={selectedProfessionalId}
+                      onChange={(event) => setSelectedProfessionalId(event.target.value)}
+                    >
+                      <option value="all">Todos</option>
+                      {professionals.map((professional) => (
+                        <option key={professional.id} value={professional.id}>
+                          {professional.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedDate ? (
+              daySchedule && !daySchedule.is_open && filteredBookingsForDay.length === 0 ? (
+                <div className="neumor-inset p-4 rounded-xl text-center">
+                  <p className="text-sm text-[var(--text-secondary)]">Día cerrado</p>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto scroll-hidden min-h-0 -mx-1 px-1">
+                  {timelineHours.length ? (
+                    <div className="space-y-3">
+                      {timelineHours.map((hour) => {
+                        const hourBookings = bookingsByHour.get(hour) || [];
+                        return (
+                          <div key={hour} className="flex gap-3">
+                            <div className="w-14 text-xs font-semibold text-[var(--text-secondary)] pt-2">
+                              {String(hour).padStart(2, "0")}:00
+                            </div>
+                            <div className="flex-1 border-l border-[var(--shadow-dark)]/30 pl-3 pb-2">
+                              {hourBookings.length ? (
+                                <div className="space-y-2">
+                                  {hourBookings.map((booking) => (
+                                    <button
+                                      key={booking.id}
+                                      type="button"
+                                      className="w-full neumor-inset px-3 py-2 rounded-xl text-left text-sm flex items-center justify-between gap-2 hover:ring-2 hover:ring-[var(--accent)]"
+                                      onClick={() => openBookingDetails(booking)}
+                                    >
+                                      <span className="truncate">{booking.customer_name}</span>
+                                      <span className="font-semibold text-[var(--accent)]">
+                                        {booking.booking_time?.slice(0, 5) || "-"}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="text-xs text-[var(--text-secondary)] hover:text-[var(--accent)]"
+                                  onClick={() => openCreateForHour(hour)}
+                                >
+                                  Libre · + Nueva
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="neumor-inset p-4 rounded-xl text-center">
+                      <p className="text-sm text-[var(--text-secondary)]">
+                        Sin {bookingLabelPlural.toLowerCase()} este día
+                      </p>
+                    </div>
+                  )}
+
+                  {bookingsWithoutTime.length > 0 && (
+                    <div className="mt-4">
+                      <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold neumor-inset mb-2">
+                        Sin hora
+                      </span>
+                      <div className="space-y-2">
+                        {bookingsWithoutTime.map((booking) => (
+                          <button
+                            key={booking.id}
+                            type="button"
+                            className="w-full neumor-inset px-3 py-2 rounded-xl text-left text-sm flex items-center justify-between gap-2 hover:ring-2 hover:ring-[var(--accent)]"
+                            onClick={() => openBookingDetails(booking)}
+                          >
+                            <span className="truncate">{booking.customer_name}</span>
+                            <span className="font-semibold text-[var(--accent)]">-</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            ) : (
+              <div className="neumor-inset p-4 rounded-xl text-center flex-1 flex items-center justify-center min-h-[80px]">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Selecciona un día en el calendario
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Fila inferior: Horarios del local */}
         <div className="neumor-card p-4 md:p-5">
           <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-5 text-[var(--text-primary)]">Horarios del local</h3>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="neumor-btn text-xs md:text-sm px-3 py-2"
+              onClick={confirmApplyDayToAll}
+              disabled={saving || selectedDayIndex === null}
+              title={
+                selectedDayIndex === null
+                  ? "Selecciona un dia en el calendario para aplicar a todos"
+                  : undefined
+              }
+            >
+              Aplicar a todos
+            </button>
+            <button
+              type="button"
+              className="neumor-btn text-xs md:text-sm px-3 py-2"
+              onClick={confirmCopyMonToWeekdays}
+              disabled={saving}
+            >
+              Copiar Lun–Vie
+            </button>
+            {selectedDayIndex === null && (
+              <span className="text-xs text-[var(--text-secondary)]">
+                Selecciona un dia para aplicar a todos.
+              </span>
+            )}
+          </div>
+
+          {hasUnsavedChanges && (
+            <div className="sticky top-3 z-10 mb-4">
+              <div className="neumor-inset p-3 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="text-xs font-semibold">Cambios sin guardar</span>
+                <button
+                  type="button"
+                  className="neumor-btn neumor-btn-accent text-xs md:text-sm px-3 py-2"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Grid de días - responsive: 1 columna en móvil, flex en desktop */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4 items-start">
@@ -1221,14 +1658,16 @@ export default function CalendarioClient({
               })}
             </div>
 
-            <button
-              type="button"
-              onClick={handleSave}
-              className="neumor-btn neumor-btn-accent mt-4 md:mt-6 text-sm md:text-base font-semibold w-full sm:w-auto px-6 md:px-8 py-3 active:scale-[0.98]"
-              disabled={saving}
-            >
-              {saving ? "Guardando..." : "Guardar horarios"}
-            </button>
+            {!hasUnsavedChanges && (
+              <button
+                type="button"
+                onClick={handleSave}
+                className="neumor-btn neumor-btn-accent mt-4 md:mt-6 text-sm md:text-base font-semibold w-full sm:w-auto px-6 md:px-8 py-3 active:scale-[0.98]"
+                disabled={saving}
+              >
+                {saving ? "Guardando..." : "Guardar horarios"}
+              </button>
+            )}
           </div>
 
           <div
@@ -1788,7 +2227,7 @@ export default function CalendarioClient({
 
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                      Precio total (EUR)
+                      Precio total (€)
                     </label>
                     <input
                       className="neumor-input w-full text-base py-2.5"

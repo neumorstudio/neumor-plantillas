@@ -15,7 +15,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   });
 
   if (error) {
-    console.error("Error iniciando OAuth:", error.message);
     return redirect("/mi-cuenta?error=auth_failed");
   }
 

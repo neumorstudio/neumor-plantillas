@@ -197,8 +197,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ success: true, sent: sentCount });
-  } catch (error) {
-    console.error("[cron] reminder error:", error);
+  } catch {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

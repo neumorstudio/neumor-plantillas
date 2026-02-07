@@ -88,43 +88,22 @@ interface Props {
 const dayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 
 export function CalendarioFitnessClient({
-  initialHours,
-  initialSlots,
+  initialHours: _initialHours,
+  initialSlots: _initialSlots,
   initialSessions,
-  initialSpecialDays,
+  initialSpecialDays: _initialSpecialDays,
   customers,
   services,
   packages,
   year,
   month,
 }: Props) {
-  const createTempId = () =>
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-  const fallbackSlots =
-    initialSlots.length > 0
-      ? initialSlots
-      : initialHours
-          .filter((hour) => hour.is_open)
-          .map((hour) => ({
-            temp_id: createTempId(),
-            day_of_week: hour.day_of_week,
-            open_time: hour.open_time,
-            close_time: hour.close_time,
-            sort_order: 0,
-            is_active: true,
-          }));
-
   const todayIso = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState<string | null>(todayIso);
-  const [slots, setSlots] = useState<BusinessHourSlot[]>(fallbackSlots);
   const [calendarYear, setCalendarYear] = useState(year);
   const [calendarMonth, setCalendarMonth] = useState(month);
   const [sessions, setSessions] = useState<Session[]>(initialSessions);
   const [loadingSessions, setLoadingSessions] = useState(false);
-  const [specialDays, setSpecialDays] = useState<SpecialDay[]>(initialSpecialDays);
 
   // Form states
   const [showForm, setShowForm] = useState(false);
@@ -353,7 +332,7 @@ export function CalendarioFitnessClient({
     return <div className="flex flex-wrap gap-1">{badges}</div>;
   };
 
-  const formatPrice = (cents: number) => `${(cents / 100).toFixed(2)} EUR`;
+  const formatPrice = (cents: number) => `${(cents / 100).toFixed(2)} €`;
 
   return (
     <div className="space-y-6">

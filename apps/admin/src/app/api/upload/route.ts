@@ -78,7 +78,6 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
       return NextResponse.json(
         { error: "Error al subir el archivo" },
         { status: 500 }
@@ -95,8 +94,7 @@ export async function POST(request: NextRequest) {
       url: urlData.publicUrl,
       path: uploadData.path,
     });
-  } catch (error) {
-    console.error("Upload API error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
@@ -153,7 +151,6 @@ export async function DELETE(request: NextRequest) {
       .remove([path]);
 
     if (deleteError) {
-      console.error("Delete error:", deleteError);
       return NextResponse.json(
         { error: "Error al eliminar el archivo" },
         { status: 500 }
@@ -161,8 +158,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Delete API error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

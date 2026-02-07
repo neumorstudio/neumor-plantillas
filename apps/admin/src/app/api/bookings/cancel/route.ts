@@ -368,8 +368,7 @@ export async function POST(request: NextRequest) {
       { success: true, status: "cancelled" },
       { headers: responseCorsHeaders }
     );
-  } catch (error) {
-    console.error("[bookings/cancel] Error interno:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500, headers: responseCorsHeaders }

@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "lint": "eslint src/",
+    "lint": "pnpm -w exec eslint --config eslint.config.mjs apps/templates/restaurant/src",
     "type-check": "astro check"
   },
   "dependencies": {

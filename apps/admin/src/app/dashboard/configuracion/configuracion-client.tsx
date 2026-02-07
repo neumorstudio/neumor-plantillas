@@ -107,7 +107,6 @@ export function ConfiguracionClient({
     };
 
     syncSubscription().catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleToggle = (key: keyof typeof settings) => {
@@ -301,7 +300,7 @@ export function ConfiguracionClient({
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Configuracion guardada correctamente" });
+        setMessage({ type: "success", text: "Configuración guardada correctamente" });
       } else {
         setMessage({ type: "error", text: data.error || "Error al guardar" });
       }
@@ -316,7 +315,7 @@ export function ConfiguracionClient({
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-heading font-bold mb-2">Configuracion</h1>
+        <h1 className="text-3xl font-heading font-bold mb-2">Configuración</h1>
         <p className="text-[var(--text-secondary)]">
           Gestiona notificaciones y acceso rapido al website
         </p>
@@ -402,7 +401,7 @@ export function ConfiguracionClient({
           disabled={saving}
           className="neumor-btn neumor-btn-accent w-full"
         >
-          {saving ? "Guardando..." : "Guardar Configuracion"}
+          {saving ? "Guardando..." : "Guardar Configuración"}
         </button>
       </div>
     </div>

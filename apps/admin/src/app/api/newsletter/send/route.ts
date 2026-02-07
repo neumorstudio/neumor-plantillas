@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     // Preparar emails personalizados
     const emails = subscribers.map((subscriber) => {
-      let html = template.html_content
+      const html = template.html_content
         .replace(/\{\{restaurantName\}\}/g, restaurantName)
         .replace(/\{\{name\}\}/g, subscriber.name || "Cliente")
         .replace(/\{\{unsubscribeLink\}\}/g, `#unsubscribe-${subscriber.id}`);
@@ -153,8 +153,7 @@ export async function POST(request: NextRequest) {
         : `Enviado a ${result.success} suscriptores (${result.failed} fallidos)`,
     });
 
-  } catch (error) {
-    console.error("Newsletter send error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

@@ -71,7 +71,6 @@ export async function getWebsiteConfig(): Promise<Record<string, unknown> | null
     .single();
 
   if (error) {
-    console.error("Error fetching website config:", error.message);
     return null;
   }
 
@@ -439,12 +438,9 @@ export async function getClientData() {
 
   if (!client) return { client: null, websiteId: null };
 
-  // Extract website id from joined data
-  const websites = client.websites;
-  const websiteId = Array.isArray(websites) ? websites[0]?.id : websites?.id;
-
   // Remove websites from client object to maintain original shape
-  const { websites: _, ...clientData } = client;
+  const { websites, ...clientData } = client;
+  const websiteId = Array.isArray(websites) ? websites[0]?.id : websites?.id;
 
   return { client: clientData, websiteId: websiteId || null };
 }

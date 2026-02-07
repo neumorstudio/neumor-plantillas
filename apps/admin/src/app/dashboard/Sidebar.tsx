@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
   },
   {
     href: "/dashboard/menu",
-    label: "Menu",
+    label: "Menú",
     slug: "menu",
     icon: <Menu className="w-5 h-5" />,
   },
@@ -116,13 +116,13 @@ const navItems: NavItem[] = [
   },
   {
     href: "/dashboard/personalizacion",
-    label: "Personalizacion",
+    label: "Personalización",
     slug: "personalizacion",
     icon: <Palette className="w-5 h-5" />,
   },
   {
     href: "/dashboard/configuracion",
-    label: "Configuracion",
+    label: "Configuración",
     slug: "configuracion",
     icon: <Settings className="w-5 h-5" />,
   },
@@ -233,6 +233,8 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
   };
 
   const currentPageTitle = getPageTitle(pathname, visibleNavItems);
+  const panelLabel =
+    clientInfo?.businessType === "restaurant" ? "Panel de Restaurante" : "Panel de Gestión";
 
   return (
     <>
@@ -242,7 +244,7 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
         <button
           onClick={() => setIsMobileOpen(true)}
           className="mobile-menu-btn"
-          aria-label="Abrir menu"
+          aria-label="Abrir menú"
         >
           <Menu className="w-6 h-6" />
         </button>
@@ -269,7 +271,7 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
       <aside
         className={`sidebar neumor-bg ${isMobileOpen ? "sidebar-open" : ""}`}
         role="navigation"
-        aria-label="Menu principal"
+        aria-label="Menú principal"
       >
         {/* Sidebar Header */}
         <div className="sidebar-header">
@@ -277,14 +279,14 @@ export function Sidebar({ clientInfo, visibleSections }: SidebarProps) {
             <h1 className="text-xl font-heading font-bold text-[var(--text-primary)]">
               NeumorStudio
             </h1>
-            <p className="text-xs text-[var(--text-secondary)]">Panel de Cliente</p>
+            <p className="text-xs text-[var(--text-secondary)]">{panelLabel}</p>
           </div>
 
           {/* Close button - only on mobile */}
           <button
             onClick={() => setIsMobileOpen(false)}
             className="sidebar-close-btn lg:hidden"
-            aria-label="Cerrar menu"
+            aria-label="Cerrar menú"
           >
             <X className="w-5 h-5" />
           </button>

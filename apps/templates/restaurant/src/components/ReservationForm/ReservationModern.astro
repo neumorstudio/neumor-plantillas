@@ -932,7 +932,6 @@ const {
         const parsed = JSON.parse(el.textContent || 'null');
         return parsed ?? fallback;
       } catch (err) {
-        console.error('Error parsing reservation data:', err);
         return fallback;
       }
     };
@@ -1338,7 +1337,6 @@ const {
         form.style.display = 'none';
         if (successMessage) successMessage.style.display = 'block';
       } catch (error) {
-        console.error(error);
         alert('Error al enviar la reserva. Por favor, inténtalo de nuevo.');
       } finally {
         submitBtn?.classList.remove('loading');

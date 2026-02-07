@@ -463,7 +463,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                 <TeamSection
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
-                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
                 />
               </section>
             );
@@ -474,7 +474,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
-                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "grid" | "carousel" | "masonry"}
                 />
               </section>
             );
@@ -496,7 +496,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
                   items={getContentArray("faqItems")}
-                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
                 />
               </section>
             );
@@ -506,7 +506,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                 <PlansSection
                   title={getContentText("plansTitle")}
                   subtitle={getContentText("plansSubtitle")}
-                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "cards" | "table" | "comparison"}
                 />
               </section>
             );
@@ -521,7 +521,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                   email={pageConfig.email}
                   webhookUrl={contactWebhookUrl}
                   websiteId={tenant.id}
-                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
+                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
                 />
               </section>
             );

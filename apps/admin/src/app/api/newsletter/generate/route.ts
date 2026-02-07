@@ -153,8 +153,7 @@ INSTRUCCIONES:
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("Groq API error:", response.status, errorData);
+      await response.json().catch(() => ({}));
       return NextResponse.json(
         { error: "Error al generar la plantilla" },
         { status: 500 }
@@ -186,8 +185,7 @@ INSTRUCCIONES:
       suggestedSubject,
       suggestedName: `Plantilla - ${prompt.slice(0, 30)}`,
     });
-  } catch (error) {
-    console.error("Generate API error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

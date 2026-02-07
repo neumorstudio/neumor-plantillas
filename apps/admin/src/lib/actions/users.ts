@@ -55,18 +55,13 @@ export async function getUsers(): Promise<UserWithClient[]> {
   const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
 
   if (authError) {
-    console.error("[SUPERADMIN] Error fetching auth users:", authError);
     throw new Error("Error al cargar usuarios");
   }
 
   // Obtener clientes con auth_user_id para hacer el join
-  const { data: clients, error: clientsError } = await supabase
+  const { data: clients } = await supabase
     .from("clients")
     .select("id, business_name, business_type, auth_user_id");
-
-  if (clientsError) {
-    console.error("[SUPERADMIN] Error fetching clients:", clientsError);
-  }
 
   // Crear mapa de auth_user_id -> client
   const clientByAuthId = new Map(
@@ -113,7 +108,6 @@ export async function getClientsForAssignment(): Promise<ClientOption[]> {
     .order("business_name");
 
   if (error) {
-    console.error("[SUPERADMIN] Error fetching clients:", error);
     throw new Error("Error al cargar negocios");
   }
 
@@ -170,7 +164,6 @@ export async function createUser(formData: FormData) {
   });
 
   if (authError) {
-    console.error("[SUPERADMIN] Error creating auth user:", authError);
     return { error: authError.message || "Error al crear el usuario" };
   }
 
@@ -182,7 +175,6 @@ export async function createUser(formData: FormData) {
       .eq("id", clientId);
 
     if (linkError) {
-      console.error("[SUPERADMIN] Error linking user to client:", linkError);
       // No hacemos rollback, el usuario ya esta creado
       return { error: "Usuario creado pero error al vincularlo al negocio: " + linkError.message };
     }
@@ -225,7 +217,6 @@ export async function assignUserToClient(userId: string, clientId: string | null
       .eq("id", clientId);
 
     if (linkError) {
-      console.error("[SUPERADMIN] Error assigning user to client:", linkError);
       return { error: linkError.message || "Error al asignar usuario" };
     }
 
@@ -244,7 +235,6 @@ export async function assignUserToClient(userId: string, clientId: string | null
       .eq("auth_user_id", userId);
 
     if (error) {
-      console.error("[SUPERADMIN] Error unlinking user:", error);
       return { error: error.message || "Error al desvincular usuario" };
     }
 
@@ -277,7 +267,6 @@ export async function deleteUser(userId: string) {
   const { error } = await supabase.auth.admin.deleteUser(userId);
 
   if (error) {
-    console.error("[SUPERADMIN] Error deleting user:", error);
     return { error: error.message || "Error al eliminar el usuario" };
   }
 
@@ -302,7 +291,6 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   });
 
   if (error) {
-    console.error("[SUPERADMIN] Error resetting password:", error);
     return { error: error.message || "Error al cambiar la contraseña" };
   }
 

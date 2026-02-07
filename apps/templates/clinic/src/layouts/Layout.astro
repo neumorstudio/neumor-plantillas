@@ -21,25 +21,15 @@ const {
 } = Astro.props;
 
 // === DEBUG LOGS ===
-console.log('[Layout.astro] ========== LAYOUT RENDER ==========');
-console.log('[Layout.astro] Received props - theme:', theme);
-console.log('[Layout.astro] Received customization:', JSON.stringify(customization, null, 2));
 
 // Aplicar parámetros de preview si existen
 const url = new URL(Astro.request.url);
 const isPreviewMode = url.searchParams.get('preview') === '1';
-console.log('[Layout.astro] URL:', url.toString());
-console.log('[Layout.astro] Is preview mode:', isPreviewMode);
 
 const finalCustomization = applyPreviewParams(customization, url);
-console.log('[Layout.astro] finalCustomization after applyPreviewParams:', JSON.stringify(finalCustomization, null, 2));
 
 // Compilar tokens a CSS
 const { cssVariables, inlineColorStyles, fontImports, favicon } = compileCustomization(finalCustomization);
-console.log('[Layout.astro] Compiled - cssVariables:', cssVariables ? 'has content' : 'empty');
-console.log('[Layout.astro] Compiled - inlineColorStyles:', inlineColorStyles);
-console.log('[Layout.astro] Compiled - fontImports:', fontImports);
-console.log('[Layout.astro] ========================================');
 
 const pwaBranding = finalCustomization.branding as Record<string, unknown> | undefined;
 const pwaLogoCandidate =
@@ -261,16 +251,9 @@ const defaultFonts = !fontImports
     <!-- DEBUG PANEL - Solo visible en modo preview -->
     {inlineColorStyles && (
       <script is:inline define:vars={{ inlineColorStyles, cssVariables, theme }}>
-        console.log('[Layout HTML] Theme class:', document.documentElement.className);
-        console.log('[Layout HTML] Inline styles on html:', document.documentElement.getAttribute('style'));
-        console.log('[Layout HTML] inlineColorStyles variable:', inlineColorStyles);
-        console.log('[Layout HTML] Computed --accent:', getComputedStyle(document.documentElement).getPropertyValue('--accent'));
 
         // Log after a small delay to see final computed values
         setTimeout(() => {
-          console.log('[Layout HTML] AFTER LOAD - Computed --accent:', getComputedStyle(document.documentElement).getPropertyValue('--accent'));
-          console.log('[Layout HTML] AFTER LOAD - html classes:', document.documentElement.className);
-          console.log('[Layout HTML] AFTER LOAD - html style:', document.documentElement.getAttribute('style'));
         }, 100);
       </script>
     )}
@@ -312,15 +295,12 @@ const defaultFonts = !fontImports
           if (!event.data || event.data.source !== 'neumorstudio-admin') return;
           if (event.data.type !== 'update-styles') return;
 
-          console.log('[Preview] Received postMessage:', event.data.type);
-          console.log('[Preview] Theme value:', event.data.payload.theme);
 
           const { theme, skin, colors, typography, effects, branding } = event.data.payload;
           const root = document.documentElement;
 
           // Aplicar tema (cambiar clase en html)
           if (theme) {
-            console.log('[Preview] Applying theme:', theme, 'Current classes:', root.className);
             // Lista completa de todos los temas disponibles
             var allThemes = [
               'dark', 'colorful', 'rustic', 'elegant', 'neuglass', 'neuglass-dark',
@@ -336,12 +316,10 @@ const defaultFonts = !fontImports
             if (theme !== 'light') {
               root.classList.add('theme-' + theme);
             }
-            console.log('[Preview] New classes:', root.className);
           }
 
           // Aplicar skin (estilo visual de componentes)
           if (skin !== undefined) {
-            console.log('[Preview] Applying skin:', skin);
             var allSkins = ['flat', 'glass', 'material', 'brutalist', 'soft', '3d', 'outline'];
             // Remover todas las clases de skin existentes
             allSkins.forEach(function(s) {
@@ -444,7 +422,6 @@ const defaultFonts = !fontImports
 
           // Aplicar contenido de texto
           const { content } = event.data.payload;
-          console.log('[Preview] Content received:', content ? 'yes' : 'no', 'heroImage:', content?.heroImage);
           if (content) {
             // Nombre del negocio
             if (content.businessName) {
@@ -522,13 +499,11 @@ const defaultFonts = !fontImports
 
             // Siempre intentar actualizar heroImage si existe en el contenido
             if (content.heroImage) {
-              console.log('[Preview] Attempting to update hero image to:', content.heroImage);
               var imageUpdated = false;
 
               // 1. Buscar .hero-image (HeroClassic, HeroBold)
               var heroImg = document.querySelector('.hero-image');
               if (heroImg && heroImg.tagName === 'IMG') {
-                console.log('[Preview] Updating .hero-image');
                 heroImg.src = content.heroImage;
                 imageUpdated = true;
               }
@@ -536,7 +511,6 @@ const defaultFonts = !fontImports
               // 2. Buscar .hero-bg-image (HeroModern - imagen fullscreen)
               var heroBgImg = document.querySelector('.hero-bg-image');
               if (heroBgImg && heroBgImg.tagName === 'IMG') {
-                console.log('[Preview] Updating .hero-bg-image (HeroModern)');
                 heroBgImg.src = content.heroImage;
                 imageUpdated = true;
               }
@@ -544,7 +518,6 @@ const defaultFonts = !fontImports
               // 3. Buscar elementos con data-hero-image
               var dataHeroImg = document.querySelector('[data-hero-image]');
               if (dataHeroImg && dataHeroImg.tagName === 'IMG') {
-                console.log('[Preview] Updating [data-hero-image]');
                 dataHeroImg.src = content.heroImage;
                 imageUpdated = true;
               }
@@ -552,19 +525,16 @@ const defaultFonts = !fontImports
               // 4. Buscar background-image CSS (fallback)
               var heroSection = document.querySelector('[data-hero-bg]');
               if (heroSection) {
-                console.log('[Preview] Updating hero section background');
                 heroSection.style.backgroundImage = 'url(' + content.heroImage + ')';
                 imageUpdated = true;
               }
 
               if (!imageUpdated) {
-                console.log('[Preview] WARNING: No hero image element found. Looking for any img in hero...');
                 // Fallback: buscar cualquier img dentro de un section.hero*
                 var heroSection = document.querySelector('section[class*="hero"]');
                 if (heroSection) {
                   var anyImg = heroSection.querySelector('img');
                   if (anyImg) {
-                    console.log('[Preview] Found fallback img in hero section');
                     anyImg.src = content.heroImage;
                   }
                 }
@@ -830,7 +800,6 @@ const defaultFonts = !fontImports
           // Aplicar sectionsConfig - Mostrar/ocultar y reordenar secciones en tiempo real
           const { sectionsConfig } = event.data.payload;
           if (sectionsConfig && sectionsConfig.sections) {
-            console.log('[Preview] Applying sectionsConfig:', sectionsConfig.sections.length, 'sections');
 
             sectionsConfig.sections.forEach(function(sectionCfg) {
               const sectionEl = document.querySelector('[data-section-id="' + sectionCfg.id + '"]');
@@ -838,10 +807,8 @@ const defaultFonts = !fontImports
                 // Actualizar visibilidad
                 if (sectionCfg.enabled) {
                   sectionEl.style.display = '';
-                  console.log('[Preview] Section', sectionCfg.id, 'enabled, order:', sectionCfg.order);
                 } else {
                   sectionEl.style.display = 'none';
-                  console.log('[Preview] Section', sectionCfg.id, 'disabled');
                 }
 
                 // Actualizar orden (CSS order para flexbox)
@@ -849,7 +816,6 @@ const defaultFonts = !fontImports
                   sectionEl.style.order = sectionCfg.order.toString();
                 }
               } else {
-                console.log('[Preview] Section element not found:', sectionCfg.id);
               }
             });
           }

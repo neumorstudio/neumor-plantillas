@@ -44,7 +44,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect, url }) => {
   });
 
   if (error) {
-    console.error("OAuth error:", error.message);
     return redirect("/mi-cuenta?error=oauth_error");
   }
 

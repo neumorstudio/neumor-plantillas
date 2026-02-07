@@ -8,7 +8,7 @@ export default async function PersonalizacionPage() {
   if (!websiteConfig) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Personalizacion</h1>
+        <h1 className="text-2xl font-bold mb-4">Personalización</h1>
         <p className="text-[var(--text-secondary)]">
           No se encontro la cuenta asociada.
         </p>

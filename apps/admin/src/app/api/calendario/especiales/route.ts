@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     }));
 
     return NextResponse.json(merged);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -184,7 +184,7 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

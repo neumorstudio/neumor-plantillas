@@ -53,13 +53,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating template:", error);
       return NextResponse.json({ error: "Error al crear plantilla" }, { status: 500 });
     }
 
     return NextResponse.json({ template });
-  } catch (error) {
-    console.error("Template API error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -94,13 +92,11 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error updating template:", error);
       return NextResponse.json({ error: "Error al actualizar plantilla" }, { status: 500 });
     }
 
     return NextResponse.json({ template });
-  } catch (error) {
-    console.error("Template API error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
@@ -131,13 +127,11 @@ export async function DELETE(request: NextRequest) {
       .eq("id", id);
 
     if (error) {
-      console.error("Error deleting template:", error);
       return NextResponse.json({ error: "Error al eliminar plantilla" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Template API error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

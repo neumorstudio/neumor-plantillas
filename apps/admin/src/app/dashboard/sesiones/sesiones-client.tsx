@@ -91,8 +91,6 @@ export function SesionesClient({ initialSessions, customers, services: initialSe
         const data = await res.json();
         setSessions(data);
       }
-    } catch {
-      console.error("Error loading sessions");
     } finally {
       setLoading(false);
     }

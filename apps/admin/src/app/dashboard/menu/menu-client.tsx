@@ -159,7 +159,7 @@ export default function MenuClient({ initialItems }: { initialItems: AdminMenuIt
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Precio (EUR)</label>
+            <label className="block text-sm font-medium mb-2">Precio (€)</label>
             <input
               type="number"
               min="0"

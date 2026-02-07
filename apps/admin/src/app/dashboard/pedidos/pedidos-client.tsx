@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { Calendar, Clock, Mail, Phone, User, X } from "lucide-react";
-import { SegmentedControl } from "@/components/mobile";
+import { ConfirmDialog, SegmentedControl } from "@/components/mobile";
 import { updateOrderStatus } from "@/lib/actions/orders";
 
 interface OrderItem {
@@ -30,27 +30,33 @@ interface Order {
   order_items?: OrderItem[] | null;
 }
 
-type FilterStatus = "all" | "pending" | "paid" | "completed" | "cancelled";
+type FilterStatus = "all" | "pending" | "paid" | "cancelled";
+type ViewMode = "compact" | "detailed";
+type OrderStatus = Exclude<FilterStatus, "all">;
 
 const STATUS_OPTIONS: { value: FilterStatus; label: string }[] = [
   { value: "all", label: "Todos" },
   { value: "pending", label: "Pendientes" },
   { value: "paid", label: "Pagados" },
-  { value: "completed", label: "Completados" },
   { value: "cancelled", label: "Cancelados" },
 ];
+
+const ORDER_STATUSES: OrderStatus[] = ["pending", "paid", "cancelled"];
+const QUICK_ACTIONS: Record<OrderStatus, OrderStatus[]> = {
+  pending: ["paid", "cancelled"],
+  paid: ["cancelled"],
+  cancelled: [],
+};
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",
   paid: "Pagado",
-  completed: "Completado",
   cancelled: "Cancelado",
 };
 
 const STATUS_BADGES: Record<string, string> = {
   pending: "badge-pending",
   paid: "badge-confirmed",
-  completed: "badge-confirmed",
   cancelled: "badge-cancelled",
 };
 
@@ -78,12 +84,47 @@ function getOrderStatus(order: Order) {
   return "pending";
 }
 
+function isOrderStatus(value: string): value is OrderStatus {
+  return ORDER_STATUSES.includes(value as OrderStatus);
+}
+
+function getPaymentStatus(order: Order) {
+  const isPaid =
+    order.stripe_payment_status === "paid" || !!order.paid_at || order.status === "paid";
+  return {
+    label: isPaid ? "Pagado" : "Pendiente pago",
+    badgeClass: isPaid ? "badge-confirmed" : "badge-pending",
+    isPaid,
+  };
+}
+
+function getPickupDateTime(order: Order) {
+  if (!order.pickup_date || !order.pickup_time) return null;
+  const [year, month, day] = order.pickup_date.split("-").map(Number);
+  const [hours, minutes] = order.pickup_time.split(":").map(Number);
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day) ||
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes)
+  ) {
+    return null;
+  }
+  return new Date(year, month - 1, day, hours, minutes);
+}
+
 export default function PedidosClient({ initialOrders }: { initialOrders: Order[] }) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [viewMode, setViewMode] = useState<ViewMode>("compact");
+  const [cancelConfirm, setCancelConfirm] = useState<{
+    orderId: string;
+    customerName: string;
+  } | null>(null);
 
   const filteredOrders = useMemo(() => {
     return orders
@@ -97,14 +138,23 @@ export default function PedidosClient({ initialOrders }: { initialOrders: Order[
           (order.customer_email?.toLowerCase().includes(search) ?? false);
         return matchesFilter && matchesSearch;
       })
-      .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      .map((order, index) => {
+        const pickupDateTime = getPickupDateTime(order);
+        const createdAt = order.created_at ? new Date(order.created_at).getTime() : 0;
+        return {
+          order,
+          index,
+          sortTime: pickupDateTime ? pickupDateTime.getTime() : createdAt,
+        };
+      })
+      .sort((a, b) => a.sortTime - b.sortTime || a.index - b.index)
+      .map(({ order }) => order);
   }, [orders, filter, searchTerm]);
 
   const counts = useMemo(() => {
     const stats = {
       pending: 0,
       paid: 0,
-      completed: 0,
       cancelled: 0,
     };
     orders.forEach((order) => {
@@ -132,6 +182,20 @@ export default function PedidosClient({ initialOrders }: { initialOrders: Order[
     });
   };
 
+  const handleQuickAction = (order: Order, nextStatus: OrderStatus) => {
+    if (nextStatus === "cancelled") {
+      setCancelConfirm({ orderId: order.id, customerName: order.customer_name });
+      return;
+    }
+    handleStatusChange(order.id, nextStatus);
+  };
+
+  const confirmCancel = () => {
+    if (!cancelConfirm) return;
+    handleStatusChange(cancelConfirm.orderId, "cancelled");
+    setCancelConfirm(null);
+  };
+
   return (
     <div className="space-y-6">
       {actionError && (
@@ -140,6 +204,21 @@ export default function PedidosClient({ initialOrders }: { initialOrders: Order[
           {actionError}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!cancelConfirm}
+        onClose={() => setCancelConfirm(null)}
+        onConfirm={confirmCancel}
+        isLoading={isPending}
+        title="Cancelar pedido"
+        description={
+          cancelConfirm
+            ? `¿Cancelar el pedido de ${cancelConfirm.customerName}?`
+            : "¿Cancelar el pedido?"
+        }
+        confirmText="Si, cancelar"
+        variant="danger"
+      />
 
       <div className="neumor-card p-4 space-y-4">
         <div className="relative">
@@ -161,15 +240,26 @@ export default function PedidosClient({ initialOrders }: { initialOrders: Order[
                 ? counts.pending
                 : opt.value === "paid"
                   ? counts.paid
-                  : opt.value === "completed"
-                    ? counts.completed
-                    : opt.value === "cancelled"
-                      ? counts.cancelled
-                      : undefined,
+                  : opt.value === "cancelled"
+                    ? counts.cancelled
+                    : undefined,
           }))}
           value={filter}
           onChange={setFilter}
         />
+
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium text-[var(--text-secondary)]">Vista</span>
+          <SegmentedControl
+            options={[
+              { value: "compact", label: "Compacto" },
+              { value: "detailed", label: "Detallado" },
+            ]}
+            value={viewMode}
+            onChange={setViewMode}
+            size="sm"
+          />
+        </div>
       </div>
 
       {filteredOrders.length === 0 ? (
@@ -185,23 +275,84 @@ export default function PedidosClient({ initialOrders }: { initialOrders: Order[
         <div className="grid gap-4">
           {filteredOrders.map((order) => {
             const status = getOrderStatus(order);
+            const statusKey = isOrderStatus(status) ? status : "pending";
             const badgeClass = STATUS_BADGES[status] || "badge";
             const statusLabel = STATUS_LABELS[status] || status;
             const shortId = order.id.slice(0, 8);
             const totalLabel = formatMoney(order.total_amount, order.currency || "EUR");
-            const paymentStatus = order.stripe_payment_status || (status === "paid" ? "paid" : "pending");
+            const paymentStatus =
+              order.stripe_payment_status || (status === "paid" ? "paid" : "pending");
+            const paymentInfo = getPaymentStatus(order);
+            const pickupDateTime = getPickupDateTime(order);
+            const minutesToPickup = pickupDateTime
+              ? (pickupDateTime.getTime() - Date.now()) / (1000 * 60)
+              : null;
+            const isPickupSoon =
+              minutesToPickup !== null && minutesToPickup >= 0 && minutesToPickup <= 30;
+            const cardHighlight = isPickupSoon
+              ? "ring-2 ring-amber-300 bg-amber-50/40"
+              : "";
+            const quickActions = QUICK_ACTIONS[statusKey];
+
+            if (viewMode === "compact") {
+              return (
+                <div key={order.id} className={`neumor-card p-3 ${cardHighlight}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="font-semibold truncate">{order.customer_name}</h3>
+                      <span className={`badge ${badgeClass}`}>{statusLabel}</span>
+                      <span className={`badge ${paymentInfo.badgeClass}`}>{paymentInfo.label}</span>
+                      {isPickupSoon && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                          &lt;30 min
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[var(--text-secondary)] whitespace-nowrap">
+                      {formatDate(order.pickup_date)} · {order.pickup_time || "-"}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mt-1">
+                    <span>
+                      Pedido #{shortId} · {order.order_items?.length ?? 0} items
+                    </span>
+                    <span className="font-semibold text-[var(--accent)]">{totalLabel}</span>
+                  </div>
+                  {quickActions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {quickActions.map((nextStatus) => (
+                        <button
+                          key={`${order.id}-${nextStatus}`}
+                          type="button"
+                          className={`neumor-btn text-xs px-3 py-1.5 ${
+                            nextStatus === "cancelled" ? "text-red-600" : ""
+                          }`}
+                          onClick={() => handleQuickAction(order, nextStatus)}
+                          disabled={isPending}
+                        >
+                          {nextStatus === "paid" ? "Marcar pagado" : "Cancelar"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
             return (
-              <div key={order.id} className="neumor-card p-4 space-y-4">
+              <div key={order.id} className={`neumor-card p-4 space-y-4 ${cardHighlight}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
                       <h3 className="font-semibold">{order.customer_name}</h3>
                       <span className={`badge ${badgeClass}`}>{statusLabel}</span>
+                      {isPickupSoon && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                          &lt;30 min
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      Pedido #{shortId}
-                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">Pedido #{shortId}</p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
@@ -211,7 +362,7 @@ export default function PedidosClient({ initialOrders }: { initialOrders: Order[
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {order.pickup_time}
+                      {order.pickup_time || "-"}
                     </span>
                   </div>
                 </div>

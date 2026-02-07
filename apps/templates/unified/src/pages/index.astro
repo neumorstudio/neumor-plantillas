@@ -16,7 +16,6 @@ if (!tenant) {
 
 // Dynamically rewrite to the correct template based on business type
 const businessType = tenant.businessType;
-console.log("[Index] Rendering template for:", businessType);
 
 // Preserve query string for preview mode support
 const url = new URL(Astro.request.url);

@@ -69,13 +69,9 @@ export default function ChangePasswordPage() {
     }
 
     // Quitar el flag must_change_password
-    const { error: metadataError } = await supabase.auth.updateUser({
+    await supabase.auth.updateUser({
       data: { must_change_password: false },
     });
-
-    if (metadataError) {
-      console.error("Error actualizando metadata:", metadataError);
-    }
 
     // Redirigir al dashboard
     router.push("/dashboard");

@@ -317,11 +317,9 @@ if (websiteData) {
     openStatus: mergedOpenStatus,
   };
 
-  console.log("✅ Configuración cargada desde Supabase:", websiteData.domain);
 } else {
   // No hay conexión a Supabase, usar defaults
   config = defaultConfig;
-  console.log("⚠️ Usando configuración por defecto (Supabase no disponible)");
 }
 
 // Extraer configuración de personalización visual
@@ -607,7 +605,7 @@ const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legac
                 <TeamSection
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
-                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
                 />
               </section>
             );
@@ -618,7 +616,7 @@ const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legac
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
-                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "carousel" | "grid" | "masonry"}
                 />
               </section>
             );
@@ -640,7 +638,7 @@ const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legac
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
                     items={getContentArray("faqItems")}
-                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
                 />
               </section>
             );
@@ -650,7 +648,7 @@ const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legac
                 <PlansSection
                   title={getContentText("plansTitle")}
                   subtitle={getContentText("plansSubtitle")}
-                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "table" | "cards" | "comparison"}
                 />
               </section>
             );
@@ -665,7 +663,7 @@ const isOrdersSectionEnabled = (sectionConfigMap.get("orders")?.enabled ?? legac
                   email={config.email}
                   webhookUrl={config.webhookUrl}
                   websiteId={currentWebsiteId}
-                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
+                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
                 />
               </section>
             );

@@ -126,8 +126,7 @@ export async function GET() {
         features: config.features,
       },
     });
-  } catch (error) {
-    console.error("Personalization GET error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
@@ -301,7 +300,6 @@ export async function POST(request: NextRequest) {
       .eq("id", websiteId);
 
     if (updateError) {
-      console.error("Error updating website:", updateError);
       return NextResponse.json(
         { error: "Error al actualizar la configuracion" },
         { status: 500 }
@@ -309,8 +307,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Personalization POST error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

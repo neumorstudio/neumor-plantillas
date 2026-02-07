@@ -49,5 +49,5 @@ export const tabs: { id: TabId; label: string; shortLabel: string; icon: React.R
   { id: "diseno", label: "Diseño", shortLabel: "Diseño", icon: <PaletteIcon /> },
   { id: "textos", label: "Textos", shortLabel: "Textos", icon: <TextIcon /> },
   { id: "marca", label: "Marca", shortLabel: "Marca", icon: <ImageIcon /> },
-  { id: "secciones", label: "Secciones", shortLabel: "Secc", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg> },
+  { id: "secciones", label: "Secciones", shortLabel: "Secciones", icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg> },
 ];

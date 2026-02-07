@@ -111,17 +111,75 @@ export interface BusinessHour {
   close_time: string;
 }
 
+export interface ServiceCategory {
+  id: string;
+  website_id: string;
+  name: string;
+  icon?: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+  items: ServiceItem[];
+}
+
+export interface ServiceItem {
+  id: string;
+  category_id: string;
+  website_id: string;
+  name: string;
+  price_cents: number;
+  duration_minutes: number;
+  notes?: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface BusinessHourSlot {
+  id: string;
+  website_id: string;
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+}
+
+export interface Professional {
+  id: string;
+  website_id: string;
+  name: string;
+  description?: string | null;
+  is_active?: boolean | null;
+  sort_order?: number | null;
+}
+
+export interface ProfessionalCategory {
+  id: string;
+  website_id: string;
+  professional_id: string;
+  category_id: string;
+}
+
+export interface SpecialDay {
+  id: string;
+  website_id: string;
+  date: string;
+  is_open: boolean;
+  open_time: string | null;
+  close_time: string | null;
+  note: string | null;
+}
+
+export interface SpecialDaySlot {
+  id: string;
+  special_day_id: string;
+  open_time: string;
+  close_time: string;
+  sort_order?: number | null;
+}
+
 // Cliente Supabase (solo lectura para el template)
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-// Verificar que las variables de entorno esten configuradas
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase no configurado. Usando configuracion por defecto.",
-    "Configura PUBLIC_SUPABASE_URL y PUBLIC_SUPABASE_ANON_KEY en .env"
-  );
-}
 
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
@@ -155,14 +213,62 @@ export async function getWebsiteConfig(websiteId?: string, domain?: string): Pro
     const { data, error } = await query.single();
 
     if (error) {
-      console.error("Error fetching website config:", error.message);
       return null;
     }
 
     return data as Website;
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
     return null;
+  }
+}
+
+export async function getServiceCatalog(websiteId?: string): Promise<ServiceCategory[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data: categories, error: categoryError } = await supabase
+      .from("service_categories")
+      .select("id, website_id, name, icon, sort_order, is_active")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (categoryError) {
+      return [];
+    }
+
+    const { data: items, error: itemError } = await supabase
+      .from("service_items")
+      .select(
+        "id, category_id, website_id, name, price_cents, duration_minutes, notes, sort_order, is_active"
+      )
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (itemError) {
+      return [];
+    }
+
+    const categoryMap = new Map<string, ServiceCategory>();
+    (categories as ServiceCategory[] | null || []).forEach((category) => {
+      categoryMap.set(category.id, { ...category, items: [] });
+    });
+
+    (items as ServiceItem[] | null || []).forEach((item) => {
+      const category = categoryMap.get(item.category_id);
+      if (category) {
+        category.items.push(item);
+      }
+    });
+
+    return Array.from(categoryMap.values());
+  } catch {
+    return [];
   }
 }
 
@@ -179,13 +285,140 @@ export async function getBusinessHours(websiteId?: string): Promise<BusinessHour
       .order("day_of_week", { ascending: true });
 
     if (error) {
-      console.error("Error fetching business hours:", error.message);
       return [];
     }
 
     return (data as BusinessHour[] | null) || [];
-  } catch (err) {
-    console.error("Error connecting to Supabase:", err);
+  } catch {
+    return [];
+  }
+}
+
+export async function getBusinessHourSlots(websiteId?: string): Promise<BusinessHourSlot[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("business_hour_slots")
+      .select("id, website_id, day_of_week, open_time, close_time, sort_order, is_active")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("day_of_week", { ascending: true })
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (data as BusinessHourSlot[] | null) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getProfessionals(websiteId?: string): Promise<Professional[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("professionals")
+      .select("id, website_id, name, description, is_active, sort_order")
+      .eq("website_id", websiteId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (data as Professional[] | null) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getProfessionalCategories(
+  websiteId?: string
+): Promise<ProfessionalCategory[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("professional_categories")
+      .select("id, website_id, professional_id, category_id")
+      .eq("website_id", websiteId);
+
+    if (error) {
+      return [];
+    }
+
+    return (data as ProfessionalCategory[] | null) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getSpecialDays(websiteId?: string): Promise<SpecialDay[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("special_days")
+      .select("id, website_id, date, is_open, open_time, close_time, note")
+      .eq("website_id", websiteId)
+      .order("date", { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (data as SpecialDay[] | null) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getSpecialDaySlots(websiteId?: string): Promise<SpecialDaySlot[]> {
+  if (!supabase || !websiteId) {
+    return [];
+  }
+
+  try {
+    const { data: specialDays, error: specialError } = await supabase
+      .from("special_days")
+      .select("id")
+      .eq("website_id", websiteId);
+
+    if (specialError) {
+      return [];
+    }
+
+    if (!specialDays?.length) {
+      return [];
+    }
+
+    const ids = specialDays.map((day) => day.id);
+    const { data, error } = await supabase
+      .from("special_day_slots")
+      .select("id, special_day_id, open_time, close_time, sort_order")
+      .in("special_day_id", ids)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (data as SpecialDaySlot[] | null) || [];
+  } catch {
     return [];
   }
 }

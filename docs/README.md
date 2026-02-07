@@ -36,8 +36,10 @@ docs/
 
 | Documento | Descripción |
 |-----------|-------------|
+| [README-dev.md](README-dev.md) | Onboarding rápido y comandos de checks. |
 | [getting-started.md](getting-started.md) | Primeros pasos para desarrollo local. |
 | [architecture.md](architecture.md) | Vista general de la arquitectura y flujos. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitectura resumida para contributors. |
 | [api.md](api.md) | Endpoints internos usados por templates y admin. |
 
 ### Base de Datos
@@ -51,6 +53,7 @@ docs/
 | Documento | Descripción |
 |-----------|-------------|
 | [GUIA-SIMULACION-CLIENTES.md](GUIA-SIMULACION-CLIENTES.md) | Guía profesional para simular creación de clientes y testing end-to-end del sistema. |
+| [TESTING.md](TESTING.md) | Guía de tests y patrones mínimos. |
 
 ### Provisioning
 
@@ -62,6 +65,7 @@ docs/
 
 | Documento | Descripción |
 |-----------|-------------|
+| [SECURITY.md](SECURITY.md) | Checklist de seguridad para contribuciones. |
 | [SECURITY_CHANGELOG.md](security/SECURITY_CHANGELOG.md) | Log de auditoría de seguridad con hallazgos (H-01 a H-07) y fixes aplicados. |
 | [public-api-verification.md](security/public-api-verification.md) | Checklist ejecutable para verificar hardening de APIs públicas y RLS. |
 

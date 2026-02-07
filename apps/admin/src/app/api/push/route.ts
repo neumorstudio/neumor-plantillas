@@ -80,13 +80,11 @@ export async function POST(request: NextRequest) {
       );
 
     if (error) {
-      console.error("Error saving push subscription:", error);
       return NextResponse.json({ error: "Error al guardar suscripcion" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Push subscription API error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
@@ -125,13 +123,11 @@ export async function DELETE(request: NextRequest) {
       .eq("endpoint", endpoint);
 
     if (error) {
-      console.error("Error deleting push subscription:", error);
       return NextResponse.json({ error: "Error al eliminar suscripcion" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Push subscription API error:", error);
+  } catch {
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

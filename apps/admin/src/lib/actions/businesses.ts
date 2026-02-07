@@ -69,7 +69,6 @@ export async function getBusinesses(): Promise<BusinessWithWebsite[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("[SUPERADMIN] Error fetching businesses:", error);
     throw new Error("Error al cargar negocios");
   }
 
@@ -229,7 +228,6 @@ export async function createBusiness(formData: FormData) {
     .single();
 
   if (clientError || !client) {
-    console.error("[SUPERADMIN] Error creating client:", clientError);
     return { error: clientError?.message || "Error al crear el negocio" };
   }
 
@@ -264,7 +262,6 @@ export async function createBusiness(formData: FormData) {
   if (websiteError || !website) {
     // Rollback: eliminar client creado
     await supabase.from("clients").delete().eq("id", client.id);
-    console.error("[SUPERADMIN] Error creating website:", websiteError);
     return { error: websiteError.message || "Error al crear el website" };
   }
 
@@ -280,7 +277,6 @@ export async function createBusiness(formData: FormData) {
     if (restaurantError) {
       await supabase.from("websites").delete().eq("id", website.id);
       await supabase.from("clients").delete().eq("id", client.id);
-      console.error("[SUPERADMIN] Error creating restaurant settings:", restaurantError);
       return { error: restaurantError.message || "Error al preparar pedidos del restaurante" };
     }
   }
@@ -360,7 +356,6 @@ export async function updateBusiness(clientId: string, formData: FormData) {
     .eq("id", clientId);
 
   if (clientError) {
-    console.error("[SUPERADMIN] Error updating client:", clientError);
     return { error: clientError.message || "Error al actualizar el negocio" };
   }
 
@@ -377,7 +372,6 @@ export async function updateBusiness(clientId: string, formData: FormData) {
     .eq("client_id", clientId);
 
   if (websiteError) {
-    console.error("[SUPERADMIN] Error updating website:", websiteError);
     return { error: websiteError.message || "Error al actualizar el website" };
   }
 
@@ -400,7 +394,6 @@ export async function updateBusiness(clientId: string, formData: FormData) {
     );
 
     if (userUpdateError) {
-      console.error("[SUPERADMIN] Error updating user metadata:", userUpdateError);
       // No retornamos error porque el cliente ya se actualizo correctamente
       // Solo logeamos para debugging
     }
@@ -427,7 +420,6 @@ export async function deleteBusiness(clientId: string) {
     .eq("client_id", clientId);
 
   if (websiteError) {
-    console.error("[SUPERADMIN] Error deleting website:", websiteError);
     // Si hay FK constraints, podria fallar
     return {
       error:
@@ -443,7 +435,6 @@ export async function deleteBusiness(clientId: string) {
     .eq("id", clientId);
 
   if (clientError) {
-    console.error("[SUPERADMIN] Error deleting client:", clientError);
     return { error: clientError.message || "Error al eliminar el negocio" };
   }
 
@@ -488,7 +479,6 @@ export async function searchBusinesses(
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("[SUPERADMIN] Error searching businesses:", error);
     throw new Error("Error en la busqueda");
   }
 

@@ -109,7 +109,6 @@ export interface CompiledTokens {
  */
 export function compileCustomization(config: WebsiteCustomization): CompiledTokens {
   // === DEBUG LOGS ===
-  console.log('[tokens.ts] compileCustomization called with config:', JSON.stringify(config, null, 2));
 
   const vars: string[] = [];
   const colorVars: string[] = [];
@@ -120,10 +119,6 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   const secondary = config.colors?.secondary || config.secondaryColor || DEFAULTS.colors.secondary;
   const accent = config.colors?.accent || DEFAULTS.colors.accent;
 
-  console.log('[tokens.ts] Resolved colors - primary:', primary, 'secondary:', secondary, 'accent:', accent);
-  console.log('[tokens.ts] config.colors:', config.colors);
-  console.log('[tokens.ts] config.primaryColor:', config.primaryColor);
-  console.log('[tokens.ts] config.effects:', config.effects);
 
   // Solo generar variables de color si hay personalización
   if (config.colors || config.primaryColor || config.secondaryColor) {
@@ -237,9 +232,6 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   const favicon = config.branding?.favicon || config.branding?.logo || config.logo || null;
 
   // === DEBUG OUTPUT ===
-  console.log('[tokens.ts] OUTPUT - cssVariables:', cssVariables ? 'has content' : 'empty');
-  console.log('[tokens.ts] OUTPUT - inlineColorStyles:', inlineColorStyles);
-  console.log('[tokens.ts] OUTPUT - colorVars array:', colorVars);
 
   return {
     cssVariables,

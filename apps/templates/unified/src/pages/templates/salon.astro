@@ -55,7 +55,6 @@ try {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
-    console.log("[Salon] User authenticated:", user.email, "auth_user_id:", user.id);
 
     // Get customer profile for this tenant
     const { data: customer, error: customerError } = await supabase
@@ -65,8 +64,6 @@ try {
       .eq("auth_user_id", user.id)
       .single();
 
-    console.log("[Salon] Customer lookup for website_id:", tenant.id);
-    console.log("[Salon] Customer result:", customer, "error:", customerError?.message);
 
     currentUser = {
       email: user.email || "",
@@ -76,11 +73,9 @@ try {
       phone: customer?.phone || null,
     };
 
-    console.log("[Salon] currentUser.customerId:", currentUser.customerId);
   }
 } catch (e) {
   // Auth check failed, user not logged in
-  console.log("[Salon] Auth check error:", e);
 }
 
 // Component mapping
@@ -198,15 +193,12 @@ const sectionsConfigRaw = config.sectionsConfig as { sections: SectionConfig[] }
 const sectionsConfig = sectionsConfigRaw || { sections: defaultSections };
 
 // DEBUG
-console.log("[Salon Unified] sectionsConfig loaded:", !!sectionsConfigRaw);
-console.log("[Salon Unified] Sections:", sectionsConfig.sections?.map(s => `${s.id}:${s.enabled}`).join(", "));
 
 // Filtrar secciones habilitadas y ordenar
 const enabledSections = sectionsConfig.sections
   .filter((s) => s.enabled)
   .sort((a, b) => a.order - b.order);
 
-console.log("[Salon Unified] Enabled sections:", enabledSections.map(s => s.id).join(", "));
 
 // Helper para verificar si una seccion esta habilitada
 const isSectionEnabled = (sectionId: string): boolean => {
@@ -270,14 +262,6 @@ const getContentArray = (key: string) => {
 };
 
 // === DEBUG LOGS ===
-console.log('[unified/salon.astro] ========== UNIFIED SALON ==========');
-console.log('[unified/salon.astro] tenant.id:', tenant.id);
-console.log('[unified/salon.astro] tenant.theme:', tenant.theme);
-console.log('[unified/salon.astro] tenant.config:', JSON.stringify(tenant.config, null, 2));
-console.log('[unified/salon.astro] Built customization:', JSON.stringify(customization, null, 2));
-console.log('[unified/salon.astro] config.colors:', config.colors);
-console.log('[unified/salon.astro] config.effects:', config.effects);
-console.log('[unified/salon.astro] =====================================');
 
 // Preview content params
 const previewContent = isPreview ? {
@@ -293,7 +277,6 @@ const previewContent = isPreview ? {
 // Build page config (preview theme overrides tenant theme)
 const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const activeSkin = config.skin as "neumorphic" | "brutalist" | "3d" | "flat" | "glassmorphism" | undefined;
-console.log('[unified/salon.astro] activeSkin:', activeSkin);
 const pageConfig = {
   businessName: tenant.businessName,
   theme: activeTheme as "light" | "dark" | "auto",
@@ -413,7 +396,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
                   members={teamMembers}
-                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
                 />
               </section>
             );
@@ -424,7 +407,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
-                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "grid" | "carousel" | "masonry"}
                 />
               </section>
             );
@@ -446,7 +429,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
                     items={getContentArray("faqItems")}
-                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
                 />
               </section>
             );
@@ -456,7 +439,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                 <PlansSection
                   title={getContentText("plansTitle")}
                   subtitle={getContentText("plansSubtitle")}
-                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "cards" | "table" | "comparison"}
                 />
               </section>
             );
@@ -471,7 +454,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   email={config.email as string | undefined}
                   webhookUrl={webhookUrl}
                   websiteId={tenant.id}
-                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
+                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
                 />
               </section>
             );

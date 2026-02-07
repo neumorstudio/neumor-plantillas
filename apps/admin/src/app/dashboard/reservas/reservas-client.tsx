@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { Pencil, Calendar, Phone, User, FileText, X } from "lucide-react";
 import { updateBooking, updateBookingStatus } from "@/lib/actions";
-import { Pencil, Calendar, Phone, User, Clock, FileText, DollarSign, X } from "lucide-react";
 import { BottomSheet, ConfirmDialog, SegmentedControl } from "@/components/mobile";
 
 interface Booking {
@@ -25,7 +26,10 @@ interface Booking {
   total_duration_minutes?: number | null;
 }
 
+const BOOKING_STATUSES = ["pending", "confirmed", "cancelled", "completed"] as const;
+type BookingStatus = (typeof BOOKING_STATUSES)[number];
 type FilterStatus = "all" | "pending" | "confirmed" | "cancelled" | "completed";
+type QuickFilter = "today" | "tomorrow" | "next_7_days" | "large_party" | "pending_confirm";
 
 const filterOptions: { value: FilterStatus; label: string }[] = [
   { value: "all", label: "Todas" },
@@ -34,16 +38,36 @@ const filterOptions: { value: FilterStatus; label: string }[] = [
   { value: "cancelled", label: "Canceladas" },
 ];
 
+// "Próximos 7 días" mantiene el rango inclusivo actual (hoy + 7 días).
+const quickFilterOptions: { value: QuickFilter; label: string }[] = [
+  { value: "today", label: "Hoy" },
+  { value: "tomorrow", label: "Mañana" },
+  { value: "next_7_days", label: "Próximos 7 días" },
+  { value: "large_party", label: "> 6 personas" },
+  { value: "pending_confirm", label: "Pendientes de confirmar" },
+];
+
 export default function ReservasClient({
   initialBookings,
+  businessType,
 }: {
   initialBookings: Booking[];
+  businessType: string;
 }) {
+  const isRestaurant = businessType === "restaurant";
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [quickFilters, setQuickFilters] = useState<QuickFilter[]>([]);
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [undoNotice, setUndoNotice] = useState<{
+    bookingId: string;
+    previousStatus: BookingStatus;
+    customerName: string;
+  } | null>(null);
+  const [undoError, setUndoError] = useState<string | null>(null);
+  const undoTimeoutRef = useRef<number | null>(null);
 
   // Estado para la reserva que se está editando
   const [bookingEdit, setBookingEdit] = useState<Booking | null>(null);
@@ -60,6 +84,20 @@ export default function ReservasClient({
     setBookings(initialBookings);
   }, [initialBookings]);
 
+  useEffect(() => {
+    if (!undoError) return;
+    const timeout = window.setTimeout(() => setUndoError(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [undoError]);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimeoutRef.current) {
+        window.clearTimeout(undoTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const parseHour = (value: string | null) => {
     if (!value) return null;
     const parts = value.split(":").map(Number);
@@ -74,19 +112,6 @@ export default function ReservasClient({
     return "Noche";
   };
 
-  const filteredBookings = bookings
-    .filter((booking) => {
-      const matchesFilter = filter === "all" || booking.status === filter;
-      const matchesSearch =
-        booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (booking.customer_phone?.includes(searchTerm) ?? false) ||
-        (booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-      return matchesFilter && matchesSearch;
-    })
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
-
-  const recentIds = new Set(filteredBookings.slice(0, 3).map((booking) => booking.id));
-
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("es-ES", {
@@ -96,20 +121,175 @@ export default function ReservasClient({
     });
   };
 
-  const formatPrice = (cents?: number | null) => {
-    if (!Number.isFinite(cents)) return "-";
-    return `${(Number(cents) / 100).toFixed(2)} EUR`;
+  const formatTime = (timeStr: string | null) => {
+    if (!timeStr) return "-";
+    const [hours, minutes] = timeStr.split(":");
+    if (!hours || !minutes) return timeStr;
+    return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
   };
 
-  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+      return null;
+    }
+    return new Date(year, month - 1, day);
+  };
+
+  const buildLocalDateTime = (dateStr: string, timeStr: string | null) => {
+    if (!timeStr) return null;
+    const date = parseLocalDate(dateStr);
+    if (!date) return null;
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes);
+  };
+
+  const getRelativeLabel = (dateStr: string, timeStr: string | null) => {
+    const date = parseLocalDate(dateStr);
+    if (!date) return null;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = Math.round(
+      (startOfDate.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays === 0) {
+      const bookingDateTime = buildLocalDateTime(dateStr, timeStr);
+      if (bookingDateTime) {
+        const diffMs = bookingDateTime.getTime() - now.getTime();
+        if (diffMs > 0) {
+          const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+          return `En ${diffHours}h`;
+        }
+      }
+      return "Hoy";
+    }
+
+    if (diffDays === 1) return "Mañana";
+    return null;
+  };
+
+  const toggleQuickFilter = (value: QuickFilter) => {
+    setQuickFilters((prev) =>
+      prev.includes(value) ? prev.filter((filter) => filter !== value) : [...prev, value]
+    );
+  };
+
+  const clearQuickFilters = () => {
+    setQuickFilters([]);
+  };
+
+  const isValidBookingStatus = (value: string): value is BookingStatus =>
+    BOOKING_STATUSES.includes(value as BookingStatus);
+
+  const showUndoNotice = (payload: {
+    bookingId: string;
+    previousStatus: BookingStatus;
+    customerName: string;
+  }) => {
+    if (undoTimeoutRef.current) {
+      window.clearTimeout(undoTimeoutRef.current);
+    }
+    setUndoNotice(payload);
+    setUndoError(null);
+    undoTimeoutRef.current = window.setTimeout(() => {
+      setUndoNotice(null);
+      undoTimeoutRef.current = null;
+    }, 8000);
+  };
+
+  const handleUndoCancel = () => {
+    if (!undoNotice) return;
+    if (undoTimeoutRef.current) {
+      window.clearTimeout(undoTimeoutRef.current);
+      undoTimeoutRef.current = null;
+    }
+    const { bookingId, previousStatus } = undoNotice;
+    setActionError(null);
+    setUndoNotice(null);
+
+    startTransition(async () => {
+      const result = await updateBookingStatus(bookingId, previousStatus);
+      if (result.error) {
+        setUndoError("No se pudo deshacer.");
+        return;
+      }
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: previousStatus } : booking
+        )
+      );
+    });
+  };
+
+  const todayIso = new Date().toISOString().split("T")[0];
+  const todayKey = new Date().toDateString();
+  const { startOfToday, startOfTomorrow, endOfNextSevenDays } = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(start);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+
+    return {
+      startOfToday: start,
+      startOfTomorrow: tomorrow,
+      endOfNextSevenDays: end,
+    };
+  }, [todayKey]);
+
+  const matchesQuickFilters = (booking: Booking) => {
+    if (!isRestaurant) return true;
+    if (quickFilters.length === 0) return true;
+
+    const bookingDate = parseLocalDate(booking.booking_date);
+    const isToday = bookingDate ? bookingDate.getTime() === startOfToday.getTime() : false;
+    const isTomorrow = bookingDate ? bookingDate.getTime() === startOfTomorrow.getTime() : false;
+    const isNextSevenDays = bookingDate
+      ? bookingDate >= startOfToday && bookingDate <= endOfNextSevenDays
+      : false;
+    const isLargeParty = booking.guests >= 7;
+    const isPending = booking.status === "pending";
+
+    const predicateMap: Record<QuickFilter, boolean> = {
+      today: isToday,
+      tomorrow: isTomorrow,
+      next_7_days: isNextSevenDays,
+      large_party: isLargeParty,
+      pending_confirm: isPending,
+    };
+
+    return quickFilters.every((filter) => predicateMap[filter]);
+  };
+
+  const filteredBookings = bookings
+    .filter((booking) => {
+      const matchesFilter = filter === "all" || booking.status === filter;
+      const matchesSearch =
+        booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (booking.customer_phone?.includes(searchTerm) ?? false) ||
+        (booking.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+      const matchesQuick = matchesQuickFilters(booking);
+      return matchesFilter && matchesSearch && matchesQuick;
+    })
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const recentIds = new Set(filteredBookings.slice(0, 3).map((booking) => booking.id));
+
+  const handleStatusChange = async (
+    bookingId: string,
+    newStatus: BookingStatus,
+    options?: { enableUndo?: boolean; previousStatus?: BookingStatus; customerName?: string }
+  ) => {
     setActionError(null);
     setConfirmDialog({ isOpen: false, bookingId: "", action: "cancel" });
 
     startTransition(async () => {
-      const result = await updateBookingStatus(
-        bookingId,
-        newStatus as "pending" | "confirmed" | "cancelled" | "completed"
-      );
+      const result = await updateBookingStatus(bookingId, newStatus);
       if (result.error) {
         setActionError(result.error);
         return;
@@ -119,6 +299,13 @@ export default function ReservasClient({
           booking.id === bookingId ? { ...booking, status: newStatus } : booking
         )
       );
+      if (options?.enableUndo && options.previousStatus) {
+        showUndoNotice({
+          bookingId,
+          previousStatus: options.previousStatus,
+          customerName: options.customerName || "Reserva",
+        });
+      }
     });
   };
 
@@ -229,11 +416,28 @@ export default function ReservasClient({
   };
 
   const handleConfirmAction = () => {
-    const statusMap = {
+    const statusMap: Record<"cancel" | "confirm" | "complete", BookingStatus> = {
       cancel: "cancelled",
       confirm: "confirmed",
       complete: "completed",
     };
+    if (confirmDialog.action === "cancel") {
+      const booking = bookings.find((b) => b.id === confirmDialog.bookingId);
+      const previousStatus = booking?.status && isValidBookingStatus(booking.status)
+        ? booking.status
+        : undefined;
+      if (isRestaurant) {
+        handleStatusChange(confirmDialog.bookingId, statusMap.cancel, {
+          enableUndo: !!previousStatus,
+          previousStatus,
+          customerName: booking?.customer_name,
+        });
+      } else {
+        handleStatusChange(confirmDialog.bookingId, statusMap.cancel);
+      }
+      return;
+    }
+
     handleStatusChange(confirmDialog.bookingId, statusMap[confirmDialog.action]);
   };
 
@@ -244,12 +448,65 @@ export default function ReservasClient({
   return (
     <div>
       {/* Header */}
-      <div className="page-header mb-6">
-        <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
-        <p className="text-sm text-[var(--text-secondary)]">
-          Gestiona las reservas de tu negocio
-        </p>
-      </div>
+      {isRestaurant ? (
+        <div className="page-header mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Gestiona las reservas de tu negocio
+            </p>
+          </div>
+          <Link
+            href={`/dashboard/calendario?create=1&date=${todayIso}`}
+            className="neumor-btn neumor-btn-accent text-sm font-semibold px-4 py-2.5 w-full sm:w-auto text-center"
+          >
+            + Nueva reserva
+          </Link>
+        </div>
+      ) : (
+        <div className="page-header mb-6">
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-1">Reservas</h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Gestiona las reservas de tu negocio
+          </p>
+        </div>
+      )}
+
+      {isRestaurant && undoNotice && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className="p-4 rounded-xl text-sm font-medium shadow-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-between gap-3"
+            role="status"
+            aria-live="polite"
+          >
+            <span>
+              {undoNotice.customerName !== "Reserva"
+                ? `Reserva de ${undoNotice.customerName} cancelada.`
+                : "Reserva cancelada."}
+            </span>
+            <button
+              type="button"
+              className="neumor-btn text-xs px-3 py-1.5"
+              onClick={handleUndoCancel}
+              disabled={isPending}
+            >
+              Deshacer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isRestaurant && undoError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(640px,calc(100%-2rem))]">
+          <div
+            className="p-4 rounded-xl text-sm font-medium shadow-lg bg-red-50 text-red-700 border border-red-200"
+            role="status"
+            aria-live="polite"
+          >
+            {undoError}
+          </div>
+        </div>
+      )}
 
       {/* Error message */}
       {actionError && !bookingEdit && (
@@ -282,6 +539,38 @@ export default function ReservasClient({
           value={filter}
           onChange={setFilter}
         />
+
+        {/* Quick Filters */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-[var(--text-secondary)]">Filtros rápidos</p>
+          <div className="flex flex-wrap gap-2">
+            {quickFilterOptions.map((option) => {
+              const isActive = quickFilters.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`neumor-inset px-3 py-1.5 rounded-full text-xs font-medium transition active:scale-95 ${
+                    isActive ? "ring-2 ring-[var(--accent)]" : ""
+                  }`}
+                  aria-pressed={isActive}
+                  onClick={() => toggleQuickFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+            {quickFilters.length > 0 && (
+              <button
+                type="button"
+                className="neumor-inset px-3 py-1.5 rounded-full text-xs font-medium text-[var(--text-secondary)] transition active:scale-95"
+                onClick={clearQuickFilters}
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Reservations List */}
@@ -306,9 +595,9 @@ export default function ReservasClient({
                     <th>Cliente</th>
                     <th>Contacto</th>
                     <th>Fecha y Hora</th>
+                    <th>Personas</th>
                     <th>Franja</th>
-                    <th>Servicios</th>
-                    <th>Precio</th>
+                    <th>Notas</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                   </tr>
@@ -328,7 +617,18 @@ export default function ReservasClient({
                       </td>
                       <td>
                         <div className="text-sm">
-                          <div>{booking.customer_phone || "-"}</div>
+                          <div>
+                            {booking.customer_phone ? (
+                              <a
+                                href={`tel:${booking.customer_phone}`}
+                                className="hover:underline"
+                              >
+                                {booking.customer_phone}
+                              </a>
+                            ) : (
+                              "-"
+                            )}
+                          </div>
                           <div className="text-[var(--text-secondary)]">
                             {booking.customer_email || "-"}
                           </div>
@@ -338,10 +638,14 @@ export default function ReservasClient({
                         <div className="text-sm">
                           <div>{formatDate(booking.booking_date)}</div>
                           <div className="text-[var(--text-secondary)]">
-                            {booking.booking_time || "-"}
+                            {formatTime(booking.booking_time)}
+                            {getRelativeLabel(booking.booking_date, booking.booking_time)
+                              ? ` · ${getRelativeLabel(booking.booking_date, booking.booking_time)}`
+                              : ""}
                           </div>
                         </div>
                       </td>
+                      <td>{booking.guests}</td>
                       <td>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full neumor-inset">
                           {getTimeBucket(booking.booking_time)}
@@ -350,14 +654,11 @@ export default function ReservasClient({
                       <td>
                         <span
                           className="text-sm text-[var(--text-secondary)] max-w-[180px] truncate block"
-                          title={booking.services?.map((s) => s.name).join(", ") || ""}
+                          title={booking.notes?.trim() || ""}
                         >
-                          {booking.services?.length
-                            ? booking.services.map((s) => s.name).join(", ")
-                            : "-"}
+                          {booking.notes?.trim() || "-"}
                         </span>
                       </td>
-                      <td>{formatPrice(booking.total_price_cents)}</td>
                       <td>{getStatusBadge(booking.status)}</td>
                       <td>
                         <div className="flex gap-2">
@@ -448,28 +749,37 @@ export default function ReservasClient({
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                       <Phone className="w-4 h-4 flex-shrink-0" />
-                      <span>{booking.customer_phone || "-"}</span>
+                      {booking.customer_phone ? (
+                        <a href={`tel:${booking.customer_phone}`} className="hover:underline">
+                          {booking.customer_phone}
+                        </a>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                      <User className="w-4 h-4 flex-shrink-0" />
+                      <span>
+                        {booking.guests} {booking.guests === 1 ? "persona" : "personas"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                       <Calendar className="w-4 h-4 flex-shrink-0" />
                       <span>
                         {formatDate(booking.booking_date)}
-                        {booking.booking_time && ` · ${booking.booking_time}`}
+                        {booking.booking_time && ` · ${formatTime(booking.booking_time)}`}
+                        {getRelativeLabel(booking.booking_date, booking.booking_time)
+                          ? ` · ${getRelativeLabel(booking.booking_date, booking.booking_time)}`
+                          : ""}
                         {` · ${getTimeBucket(booking.booking_time)}`}
                       </span>
                     </div>
-                    {booking.services?.length ? (
+                    {booking.notes?.trim() ? (
                       <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                         <FileText className="w-4 h-4 flex-shrink-0" />
                         <span className="line-clamp-1">
-                          {booking.services.map((s) => s.name).join(", ")}
+                          {booking.notes}
                         </span>
-                      </div>
-                    ) : null}
-                    {booking.total_price_cents ? (
-                      <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                        <DollarSign className="w-4 h-4 flex-shrink-0" />
-                        <span>{formatPrice(booking.total_price_cents)}</span>
                       </div>
                     ) : null}
                   </div>

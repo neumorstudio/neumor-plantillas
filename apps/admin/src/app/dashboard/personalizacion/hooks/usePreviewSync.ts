@@ -55,23 +55,12 @@ export function usePreviewSync({
   // Enviar mensaje postMessage a los iframes de preview
   const sendPreviewMessage = useCallback((type: string, payload: Record<string, unknown>) => {
     const message = { type, payload, source: "neumorstudio-admin" };
-    const contentPayload = payload.content as { heroImage?: string } | undefined;
-    const sectionsPayload = payload.sectionsConfig as { sections?: unknown[] } | undefined;
-    console.log("[Admin] Sending postMessage:", type, "theme:", payload.theme, "heroImage:", contentPayload?.heroImage, "sections:", sectionsPayload?.sections?.length ?? 0);
     iframeRef.current?.contentWindow?.postMessage(message, "*");
     iframeMobileRef.current?.contentWindow?.postMessage(message, "*");
   }, [iframeRef, iframeMobileRef]);
 
   // Enviar cambios CSS en tiempo real via postMessage (con debounce para evitar flicker al aplicar presets)
   useEffect(() => {
-    // === DEBUG: Log effects changes ===
-    console.log('[usePreviewSync] Effects changed:', {
-      shadowIntensity: effects.shadowIntensity,
-      borderRadius: effects.borderRadius,
-      glassmorphism: effects.glassmorphism,
-      blurIntensity: effects.blurIntensity,
-    });
-
     // Limpiar timeout anterior
     if (previewDebounceRef.current) {
       clearTimeout(previewDebounceRef.current);
@@ -79,7 +68,6 @@ export function usePreviewSync({
 
     // Debounce de 50ms para agrupar múltiples cambios de estado (ej: al aplicar un preset)
     previewDebounceRef.current = setTimeout(() => {
-      console.log('[usePreviewSync] Sending postMessage with effects:', effects);
       sendPreviewMessage("update-styles", {
         theme,
         skin,

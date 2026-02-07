@@ -164,11 +164,9 @@ if (websiteData) {
     socialLinks: mergedSocialLinks,
   };
 
-  console.log("Configuracion cargada desde Supabase:", websiteData.domain);
 } else {
   // No hay conexion a Supabase, usar defaults
   config = defaultConfig;
-  console.log("Usando configuracion por defecto (Supabase no disponible)");
 }
 
 // Extraer configuración de personalización visual
@@ -217,18 +215,12 @@ const sectionsConfig: SectionsConfig = websiteData?.config?.sectionsConfig || {
 };
 
 // DEBUG: Log para diagnosticar problemas con sectionsConfig
-console.log("=== SECTIONS DEBUG ===");
-console.log("Has sectionsConfig from DB:", !!websiteData?.config?.sectionsConfig);
-console.log("Total sections:", sectionsConfig.sections?.length || 0);
-console.log("Sections raw:", JSON.stringify(sectionsConfig.sections?.map(s => ({ id: s.id, enabled: s.enabled, order: s.order }))));
 
 // Filtrar secciones habilitadas y ordenar por order
 const enabledSections = sectionsConfig.sections
   .filter((s) => s.enabled)
   .sort((a, b) => a.order - b.order);
 
-console.log("Enabled sections:", enabledSections.map(s => s.id).join(", "));
-console.log("=== END SECTIONS DEBUG ===");
 
 // Crear un mapa para acceso rapido a la configuracion de cada seccion
 // IMPORTANTE: Incluir TODAS las secciones (no solo habilitadas) para permitir live preview
@@ -467,7 +459,7 @@ const serviceCategories = serviceCatalog.length
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
                   members={teamMembers}
-                  variant={previewSectionVariants.team || sectionCfg?.variant || "grid"}
+                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
                 />
               </section>
             );
@@ -478,7 +470,7 @@ const serviceCategories = serviceCatalog.length
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
-                  variant={previewSectionVariants.gallery || sectionCfg?.variant || "masonry"}
+                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "carousel" | "grid" | "masonry"}
                 />
               </section>
             );
@@ -500,7 +492,7 @@ const serviceCategories = serviceCatalog.length
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
                     items={getContentArray("faqItems")}
-                  variant={previewSectionVariants.faq || sectionCfg?.variant || "accordion"}
+                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
                 />
               </section>
             );
@@ -510,7 +502,7 @@ const serviceCategories = serviceCatalog.length
                 <PlansSection
                   title={getContentText("plansTitle")}
                   subtitle={getContentText("plansSubtitle")}
-                  variant={previewSectionVariants.plans || sectionCfg?.variant || "cards"}
+                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "table" | "cards" | "comparison"}
                 />
               </section>
             );
@@ -525,7 +517,7 @@ const serviceCategories = serviceCatalog.length
                   email={config.email}
                   webhookUrl={config.webhookUrl}
                   websiteId={currentWebsiteId}
-                  variant={previewSectionVariants.contact || sectionCfg?.variant || "form"}
+                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
                 />
               </section>
             );

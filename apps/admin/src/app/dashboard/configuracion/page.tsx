@@ -7,9 +7,9 @@ export default async function ConfiguracionPage() {
   if (!client || !websiteId) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Configuracion</h1>
+        <h1 className="text-2xl font-bold mb-4">Configuración</h1>
         <p className="text-[var(--text-secondary)]">
-          No se encontro la cuenta asociada.
+          No se encontró la cuenta asociada.
         </p>
       </div>
     );

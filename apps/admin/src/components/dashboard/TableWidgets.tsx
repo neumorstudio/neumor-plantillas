@@ -511,7 +511,7 @@ export function RecentBookingsTable({
 
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-[var(--text-secondary)] mb-1">
-                      Precio total (EUR)
+                      Precio total (€)
                     </label>
                     <input
                       className="neumor-input w-full text-base py-2.5"

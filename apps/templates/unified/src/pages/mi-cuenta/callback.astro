@@ -14,7 +14,6 @@ const code = Astro.url.searchParams.get("code");
 const error = Astro.url.searchParams.get("error");
 
 if (error) {
-  console.error("[Callback] OAuth error:", error);
   return Astro.redirect("/mi-cuenta?error=" + error);
 }
 
@@ -27,19 +26,12 @@ if (code) {
   const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (sessionError || !data.session) {
-    console.error("[Callback] Error exchanging code:", sessionError?.message);
     return Astro.redirect("/mi-cuenta?error=session_failed");
   }
 
   const user = data.session.user;
 
   // Link or create customer for this website
-  console.log("[Callback] Linking customer:", {
-    tenantId: tenant.id,
-    userId: user.id,
-    email: user.email
-  });
-
   const { data: customerId, error: linkError } = await supabase.rpc("link_or_create_customer", {
     p_website_id: tenant.id,
     p_auth_user_id: user.id,
@@ -48,7 +40,6 @@ if (code) {
   });
 
   if (linkError) {
-    console.error("[Callback] Error linking customer:", linkError.message);
 
     // Fallback: try upsert directly
     const { error: upsertError } = await supabase
@@ -63,12 +54,10 @@ if (code) {
       });
 
     if (upsertError) {
-      console.error("[Callback] Upsert error:", upsertError.message);
       return Astro.redirect("/mi-cuenta?error=customer_failed");
     }
   }
 
-  console.log("[Callback] Customer linked, returned customerId:", customerId);
 
   // Verify the customer record
   const { data: verifyCustomer } = await supabase
@@ -77,7 +66,6 @@ if (code) {
     .eq("website_id", tenant.id)
     .eq("auth_user_id", user.id)
     .single();
-  console.log("[Callback] Verified customer record:", verifyCustomer);
 
   // Check if there's a return URL in cookie (set by auth/google.ts)
   const returnUrlCookie = Astro.cookies.get("auth_return_url");
@@ -102,7 +90,6 @@ if (code) {
 }
 
 // No code - let client-side handle implicit flow
-console.log("[Callback] No code, client will handle hash fragment");
 ---
 
 <html>
@@ -123,7 +110,6 @@ console.log("[Callback] No code, client will handle hash fragment");
         } else if (Date.now() - start < maxWait) {
           setTimeout(check, 50);
         } else {
-          console.error("[Callback] Supabase SDK failed to load");
           window.location.href = "/mi-cuenta?error=sdk_failed";
         }
       };
@@ -142,7 +128,6 @@ console.log("[Callback] No code, client will handle hash fragment");
         const refresh_token = hashParams.get("refresh_token");
 
         if (!access_token) {
-          console.error("No access_token in hash");
           window.location.href = "/mi-cuenta?error=no_token";
           return;
         }
@@ -150,30 +135,24 @@ console.log("[Callback] No code, client will handle hash fragment");
         // Create client and explicitly set the session to persist it
         const supabase = (window as unknown as { supabase: { createClient: (url: string, key: string) => { auth: { setSession: (params: { access_token: string; refresh_token: string }) => Promise<{ data: { session?: { user: { email: string } } }; error: unknown }> } } } }).supabase.createClient(supabaseUrl, supabaseKey);
 
-        console.log("[Callback] Calling setSession with tokens...");
         const { data, error } = await supabase.auth.setSession({
           access_token,
           refresh_token: refresh_token || "",
         });
 
         if (error) {
-          console.error("[Callback] Error setting session:", error);
           window.location.href = "/mi-cuenta?error=session_failed";
           return;
         }
 
         if (data.session) {
-          console.log("[Callback] Session established:", data.session.user.email);
 
           // Verify session is in localStorage
           const storageKey = `sb-${supabaseUrl.split("//")[1].split(".")[0]}-auth-token`;
           const stored = localStorage.getItem(storageKey);
-          console.log("[Callback] LocalStorage key:", storageKey);
-          console.log("[Callback] Session in localStorage:", stored ? "YES" : "NO");
 
           // Check for return URL in sessionStorage
           const returnUrl = sessionStorage.getItem("auth_return_url");
-          console.log("[Callback] Return URL:", returnUrl);
           if (returnUrl) {
             sessionStorage.removeItem("auth_return_url");
             window.location.href = returnUrl;
@@ -182,7 +161,6 @@ console.log("[Callback] No code, client will handle hash fragment");
           }
           return;
         } else {
-          console.error("[Callback] No session in response");
         }
       }
 

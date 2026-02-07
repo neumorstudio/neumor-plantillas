@@ -181,7 +181,6 @@ export async function getWebsiteByDomain(
     .single();
 
   if (error || !data) {
-    console.error("Website no encontrado para dominio:", cleanDomain);
     return null;
   }
 

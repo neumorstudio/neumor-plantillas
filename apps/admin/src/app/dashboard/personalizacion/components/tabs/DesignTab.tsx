@@ -4,7 +4,7 @@
  */
 
 import type { Theme, ColorsConfig, EffectsConfig, TypographyConfig, BusinessType } from "@neumorstudio/supabase";
-import { ColorPicker, SliderControl, OptionSelector, FontSelector } from "@/components/customization";
+import { ColorPicker, SliderControl, FontSelector } from "@/components/customization";
 import { CollapsibleSection } from "@/components/ui";
 import { getThemeIcon } from "@/components/icons";
 import {
@@ -40,7 +40,7 @@ export function DesignTab({
   skin,
   activePreset,
   colors,
-  effects,
+  effects: _effects,
   typography,
   isMobile,
   onApplyPreset,
@@ -48,7 +48,7 @@ export function DesignTab({
   onSetTheme,
   onSkinChange,
   onColorChange,
-  onEffectsChange,
+  onEffectsChange: _onEffectsChange,
   onTypographyChange,
 }: DesignTabProps) {
 

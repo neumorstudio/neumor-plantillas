@@ -1,5 +1,6 @@
 ---
 import { getBusinessHourSlots, getBusinessHours, getProfessionals, getProfessionalCategories, getServiceCatalog, getSpecialDays, getSpecialDaySlots } from "@lib/supabase";
+import type { ServiceCategory, Professional } from "@lib/supabase";
 
 // User info passed from server (SSR auth check)
 interface AuthUser {
@@ -45,13 +46,17 @@ const professionalCategories = await getProfessionalCategories(websiteId);
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-const fallbackCategories = [
+const fallbackWebsiteId = websiteId || "fallback";
+const fallbackCategories: ServiceCategory[] = [
   {
     id: "cortes",
+    website_id: fallbackWebsiteId,
     name: "Cortes",
     items: [
       {
         id: "corte-caballero",
+        category_id: "cortes",
+        website_id: fallbackWebsiteId,
         name: "Corte Caballero",
         price_cents: 1800,
         duration_minutes: 30,
@@ -59,6 +64,8 @@ const fallbackCategories = [
       },
       {
         id: "corte-senora",
+        category_id: "cortes",
+        website_id: fallbackWebsiteId,
         name: "Corte Senora",
         price_cents: 2500,
         duration_minutes: 45,
@@ -66,6 +73,8 @@ const fallbackCategories = [
       },
       {
         id: "corte-infantil",
+        category_id: "cortes",
+        website_id: fallbackWebsiteId,
         name: "Corte Infantil",
         price_cents: 1200,
         duration_minutes: 20,
@@ -75,10 +84,13 @@ const fallbackCategories = [
   },
   {
     id: "barba",
+    website_id: fallbackWebsiteId,
     name: "Barba",
     items: [
       {
         id: "corte-barba",
+        category_id: "barba",
+        website_id: fallbackWebsiteId,
         name: "Corte + Barba",
         price_cents: 2800,
         duration_minutes: 45,
@@ -88,7 +100,7 @@ const fallbackCategories = [
   },
 ];
 
-const categories = hasServiceCatalog ? serviceCatalog : fallbackCategories;
+const categories: ServiceCategory[] = hasServiceCatalog ? serviceCatalog : fallbackCategories;
 const hoursPayload = JSON.stringify(businessHours);
 const slotsPayload = JSON.stringify(businessHourSlots);
 const specialDaysPayload = JSON.stringify(specialDays);
@@ -1107,7 +1119,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 <script>
   const form = document.querySelector(".appointment-form") as HTMLFormElement | null;
   if (!form) {
-    console.warn("Appointment form not found");
   } else {
   const panels = Array.from(form.querySelectorAll<HTMLElement>(".step-panel"));
   const stepDots = Array.from(form.querySelectorAll<HTMLElement>(".stepper-item"));
@@ -1165,7 +1176,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
     }
     if (submitBtn) {
       submitBtn.disabled = !email || isSubmitting;
-      console.log("[setAuthState] submitBtn.disabled set to:", !email || isSubmitting);
     }
     if (authBlock) {
       authBlock.classList.toggle("is-authenticated", Boolean(email));
@@ -1911,7 +1921,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
   // Initialize auth state from server-side props (SSR)
   // This is passed from the server after checking cookies
   const currentUserData = form.dataset.currentUser;
-  console.log("[Form] currentUserData from props:", currentUserData);
   if (currentUserData) {
     try {
       const user = JSON.parse(currentUserData) as {
@@ -1921,7 +1930,6 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         name?: string;
         phone?: string;
       };
-      console.log("[Form] User authenticated (SSR):", user.email, "customerId:", user.customerId);
       setAuthState(user.email, user.id, user.customerId);
 
       // Pre-fill form fields
@@ -1938,11 +1946,9 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
         phoneInput.value = user.phone;
       }
     } catch (e) {
-      console.error("[Form] Error parsing currentUser:", e);
       setAuthState(null, null, null);
     }
   } else {
-    console.log("[Form] No authenticated user");
     setAuthState(null, null, null);
   }
 
@@ -1975,33 +1981,25 @@ const professionalCategoriesPayload = JSON.stringify(professionalCategories);
 
   // Debug: direct click listener on submit button
   submitBtn?.addEventListener("click", () => {
-    console.log("[Submit] Button clicked, disabled:", submitBtn?.disabled);
   });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (isSubmitting) {
-      console.log("[Submit] Ignored: submission already in progress");
       return;
     }
-    console.log("[Submit] Form submitted");
-    console.log("[Submit] currentUserId:", currentUserId);
-    console.log("[Submit] currentCustomerId:", currentCustomerId);
 
     if (!validateStep()) {
-      console.log("[Submit] Validation failed");
       return;
     }
 
     // Check auth from SSR props (currentUserId and currentCustomerId set in setAuthState)
     if (!currentUserId || !currentCustomerId) {
-      console.log("[Submit] Auth check failed - missing userId or customerId");
       showToast("Debes iniciar sesion con Google para confirmar.", "warning");
       return;
     }
 
     const webhookUrl = form.dataset.webhook;
-    console.log("[Submit] Proceeding with booking, webhookUrl:", webhookUrl);
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData);
     const selectedServices = getSelectedServices();

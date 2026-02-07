@@ -193,15 +193,6 @@ export function ServiciosClient({ initialCategories }: Props) {
     notes: string;
   }>>({});
 
-  const loadServices = async () => {
-    const response = await fetch("/api/servicios");
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Error al cargar servicios");
-    }
-    setCategories(data.categories || []);
-  };
-
   const runAction = async (payload: Record<string, unknown>, successText: string) => {
     setLoading(true);
     setMessage(null);
@@ -652,7 +643,7 @@ export function ServiciosClient({ initialCategories }: Props) {
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
                                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                                    Precio (EUR)
+                                    Precio (€)
                                   </label>
                                   <input
                                     name="price"
@@ -760,7 +751,7 @@ export function ServiciosClient({ initialCategories }: Props) {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">
-                            Precio (EUR)
+                            Precio (€)
                           </label>
                           <input
                             type="number"
