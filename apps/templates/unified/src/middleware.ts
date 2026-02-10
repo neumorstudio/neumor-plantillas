@@ -12,6 +12,14 @@ export interface TenantData {
   businessName: string;
 }
 
+function normalizeBusinessType(value: string | null | undefined): string {
+  if (!value) return "restaurant";
+  const normalized = value.toLowerCase();
+  if (normalized === "fitness") return "gym";
+  if (normalized === "shop") return "store";
+  return normalized;
+}
+
 // In-memory cache for tenant lookups
 const tenantCache = new Map<string, { data: TenantData; expires: number }>();
 const CACHE_TTL = 60 * 1000; // 1 minute
@@ -143,7 +151,7 @@ async function resolveTenant(
     customDomain: websiteData.custom_domain,
     theme: websiteData.theme || "light",
     config: (websiteData.config as Record<string, unknown>) || {},
-    businessType: clientData?.business_type || "restaurant",
+    businessType: normalizeBusinessType(clientData?.business_type),
     businessName: clientData?.business_name || "Mi Negocio",
   };
 
