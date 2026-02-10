@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 // Tipos para la configuracion del website
 export interface WebsiteVariants {
-  hero: "classic" | "modern" | "bold" | "minimal";
+  hero: "classic" | "modern" | "bold" | "minimal" | "fullscreen" | "split";
   classes: "tabs" | "grid" | "list" | "carousel";
   features: "cards" | "icons" | "banner";
   reviews: "grid" | "carousel" | "minimal";

@@ -23,7 +23,7 @@ import Header from "@components/Header.astro";
 import ClassBookingForm from "@components/ClassBookingForm.astro";
 
 // Importar TODAS las variantes de componentes
-import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@components/Hero";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@components/Hero";
 import { ClassesTabs, ClassesGrid, ClassesList, ClassesCarousel } from "@components/Classes";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@components/Footer";
@@ -66,6 +66,8 @@ const componentMap = {
     modern: HeroModern,
     bold: HeroBold,
     minimal: HeroMinimal,
+    fullscreen: HeroFullscreen,
+    split: HeroSplit,
   },
   classes: {
     tabs: ClassesTabs,

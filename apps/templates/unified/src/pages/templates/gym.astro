@@ -8,10 +8,13 @@ import type { TenantData } from "../../middleware";
 // Import components from gym template
 import Layout from "@gym/layouts/Layout.astro";
 import Header from "@gym/components/Header.astro";
-import { HeroClassic, HeroModern, HeroBold, HeroMinimal } from "@gym/components/Hero";
+import ClassBookingForm from "@gym/components/ClassBookingForm.astro";
+import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@gym/components/Hero";
 import { ClassesTabs, ClassesGrid, ClassesList, ClassesCarousel } from "@gym/components/Classes";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@gym/components/Features";
 import { FooterFull, FooterMinimal, FooterCentered } from "@gym/components/Footer";
+import { ReviewsGrid, ReviewsCarousel, ReviewsMinimal } from "@gym/components/Reviews";
+import { FAQSection, ContactSection, TeamSection, GallerySection, BrandsSection, PlansSection } from "@gym/components/Sections";
 import { getBusinessHours } from "@gym/lib/supabase";
 
 // Get tenant from middleware
@@ -35,27 +38,55 @@ const previewContent = isPreview ? {
   email: url.searchParams.get("email"),
   logo: url.searchParams.get("logo"),
 } : null;
+const previewVariants = {
+  hero: url.searchParams.get("v_hero"),
+  classes: url.searchParams.get("v_classes"),
+  features: url.searchParams.get("v_features"),
+  reviews: url.searchParams.get("v_reviews"),
+  footer: url.searchParams.get("v_footer"),
+};
+const previewSectionVariants = {
+  team: url.searchParams.get("v_team"),
+  gallery: url.searchParams.get("v_gallery"),
+  brands: url.searchParams.get("v_brands"),
+  faq: url.searchParams.get("v_faq"),
+  plans: url.searchParams.get("v_plans"),
+  contact: url.searchParams.get("v_contact"),
+};
 
 // Component mapping
 const componentMap = {
-  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal },
+  hero: { classic: HeroClassic, modern: HeroModern, bold: HeroBold, minimal: HeroMinimal, fullscreen: HeroFullscreen, split: HeroSplit },
   classes: { tabs: ClassesTabs, grid: ClassesGrid, list: ClassesList, carousel: ClassesCarousel },
   features: { cards: FeaturesCards, icons: FeaturesIcons, banner: FeaturesBanner },
   footer: { full: FooterFull, minimal: FooterMinimal, centered: FooterCentered },
+  testimonials: { grid: ReviewsGrid, carousel: ReviewsCarousel, minimal: ReviewsMinimal },
 };
 
 // Get variants from config or use defaults
-const variants = (config.variants as Record<string, string>) || {
-  hero: "bold",
-  classes: "tabs",
-  features: "cards",
-  footer: "full",
-};
+const rawVariants = (config.variants as Record<string, string>) || {};
+const configVariants = {
+  hero: rawVariants.hero || "classic",
+  classes: rawVariants.classes || rawVariants.services || rawVariants.menu || "tabs",
+  features: rawVariants.features || "cards",
+  reviews: rawVariants.reviews || "carousel",
+  footer: rawVariants.footer || "full",
+} as Record<string, string>;
+
+// Apply preview overrides if in preview mode
+const variants = isPreview ? {
+  hero: previewVariants.hero || configVariants.hero,
+  classes: previewVariants.classes || configVariants.classes,
+  features: previewVariants.features || configVariants.features,
+  reviews: previewVariants.reviews || configVariants.reviews,
+  footer: previewVariants.footer || configVariants.footer,
+} : configVariants;
 
 // Select components based on variants
 const Hero = componentMap.hero[variants.hero as keyof typeof componentMap.hero] || HeroBold;
 const Classes = componentMap.classes[variants.classes as keyof typeof componentMap.classes] || ClassesTabs;
 const Features = componentMap.features[variants.features as keyof typeof componentMap.features] || FeaturesCards;
+const ReviewsComponent = componentMap.testimonials[variants.reviews as keyof typeof componentMap.testimonials] || ReviewsCarousel;
 const FooterComponent = componentMap.footer[variants.footer as keyof typeof componentMap.footer] || FooterFull;
 
 const businessHours = await getBusinessHours(tenant.id);
@@ -65,6 +96,49 @@ const buildScheduleLabel = (hours: { is_open: boolean; open_time: string; close_
   return `${openDay.open_time.slice(0, 5)} - ${openDay.close_time.slice(0, 5)}`;
 };
 const scheduleLabel = buildScheduleLabel(businessHours);
+
+// Helpers de contenido
+const getContentText = (key: string) => {
+  const value = config?.[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const getContentArray = (key: string) => {
+  const value = config?.[key];
+  return Array.isArray(value) && value.length > 0 ? value : undefined;
+};
+
+// ============================================
+// CONFIGURACION DE SECCIONES DINAMICAS
+// ============================================
+
+interface SectionConfig {
+  id: string;
+  enabled: boolean;
+  variant: string;
+  order: number;
+}
+
+// Secciones por defecto para gym/fitness
+const defaultSections: SectionConfig[] = [
+  { id: "hero", enabled: true, variant: "classic", order: 0 },
+  { id: "features", enabled: true, variant: "cards", order: 1 },
+  { id: "services", enabled: true, variant: "tabs", order: 2 },
+  { id: "booking", enabled: true, variant: "classic", order: 3 },
+  { id: "footer", enabled: true, variant: "full", order: 4 },
+];
+
+// Obtener sectionsConfig de la BD o usar defaults
+const sectionsConfigRaw = config.sectionsConfig as { sections: SectionConfig[] } | undefined;
+const sectionsConfig = sectionsConfigRaw || { sections: defaultSections };
+
+// Crear un mapa para acceso rapido a la configuracion de cada seccion
+const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
+const legacyEnabledSections = new Set(
+  defaultSections.filter((section) => section.enabled).map((section) => section.id)
+);
 
 // Extraer configuración de personalización visual
 const customization = {
@@ -80,64 +154,203 @@ const customization = {
 // Build page config (preview overrides config values)
 const activeTheme = (isPreview && previewTheme) ? previewTheme : tenant.theme;
 const activeSkin = config.skin as "neumorphic" | "brutalist" | "3d" | "flat" | "glassmorphism" | undefined;
-const pageConfig = {
-  gymName: tenant.businessName,
-  theme: activeTheme as "light" | "dark" | "auto",
-  siteTitle: `${tenant.businessName} | Gimnasio`,
-  siteDescription: (config.siteDescription as string) || "Tu gimnasio de confianza",
-  heroTitle: previewContent?.heroTitle || (config.heroTitle as string) || "Transforma Tu Cuerpo",
-  heroSubtitle: previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Entrena con los mejores profesionales",
-  heroImage: previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
-  heroCta: config.heroCta as string | undefined,
-  address: previewContent?.address || (config.address as string) || "",
-  phone: previewContent?.phone || (config.phone as string) || "",
-  email: previewContent?.email || (config.email as string) || "",
-  logo: previewContent?.logo || (customization.branding?.logo as string) || customization.logo || "",
-  socialLinks: (config.socialLinks as { instagram: string; facebook: string; youtube: string }) || {
-    instagram: "#",
-    facebook: "#",
-    youtube: "#",
-  },
-  schedule: (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined,
-  features: config.features as { title?: string; subtitle?: string; items?: { icon: string; title: string; description: string }[] } | undefined,
+const businessName = (config.businessName as string) || tenant.businessName || "Gimnasio";
+const heroTitle = previewContent?.heroTitle || (config.heroTitle as string) || "Transforma Tu Cuerpo";
+const heroSubtitle = previewContent?.heroSubtitle || (config.heroSubtitle as string) || "Entrena con los mejores profesionales";
+const heroImage = previewContent?.heroImage || (config.heroImage as string) || "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80";
+const heroCta = config.heroCta as string | undefined;
+const address = previewContent?.address || (config.address as string) || "";
+const phone = previewContent?.phone || (config.phone as string) || "";
+const email = previewContent?.email || (config.email as string) || "";
+const logo = previewContent?.logo || (customization.branding?.logo as string) || customization.logo || "";
+const socialLinks = (config.socialLinks as { instagram: string; facebook: string; youtube: string }) || {
+  instagram: "#",
+  facebook: "#",
+  youtube: "#",
 };
+const schedule = (config.schedule as { weekdays?: string; saturday?: string; sunday?: string }) || undefined;
+const webhookUrl = (config.webhookUrl as string) || (
+  import.meta.env.PUBLIC_ADMIN_URL
+    ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/entrenamientos`
+    : (import.meta.env.PUBLIC_BOOKING_WEBHOOK_URL || "")
+);
+const currentWebsiteId = tenant.id;
 ---
 
 <Layout
-  title={pageConfig.siteTitle}
-  description={pageConfig.siteDescription}
-  theme={pageConfig.theme === "auto" ? "light" : pageConfig.theme}
+  title={`${businessName} | Gimnasio`}
+  description={(config.siteDescription as string) || "Tu gimnasio de confianza"}
+  theme={(activeTheme || "light") as "light" | "dark" | "colorful" | "rustic" | "elegant" | "neuglass" | "neuglass-dark"}
   skin={activeSkin}
   customization={customization}
 >
   <Header
-    businessName={pageConfig.gymName}
-    logo={pageConfig.logo}
+    businessName={businessName}
+    logo={logo}
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
   />
 
-  <main>
-    <Hero
-      title={pageConfig.heroTitle}
-      subtitle={pageConfig.heroSubtitle}
-      ctaText={pageConfig.heroCta}
-      backgroundImage={pageConfig.heroImage}
-      scheduleLabel={scheduleLabel}
-      address={pageConfig.address}
-      phone={pageConfig.phone}
-    />
+  <main class="sections-container" style="display: flex; flex-direction: column;">
+    {(() => {
+      const allSections = [
+        "hero",
+        "features",
+        "services",
+        "testimonials",
+        "team",
+        "gallery",
+        "brands",
+        "faq",
+        "plans",
+        "contact",
+        "booking",
+      ];
 
-    <Features features={pageConfig.features?.items} />
+      return allSections.map((sectionId) => {
+        const sectionCfg = sectionConfigMap.get(sectionId);
+        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
+        const order = sectionCfg?.order ?? 99;
+        const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
 
-    <Classes />
+        switch (sectionId) {
+          case "hero":
+            return (
+              <section data-section-id="hero" style={style}>
+                <Hero
+                  title={heroTitle}
+                  subtitle={heroSubtitle}
+                  ctaText={heroCta}
+                  backgroundImage={heroImage}
+                  scheduleLabel={scheduleLabel}
+                  address={address}
+                  phone={phone}
+                />
+              </section>
+            );
+          case "features":
+            return (
+              <section data-section-id="features" style={style}>
+                <Features />
+              </section>
+            );
+          case "services":
+            return (
+              <section data-section-id="services" style={style}>
+                <Classes
+                  title={getContentText("servicesTitle")}
+                  subtitle={getContentText("servicesSubtitle")}
+                />
+              </section>
+            );
+          case "testimonials":
+            return (
+              <section data-section-id="testimonials" style={style}>
+                <ReviewsComponent
+                  title={config.reviewsTitle as string | undefined}
+                  subtitle={config.reviewsSubtitle as string | undefined}
+                  googleRating={config.googleRating as number | undefined}
+                  totalReviews={config.totalReviews as number | undefined}
+                />
+              </section>
+            );
+          case "team":
+            return (
+              <section data-section-id="team" style={style}>
+                <TeamSection
+                  title={getContentText("teamTitle")}
+                  subtitle={getContentText("teamSubtitle")}
+                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
+                />
+              </section>
+            );
+          case "gallery":
+            return (
+              <section data-section-id="gallery" style={style}>
+                <GallerySection
+                  title={getContentText("galleryTitle")}
+                  subtitle={getContentText("gallerySubtitle")}
+                  images={getContentArray("galleryImages")}
+                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "carousel" | "grid" | "masonry"}
+                />
+              </section>
+            );
+          case "brands":
+            return (
+              <section data-section-id="brands" style={style}>
+                <BrandsSection
+                  title={getContentText("brandsTitle")}
+                  subtitle={getContentText("brandsSubtitle")}
+                  logos={getContentArray("brandsLogos")}
+                  variant={previewSectionVariants.brands || sectionCfg?.variant || "carousel"}
+                />
+              </section>
+            );
+          case "faq":
+            return (
+              <section data-section-id="faq" style={style}>
+                <FAQSection
+                  title={getContentText("faqTitle")}
+                  subtitle={getContentText("faqSubtitle")}
+                  items={getContentArray("faqItems")}
+                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
+                />
+              </section>
+            );
+          case "plans":
+            return (
+              <section data-section-id="plans" style={style}>
+                <PlansSection
+                  title={getContentText("plansTitle")}
+                  subtitle={getContentText("plansSubtitle")}
+                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "table" | "cards" | "comparison"}
+                />
+              </section>
+            );
+          case "contact":
+            return (
+              <section data-section-id="contact" style={style}>
+                <ContactSection
+                  title={getContentText("contactTitle")}
+                  subtitle={getContentText("contactSubtitle")}
+                  address={address}
+                  phone={phone}
+                  email={email}
+                  webhookUrl={webhookUrl}
+                  websiteId={currentWebsiteId}
+                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
+                />
+              </section>
+            );
+          case "booking":
+            return (
+              <section data-section-id="booking" style={style}>
+                <ClassBookingForm webhookUrl={webhookUrl} websiteId={currentWebsiteId} />
+              </section>
+            );
+          default:
+            return null;
+        }
+      });
+    })()}
   </main>
 
-  <FooterComponent
-    businessName={pageConfig.gymName}
-    address={pageConfig.address}
-    phone={pageConfig.phone}
-    email={pageConfig.email}
-    socialLinks={pageConfig.socialLinks}
-    schedule={pageConfig.schedule}
-  />
+  {(() => {
+    const footerCfg = sectionConfigMap.get("footer");
+    const isFooterEnabled = footerCfg?.enabled ?? true;
+    const footerOrder = footerCfg?.order ?? 100;
+    const footerStyle = `order: ${footerOrder}; ${!isFooterEnabled ? 'display: none;' : ''}`;
+
+    return (
+      <div data-section-id="footer" style={footerStyle}>
+        <FooterComponent
+          businessName={businessName}
+          address={address}
+          phone={phone}
+          email={email}
+          socialLinks={socialLinks}
+          schedule={schedule}
+        />
+      </div>
+    );
+  })()}
 </Layout>
