@@ -1,3 +1,5 @@
+import React from "react";
+
 // Componentes de widgets de estadísticas para el dashboard dinámico
 
 interface StatCardProps {
@@ -262,5 +264,127 @@ export function ExpiringPackagesWidget({ count }: { count: number }) {
         </svg>
       }
     />
+  );
+}
+
+// ============================================
+// FITNESS / ENTRENADOR PERSONAL - BLOQUE HOY
+// ============================================
+
+export interface TodaySession {
+  id: string;
+  booking_date: string;
+  booking_time: string | null;
+  status: string;
+  session_notes: string | null;
+  customers?: { id: string; name: string } | { id: string; name: string }[] | null;
+  trainer_services?: { id: string; name: string } | { id: string; name: string }[] | null;
+}
+
+function getTodaySessionStatusBadge(status: string) {
+  switch (status) {
+    case "confirmed":
+      return { class: "badge-confirmed", label: "Confirmada" };
+    case "completed":
+      return { class: "badge-confirmed", label: "Completada" };
+    case "cancelled":
+      return { class: "badge-cancelled", label: "Cancelada" };
+    case "no_show":
+      return { class: "badge-cancelled", label: "No asistio" };
+    default:
+      return { class: "badge-pending", label: "Pendiente" };
+  }
+}
+
+function getRelationName(
+  relation?: { name: string } | { name: string }[] | null
+): string | null {
+  if (!relation) return null;
+  if (Array.isArray(relation)) return relation[0]?.name || null;
+  return relation.name || null;
+}
+
+export function TodaySessionsCard({ sessions }: { sessions: TodaySession[] }) {
+  const visibleSessions = sessions.slice(0, 8);
+
+  return (
+    <div className="neumor-card p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        <div>
+          <h2 className="text-lg sm:text-xl font-semibold">Hoy</h2>
+          <p className="text-sm text-[var(--text-secondary)]">Proximas sesiones</p>
+        </div>
+        <a
+          href="/dashboard/calendario"
+          className="text-sm text-[var(--accent)] hover:underline"
+        >
+          Ver calendario
+        </a>
+      </div>
+
+      {visibleSessions.length === 0 ? (
+        <div className="text-center py-6 text-[var(--text-secondary)]">
+          <p>No tienes sesiones para hoy</p>
+          <p className="text-sm mt-2">Abre el calendario para programar sesiones.</p>
+          <a
+            href="/dashboard/calendario"
+            className="mt-4 inline-flex neumor-btn-primary px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Abrir calendario
+          </a>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {visibleSessions.map((session) => {
+            const badge = getTodaySessionStatusBadge(session.status);
+            const customerName = getRelationName(session.customers) || "Cliente por asignar";
+            const serviceName = getRelationName(session.trainer_services) || "Servicio por asignar";
+            const needsAssign = !getRelationName(session.customers) || !getRelationName(session.trainer_services);
+
+            return (
+              <div
+                key={session.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 rounded-lg border border-[var(--shadow-light)] px-3 py-3"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="text-base sm:text-lg font-semibold tabular-nums w-14">
+                    {session.booking_time?.slice(0, 5) || "--:--"}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{customerName}</div>
+                    <div className="text-xs text-[var(--text-secondary)] truncate">
+                      {serviceName}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                  <span className={`badge ${badge.class}`}>{badge.label}</span>
+                  <a
+                    href="/dashboard/sesiones"
+                    className="neumor-btn px-3 py-1.5 rounded-lg text-xs font-medium"
+                  >
+                    Iniciar sesion
+                  </a>
+                  <a
+                    href="/dashboard/sesiones"
+                    className="neumor-btn px-3 py-1.5 rounded-lg text-xs font-medium"
+                  >
+                    Reprogramar
+                  </a>
+                  {needsAssign && (
+                    <a
+                      href="/dashboard/sesiones"
+                      className="neumor-btn px-3 py-1.5 rounded-lg text-xs font-medium"
+                    >
+                      Asignar
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

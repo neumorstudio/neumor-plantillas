@@ -34,6 +34,8 @@ import {
   SessionsWeekWidget,
   ActiveClientsWidget,
   ExpiringPackagesWidget,
+  TodaySessionsCard,
+  type TodaySession,
 } from "@/components/dashboard/StatWidgets";
 import {
   RecentBookingsTable,
@@ -246,6 +248,12 @@ export default async function DashboardPage() {
   const recentJobs = isRepairsType ? await getRecentJobs(5) : [];
   const recentQuotes = isRepairsType ? await getRecentQuotes(5) : [];
   const recentSessions = isFitnessType ? await getRecentSessions(5) : [];
+  const sessionsTodayPayload = widgetData.sessions_today as
+    | { count: number; sessions: TodaySession[] }
+    | undefined;
+  const todaySessions = Array.isArray(sessionsTodayPayload?.sessions)
+    ? sessionsTodayPayload.sessions
+    : [];
   let professionalRevenue: {
     today: { name: string; total: number; count: number }[];
     week: { name: string; total: number; count: number }[];
@@ -438,15 +446,46 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid - Widgets dinámicos */}
-      <div className="dashboard-grid mb-6 sm:mb-8">
-        {widgetIds.map((widgetId) => renderWidget(widgetId))}
-      </div>
-
       {/* Tablas según tipo de negocio */}
       {isFitnessType ? (
         <>
-          {/* Dashboard para fitness/entrenador personal */}
+          {/* Bloque principal: Hoy */}
+          <TodaySessionsCard sessions={todaySessions} />
+
+          {/* Bloques de apoyo: Huecos y alertas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8">
+            <div className="neumor-card p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold">Huecos del dia</h3>
+              <p className="text-sm text-[var(--text-secondary)] mt-2">
+                Revisa la agenda para llenar espacios libres con nuevas sesiones.
+              </p>
+              <a
+                href="/dashboard/calendario"
+                className="mt-4 inline-flex neumor-btn px-4 py-2 rounded-lg text-sm font-medium"
+              >
+                Abrir calendario
+              </a>
+            </div>
+            <div className="neumor-card p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold">Alertas de agenda</h3>
+              <p className="text-sm text-[var(--text-secondary)] mt-2">
+                Revisa cambios, cancelaciones y sesiones pendientes de confirmar.
+              </p>
+              <a
+                href="/dashboard/calendario"
+                className="mt-4 inline-flex neumor-btn px-4 py-2 rounded-lg text-sm font-medium"
+              >
+                Ver agenda
+              </a>
+            </div>
+          </div>
+
+          {/* KPIs - segunda prioridad */}
+          <div className="dashboard-grid mb-6 sm:mb-8 mt-6 sm:mt-8">
+            {widgetIds.map((widgetId) => renderWidget(widgetId))}
+          </div>
+
+          {/* Historico */}
           <RecentSessionsTable sessions={recentSessions} />
 
           {/* Acciones rápidas para fitness */}
@@ -498,6 +537,11 @@ export default async function DashboardPage() {
         </>
       ) : isRepairsType ? (
         <>
+          {/* Stats Grid - Widgets dinámicos */}
+          <div className="dashboard-grid mb-6 sm:mb-8">
+            {widgetIds.map((widgetId) => renderWidget(widgetId))}
+          </div>
+
           {/* Dashboard para repairs/realestate */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <RecentQuotesTable quotes={recentQuotes} />
@@ -542,6 +586,11 @@ export default async function DashboardPage() {
         </>
       ) : (
         <>
+          {/* Stats Grid - Widgets dinámicos */}
+          <div className="dashboard-grid mb-6 sm:mb-8">
+            {widgetIds.map((widgetId) => renderWidget(widgetId))}
+          </div>
+
           {/* Dashboard para restaurant/salon/clinic/etc */}
           {businessType === "salon" ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
