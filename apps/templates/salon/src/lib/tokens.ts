@@ -101,7 +101,23 @@ export interface CompiledTokens {
   /** Inline styles for colors - applied to html element to override theme defaults */
   inlineColorStyles: string;
   fontImports: string;
+  customFontsCss: string;
   favicon: string | null;
+}
+
+const CUSTOM_FONTS = ['Brittany Signature'];
+
+function getCustomFontCss(fontName: string): string {
+  if (fontName === 'Brittany Signature') {
+    return `@font-face {
+      font-family: 'Brittany Signature';
+      src: url('/fonts/BrittanySignature.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }`;
+  }
+  return '';
 }
 
 /**
@@ -113,6 +129,7 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   const vars: string[] = [];
   const colorVars: string[] = [];
   const fonts: string[] = [];
+  let customFontsCss = '';
 
   // === COLORES (separados para inline styles con máxima especificidad) ===
   const primary = config.colors?.primary || config.primaryColor || DEFAULTS.colors.primary;
@@ -155,15 +172,27 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
   const bodyFont = config.typography?.bodyFont || DEFAULTS.typography.bodyFont;
 
   if (headingFont && headingFont !== 'system') {
-    fonts.push(headingFont);
-    colorVars.push(`--font-heading: '${headingFont}', serif`);
+    if (CUSTOM_FONTS.includes(headingFont)) {
+      customFontsCss += getCustomFontCss(headingFont);
+      colorVars.push(`--font-heading: '${headingFont}', serif`);
+    } else {
+      fonts.push(headingFont);
+      colorVars.push(`--font-heading: '${headingFont}', serif`);
+    }
   }
 
   if (bodyFont && bodyFont !== 'system') {
-    if (!fonts.includes(bodyFont)) {
-      fonts.push(bodyFont);
+    if (CUSTOM_FONTS.includes(bodyFont)) {
+      if (!customFontsCss.includes(bodyFont)) {
+        customFontsCss += getCustomFontCss(bodyFont);
+      }
+      colorVars.push(`--font-body: '${bodyFont}', system-ui, sans-serif`);
+    } else {
+      if (!fonts.includes(bodyFont)) {
+        fonts.push(bodyFont);
+      }
+      colorVars.push(`--font-body: '${bodyFont}', system-ui, sans-serif`);
     }
-    colorVars.push(`--font-body: '${bodyFont}', system-ui, sans-serif`);
   }
 
   // Escala tipográfica
@@ -237,6 +266,7 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
     cssVariables,
     inlineColorStyles,
     fontImports,
+    customFontsCss,
     favicon,
   };
 }

@@ -29,7 +29,7 @@ const isPreviewMode = url.searchParams.get('preview') === '1';
 const finalCustomization = applyPreviewParams(customization, url);
 
 // Compilar tokens a CSS
-const { cssVariables, inlineColorStyles, fontImports, favicon } = compileCustomization(finalCustomization);
+const { cssVariables, inlineColorStyles, fontImports, customFontsCss, favicon } = compileCustomization(finalCustomization);
 
 const pwaBranding = finalCustomization.branding as Record<string, unknown> | undefined;
 const pwaLogoCandidate =
@@ -123,6 +123,11 @@ const defaultFonts = !fontImports
     <!-- Custom CSS Variables from personalization (override defaults) -->
     {cssVariables && (
       <style set:html={cssVariables}></style>
+    )}
+
+    <!-- Custom Fonts CSS -->
+    {customFontsCss && (
+      <style set:html={customFontsCss}></style>
     )}
 
     <style is:inline>
@@ -353,26 +358,63 @@ const defaultFonts = !fontImports
 
           // Aplicar tipografia
           if (typography) {
-            if (typography.headingFont && typography.headingFont !== 'system') {
-              // Cargar fuente si no esta cargada
+            if (typography.headingFont) {
               const fontName = typography.headingFont;
-              if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
-                const link = document.createElement('link');
-                link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
-                link.rel = 'stylesheet';
-                document.head.appendChild(link);
+              if (fontName === 'system') {
+                root.style.setProperty('--font-heading', 'system-ui, sans-serif');
+              } else if (fontName === 'Brittany Signature') {
+                if (!document.querySelector('style[data-font="Brittany Signature"]')) {
+                  const style = document.createElement('style');
+                  style.setAttribute('data-font', 'Brittany Signature');
+                  style.textContent = `@font-face {
+                    font-family: 'Brittany Signature';
+                    src: url('/fonts/BrittanySignature.ttf') format('truetype');
+                    font-weight: normal;
+                    font-style: normal;
+                    font-display: swap;
+                  }`;
+                  document.head.appendChild(style);
+                }
+                root.style.setProperty('--font-heading', "'Brittany Signature', serif");
+              } else {
+                // Google Fonts
+                if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
+                  const link = document.createElement('link');
+                  link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+                  link.rel = 'stylesheet';
+                  document.head.appendChild(link);
+                }
+                root.style.setProperty('--font-heading', "'" + fontName + "', serif");
               }
-              root.style.setProperty('--font-heading', "'" + fontName + "', serif");
             }
-            if (typography.bodyFont && typography.bodyFont !== 'system') {
+            if (typography.bodyFont) {
               const fontName = typography.bodyFont;
-              if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
-                const link = document.createElement('link');
-                link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
-                link.rel = 'stylesheet';
-                document.head.appendChild(link);
+              if (fontName === 'system') {
+                root.style.setProperty('--font-body', 'system-ui, sans-serif');
+              } else if (fontName === 'Brittany Signature') {
+                if (!document.querySelector('style[data-font="Brittany Signature"]')) {
+                  const style = document.createElement('style');
+                  style.setAttribute('data-font', 'Brittany Signature');
+                  style.textContent = `@font-face {
+                    font-family: 'Brittany Signature';
+                    src: url('/fonts/BrittanySignature.ttf') format('truetype');
+                    font-weight: normal;
+                    font-style: normal;
+                    font-display: swap;
+                  }`;
+                  document.head.appendChild(style);
+                }
+                root.style.setProperty('--font-body', "'Brittany Signature', system-ui, sans-serif");
+              } else {
+                // Google Fonts
+                if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
+                  const link = document.createElement('link');
+                  link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+                  link.rel = 'stylesheet';
+                  document.head.appendChild(link);
+                }
+                root.style.setProperty('--font-body', "'" + fontName + "', system-ui, sans-serif");
               }
-              root.style.setProperty('--font-body', "'" + fontName + "', system-ui, sans-serif");
             }
             if (typography.baseFontSize) {
               root.style.setProperty('--font-size-base', typography.baseFontSize + 'px');

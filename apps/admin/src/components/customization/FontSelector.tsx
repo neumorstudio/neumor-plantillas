@@ -16,11 +16,26 @@ export function FontSelector({ label, value, onChange, description }: FontSelect
   // Preload font when selected
   useEffect(() => {
     if (value && value !== 'system' && !loaded.has(value)) {
-      const link = document.createElement('link');
-      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(value)}:wght@400;600&display=swap`;
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-      setLoaded(prev => new Set([...prev, value]));
+      if (value === 'Brittany Signature') {
+        const style = document.createElement('style');
+        style.textContent = `
+          @font-face {
+            font-family: 'Brittany Signature';
+            src: url('/fonts/BrittanySignature.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+        `;
+        document.head.appendChild(style);
+        setLoaded(prev => new Set([...prev, value]));
+      } else {
+        const link = document.createElement('link');
+        link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(value)}:wght@400;600&display=swap`;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+        setLoaded(prev => new Set([...prev, value]));
+      }
     }
   }, [value, loaded]);
 
