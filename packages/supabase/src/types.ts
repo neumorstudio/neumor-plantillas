@@ -382,6 +382,7 @@ export const RECOMMENDED_FONTS = [
   { value: 'Raleway', label: 'Raleway' },
   { value: 'Nunito', label: 'Nunito' },
   { value: 'Work Sans', label: 'Work Sans' },
+  { value: 'Brittany Signature', label: 'Brittany Signature' },
 ] as const;
 
 /** Opciones de border radius */
