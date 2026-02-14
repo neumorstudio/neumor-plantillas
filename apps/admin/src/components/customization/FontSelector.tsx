@@ -29,6 +29,19 @@ export function FontSelector({ label, value, onChange, description }: FontSelect
         `;
         document.head.appendChild(style);
         setLoaded(prev => new Set([...prev, value]));
+      } else if (value === 'Clash Display') {
+        const style = document.createElement('style');
+        style.textContent = `
+          @font-face {
+            font-family: 'Clash Display';
+            src: url('/fonts/ClashDisplay.ttf') format('truetype');
+            font-weight: 400 700;
+            font-style: normal;
+            font-display: swap;
+          }
+        `;
+        document.head.appendChild(style);
+        setLoaded(prev => new Set([...prev, value]));
       } else {
         const link = document.createElement('link');
         link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(value)}:wght@400;600&display=swap`;

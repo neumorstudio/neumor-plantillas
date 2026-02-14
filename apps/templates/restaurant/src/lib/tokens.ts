@@ -105,7 +105,7 @@ export interface CompiledTokens {
   favicon: string | null;
 }
 
-const CUSTOM_FONTS = ['Brittany Signature'];
+const CUSTOM_FONTS = ['Brittany Signature', 'Clash Display'];
 
 function getCustomFontCss(fontName: string): string {
   if (fontName === 'Brittany Signature') {
@@ -113,6 +113,15 @@ function getCustomFontCss(fontName: string): string {
       font-family: 'Brittany Signature';
       src: url('/fonts/BrittanySignature.ttf') format('truetype');
       font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }`;
+  }
+  if (fontName === 'Clash Display') {
+    return `@font-face {
+      font-family: 'Clash Display';
+      src: url('/fonts/ClashDisplay.ttf') format('truetype');
+      font-weight: 400 700;
       font-style: normal;
       font-display: swap;
     }`;

@@ -383,6 +383,22 @@ export const RECOMMENDED_FONTS = [
   { value: 'Nunito', label: 'Nunito' },
   { value: 'Work Sans', label: 'Work Sans' },
   { value: 'Brittany Signature', label: 'Brittany Signature' },
+
+  // Luxury & Elegant
+  { value: 'Cinzel', label: 'Cinzel (Clásico)' },
+  { value: 'Bodoni Moda', label: 'Bodoni Moda (Moda)' },
+  { value: 'Prata', label: 'Prata (Sofisticado)' },
+
+  // Modern & Bold
+  { value: 'Clash Display', label: 'Clash Display (Trendy)' },
+  { value: 'Bebas Neue', label: 'Bebas Neue (Titulares)' },
+  { value: 'Syne', label: 'Syne (Artístico)' },
+  { value: 'Space Grotesk', label: 'Space Grotesk (Tech)' },
+  { value: 'Anton', label: 'Anton (Impacto)' },
+
+  // Script & Handwritten
+  { value: 'Great Vibes', label: 'Great Vibes (Elegante)' },
+  { value: 'Allura', label: 'Allura (Fluido)' },
 ] as const;
 
 /** Opciones de border radius */

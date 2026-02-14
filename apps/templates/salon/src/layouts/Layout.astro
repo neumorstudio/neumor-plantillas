@@ -487,6 +487,20 @@ const defaultFonts = !fontImports
                   document.head.appendChild(style);
                 }
                 root.style.setProperty('--font-heading', "'Brittany Signature', serif");
+              } else if (fontName === 'Clash Display') {
+                if (!document.querySelector('style[data-font="Clash Display"]')) {
+                  const style = document.createElement('style');
+                  style.setAttribute('data-font', 'Clash Display');
+                  style.textContent = `@font-face {
+                    font-family: 'Clash Display';
+                    src: url('/fonts/ClashDisplay.ttf') format('truetype');
+                    font-weight: 400 700;
+                    font-style: normal;
+                    font-display: swap;
+                  }`;
+                  document.head.appendChild(style);
+                }
+                root.style.setProperty('--font-heading', "'Clash Display', sans-serif");
               } else {
                 // Google Fonts
                 if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
@@ -517,6 +531,20 @@ const defaultFonts = !fontImports
                   document.head.appendChild(style);
                 }
                 root.style.setProperty('--font-body', "'Brittany Signature', system-ui, sans-serif");
+              } else if (fontName === 'Clash Display') {
+                if (!document.querySelector('style[data-font="Clash Display"]')) {
+                  const style = document.createElement('style');
+                  style.setAttribute('data-font', 'Clash Display');
+                  style.textContent = `@font-face {
+                    font-family: 'Clash Display';
+                    src: url('/fonts/ClashDisplay.ttf') format('truetype');
+                    font-weight: 400 700;
+                    font-style: normal;
+                    font-display: swap;
+                  }`;
+                  document.head.appendChild(style);
+                }
+                root.style.setProperty('--font-body', "'Clash Display', sans-serif");
               } else {
                 // Google Fonts
                 if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]')) {
