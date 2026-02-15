@@ -16,6 +16,10 @@ export interface TypographyConfig {
   bodyFont?: string;
   baseFontSize?: number;
   scale?: number;
+  heroTitleFont?: string;
+  heroSubtitleFont?: string;
+  sectionTitleFont?: string;
+  sectionSubtitleFont?: string;
 }
 
 export interface EffectsConfig {
@@ -204,6 +208,33 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
     }
   }
 
+  // === GRANULAR FONTS ===
+  const granularFonts = {
+    '--font-hero-title': config.typography?.heroTitleFont,
+    '--font-hero-subtitle': config.typography?.heroSubtitleFont,
+    '--font-section-title': config.typography?.sectionTitleFont,
+    '--font-section-subtitle': config.typography?.sectionSubtitleFont,
+  };
+
+  for (const [variable, fontName] of Object.entries(granularFonts)) {
+    if (fontName && fontName !== 'system') {
+      const isHeadingType = variable.includes('title');
+      const fallback = isHeadingType ? 'serif' : 'system-ui, sans-serif';
+
+      if (CUSTOM_FONTS.includes(fontName)) {
+        if (!customFontsCss.includes(fontName)) {
+          customFontsCss += getCustomFontCss(fontName);
+        }
+        vars.push(`${variable}: '${fontName}', ${fallback};`);
+      } else {
+        if (!fonts.includes(fontName)) {
+          fonts.push(fontName);
+        }
+        vars.push(`${variable}: '${fontName}', ${fallback};`);
+      }
+    }
+  }
+
   // Escala tipográfica
   if (config.typography?.baseFontSize || config.typography?.scale) {
     const base = config.typography.baseFontSize || DEFAULTS.typography.baseFontSize;
@@ -312,12 +343,16 @@ export function applyPreviewParams(
   const bodyPreview = url.searchParams.get('t_body');
   const sizePreview = url.searchParams.get('t_size');
 
-  if (headingPreview || bodyPreview || sizePreview) {
+  if (headingPreview || bodyPreview || sizePreview || url.searchParams.get('t_hero_title')) {
     result.typography = {
       ...result.typography,
       ...(headingPreview && { headingFont: headingPreview }),
       ...(bodyPreview && { bodyFont: bodyPreview }),
       ...(sizePreview && { baseFontSize: parseInt(sizePreview, 10) }),
+      ...(url.searchParams.get('t_hero_title') && { heroTitleFont: url.searchParams.get('t_hero_title')! }),
+      ...(url.searchParams.get('t_hero_subtitle') && { heroSubtitleFont: url.searchParams.get('t_hero_subtitle')! }),
+      ...(url.searchParams.get('t_section_title') && { sectionTitleFont: url.searchParams.get('t_section_title')! }),
+      ...(url.searchParams.get('t_section_subtitle') && { sectionSubtitleFont: url.searchParams.get('t_section_subtitle')! }),
     };
   }
 

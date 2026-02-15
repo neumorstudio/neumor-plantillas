@@ -99,7 +99,19 @@ const defaultFonts = !fontImports
       }
 
       h1, h2, h3 {
-        font-family: var(--font-heading);
+        font-family: var(--font-section-title, var(--font-heading));
+      }
+
+      .hero-title {
+        font-family: var(--font-hero-title, var(--font-heading)) !important;
+      }
+
+      .hero-subtitle {
+        font-family: var(--font-hero-subtitle, var(--font-body)) !important;
+      }
+
+      .section-subtitle {
+        font-family: var(--font-section-subtitle, var(--font-body)) !important;
       }
 
       /* Botón crítico - evita flash de botones sin estilo */
@@ -560,6 +572,32 @@ const defaultFonts = !fontImports
             if (typography.baseFontSize) {
               root.style.setProperty('--font-size-base', typography.baseFontSize + 'px');
             }
+
+            // Granular Fonts
+            const granularMap = {
+              heroTitleFont: '--font-hero-title',
+              heroSubtitleFont: '--font-hero-subtitle',
+              sectionTitleFont: '--font-section-title',
+              sectionSubtitleFont: '--font-section-subtitle',
+            };
+
+            Object.entries(granularMap).forEach(([key, variable]) => {
+              const fontName = typography[key];
+              if (fontName) {
+                if (fontName === 'system') {
+                  root.style.setProperty(variable, variable.includes('title') ? 'serif' : 'system-ui, sans-serif');
+                } else {
+                  if (!document.querySelector('link[href*="' + fontName.replace(/ /g, '+') + '"]') && 
+                      !document.querySelector('style[data-font="' + fontName + '"]')) {
+                    const link = document.createElement('link');
+                    link.href = 'https://fonts.googleapis.com/css2?family=' + fontName.replace(/ /g, '+') + ':wght@400;500;600;700&display=swap';
+                    link.rel = 'stylesheet';
+                    document.head.appendChild(link);
+                  }
+                  root.style.setProperty(variable, "'" + fontName + "', " + (variable.includes('title') ? 'serif' : 'system-ui, sans-serif'));
+                }
+              }
+            });
           }
 
           // Aplicar efectos

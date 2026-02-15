@@ -76,8 +76,8 @@ export function DesignTab({
               key={preset.id}
               onClick={() => onApplyPreset(preset)}
               className={`relative p-3 rounded-xl text-left transition-all overflow-hidden ${activePreset === preset.id
-                  ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
-                  : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
+                ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
+                : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
                 }`}
               style={{ background: preset.preview }}
             >
@@ -124,8 +124,8 @@ export function DesignTab({
                   key={t.value}
                   onClick={() => { onSetTheme(t.value); onSetActivePreset(null); }}
                   className={`relative p-2 rounded-lg text-left transition-all ${theme === t.value
-                      ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
-                      : "hover:shadow-md hover:scale-[1.01]"
+                    ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02]"
+                    : "hover:shadow-md hover:scale-[1.01]"
                     }`}
                   style={{
                     background: `linear-gradient(135deg, ${t.colors[0]} 0%, ${t.colors[1]} 100%)`,
@@ -173,8 +173,8 @@ export function DesignTab({
               key={s.value}
               onClick={() => onSkinChange(s.value)}
               className={`relative p-3 rounded-lg text-left transition-all ${skin === s.value
-                  ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02] bg-[var(--shadow-light)]"
-                  : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
+                ? "ring-2 ring-[var(--accent)] shadow-lg scale-[1.02] bg-[var(--shadow-light)]"
+                : "hover:shadow-md hover:scale-[1.01] border border-[var(--shadow-dark)]"
                 }`}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -263,50 +263,97 @@ export function DesignTab({
 
       {/* Tipografia */}
       <CollapsibleSection title="Tipografia" defaultOpen={false}>
-        <FontSelector
-          label="Fuente de Titulos"
-          description="Para titulos y encabezados"
-          value={typography.headingFont || "system"}
-          onChange={(v) => onTypographyChange("headingFont", v)}
-        />
-        <FontSelector
-          label="Fuente de Texto"
-          description="Para parrafos y texto general"
-          value={typography.bodyFont || "system"}
-          onChange={(v) => onTypographyChange("bodyFont", v)}
-        />
-        <div className="space-y-2">
-          <SliderControl
-            label="Tamano Base"
-            description="Tamano del texto base"
-            value={typography.baseFontSize || 16}
-            onChange={(v) => onTypographyChange("baseFontSize", v)}
-            min={14}
-            max={20}
-            step={1}
-            unit="px"
-          />
-          {isMobile && (
-            <div className="flex items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={() => onTypographyChange("baseFontSize", Math.max(14, (typography.baseFontSize || 16) - 1))}
-                className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
-              >
-                −
-              </button>
-              <span className="text-base font-medium w-12 text-center">
-                {typography.baseFontSize || 16}px
-              </span>
-              <button
-                type="button"
-                onClick={() => onTypographyChange("baseFontSize", Math.min(20, (typography.baseFontSize || 16) + 1))}
-                className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
-              >
-                +
-              </button>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+              Fuentes Globales
+            </h4>
+            <FontSelector
+              label="Fuente de Titulos"
+              description="Para titulos y encabezados por defecto"
+              value={typography.headingFont || "system"}
+              onChange={(v) => onTypographyChange("headingFont", v)}
+            />
+            <FontSelector
+              label="Fuente de Texto"
+              description="Para parrafos y texto general"
+              value={typography.bodyFont || "system"}
+              onChange={(v) => onTypographyChange("bodyFont", v)}
+            />
+          </div>
+
+          <div className="border-t border-[var(--shadow-dark)]" />
+
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+              Personalización por Bloques
+            </h4>
+            <p className="text-[10px] text-[var(--text-secondary)] italic">
+              Opcional: Sobrescribe la fuente global en secciones específicas.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FontSelector
+                label="Título Hero"
+                value={typography.heroTitleFont || "system"}
+                onChange={(v) => onTypographyChange("heroTitleFont", v)}
+              />
+              <FontSelector
+                label="Subtítulo Hero"
+                value={typography.heroSubtitleFont || "system"}
+                onChange={(v) => onTypographyChange("heroSubtitleFont", v)}
+              />
+              <FontSelector
+                label="Títulos de Secciones"
+                value={typography.sectionTitleFont || "system"}
+                onChange={(v) => onTypographyChange("sectionTitleFont", v)}
+              />
+              <FontSelector
+                label="Subtítulos de Secciones"
+                value={typography.sectionSubtitleFont || "system"}
+                onChange={(v) => onTypographyChange("sectionSubtitleFont", v)}
+              />
             </div>
-          )}
+          </div>
+
+          <div className="border-t border-[var(--shadow-dark)]" />
+
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+              Tamaño Base
+            </h4>
+            <SliderControl
+              label="Tamano Base"
+              description="Tamano del texto base"
+              value={typography.baseFontSize || 16}
+              onChange={(v) => onTypographyChange("baseFontSize", v)}
+              min={14}
+              max={20}
+              step={1}
+              unit="px"
+            />
+            {isMobile && (
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => onTypographyChange("baseFontSize", Math.max(14, (typography.baseFontSize || 16) - 1))}
+                  className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
+                >
+                  −
+                </button>
+                <span className="text-base font-medium w-12 text-center">
+                  {typography.baseFontSize || 16}px
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onTypographyChange("baseFontSize", Math.min(20, (typography.baseFontSize || 16) + 1))}
+                  className="neumor-btn w-10 h-10 flex items-center justify-center text-lg font-bold"
+                >
+                  +
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </CollapsibleSection>
     </div>

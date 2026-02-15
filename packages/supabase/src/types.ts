@@ -339,6 +339,10 @@ export interface TypographyConfig {
   bodyFont?: string;      // Google Font name o "system"
   baseFontSize?: number;  // 14-18, default 16
   scale?: number;         // 1.125-1.333, default 1.25
+  heroTitleFont?: string;
+  heroSubtitleFont?: string;
+  sectionTitleFont?: string;
+  sectionSubtitleFont?: string;
 }
 
 /** Configuración de efectos visuales */
