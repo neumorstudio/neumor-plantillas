@@ -343,6 +343,7 @@ export interface TypographyConfig {
   heroSubtitleFont?: string;
   sectionTitleFont?: string;
   sectionSubtitleFont?: string;
+  serviceTitleFont?: string;
 }
 
 /** Configuración de efectos visuales */

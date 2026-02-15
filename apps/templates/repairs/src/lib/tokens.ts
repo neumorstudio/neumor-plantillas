@@ -20,6 +20,7 @@ export interface TypographyConfig {
   heroSubtitleFont?: string;
   sectionTitleFont?: string;
   sectionSubtitleFont?: string;
+  serviceTitleFont?: string;
 }
 
 export interface EffectsConfig {
@@ -214,6 +215,7 @@ export function compileCustomization(config: WebsiteCustomization): CompiledToke
     '--font-hero-subtitle': config.typography?.heroSubtitleFont,
     '--font-section-title': config.typography?.sectionTitleFont,
     '--font-section-subtitle': config.typography?.sectionSubtitleFont,
+    '--font-service-title': config.typography?.serviceTitleFont,
   };
 
   for (const [variable, fontName] of Object.entries(granularFonts)) {
@@ -353,6 +355,7 @@ export function applyPreviewParams(
       ...(url.searchParams.get('t_hero_subtitle') && { heroSubtitleFont: url.searchParams.get('t_hero_subtitle')! }),
       ...(url.searchParams.get('t_section_title') && { sectionTitleFont: url.searchParams.get('t_section_title')! }),
       ...(url.searchParams.get('t_section_subtitle') && { sectionSubtitleFont: url.searchParams.get('t_section_subtitle')! }),
+      ...(url.searchParams.get('t_service_title') && { serviceTitleFont: url.searchParams.get('t_service_title')! }),
     };
   }
 

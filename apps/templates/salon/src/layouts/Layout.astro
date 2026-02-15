@@ -113,6 +113,10 @@ const defaultFonts = !fontImports
       .section-subtitle {
         font-family: var(--font-section-subtitle, var(--font-body)) !important;
       }
+      
+      .item-name, .category-name, .product-name {
+        font-family: var(--font-service-title, var(--font-heading)) !important;
+      }
 
       /* Botón crítico - evita flash de botones sin estilo */
       .neumor-btn {
@@ -574,11 +578,9 @@ const defaultFonts = !fontImports
             }
 
             // Granular Fonts
-            const granularMap = {
-              heroTitleFont: '--font-hero-title',
-              heroSubtitleFont: '--font-hero-subtitle',
               sectionTitleFont: '--font-section-title',
               sectionSubtitleFont: '--font-section-subtitle',
+              serviceTitleFont: '--font-service-title',
             };
 
             Object.entries(granularMap).forEach(([key, variable]) => {

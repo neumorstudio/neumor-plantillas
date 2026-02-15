@@ -313,6 +313,11 @@ export function DesignTab({
                 value={typography.sectionSubtitleFont || "system"}
                 onChange={(v) => onTypographyChange("sectionSubtitleFont", v)}
               />
+              <FontSelector
+                label="Títulos de Servicios/Menú"
+                value={typography.serviceTitleFont || "system"}
+                onChange={(v) => onTypographyChange("serviceTitleFont", v)}
+              />
             </div>
           </div>
 
