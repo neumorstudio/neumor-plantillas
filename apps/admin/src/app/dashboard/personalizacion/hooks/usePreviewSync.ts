@@ -80,6 +80,10 @@ export function usePreviewSync({
           headingFont: typography.headingFont,
           bodyFont: typography.bodyFont,
           baseFontSize: typography.baseFontSize,
+          heroTitleFont: typography.heroTitleFont,
+          heroSubtitleFont: typography.heroSubtitleFont,
+          sectionTitleFont: typography.sectionTitleFont,
+          sectionSubtitleFont: typography.sectionSubtitleFont,
         },
         effects: {
           shadowIntensity: effects.shadowIntensity,
