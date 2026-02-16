@@ -279,7 +279,8 @@ export const SECTIONS_CATALOG: Record<SectionId, SectionDefinition> = {
     description: "Sistema de reserva de citas",
     icon: SECTION_ICONS.booking,
     variants: [
-      { value: "wizard", label: "Asistente" },
+      { value: "wizard", label: "Clasico" },
+      { value: "modal", label: "Modal" },
     ],
     defaultVariant: "wizard",
     // Implementado en: salon (AppointmentForm), clinic (AppointmentForm), fitness (ClassBookingForm)

@@ -9,6 +9,8 @@ import type { TenantData } from "../../middleware";
 import Layout from "@salon/layouts/Layout.astro";
 import Header from "@salon/components/Header.astro";
 import AppointmentForm from "@salon/components/AppointmentForm.astro";
+import AppointmentModal from "@salon/components/AppointmentModal.astro";
+import BookingBanner from "@salon/components/BookingBanner.astro";
 import { HeroClassic, HeroModern, HeroBold, HeroMinimal, HeroFullscreen, HeroSplit } from "@salon/components/Hero";
 import { ServicesTabs, ServicesGrid, ServicesList, ServicesCarousel } from "@salon/components/Services";
 import { FeaturesCards, FeaturesIcons, FeaturesBanner } from "@salon/components/Features";
@@ -38,6 +40,7 @@ const previewVariants = {
   services: url.searchParams.get("v_services"),
   features: url.searchParams.get("v_features"),
   footer: url.searchParams.get("v_footer"),
+  booking: url.searchParams.get("v_booking"),
 };
 const previewSectionVariants = {
   team: url.searchParams.get("v_team"),
@@ -47,6 +50,7 @@ const previewSectionVariants = {
   plans: url.searchParams.get("v_plans"),
   contact: url.searchParams.get("v_contact"),
 };
+const previewSectionsParam = url.searchParams.get("v_sections");
 
 // Check if user is authenticated (SSR)
 let currentUser: { email: string; id: string; customerId: string | null; name?: string; phone?: string | null } | null = null;
@@ -190,14 +194,31 @@ const defaultSections: SectionConfig[] = [
 
 // Obtener sectionsConfig de la BD o usar defaults
 const sectionsConfigRaw = config.sectionsConfig as { sections: SectionConfig[] } | undefined;
-const sectionsConfig = sectionsConfigRaw || { sections: defaultSections };
+const sectionsConfig = (sectionsConfigRaw?.sections && Array.isArray(sectionsConfigRaw.sections) && sectionsConfigRaw.sections.length > 0)
+  ? sectionsConfigRaw 
+  : { sections: defaultSections };
 
 // DEBUG
 
 // Filtrar secciones habilitadas y ordenar
-const enabledSections = sectionsConfig.sections
+let enabledSections = sectionsConfig.sections
   .filter((s) => s.enabled)
   .sort((a, b) => a.order - b.order);
+
+// Si estamos en preview y tenemos el parámetro de secciones, sobrescribir el orden y habilitación
+if (isPreview && previewSectionsParam) {
+  const previewIds = previewSectionsParam.split(",");
+  enabledSections = previewIds.map((id, index) => {
+    // Buscar si existe en la config actual para mantener la variante
+    const existing = sectionsConfig.sections.find(s => s.id === id);
+    return {
+      id: id,
+      enabled: true,
+      variant: existing?.variant || "classic",
+      order: index
+    };
+  });
+}
 
 
 // Helper para verificar si una seccion esta habilitada
@@ -298,6 +319,9 @@ const pageConfig = {
   // Features ahora se generan desde serviceCatalog, no desde config.features
 };
 
+const bookingSectionConfig = sectionsConfig.sections.find((s) => s.id === "booking");
+const bookingVariant = previewVariants.booking || bookingSectionConfig?.variant || "wizard";
+
 const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
   ? `${import.meta.env.PUBLIC_ADMIN_URL}/api/citas`
   : "";
@@ -314,6 +338,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
     businessName={pageConfig.businessName}
     logo={pageConfig.logo}
     logoDisplay={(customization.branding as { logoDisplay?: "logo" | "name" } | undefined)?.logoDisplay}
+    bookingVariant={bookingVariant}
   />
 
   <main class="sections-container" style="display: flex; flex-direction: column;">
@@ -336,14 +361,9 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
         "contact",
         "booking",
       ];
-      const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
-      const legacyEnabledSections = new Set(
-        defaultSections.filter((section) => section.enabled).map((section) => section.id)
-      );
-
       return allSections.map((sectionId) => {
-        const sectionCfg = sectionConfigMap.get(sectionId);
-        const isEnabled = sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId);
+        const sectionCfg = enabledSections.find((s) => s.id === sectionId);
+        const isEnabled = !!sectionCfg;
         const order = sectionCfg?.order ?? 99;
         const style = `order: ${order}; ${!isEnabled ? 'display: none;' : ''}`;
 
@@ -396,7 +416,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
                   members={teamMembers}
-                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
+                  variant={((previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list")}
                 />
               </section>
             );
@@ -407,7 +427,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
-                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "grid" | "carousel" | "masonry"}
+                  variant={((previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "grid" | "carousel" | "masonry")}
                 />
               </section>
             );
@@ -429,7 +449,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
                     items={getContentArray("faqItems")}
-                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
+                  variant={((previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple")}
                 />
               </section>
             );
@@ -439,7 +459,7 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                 <PlansSection
                   title={getContentText("plansTitle")}
                   subtitle={getContentText("plansSubtitle")}
-                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "cards" | "table" | "comparison"}
+                  variant={((previewSectionVariants.plans || sectionCfg?.variant || "cards") as "cards" | "table" | "comparison")}
                 />
               </section>
             );
@@ -454,21 +474,29 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
                   email={config.email as string | undefined}
                   webhookUrl={webhookUrl}
                   websiteId={tenant.id}
-                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
+                  variant={((previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info")}
                 />
               </section>
             );
           case "booking":
+            const sectionBookingVariant = previewVariants.booking || sectionCfg?.variant || "classic";
             return (
               <div data-section-id="booking" style={style}>
-                <AppointmentForm
-                  webhookUrl={webhookUrl}
-                  websiteId={tenant.id}
-                  currentUser={currentUser}
-                  address={pageConfig.address}
-                  phone={pageConfig.phone}
-                  email={pageConfig.email}
-                />
+                {sectionBookingVariant === "modal" ? (
+                  <BookingBanner 
+                    title={getContentText("bookingTitle")} 
+                    subtitle={getContentText("bookingSubtitle")} 
+                  />
+                ) : (
+                  <AppointmentForm
+                    webhookUrl={webhookUrl}
+                    websiteId={tenant.id}
+                    currentUser={currentUser}
+                    address={pageConfig.address}
+                    phone={pageConfig.phone}
+                    email={pageConfig.email}
+                  />
+                )}
               </div>
             );
           default:
@@ -497,4 +525,21 @@ const webhookUrl = import.meta.env.PUBLIC_ADMIN_URL
       );
     })()}
   </main>
+  {(() => {
+    // Usar la misma lógica de variante que arriba
+    const bookingSection = sectionsConfig?.sections?.find(s => s.id === "booking");
+    const activeBookingVariant = previewVariants.booking || bookingSection?.variant || "wizard";
+    
+    // Usar isSectionEnabled para soportar live preview de habilitar/deshabilitar
+    if (isSectionEnabled("booking") && activeBookingVariant === "modal") {
+      return (
+        <AppointmentModal 
+          webhookUrl={webhookUrl}
+          websiteId={tenant.id}
+          currentUser={currentUser}
+        />
+      );
+    }
+    return null;
+  })()}
 </Layout>

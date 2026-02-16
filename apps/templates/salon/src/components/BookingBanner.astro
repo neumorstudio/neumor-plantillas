@@ -1,0 +1,117 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  ctaText?: string;
+}
+
+const {
+  title = "Reserva tu Experiencia",
+  subtitle = "Nuestros expertos están listos para cuidarte. Agenda tu cita en menos de un minuto.",
+  ctaText = "Agendar Ahora"
+} = Astro.props;
+---
+
+<section class="booking-banner section">
+  <div class="container">
+    <div class="banner-card neumor-card animate-fade-in">
+      <div class="banner-content">
+        <h2 class="banner-title">{title}</h2>
+        <p class="banner-subtitle">{subtitle}</p>
+        <button class="neumor-btn neumor-btn-accent banner-cta" data-open-modal="booking">
+          {ctaText}
+        </button>
+      </div>
+      <div class="banner-decoration">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .booking-banner {
+    padding: 4rem 0;
+  }
+
+  .banner-card {
+    position: relative;
+    padding: 4rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    background: var(--neumor-bg);
+  }
+
+  .banner-content {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+  }
+
+  .banner-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  .banner-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+  .banner-cta {
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+  }
+
+  .banner-decoration {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.2;
+  }
+
+  .blob-1 {
+    top: -10%;
+    left: -5%;
+    width: 300px;
+    height: 300px;
+    background: var(--accent);
+  }
+
+  .blob-2 {
+    bottom: -15%;
+    right: -5%;
+    width: 250px;
+    height: 250px;
+    background: var(--accent-hover);
+  }
+
+  @media (max-width: 768px) {
+    .banner-card {
+      padding: 3rem 1.5rem;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 1s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

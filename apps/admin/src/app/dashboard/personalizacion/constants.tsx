@@ -19,6 +19,7 @@ export const defaultVariants: Variants = {
   reviews: "grid",
   footer: "full",
   reservation: "classic",
+  booking: "wizard",
 };
 
 export const defaultColors: ColorsConfig = {

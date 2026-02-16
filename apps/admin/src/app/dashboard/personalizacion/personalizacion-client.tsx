@@ -334,7 +334,7 @@ export function PersonalizacionClient({
     reservation: "reservation",
     orders: "orders",
     // Secciones sin variante correspondiente en Variants
-    booking: null,
+    booking: "booking",
     contact: null,
   };
 
@@ -445,15 +445,24 @@ export function PersonalizacionClient({
     const menuVariant = getSectionVariant("menu", variants.menu);
     const reviewsVariant = getSectionVariant("testimonials", variants.reviews);
     const reservationVariant = getSectionVariant("reservation", variants.reservation);
+    const bookingVariant = getSectionVariant("booking", "classic");
+
+    const enabledSectionIds = sectionsConfig.sections
+      .filter((s) => s.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((s) => s.id)
+      .join(",");
 
     const params = new URLSearchParams({
       preview: "1",
+      v_sections: enabledSectionIds,
       v_hero: getSectionVariant("hero", variants.hero),
       v_features: getSectionVariant("features", variants.features),
       v_footer: getSectionVariant("footer", variants.footer),
       v_reviews: reviewsVariant,
       v_menu: menuVariant,
       v_reservation: reservationVariant,
+      v_booking: bookingVariant,
       v_orders: getSectionVariant("orders", variants.orders),
       // Variantes de "services" segun template
       v_services: servicesVariant,

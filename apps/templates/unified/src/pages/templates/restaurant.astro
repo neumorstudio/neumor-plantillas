@@ -50,6 +50,7 @@ const previewVariants = {
   footer: url.searchParams.get("v_footer"),
   reservation: url.searchParams.get("v_reservation"),
 };
+const previewSectionsParam = url.searchParams.get("v_sections");
 const previewSectionVariants = {
   team: url.searchParams.get("v_team"),
   gallery: url.searchParams.get("v_gallery"),
@@ -170,10 +171,28 @@ const defaultSections: SectionConfig[] = [
 
 // Obtener sectionsConfig de la BD o usar defaults
 const sectionsConfigRaw = config.sectionsConfig as { sections: SectionConfig[] } | undefined;
-const sectionsConfig = sectionsConfigRaw || { sections: defaultSections };
+const sectionsConfig = (sectionsConfigRaw?.sections && Array.isArray(sectionsConfigRaw.sections) && sectionsConfigRaw.sections.length > 0)
+  ? sectionsConfigRaw 
+  : { sections: defaultSections };
+
+// Si estamos en preview y tenemos el parámetro de secciones, sobrescribir el orden y habilitación
+let finalSections = [...sectionsConfig.sections];
+if (isPreview && previewSectionsParam) {
+  const previewIds = previewSectionsParam.split(",");
+  finalSections = previewIds.map((id, index) => {
+    // Buscar si existe en la config actual para mantener la variante
+    const existing = sectionsConfig.sections.find(s => s.id === id);
+    return {
+      id: id,
+      enabled: true,
+      variant: existing?.variant || "classic",
+      order: index
+    };
+  });
+}
 
 // Crear un mapa para acceso rapido a la configuracion de cada seccion
-const sectionConfigMap = new Map(sectionsConfig.sections.map((s) => [s.id, s]));
+const sectionConfigMap = new Map(finalSections.map((s) => [s.id, s]));
 const legacyEnabledSections = new Set(
   defaultSections.filter((section) => section.enabled).map((section) => section.id)
 );
@@ -380,26 +399,13 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
 
   <main class="sections-container" style="display: flex; flex-direction: column;">
     {(() => {
-      const allSections = [
-        "hero",
-        "features",
-        "menu",
-        "orders",
-        "testimonials",
-        "team",
-        "gallery",
-        "brands",
-        "faq",
-        "plans",
-        "contact",
-        "reservation",
-      ];
-
-      return allSections.map((sectionId) => {
-        const sectionCfg = sectionConfigMap.get(sectionId);
-        const isEnabled = (sectionCfg?.enabled ?? legacyEnabledSections.has(sectionId))
-          && (sectionId !== "orders" || ordersFeatureEnabled);
-        const order = sectionCfg?.order ?? 99;
+      // Usar las secciones finales (posiblemente sobrescritas por preview)
+      const sortedSections = [...finalSections].sort((a, b) => a.order - b.order);
+      
+      return sortedSections.map((sectionCfg) => {
+        const sectionId = sectionCfg.id;
+        const isEnabled = sectionCfg.enabled && (sectionId !== "orders" || ordersFeatureEnabled);
+        const order = sectionCfg.order;
         const style = `order: ${order}; ${!isEnabled ? "display: none;" : ""}`;
 
         switch (sectionId) {
@@ -463,7 +469,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                 <TeamSection
                   title={getContentText("teamTitle")}
                   subtitle={getContentText("teamSubtitle")}
-                  variant={(previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list"}
+                  variant={((previewSectionVariants.team || sectionCfg?.variant || "grid") as "grid" | "carousel" | "list")}
                 />
               </section>
             );
@@ -474,7 +480,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                   title={getContentText("galleryTitle")}
                   subtitle={getContentText("gallerySubtitle")}
                   images={getContentArray("galleryImages")}
-                  variant={(previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "grid" | "carousel" | "masonry"}
+                  variant={((previewSectionVariants.gallery || sectionCfg?.variant || "masonry") as "grid" | "carousel" | "masonry")}
                 />
               </section>
             );
@@ -496,7 +502,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                   title={getContentText("faqTitle")}
                   subtitle={getContentText("faqSubtitle")}
                   items={getContentArray("faqItems")}
-                  variant={(previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple"}
+                  variant={((previewSectionVariants.faq || sectionCfg?.variant || "accordion") as "accordion" | "cards" | "simple")}
                 />
               </section>
             );
@@ -506,7 +512,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                 <PlansSection
                   title={getContentText("plansTitle")}
                   subtitle={getContentText("plansSubtitle")}
-                  variant={(previewSectionVariants.plans || sectionCfg?.variant || "cards") as "cards" | "table" | "comparison"}
+                  variant={((previewSectionVariants.plans || sectionCfg?.variant || "cards") as "cards" | "table" | "comparison")}
                 />
               </section>
             );
@@ -521,7 +527,7 @@ const ordersWebhookUrl = (config.ordersWebhookUrl as string | undefined)
                   email={pageConfig.email}
                   webhookUrl={contactWebhookUrl}
                   websiteId={tenant.id}
-                  variant={(previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info"}
+                  variant={((previewSectionVariants.contact || sectionCfg?.variant || "form") as "form" | "info")}
                 />
               </section>
             );

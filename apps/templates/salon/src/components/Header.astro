@@ -3,10 +3,12 @@ interface Props {
   businessName: string;
   logo?: string;
   logoDisplay?: "logo" | "name";
+  bookingVariant?: string;
 }
 
-const { businessName, logo, logoDisplay = "name" } = Astro.props;
+const { businessName, logo, logoDisplay = "name", bookingVariant = "wizard" } = Astro.props;
 const hasLogo = Boolean(logo);
+const isBookingModal = bookingVariant === "modal";
 ---
 
 <header class="header">
@@ -19,14 +21,26 @@ const hasLogo = Boolean(logo);
 
       <ul class="nav-links">
         <li><a href="#services">Servicios</a></li>
-        <li><a href="#appointment">Reservar cita</a></li>
+        <li>
+          {isBookingModal ? (
+            <button class="nav-link-btn" data-open-modal="booking">Reservar cita</button>
+          ) : (
+            <a href="#appointment" class="nav-link-btn">Reservar cita</a>
+          )}
+        </li>
         <li><a href="#contact">Contacto</a></li>
         <li><a href="/mi-cuenta" class="nav-account">Mi cuenta</a></li>
       </ul>
 
-      <a href="#appointment" class="neumor-btn neumor-btn-accent nav-cta">
-        Reservar Cita
-      </a>
+      {isBookingModal ? (
+        <button class="neumor-btn neumor-btn-accent nav-cta" data-open-modal="booking">
+          Reservar Cita
+        </button>
+      ) : (
+        <a href="#appointment" class="neumor-btn neumor-btn-accent nav-cta" style="display: flex; align-items: center;">
+          Reservar Cita
+        </a>
+      )}
 
       <button class="mobile-menu-btn neumor-btn" aria-label="Menu">
         <svg
@@ -50,13 +64,25 @@ const hasLogo = Boolean(logo);
     <div class="mobile-menu" data-mobile-menu>
       <ul class="mobile-links">
         <li><a href="#services">Servicios</a></li>
-        <li><a href="#appointment">Reservar cita</a></li>
+        <li>
+          {isBookingModal ? (
+            <button class="nav-link-btn" data-open-modal="booking">Reservar cita</button>
+          ) : (
+            <a href="#appointment" class="nav-link-btn">Reservar cita</a>
+          )}
+        </li>
         <li><a href="#contact">Contacto</a></li>
         <li><a href="/mi-cuenta">Mi cuenta</a></li>
       </ul>
-      <a href="#appointment" class="neumor-btn neumor-btn-accent mobile-cta">
-        Reservar Cita
-      </a>
+      {isBookingModal ? (
+        <button class="neumor-btn neumor-btn-accent mobile-cta" data-open-modal="booking">
+          Reservar Cita
+        </button>
+      ) : (
+        <a href="#appointment" class="neumor-btn neumor-btn-accent mobile-cta" style="display: flex; align-items: center;">
+          Reservar Cita
+        </a>
+      )}
     </div>
   </div>
 </header>
@@ -118,13 +144,21 @@ const hasLogo = Boolean(logo);
     padding: 0;
   }
 
-  .nav-links a {
+  .nav-links a,
+  .nav-link-btn {
     color: var(--text-secondary);
     font-weight: 500;
     transition: color 0.2s ease;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
   }
 
-  .nav-links a:hover {
+  .nav-links a:hover,
+  .nav-link-btn:hover {
     color: var(--accent);
   }
 
